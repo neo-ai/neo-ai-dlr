@@ -54,6 +54,15 @@ DLRBackend get_backend(const std::string &dirname);
 
 namespace dlr {
 
+struct TreeliteInput {
+  std::vector<float> data;
+  std::vector<uint32_t> col_ind;
+  std::vector<size_t> row_ptr;
+  size_t num_row;
+  size_t num_col;
+  CSRBatchHandle handle;
+};
+
 class DLRModel {
  private:
   std::string version_;
@@ -69,8 +78,8 @@ class DLRModel {
   /* fields for Treelite model */
   PredictorHandle treelite_model_;
   size_t treelite_num_feature_;
-  size_t treelite_output_size_;
-  std::unique_ptr<TreelitePredictorEntry[]> treelite_input_;
+  size_t treelite_output_size_;  // size of output per instance
+  std::unique_ptr<TreeliteInput> treelite_input_;
   std::unique_ptr<float[]> treelite_output_;
 
  public:
