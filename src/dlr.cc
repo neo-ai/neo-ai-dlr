@@ -187,12 +187,14 @@ void DLRModel::SetupTreeliteModule(const std::string& model_path) {
       TreelitePredictorQueryNumFeature(treelite_model_, &treelite_num_feature_),
       0)
       << TreeliteGetLastError();
+  treelite_input_.reset(nullptr);
 
   size_t num_output_class;  // > 1 for multi-class classification; 1 otherwise
   CHECK_EQ(TreelitePredictorQueryNumOutputGroup(treelite_model_,
                                                 &num_output_class),
            0)
       << TreeliteGetLastError();
+  treelite_output_.reset(nullptr);
   // NOTE: second dimension of the output shape is smaller than num_output_class
   //       when a multi-class classifier outputs only the class prediction (argmax)
   //       To detect this edge case, run TreelitePredictorPredictInst() once.
@@ -262,6 +264,7 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
     const size_t batch_size = static_cast<size_t>(shape[0]);
     const uint32_t num_col = static_cast<uint32_t>(shape[1]);
     treelite_input_.reset(new TreeliteInput);
+    CHECK(treelite_input_);
     treelite_input_->row_ptr.push_back(0);
 
     // NOTE: Assume row-major (C) layout
@@ -272,17 +275,18 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
           treelite_input_->col_ind.push_back(j);
         }
       }
-      treelite_input_->row_ptr.push_back(treelite_input_->row_ptr.back()
-                                         + treelite_input_->data.size());
+      treelite_input_->row_ptr.push_back(treelite_input_->data.size());
     }
-    // Post conditions
+    // Post conditions for CSR matrix initialization
     CHECK_EQ(treelite_input_->data.size(), treelite_input_->col_ind.size());
     CHECK_EQ(treelite_input_->data.size(), treelite_input_->row_ptr.back());
     CHECK_EQ(treelite_input_->row_ptr.size(), batch_size + 1);
 
+    // Save dimensions for input
     treelite_input_->num_row = batch_size;
     treelite_input_->num_col = treelite_num_feature_;
 
+    // Register CSR matrix with Treelite backend
     CHECK_EQ(TreeliteAssembleSparseBatch(treelite_input_->data.data(),
                                          treelite_input_->col_ind.data(),
                                          treelite_input_->row_ptr.data(),
@@ -300,7 +304,8 @@ void DLRModel::GetOutputShape(int index, int64_t* shape) const {
     std::memcpy(shape, outputs_[index]->shape,
                 sizeof(int64_t) * outputs_[index]->ndim);
   } else if (backend_ == DLRBackend::kTREELITE) {
-    shape[0] = static_cast<int64_t>(treelite_input_->num_row);
+    // Use -1 if input is yet unspecified and batch size is not known
+    shape[0] = treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
     shape[1] = static_cast<int64_t>(treelite_output_size_);
   } else {
     LOG(FATAL) << "Unsupported backend!";
@@ -315,6 +320,7 @@ void DLRModel::GetOutput(int index, float* out) {
     tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
     get_output(index, &output_tensor);
   } else if (backend_ == DLRBackend::kTREELITE) {
+    CHECK(treelite_input_);
     std::memcpy(out, treelite_output_.get(),
                 sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
   } else {
@@ -331,7 +337,12 @@ void DLRModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     }
     *dim = tensor->ndim;
   } else if (backend_ == DLRBackend::kTREELITE) {
-    *size = static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
+    if (treelite_input_) {
+      *size = static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
+    } else {
+      // Input is yet unspecified and batch is not known
+      *size = treelite_output_size_;
+    }
     *dim = 2;
   } else {
     LOG(FATAL) << "Unsupported backend!";
@@ -349,11 +360,24 @@ void DLRModel::Run() {
     run();
   } else if (backend_ == DLRBackend::kTREELITE) {
     size_t out_result_size;
+    CHECK(treelite_input_);
     treelite_output_.reset(new float[treelite_input_->num_row * treelite_output_size_]);
+    CHECK(treelite_output_);
     CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle,
                                            1, 0, 0, treelite_output_.get(),
                                            &out_result_size), 0)
       << TreeliteGetLastError();
+  }
+}
+
+const char* DLRModel::GetBackend() const {
+  if (backend_ == DLRBackend::kTVM) {
+    return "tvm";
+  } else if (backend_ == DLRBackend::kTREELITE) {
+    return "treelite";
+  } else {
+    LOG(FATAL) << "Unsupported backend!";
+    return "";
   }
 }
 
@@ -457,5 +481,11 @@ extern "C" int RunDLRModel(DLRModelHandle *handle) {
 
 extern "C" const char* DLRGetLastError() {
   return TVMGetLastError();
+}
+
+extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
+  API_BEGIN();
+  *name = static_cast<DLRModel *>(*handle)->GetBackend();
+  API_END();
 }
 
