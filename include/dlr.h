@@ -103,6 +103,8 @@ class DLRModel {
   void GetOutputSizeDim(int index, int64_t* size, int* dim);
   void GetOutput(int index, float* out);
 
+  const char* GetBackend() const;
+
   /*! /brief DLRModel destructor
    */
   virtual ~DLRModel() {};
@@ -198,6 +200,12 @@ extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
  * \return null-terminated string
  */
 extern "C" const char* DLRGetLastError();
+
+/*!
+ * \brief Get the name of the backend ("tvm" / "treelite")
+ * \param name null-terminated string
+ */
+extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
 } // namespace dlr
 

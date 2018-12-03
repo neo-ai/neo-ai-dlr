@@ -30,6 +30,19 @@ class DLRModel:
         if ret != 0:
             raise DLRError(self.lib.DLRGetLastError().decode('ascii'))
 
+    def _lazy_init_output_shape(self):
+        self.output_shapes = []
+        self.output_size_dim = []
+        for i in range(self.num_outputs):
+            shape = self._get_output_shape(i)
+            self.output_shapes.append(shape)
+
+    def _parse_backend(self):
+        backend = c_char_p()
+        self._check_call(self.lib.GetDLRBackend(byref(self.handle),
+                                                byref(backend)))
+        return backend.value.decode('ascii')
+
     def __init__(self, tar_path, dev_type='cpu', dev_id=0):
         if not os.path.exists(tar_path):
             raise ValueError("tar_path %s doesn't exist" % tar_path)
@@ -50,17 +63,15 @@ class DLRModel:
                                                  c_int(device_table[dev_type]),
                                                  c_int(dev_id)))
 
+        self.backend = self._parse_backend()
+
         self.num_inputs = self._get_num_inputs()
         self.input_names = []
         for i in range(self.num_inputs):
             self.input_names.append(self._get_input_name(i))
 
         self.num_outputs = self._get_num_outputs()
-        self.output_shapes = []
-        self.output_size_dim = []
-        for i in range(self.num_outputs):
-            shape = self._get_output_shape(i)
-            self.output_shapes.append(shape)
+        self._lazy_init_output_shape()
 
     def __del__(self):
         if getattr(self, "handle", None) is not None and self.handle is not None:
@@ -102,6 +113,8 @@ class DLRModel:
                                               shape.ctypes.data_as(POINTER(c_longlong)),
                                               in_data.ctypes.data_as(POINTER(c_float)),
                                               c_int(in_data.ndim)))
+        if self.backend == 'treelite':
+            self._lazy_init_output_shape()
 
     def _run(self):
         """A light wrapper to call run in the DLR backend."""

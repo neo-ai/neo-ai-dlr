@@ -29,7 +29,7 @@ def load_tar(tar_path):
 
 def run_model(model_dir, X, y):
   model = dlr.DLRModel(model_dir)
-  output = np.concatenate(tuple(model.run(X[i:i+1,:])[0] for i in range(X.shape[0]))).squeeze()
+  output = model.run(X)[0].squeeze()
   return output
 
 def ndcg(y_true, y_score, query_sessions):
