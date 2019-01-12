@@ -112,47 +112,63 @@ class DLRModel {
 };
 
 
-/*! /brief Handle for DLRModel
+/*!
+ \brief Handle for DLRModel.
  */
 typedef void* DLRModelHandle;
 
-/*! /brief Create a DLR model.
+/*!
+ \brief Creates a DLR model.
+ \param handle The pointer to save the model handle.
+ \param model_path Path to the top-level directory containing the model.
+ \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ \param dev_id Device ID.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int CreateDLRModel(DLRModelHandle *handle,
                               const char *model_path,
                               int dev_type, int dev_id);
 
-/*! /brief Delete a DLR model.
+/*!
+ \brief Deletes a DLR model.
+ \param handle The model handle returned from CreateDLRModel().
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int DeleteDLRModel(DLRModelHandle* handle);
 
-/*! /brief Run a DLR model.
+/*!
+ \brief Runs a DLR model.
+ \param handle The model handle returned from CreateDLRModel().
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int RunDLRModel(DLRModelHandle *handle);
 
 /*!
- * \brief Get the number of inputs.
- * \param handle The model handler.
- * \param num_inputs The number of inputs.
+ \brief Gets the number of inputs.
+ \param handle The model handle returned from CreateDLRModel().
+ \param num_inputs The pointer to save the number of inputs.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
 
 /*!
- * \brief Get name of the index-th input.
- * \param handle The model handler.
- * \param index The index of the input.
- * \param input_name The name of the index-th input.
+ \brief Gets the name of the index-th input.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index of the input.
+ \param input_name The pointer to save the name of the index-th input.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
                                const char** input_name);
 
 /*!
- * \brief Set the input according the node name.
- * \param handle The model handler.
- * \param name The input node name.
- * \param shape The input node shape.
- * \param input The data for the input.
- * \param dim The dimension of the input data.
+ \brief Sets the input according the node name.
+ \param handle The model handle returned from CreateDLRModel().
+ \param name The input node name.
+ \param shape The input node shape as an array.
+ \param input The data for the input as an array.
+ \param dim The dimension of the input data.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int SetDLRInput(DLRModelHandle* handle,
                            const char* name,
@@ -160,50 +176,56 @@ extern "C" int SetDLRInput(DLRModelHandle* handle,
                            float* input,
                            int dim);
 /*!
- * \brief Get the shape of the index-th output.
- * \param handle The model handler.
- * \param index The index-th output.
- * \param shape The shape of index-th output.
+ \brief Gets the shape of the index-th output.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th output.
+ \param shape The pointer to save the shape of index-th output. This should be a pointer to an array of size "dim" from GetDLROutputSizeDim().
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLROutputShape(DLRModelHandle* handle,
                                  int index,
                                  int64_t* shape);
 
 /*!
- * \brief Get the index-th output from the model.
- * \param handle The model handler.
- * \param index The index-th output.
- * \param out The pointer to save the output data.
+ \brief Gets the index-th output from the model.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th output.
+ \param out The pointer to save the output data. This should be a pointer to an array of size "size" from GetDLROutputSizeDim().
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLROutput(DLRModelHandle* handle,
                             int index,
                             float* out);
 /*!
- * \brief Get the number of outputs.
- * \param handle The model handler.
- * \param num_outputs The pointer to save the number of outputs.
+ \brief Gets the number of outputs.
+ \param handle The model handle returned from CreateDLRModel().
+ \param num_outputs The pointer to save the number of outputs.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
                                 int* num_outputs);
 
 /*!
- * \brief Get the size and dimension of an output.
- * \param handle The model handler.
- * \param index The index-th output.
- * \param size The size of the index-th output.
- * \param dim The dimension of the index-th output.
+ \brief Gets the size and dimension of an output.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th output.
+ \param size The pointer to save the size of the index-th output.
+ \param dim The pointer to save the dimension of the index-th output.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
                                    int64_t* size, int* dim);
 /*!
- * \brief Get the last error message
- * \return null-terminated string
+ \brief Gets the last error message.
+ \return Null-terminated string containing the error message.
  */
 extern "C" const char* DLRGetLastError();
 
 /*!
- * \brief Get the name of the backend ("tvm" / "treelite")
- * \param name null-terminated string
+ \brief Gets the name of the backend ("tvm" / "treelite")
+ \param handle The model handle returned from CreateDLRModel().
+ \param name The pointer to save the null-terminated string containing the name.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
