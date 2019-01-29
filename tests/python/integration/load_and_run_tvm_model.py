@@ -1,6 +1,7 @@
 from dlr import DLRModel
 import numpy as np
 import os
+import logging
 
 def test_resnet():
     # Load the model
@@ -47,7 +48,8 @@ def test_multi_input_multi_output():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='test-dlr.log',level=logging.INFO)
     test_resnet()
     test_multi_input()
     test_multi_input_multi_output()
-    print "All tests passed!"
+    logging.info('All tests passed!')
