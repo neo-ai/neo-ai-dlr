@@ -5,6 +5,7 @@ import tarfile
 import contextlib
 import os
 import numpy as np
+import logging
 
 def todense(csr_matrix):
   out = np.full(shape=csr_matrix.shape, fill_value=np.nan, dtype=np.float32)
@@ -82,9 +83,11 @@ def test_letor():
   assert np.allclose(output, np.loadtxt(xgb_pred_path, delimiter=','))
 
 def main():
+  logging.basicConfig(filename='test-dlr.log',level=logging.INFO)
   test_iris()
   test_letor()
-  print "All tests passed!"
+  logging.info('All tests passed!')
+  
 
 if __name__ == '__main__':
   main()
