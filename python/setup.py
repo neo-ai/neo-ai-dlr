@@ -2,13 +2,21 @@ import os
 from setuptools import setup, find_packages
 from subprocess import check_output
 from setuptools.dist import Distribution
+from platform import system
 
 data_files = []
 for path, dirnames, filenames in os.walk('python'):
     for filename in filenames:
         data_files.append(os.path.join(path, filename))
-data_files.append('../build/lib/libdlr.so')
 
+if system() in ('Windows', 'Microsoft'):
+    lib_ext = '.dll'
+elif system() == "Darwin":
+    lib_ext = '.dylib'
+else:    
+    lib_ext = '.so'
+
+data_files.append('../build/lib/libdlr' + lib_ext)
 
 class BinaryDistribution(Distribution):
     def has_ext_modules(self):
