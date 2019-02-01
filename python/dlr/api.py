@@ -15,6 +15,18 @@ class DLRError(Exception):
 
 
 class DLRModel:
+    """
+    Load a Neo-compiled model
+
+    Parameters
+    ----------
+    model_path : str
+        Full path to the directory containing the compiled model
+    dev_type : str
+        Device type ('cpu', 'gpu', or 'opencl')
+    dev_id : int
+        Device ID
+    """
 
     def _check_call(self, ret):
         """
@@ -43,9 +55,9 @@ class DLRModel:
                                                 byref(backend)))
         return backend.value.decode('ascii')
 
-    def __init__(self, tar_path, dev_type='cpu', dev_id=0):
-        if not os.path.exists(tar_path):
-            raise ValueError("tar_path %s doesn't exist" % tar_path)
+    def __init__(self, model_path, dev_type='cpu', dev_id=0):
+        if not os.path.exists(model_path):
+            raise ValueError("model_path %s doesn't exist" % model_path)
 
         self.handle = c_void_p()
         libpath = os.path.join(os.path.dirname(
@@ -59,7 +71,7 @@ class DLRModel:
         }
 
         self._check_call(self.lib.CreateDLRModel(byref(self.handle),
-                                                 c_char_p(tar_path.encode()),
+                                                 c_char_p(model_path.encode()),
                                                  c_int(device_table[dev_type]),
                                                  c_int(dev_id)))
 
@@ -87,7 +99,13 @@ class DLRModel:
         return num_inputs.value
 
     def get_input_names(self):
-        """Get all input_names"""
+        """
+        Get all input names
+
+        Returns
+        -------
+        out : list of :py:class:`str`
+        """
         return self.input_names
 
     def _get_input_name(self, index):
@@ -194,6 +212,26 @@ class DLRModel:
         return out
 
     def run(self, input_values):
+        """
+        Run inference with given input(s)
+
+        Parameters
+        ----------
+        input_values : a single :py:class:`numpy.ndarray` or a dictionary
+            For decision tree models, provide a single :py:class:`numpy.ndarray`
+            to indicate a single input, as decision trees always accept only one
+            input.
+
+            For deep learning models, provide a dictionary where keys are input
+            names (of type :py:class:`str`) and values are input tensors (of type
+            :py:class:`numpy.ndarray`). Deep learning models allow more than one
+            input, so each input must have a unique name.
+
+        Returns
+        -------
+        out : :py:class:`numpy.ndarray`
+            Prediction result
+        """
         out = []
         # set input(s)
         if isinstance(input_values, (np.ndarray, np.generic)):
