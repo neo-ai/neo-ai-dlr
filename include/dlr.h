@@ -111,6 +111,11 @@ class DLRModel {
 
 };
 
+/*!
+ * \defgroup c_api
+ * C API of DLR
+ * \{
+ */
 
 /*!
  \brief Handle for DLRModel.
@@ -228,6 +233,8 @@ extern "C" const char* DLRGetLastError();
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name);
+
+/*! \} */
 
 } // namespace dlr
 
