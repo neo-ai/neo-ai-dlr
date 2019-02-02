@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.6)
 project(dlr)
 #include(cmake/Utils.cmake)
 
@@ -56,9 +56,32 @@ FILE(GLOB_RECURSE DLR_INC
     "${TREELITE_SRC}/include/*.h"
 )
 
+set(USE_OPENCL OFF)
 set(USE_CUDA OFF)
 set(USE_CUDNN OFF)
 set(USE_TENSORRT OFF)
+
+if(USE_OPENCL STREQUAL "ON")
+    message("USING OpenCL")
+    set(USE_OPENCL "/opt/intel/opencl")
+    set(OpenCL_TOOLKIT_ROOT_DIR ${USE_OPENCL})
+    message(STATUS "Custom OPENCL_PATH=" ${OpenCL_TOOLKIT_ROOT_DIR})
+    set(OpenCL_INCLUDE_DIR ${OpenCL_TOOLKIT_ROOT_DIR}/include)
+    include_directories(${OpenCL_INCLUDE_DIR})
+    find_library(_OpenCL_LIBRARY OpenCL
+      PATHS ${_OPENCL_TOOLKIT_ROOT_DIR}
+      PATH_SUFFIXES lib lib64 lib64/stubs)
+    if (_OpenCL_LIBRARY MATCHES "NOTFOUND")
+      set(_OpenCL_LIBRARY ${USE_OPENCL}/lib/libOpenCL.so)
+    endif()
+    message(STATUS "OPENCL_LIBRARY: " ${_OpenCL_LIBRARY})
+    if(_OpenCL_LIBRARY)
+      set(OpenCL_LIBRARY ${_OpenCL_LIBRARY})
+    endif()
+    list(APPEND TVM_RUNTIME_LINKER_LIBS ${OPENCL_LIBRARY})
+    file(GLOB RUNTIME_OPENCL_SRCS ${TVM_SRC}/src/runtime/opencl/*.cc)
+    list(APPEND DLR_SRC ${RUNTIME_OPENCL_SRCS})
+endif()
 
 if(USE_CUDA STREQUAL "ON")
     message("USING CUDA")
