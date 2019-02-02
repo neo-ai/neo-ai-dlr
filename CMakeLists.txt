@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.6)
 project(dlr)
 include(cmake/Utils.cmake)
 
@@ -6,6 +6,7 @@ set_default_configuration_release()
 msvc_use_static_runtime()
 
 # Options
+option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
@@ -61,9 +62,35 @@ FILE(GLOB_RECURSE DLR_INC
     "${TREELITE_SRC}/include/*.h"
 )
 
+if(USE_OPENCL)
+    message("USING OpenCL")
+    if(USE_OPENCL STREQUAL "ON")
+      set(USE_OPENCL "/opt/intel/opencl")
+    endif()
+    set(OpenCL_TOOLKIT_ROOT_DIR ${USE_OPENCL})
+    message(STATUS "Custom OPENCL_PATH=" ${OpenCL_TOOLKIT_ROOT_DIR})
+    set(OpenCL_INCLUDE_DIR ${OpenCL_TOOLKIT_ROOT_DIR}/include)
+    include_directories(${OpenCL_INCLUDE_DIR})
+    find_library(_OpenCL_LIBRARY OpenCL
+      PATHS ${_OPENCL_TOOLKIT_ROOT_DIR}
+      PATH_SUFFIXES lib lib64 lib64/stubs)
+    if (_OpenCL_LIBRARY MATCHES "NOTFOUND")
+      set(_OpenCL_LIBRARY ${USE_OPENCL}/lib/libOpenCL.so)
+    endif()
+    message(STATUS "OPENCL_LIBRARY: " ${_OpenCL_LIBRARY})
+    if(_OpenCL_LIBRARY)
+      set(OpenCL_LIBRARY ${_OpenCL_LIBRARY})
+    endif()
+    list(APPEND TVM_RUNTIME_LINKER_LIBS ${OPENCL_LIBRARY})
+    file(GLOB RUNTIME_OPENCL_SRCS ${TVM_SRC}/src/runtime/opencl/*.cc)
+    list(APPEND DLR_SRC ${RUNTIME_OPENCL_SRCS})
+endif()
+
 if(USE_CUDA)
     message("USING CUDA")
-    set(USE_CUDA "/usr/local/cuda-9.0")
+    if(USE_CUDA STREQUAL "ON")
+      set(USE_CUDA "/usr/local/cuda-9.0")
+    endif()
     set(CUDA_TOOLKIT_ROOT_DIR ${USE_CUDA})
     message(STATUS "Custom CUDA_PATH=" ${CUDA_TOOLKIT_ROOT_DIR})
     set(CUDA_INCLUDE_DIRS ${CUDA_TOOLKIT_ROOT_DIR}/include)
