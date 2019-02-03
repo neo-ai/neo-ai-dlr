@@ -6,6 +6,8 @@ DLR is a compact, common runtime for deep learning models and decision tree mode
 
 For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Your Machine Learning Models Once, Run Them Anywhere](https://aws.amazon.com/blogs/aws/amazon-sagemaker-neo-train-your-machine-learning-models-once-run-them-anywhere/)
 
+Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
+
 ## Development
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md)
