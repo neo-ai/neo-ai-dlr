@@ -29,7 +29,7 @@ endif()
 set(TVM_RUNTIME_LINKER_LIBS "")
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
-set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/neo-ai-treelite")
+set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
 
