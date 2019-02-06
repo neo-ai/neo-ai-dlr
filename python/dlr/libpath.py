@@ -21,7 +21,10 @@ def find_lib_path():
     curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
     dll_path = [curr_path, os.path.join(curr_path, '../../lib/'),
                 os.path.join(curr_path, './lib/'),
-                os.path.join(sys.prefix, 'dlr')]
+                os.path.join(sys.prefix, 'dlr'),
+                os.path.join(sys.prefix, 'local', 'dlr'),
+                os.path.join(sys.exec_prefix, 'local', 'dlr'),
+                os.path.join(os.path.expanduser('~'), '.local', 'dlr')]
     if sys.platform == 'win32':
         if platform.architecture()[0] == '64bit':
             dll_path.append(os.path.join(curr_path, '../../windows/x64/Release/'))
