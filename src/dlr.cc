@@ -36,9 +36,7 @@ void listdir(const std::string& dirname, std::vector<std::string> &paths) {
   std::vector<dmlc::io::FileInfo> file_list;
   fs->ListDirectory(uri, &file_list);
   for (dmlc::io::FileInfo info : file_list) {
-    if (info.type == dmlc::io::FileType::kDirectory) {
-      LOG(FATAL) << "Sub-directories are not allowed in model artifacts";
-    } else {
+    if (info.type != dmlc::io::FileType::kDirectory) {
       paths.push_back(info.path.name);
     }
   }
