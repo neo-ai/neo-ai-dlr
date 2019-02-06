@@ -10,13 +10,13 @@ for path, dirnames, filenames in os.walk('python'):
         data_files.append(os.path.join(path, filename))
 
 if system() in ('Windows', 'Microsoft'):
-    lib_ext = '.dll'
+    libname = 'dlr.dll'
 elif system() == "Darwin":
-    lib_ext = '.dylib'
+    libname = 'libdlr.dylib'
 else:    
-    lib_ext = '.so'
+    libname = 'libdlr.so'
 
-data_files.append('../build/lib/libdlr' + lib_ext)
+data_files.append('../lib/{}'.format(libname))
 
 class BinaryDistribution(Distribution):
     def has_ext_modules(self):

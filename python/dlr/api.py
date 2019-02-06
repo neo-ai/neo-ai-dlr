@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import absolute_import as _abs
+
 import ctypes
 from ctypes import cdll
 from ctypes import c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_longlong
@@ -8,11 +11,65 @@ from argparse import ArgumentParser
 import sys
 import os
 
+from .libpath import find_lib_path
 
 class DLRError(Exception):
-    """DLR exception class"""
+    """Error thrown by DLR"""
     pass
 
+def _load_lib():
+    """Load DLR library."""
+    lib_paths = find_lib_path()
+    if len(lib_paths) == 0:
+        return None
+    try:
+        pathBackup = os.environ['PATH'].split(os.pathsep)
+    except KeyError:
+        pathBackup = []
+    lib_success = False
+    os_error_list = []
+    for lib_path in lib_paths:
+        try:
+            # needed when the lib is linked with non-system-available dependencies
+            os.environ['PATH'] = os.pathsep.join(pathBackup + [os.path.dirname(lib_path)])
+            lib = ctypes.cdll.LoadLibrary(lib_path)
+            lib_success = True
+        except OSError as e:
+            os_error_list.append(str(e))
+            continue
+        finally:
+            os.environ['PATH'] = os.pathsep.join(pathBackup)
+    if not lib_success:
+        libname = os.path.basename(lib_paths[0])
+        raise DLRError(
+            'DLR library ({}) could not be loaded.\n'.format(libname) +
+            'Likely causes:\n' +
+            '  * OpenMP runtime is not installed ' +
+            '(vcomp140.dll or libgomp-1.dll for Windows, ' +
+            'libgomp.so for UNIX-like OSes)\n' +
+            '  * You are running 32-bit Python on a 64-bit OS\n' +
+            'Error message(s): {}\n'.format(os_error_list))
+    lib.DLRGetLastError.restype = ctypes.c_char_p
+    return lib
+
+
+# load the DLR library globally
+_LIB = _load_lib()
+
+
+def _check_call(ret):
+    """
+    Check the return value of C API call
+    This function will raise exception when error occurs.
+    Wrap every API call with this function
+
+    Parameters
+    ----------
+    ret : int
+        return value from API calls
+    """
+    if ret != 0:
+        raise DLRError(_LIB.DLRGetLastError().decode('ascii'))
 
 class DLRModel:
     """
@@ -28,20 +85,6 @@ class DLRModel:
         Device ID
     """
 
-    def _check_call(self, ret):
-        """
-        Check the return value of C API call
-        This function will raise exception when error occurs.
-        Wrap every API call with this function
-
-        Parameters
-        ----------
-        ret : int
-            return value from API calls
-        """
-        if ret != 0:
-            raise DLRError(self.lib.DLRGetLastError().decode('ascii'))
-
     def _lazy_init_output_shape(self):
         self.output_shapes = []
         self.output_size_dim = []
@@ -51,8 +94,8 @@ class DLRModel:
 
     def _parse_backend(self):
         backend = c_char_p()
-        self._check_call(self.lib.GetDLRBackend(byref(self.handle),
-                                                byref(backend)))
+        _check_call(_LIB.GetDLRBackend(byref(self.handle),
+                                       byref(backend)))
         return backend.value.decode('ascii')
 
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
@@ -60,20 +103,16 @@ class DLRModel:
             raise ValueError("model_path %s doesn't exist" % model_path)
 
         self.handle = c_void_p()
-        libpath = os.path.join(os.path.dirname(
-            os.path.abspath(os.path.expanduser(__file__))), 'libdlr.so')
-        self.lib = cdll.LoadLibrary(libpath)
-        self.lib.DLRGetLastError.restype = ctypes.c_char_p
         device_table = {
             'cpu': 1,
             'gpu': 2,
             'opencl': 4,
         }
 
-        self._check_call(self.lib.CreateDLRModel(byref(self.handle),
-                                                 c_char_p(model_path.encode()),
-                                                 c_int(device_table[dev_type]),
-                                                 c_int(dev_id)))
+        _check_call(_LIB.CreateDLRModel(byref(self.handle),
+                                        c_char_p(model_path.encode()),
+                                        c_int(device_table[dev_type]),
+                                        c_int(dev_id)))
 
         self.backend = self._parse_backend()
 
@@ -88,14 +127,14 @@ class DLRModel:
     def __del__(self):
         if getattr(self, "handle", None) is not None and self.handle is not None:
             if getattr(self, "lib", None) is not None:
-                self._check_call(self.lib.DeleteDLRModel(byref(self.handle)))
+                _check_call(_LIB.DeleteDLRModel(byref(self.handle)))
             self.handle = None
 
     def _get_num_inputs(self):
         """Get the number of inputs of a network"""
         num_inputs = c_int()
-        self._check_call(self.lib.GetDLRNumInputs(byref(self.handle),
-                                                  byref(num_inputs)))
+        _check_call(_LIB.GetDLRNumInputs(byref(self.handle),
+                                         byref(num_inputs)))
         return num_inputs.value
 
     def get_input_names(self):
@@ -110,8 +149,8 @@ class DLRModel:
 
     def _get_input_name(self, index):
         name = ctypes.c_char_p()
-        self._check_call(self.lib.GetDLRInputName(byref(self.handle),
-                                                  c_int(index), byref(name)))
+        _check_call(_LIB.GetDLRInputName(byref(self.handle),
+                                         c_int(index), byref(name)))
         return name.value.decode("utf-8")
 
     def _set_input(self, name, data):
@@ -126,23 +165,23 @@ class DLRModel:
         """
         in_data = np.ascontiguousarray(data, dtype=np.float32)
         shape = np.array(in_data.shape, dtype=np.int64)
-        self._check_call(self.lib.SetDLRInput(byref(self.handle),
-                                              c_char_p(name.encode('utf-8')),
-                                              shape.ctypes.data_as(POINTER(c_longlong)),
-                                              in_data.ctypes.data_as(POINTER(c_float)),
-                                              c_int(in_data.ndim)))
+        _check_call(_LIB.SetDLRInput(byref(self.handle),
+                                     c_char_p(name.encode('utf-8')),
+                                     shape.ctypes.data_as(POINTER(c_longlong)),
+                                     in_data.ctypes.data_as(POINTER(c_float)),
+                                     c_int(in_data.ndim)))
         if self.backend == 'treelite':
             self._lazy_init_output_shape()
 
     def _run(self):
         """A light wrapper to call run in the DLR backend."""
-        self._check_call(self.lib.RunDLRModel(byref(self.handle)))
+        _check_call(_LIB.RunDLRModel(byref(self.handle)))
 
     def _get_num_outputs(self):
         """Get the number of outputs of a network"""
         num_outputs = c_int()
-        self._check_call(self.lib.GetDLRNumOutputs(byref(self.handle),
-                                                   byref(num_outputs)))
+        _check_call(_LIB.GetDLRNumOutputs(byref(self.handle),
+                                          byref(num_outputs)))
         return num_outputs.value
 
     def _get_output_size_dim(self, index):
@@ -163,7 +202,7 @@ class DLRModel:
         idx = ctypes.c_int()
         size = ctypes.c_longlong()
         dim = ctypes.c_int()
-        self._check_call(self.lib.GetDLROutputSizeDim(byref(self.handle), idx,
+        _check_call(_LIB.GetDLROutputSizeDim(byref(self.handle), idx,
                                                       byref(size), byref(dim)))
         return size.value, dim.value
 
@@ -183,9 +222,9 @@ class DLRModel:
         size, dim = self._get_output_size_dim(index)
         self.output_size_dim.append((size, dim))
         shape = np.zeros(dim, dtype=np.int64)
-        self._check_call(self.lib.GetDLROutputShape(byref(self.handle),
+        _check_call(_LIB.GetDLROutputShape(byref(self.handle),
                                                     c_int(index),
-                      shape.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))))
+                    shape.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))))
         return shape
 
     def _get_output(self, index):
@@ -206,8 +245,8 @@ class DLRModel:
                              "len(output_shapes)-1, but got %d" % index)
 
         output = np.zeros(self.output_size_dim[index][0], dtype=np.float32)
-        self._check_call(self.lib.GetDLROutput(byref(self.handle), c_int(index),
-                         output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
+        _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
+                    output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
         out = output.reshape(self.output_shapes[index])
         return out
 

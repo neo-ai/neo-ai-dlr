@@ -5,8 +5,18 @@
 #include <streambuf>
 #include <algorithm>
 #include <iterator>
+#include <vector>
 #include <cstring>
 #include <numeric>
+
+/* OS-specific library file extension */
+#ifdef _WIN32
+#define LIBEXT ".dll"
+#elif __APPLE__
+#define LIBEXT ".dylib"
+#else
+#define LIBEXT ".so"
+#endif
 
 namespace {
 
@@ -21,15 +31,17 @@ constexpr const char* SAGEMAKER_AUXILIARY_JSON_FILES[] = {
 using namespace dlr;
 
 void listdir(const std::string& dirname, std::vector<std::string> &paths) {
-  DIR* dirp = opendir(dirname.c_str());
-  if(!dirp) {
-    LOG(FATAL) << "Invalid folder path: " << dirname;
+  dmlc::io::URI uri(dirname.c_str());
+  dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
+  std::vector<dmlc::io::FileInfo> file_list;
+  fs->ListDirectory(uri, &file_list);
+  for (dmlc::io::FileInfo info : file_list) {
+    if (info.type == dmlc::io::FileType::kDirectory) {
+      LOG(FATAL) << "Sub-directories are not allowed in model artifacts";
+    } else {
+      paths.push_back(info.path.name);
+    }
   }
-  struct dirent * dp;
-  while ((dp = readdir(dirp)) != NULL) {
-    paths.push_back(dp->d_name);
-  }
-  closedir(dirp);
 }
 
 bool IsFileEmpty(const std::string &filePath){
@@ -61,7 +73,7 @@ ModelPath get_treelite_paths(const std::string &dirname) {
   std::vector<std::string> paths_vec;
   listdir(dirname, paths_vec);
   for (auto filename : paths_vec) {
-    if (endsWith(filename, ".so")) {
+    if (endsWith(filename, LIBEXT)) {
       paths.model_lib = dirname + "/" + filename;
     } else if (filename == "version.json") {
       paths.ver_json = dirname + "/" + filename;
@@ -85,7 +97,7 @@ ModelPath get_tvm_paths(const std::string &dirname) {
                                  { return (s != filename); })
         && filename != "version.json") {
       paths.model_json = dirname + "/" + filename;
-    } else if (endsWith(filename, ".so")) {
+    } else if (endsWith(filename, LIBEXT)) {
       paths.model_lib = dirname + "/" + filename;
     } else if (endsWith(filename, ".params")) {
       paths.params = dirname + "/" +filename;
