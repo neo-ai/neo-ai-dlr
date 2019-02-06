@@ -74,9 +74,9 @@ ModelPath get_treelite_paths(const std::string &dirname) {
   listdir(dirname, paths_vec);
   for (auto filename : paths_vec) {
     if (endsWith(filename, LIBEXT)) {
-      paths.model_lib = dirname + "/" + filename;
+      paths.model_lib = filename;
     } else if (filename == "version.json") {
-      paths.ver_json = dirname + "/" + filename;
+      paths.ver_json = filename;
     }
   }
   if ( paths.model_lib.empty() ){
@@ -96,13 +96,13 @@ ModelPath get_tvm_paths(const std::string &dirname) {
                        [filename](const std::string& s)
                                  { return (s != filename); })
         && filename != "version.json") {
-      paths.model_json = dirname + "/" + filename;
+      paths.model_json = filename;
     } else if (endsWith(filename, LIBEXT)) {
-      paths.model_lib = dirname + "/" + filename;
+      paths.model_lib = filename;
     } else if (endsWith(filename, ".params")) {
-      paths.params = dirname + "/" +filename;
+      paths.params = filename;
     } else if (filename == "version.json") {
-      paths.ver_json = dirname + "/" +filename;
+      paths.ver_json = filename;
     }
   }
   if ( paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty() ){
