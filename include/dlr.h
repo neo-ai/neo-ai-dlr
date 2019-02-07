@@ -5,6 +5,7 @@
 #include <tvm/runtime/module.h>
 #include <treelite/predictor.h>
 #include <treelite/c_api_runtime.h>
+#include "../3rdparty/treelite/dmlc-core/src/io/filesys.h"
 //#include <graph/graph_runtime.cc>
 //#include <graph/debug/graph_runtime_debug.cc>
 #include <runtime_base.h>
@@ -12,9 +13,15 @@
 #include <string>
 #include <vector>
 #include <sys/types.h>
-#include <dirent.h>
 
 #define LINE_SIZE 256
+
+/* special symbols for DLL library on Windows */
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL extern "C" __declspec(dllexport)
+#else
+#define DLR_DLL extern "C"
+#endif
 
 typedef struct {
   std::string model_lib;
@@ -111,6 +118,8 @@ class DLRModel {
 
 };
 
+} // namespace dlr
+
 /*!
  * \defgroup c_api
  * C API of DLR
@@ -130,23 +139,23 @@ typedef void* DLRModelHandle;
  \param dev_id Device ID.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int CreateDLRModel(DLRModelHandle *handle,
-                              const char *model_path,
-                              int dev_type, int dev_id);
+DLR_DLL int CreateDLRModel(DLRModelHandle *handle,
+                           const char *model_path,
+                           int dev_type, int dev_id);
 
 /*!
  \brief Deletes a DLR model.
  \param handle The model handle returned from CreateDLRModel().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int DeleteDLRModel(DLRModelHandle* handle);
+DLR_DLL int DeleteDLRModel(DLRModelHandle* handle);
 
 /*!
  \brief Runs a DLR model.
  \param handle The model handle returned from CreateDLRModel().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int RunDLRModel(DLRModelHandle *handle);
+DLR_DLL int RunDLRModel(DLRModelHandle *handle);
 
 /*!
  \brief Gets the number of inputs.
@@ -154,7 +163,7 @@ extern "C" int RunDLRModel(DLRModelHandle *handle);
  \param num_inputs The pointer to save the number of inputs.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
+DLR_DLL int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
 
 /*!
  \brief Gets the name of the index-th input.
@@ -163,8 +172,8 @@ extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
  \param input_name The pointer to save the name of the index-th input.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
-                               const char** input_name);
+DLR_DLL int GetDLRInputName(DLRModelHandle* handle, int index,
+                            const char** input_name);
 
 /*!
  \brief Sets the input according the node name.
@@ -175,11 +184,11 @@ extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
  \param dim The dimension of the input data.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int SetDLRInput(DLRModelHandle* handle,
-                           const char* name,
-                           const int64_t* shape,
-                           float* input,
-                           int dim);
+DLR_DLL int SetDLRInput(DLRModelHandle* handle,
+                        const char* name,
+                        const int64_t* shape,
+                        float* input,
+                        int dim);
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().
@@ -187,9 +196,9 @@ extern "C" int SetDLRInput(DLRModelHandle* handle,
  \param shape The pointer to save the shape of index-th output. This should be a pointer to an array of size "dim" from GetDLROutputSizeDim().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLROutputShape(DLRModelHandle* handle,
-                                 int index,
-                                 int64_t* shape);
+DLR_DLL int GetDLROutputShape(DLRModelHandle* handle,
+                              int index,
+                              int64_t* shape);
 
 /*!
  \brief Gets the index-th output from the model.
@@ -198,17 +207,17 @@ extern "C" int GetDLROutputShape(DLRModelHandle* handle,
  \param out The pointer to save the output data. This should be a pointer to an array of size "size" from GetDLROutputSizeDim().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLROutput(DLRModelHandle* handle,
-                            int index,
-                            float* out);
+DLR_DLL int GetDLROutput(DLRModelHandle* handle,
+                         int index,
+                         float* out);
 /*!
  \brief Gets the number of outputs.
  \param handle The model handle returned from CreateDLRModel().
  \param num_outputs The pointer to save the number of outputs.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
-                                int* num_outputs);
+DLR_DLL int GetDLRNumOutputs(DLRModelHandle* handle,
+                             int* num_outputs);
 
 /*!
  \brief Gets the size and dimension of an output.
@@ -218,13 +227,13 @@ extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
  \param dim The pointer to save the dimension of the index-th output.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
-                                   int64_t* size, int* dim);
+DLR_DLL int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
+                                int64_t* size, int* dim);
 /*!
  \brief Gets the last error message.
  \return Null-terminated string containing the error message.
  */
-extern "C" const char* DLRGetLastError();
+DLR_DLL const char* DLRGetLastError();
 
 /*!
  \brief Gets the name of the backend ("tvm" / "treelite")
@@ -232,10 +241,8 @@ extern "C" const char* DLRGetLastError();
  \param name The pointer to save the null-terminated string containing the name.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name);
+DLR_DLL int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
 /*! \} */
 
-} // namespace dlr
-
-#endif
+#endif  // DLR_H_

@@ -1,20 +1,20 @@
 cmake_minimum_required (VERSION 3.1)
 project(dlr)
-#include(cmake/Utils.cmake)
+include(cmake/Utils.cmake)
+
+set_default_configuration_release()
+msvc_use_static_runtime()
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
 # See https://blog.kitware.com/upcoming-in-cmake-2-8-12-osx-rpath-support/
 set(CMAKE_MACOSX_RPATH TRUE)
 
 set(python-build "bp3-python setup.py build")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/lib")
 
 # Set BUILD_SHARED_LIBS as option. By default, build shared libraries;
 # User can set this to OFF to build static libraries instead.
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
-
-#set_default_configuration_release()
 
 # Compiler flags
 set(CMAKE_CXX_STANDARD 11)
@@ -131,11 +131,11 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
-
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
+set_output_directory(dlr ${PROJECT_SOURCE_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "TVM_RUNTIME_LINKER_LIBS: " ${TVM_RUNTIME_LINKER_LIBS})
 target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
