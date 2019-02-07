@@ -106,11 +106,11 @@ In the DLR directory, first run CMake to generate a Visual Studio project:
 
 If CMake run was successful, you should be able to find the solution file ``dlr.sln``. Open it with Visual Studio. To build, choose **Build Solution** on the **Build** menu.
 
-NVIDIA GPU is not yet supported for Windows target.
+NVIDIA GPUs are not yet supported for Windows target.
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
-.. code-block:: bash
+.. code-block:: cmd
 
   cd python
   python3 setup.py install
