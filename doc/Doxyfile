@@ -7,7 +7,7 @@ CASE_SENSE_NAMES = NO
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             = 
+PREDEFINED             = DLR_DLL=
 INPUT            = ../include/ ../src/
 EXAMPLE_PATH     = ../
 RECURSIVE        = YES
