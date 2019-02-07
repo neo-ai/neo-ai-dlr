@@ -61,7 +61,7 @@ Once the compilation is completed, install the Python package by running ``setup
 .. code-block:: bash
 
   cd python
-  python3 setup.py install
+  python3 setup.py install --user
 
 Building on Mac OS X
 ====================
@@ -89,7 +89,7 @@ Once the compilation is completed, install the Python package by running ``setup
 .. code-block:: bash
 
   cd python
-  python3 setup.py install
+  python3 setup.py install --user --prefix=''
 
 Building on Windows
 ===================
@@ -113,4 +113,4 @@ Once the compilation is completed, install the Python package by running ``setup
 .. code-block:: cmd
 
   cd python
-  python3 setup.py install
+  python3 setup.py install --user
