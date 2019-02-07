@@ -10,6 +10,7 @@ Contents
   :maxdepth: 2
   :titlesonly:
 
+  install
   python-api
   c-api
   Internal docs <http://neo-ai-dlr.readthedocs.io/en/latest/dev/>

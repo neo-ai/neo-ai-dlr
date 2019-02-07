@@ -5,6 +5,11 @@ include(cmake/Utils.cmake)
 set_default_configuration_release()
 msvc_use_static_runtime()
 
+# Options
+option(USE_CUDA  "Build with CUDA" OFF)
+option(USE_CUDNN "Build with CUDNN" OFF)
+option(USE_TENSORRT "Build with Tensor RT" OFF)
+
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
 # See https://blog.kitware.com/upcoming-in-cmake-2-8-12-osx-rpath-support/
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -56,11 +61,7 @@ FILE(GLOB_RECURSE DLR_INC
     "${TREELITE_SRC}/include/*.h"
 )
 
-set(USE_CUDA OFF)
-set(USE_CUDNN OFF)
-set(USE_TENSORRT OFF)
-
-if(USE_CUDA STREQUAL "ON")
+if(USE_CUDA)
     message("USING CUDA")
     set(USE_CUDA "/usr/local/cuda-9.0")
     set(CUDA_TOOLKIT_ROOT_DIR ${USE_CUDA})
@@ -84,7 +85,7 @@ if(USE_CUDA STREQUAL "ON")
     file(GLOB RUNTIME_CUDA_SRCS ${TVM_SRC}/src/runtime/cuda/*.cc)
     list(APPEND DLR_SRC ${RUNTIME_CUDA_SRCS})
 endif()
-if(USE_CUDNN STREQUAL "ON")
+if(USE_CUDNN)
     message("USING CUDNN")
     set(USE_CUDNN ${USE_CUDA})
     set(CUDNN_TOOLKIT_ROOT_DIR ${USE_CUDNN})
@@ -100,7 +101,7 @@ if(USE_CUDNN STREQUAL "ON")
     file(GLOB CONTRIB_CUDNN_SRCS ${TVM_SRC}/src/contrib/cudnn/*.cc)
     list(APPEND RUNTIME_SRCS ${CONTRIB_CUDNN_SRCS})
 endif()
-if(USE_TENSORRT STREQUAL "ON")
+if(USE_TENSORRT)
     message("USING TENSORRT")
     set(USE_TENSORRT "/home/ubuntu/TensorRT-4.0.1.6")
     set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
