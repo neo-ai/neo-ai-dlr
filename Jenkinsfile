@@ -72,7 +72,8 @@ def buildHelloWorldJob(worker_type) {
     apt-get moo
     """
     if (worker_type == "gpu") {
-      sh """
+      sh """#!/bin/bash
+      source ${WORKSPACE}/tests/ci_build/setup_cuda_path.sh
       nvcc --version
       nvidia-smi --query-gpu=gpu_name,gpu_bus_id,vbios_version --format=csv
       """
