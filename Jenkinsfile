@@ -67,7 +67,9 @@ def buildHelloWorldJob() {
     echo "Hello world!"
     sh """
     git rev-parse HEAD
+    cmake --version
     g++ --version
+    python3 --version
     apt-get moo
     """
   }
