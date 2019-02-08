@@ -34,7 +34,8 @@ pipeline {
     stage('Jenkins: Build & Test') {
       steps {
         script {
-          parallel ([ "hello-world" : { buildHelloWorldJob() } ])
+          parallel ([ "hello-world-cpu" : { buildHelloWorldJob("cpu") },
+                      "hello-world-gpu" : { buildHelloWorldJob("gpu") } ])
         }
       }
     }
@@ -59,18 +60,22 @@ def checkoutSrcs() {
 }
 
 // Placeholder for a build task
-def buildHelloWorldJob() {
-  // Use Linux CPU worker
-  def nodeReq = "linux && cpu && unrestricted"
+def buildHelloWorldJob(worker_type) {
+  def nodeReq = "linux && ${worker_type} && unrestricted"
   node(nodeReq) {
     unstash name: 'srcs'
     echo "Hello world!"
     sh """
-    git rev-parse HEAD
     cmake --version
     g++ --version
     python3 --version
     apt-get moo
     """
+    if (worker_type == "gpu") {
+      sh """
+      nvcc --version
+      nvidia-smi --query-gpu=gpu_name,gpu_bus_id,vbios_version --format=csv
+      """
+    }
   }
 }
