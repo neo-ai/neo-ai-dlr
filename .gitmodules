@@ -2,6 +2,6 @@
 	path = 3rdparty/tvm
 	url = https://github.com/neo-ai/tvm.git
     branch = neo-ai
-[submodule "3rdparty/neo-ai-treelite"]
-	path = 3rdparty/neo-ai-treelite
-	url = https://github.com/neo-ai/neo-ai-treelite.git
+[submodule "3rdparty/treelite"]
+	path = 3rdparty/treelite
+	url = https://github.com/neo-ai/treelite

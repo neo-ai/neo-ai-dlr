@@ -1,20 +1,26 @@
 cmake_minimum_required (VERSION 3.6)
 project(dlr)
-#include(cmake/Utils.cmake)
+include(cmake/Utils.cmake)
+
+set_default_configuration_release()
+msvc_use_static_runtime()
+
+# Options
+option(USE_CUDA  "Build with CUDA" OFF)
+option(USE_CUDNN "Build with CUDNN" OFF)
+option(USE_TENSORRT "Build with Tensor RT" OFF)
+option(USE_OPENCL "Build with OpenCL" OFF)
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
 # See https://blog.kitware.com/upcoming-in-cmake-2-8-12-osx-rpath-support/
 set(CMAKE_MACOSX_RPATH TRUE)
 
 set(python-build "bp3-python setup.py build")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/lib")
 
 # Set BUILD_SHARED_LIBS as option. By default, build shared libraries;
 # User can set this to OFF to build static libraries instead.
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
-
-#set_default_configuration_release()
 
 # Compiler flags
 set(CMAKE_CXX_STANDARD 11)
@@ -29,7 +35,7 @@ endif()
 set(TVM_RUNTIME_LINKER_LIBS "")
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
-set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/neo-ai-treelite")
+set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
 
@@ -56,12 +62,7 @@ FILE(GLOB_RECURSE DLR_INC
     "${TREELITE_SRC}/include/*.h"
 )
 
-set(USE_OPENCL OFF)
-set(USE_CUDA OFF)
-set(USE_CUDNN OFF)
-set(USE_TENSORRT OFF)
-
-if(USE_OPENCL STREQUAL "ON")
+if(USE_OPENCL)
     message("USING OpenCL")
     set(USE_OPENCL "/opt/intel/opencl")
     set(OpenCL_TOOLKIT_ROOT_DIR ${USE_OPENCL})
@@ -83,7 +84,7 @@ if(USE_OPENCL STREQUAL "ON")
     list(APPEND DLR_SRC ${RUNTIME_OPENCL_SRCS})
 endif()
 
-if(USE_CUDA STREQUAL "ON")
+if(USE_CUDA)
     message("USING CUDA")
     set(USE_CUDA "/usr/local/cuda-9.0")
     set(CUDA_TOOLKIT_ROOT_DIR ${USE_CUDA})
@@ -107,7 +108,7 @@ if(USE_CUDA STREQUAL "ON")
     file(GLOB RUNTIME_CUDA_SRCS ${TVM_SRC}/src/runtime/cuda/*.cc)
     list(APPEND DLR_SRC ${RUNTIME_CUDA_SRCS})
 endif()
-if(USE_CUDNN STREQUAL "ON")
+if(USE_CUDNN)
     message("USING CUDNN")
     set(USE_CUDNN ${USE_CUDA})
     set(CUDNN_TOOLKIT_ROOT_DIR ${USE_CUDNN})
@@ -123,7 +124,7 @@ if(USE_CUDNN STREQUAL "ON")
     file(GLOB CONTRIB_CUDNN_SRCS ${TVM_SRC}/src/contrib/cudnn/*.cc)
     list(APPEND RUNTIME_SRCS ${CONTRIB_CUDNN_SRCS})
 endif()
-if(USE_TENSORRT STREQUAL "ON")
+if(USE_TENSORRT)
     message("USING TENSORRT")
     set(USE_TENSORRT "/home/ubuntu/TensorRT-4.0.1.6")
     set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
@@ -154,11 +155,11 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
-
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
+set_output_directory(dlr ${PROJECT_SOURCE_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "TVM_RUNTIME_LINKER_LIBS: " ${TVM_RUNTIME_LINKER_LIBS})
 target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
