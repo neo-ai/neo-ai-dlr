@@ -114,3 +114,15 @@ Once the compilation is completed, install the Python package by running ``setup
 
   cd python
   python3 setup.py install --user
+
+************************
+Validation
+************************
+
+Validation on Linux
+===================
+.. code-block:: cmd
+
+  cd tests/python/integration/
+  python load_and_run_tvm_model.py
+  python load_and_run_treelite_model.py

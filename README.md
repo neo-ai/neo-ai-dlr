@@ -9,10 +9,6 @@ For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Y
 
 Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
 
-## Development
-
-See [DEVELOPMENT.md](./DEVELOPMENT.md)
-
 ## License
 
 This library is licensed under the Apache License Version 2.0. 
