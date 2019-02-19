@@ -51,10 +51,17 @@ By default, DLR will be built with CPU support only. To enable support for NVIDI
 
 .. code-block:: bash
 
-  cmake .. -DUSE_CUDA=ON -DUSE_TENSORRT=ON -DUSE_CUDNN=ON
+  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
   make -j4
 
-You will need to install NVIDIA CUDA toolkits and drivers beforehand.
+You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
+
+Similarly, to enable support for OpenCL devices, run CMake with:
+
+.. code-block:: bash
+
+  cmake .. -DUSE_OPENCL=ON 
+  make -j4
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
