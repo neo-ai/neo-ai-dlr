@@ -222,7 +222,6 @@ class DLRModel:
         size, dim = self._get_output_size_dim(index)
         if index >= len(self.output_size_dim):
             self.output_size_dim.extend( [(0, 0)] * (index - len(self.output_size_dim) + 1))
-        print( self.output_size_dim)
         self.output_size_dim[index] = (size, dim)
         shape = np.zeros(dim, dtype=np.int64)
         _check_call(_LIB.GetDLROutputShape(byref(self.handle),
