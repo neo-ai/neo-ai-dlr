@@ -36,15 +36,18 @@ def test_multi_input_multi_output():
     device = 'cpu'
     model = DLRModel(model_path, device)
 
+    assert model._get_output_size_dim(0) == (2, 1)
+    assert model._get_output_size_dim(1) == (3, 1)
+
     input1 = np.asarray([1., 2.])
     input2 = np.asarray([3., 4.])
-    input3 = np.asarray([5., 6.])
-    input4 = np.asarray([7., 8.])
+    input3 = np.asarray([5., 6., 7])
+    input4 = np.asarray([8., 9., 10])
     input_map = {'data1': input1, 'data2': input2, 'data3': input3, 'data4': input4}
     outputs = model.run(input_map)
 
     assert outputs[0].tolist() == [4, 6]
-    assert outputs[1].tolist() == [12, 14]
+    assert outputs[1].tolist() == [13, 15, 17]
 
 
 if __name__ == '__main__':

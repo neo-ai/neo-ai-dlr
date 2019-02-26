@@ -199,7 +199,7 @@ class DLRModel:
         dim : int
             The dimension of the index-th output.
         """
-        idx = ctypes.c_int()
+        idx = ctypes.c_int(index)
         size = ctypes.c_longlong()
         dim = ctypes.c_int()
         _check_call(_LIB.GetDLROutputSizeDim(byref(self.handle), idx,
@@ -220,7 +220,9 @@ class DLRModel:
             The shape of the index-th output.
         """
         size, dim = self._get_output_size_dim(index)
-        self.output_size_dim.append((size, dim))
+        if not self.output_size_dim:
+            self.output_size_dim = [(0, 0)] * self._get_num_outputs()
+        self.output_size_dim[index] = (size, dim)
         shape = np.zeros(dim, dtype=np.int64)
         _check_call(_LIB.GetDLROutputShape(byref(self.handle),
                                                     c_int(index),

@@ -36,7 +36,7 @@
       "name": "__add_symbol__1", 
       "attrs": {
         "flatten_data": "1", 
-        "func_name": "fuse_broadcast_add", 
+        "func_name": "fuse_broadcast_add_1", 
         "num_inputs": "2", 
         "num_outputs": "1"
       }, 
@@ -48,20 +48,20 @@
   "heads": [[2, 0, 0], [5, 0, 0]], 
   "attrs": {
     "storage_id": ["list_int", [2, 3, 0, 4, 5, 1]], 
-    "shape": ["list_shape", [
-        [2], 
-        [2], 
-        [2], 
-        [2], 
-        [2], 
-        [2]]], 
-    "dtype": ["list_int", [0, 0, 0, 0, 0, 0]], 
     "dltype": ["list_str", [
         "float32", 
         "float32", 
         "float32", 
         "float32", 
         "float32", 
-        "float32"]]
+        "float32"]], 
+    "dtype": ["list_int", [0, 0, 0, 0, 0, 0]], 
+    "shape": ["list_shape", [
+        [2], 
+        [2], 
+        [2], 
+        [3], 
+        [3], 
+        [3]]]
   }
 }
