@@ -30,18 +30,8 @@ params["data4"] = data4 = np.random.uniform(-1, 1, size=data_shape2).astype("flo
 
 net = symbol.Group([net1, net2])
 
-
-print('=======')
-print(net1.list_input_names())
-print(net2.list_input_names())
-print(net.list_input_names())
-
-
 deploy_graph, lib, params = nnvm.compiler.build(
     net, target="llvm", shape=shape_dict, dtype="float32", params=params)
-
-print(deploy_graph.json())
-print('=======')
 
 temp = path.curdir
 path_lib = path.join(temp, "deploy.so")
