@@ -14,23 +14,34 @@ from tvm.contrib import graph_runtime, util
 data1 = symbol.Variable(name="data1")
 data2 = symbol.Variable(name="data2")
 net1 = data1 + data2
-data_shape = (2,)
-shape_dict = {"data1": data_shape, "data2": data_shape}
+data_shape1 = (2,)
+data_shape2 = (3,)
+shape_dict = {"data1": data_shape1, "data2": data_shape1}
 params = {}
-params["data1"] = data1 = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-params["data2"] = data2 = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+params["data1"] = data1 = np.random.uniform(-1, 1, size=data_shape1).astype("float32")
+params["data2"] = data2 = np.random.uniform(-1, 1, size=data_shape1).astype("float32")
 
 data3 = symbol.Variable(name="data3")
 data4 = symbol.Variable(name="data4")
 net2 = data3 + data4
-shape_dict.update({"data3": data_shape, "data4": data_shape})
-params["data3"] = data3 = np.random.uniform(-1, 1, size=data_shape).astype("float32")
-params["data4"] = data4 = np.random.uniform(-1, 1, size=data_shape).astype("float32")
+shape_dict.update({"data3": data_shape2, "data4": data_shape2})
+params["data3"] = data3 = np.random.uniform(-1, 1, size=data_shape2).astype("float32")
+params["data4"] = data4 = np.random.uniform(-1, 1, size=data_shape2).astype("float32")
 
 net = symbol.Group([net1, net2])
 
+
+print('=======')
+print(net1.list_input_names())
+print(net2.list_input_names())
+print(net.list_input_names())
+
+
 deploy_graph, lib, params = nnvm.compiler.build(
     net, target="llvm", shape=shape_dict, dtype="float32", params=params)
+
+print(deploy_graph.json())
+print('=======')
 
 temp = path.curdir
 path_lib = path.join(temp, "deploy.so")
@@ -56,3 +67,4 @@ assert np.allclose(data1 + data2, out1.asnumpy())
 
 out2 = module.get_output(1, out=tvm.nd.empty(oshape[1], "float32"))
 assert np.allclose(data3 + data4, out2.asnumpy())
+
