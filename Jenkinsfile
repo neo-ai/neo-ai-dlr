@@ -61,7 +61,7 @@ def AMD64BuildCPU() {
   def dockerArgs = ""
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Building univeral artifact for AMD64, CPU-only"
+    echo "Building universal artifact for AMD64, CPU-only"
     sh """
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
