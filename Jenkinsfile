@@ -59,17 +59,15 @@ def AMD64BuildCPU() {
   def nodeReq = "ubuntu && amd64 && cpu-bare"
   def dockerTarget = "cpu_bare"
   def dockerArgs = ""
-  // Destination dir for artifacts
-  def distDir = "dist/build-amd64-cpu"
   node(nodeReq) {
     unstash name: 'srcs'
     echo "Building univeral artifact for AMD64, CPU-only"
     sh """
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
-    rm -rf "${distDir}"; mkdir -p "${distDir}/py"
-    cp -r python/dist "${distDir}/py"
     """
-    archiveArtifacts artifacts: "${distDir}/**/*.*", allowEmptyArchive: true
+    withAWS(credentials:'Neo-AI-CI-Fleet') {
+      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "neo-ai-dlr/${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
+    }
   }
 }
