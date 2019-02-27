@@ -3,9 +3,6 @@
 // Jenkins pipeline
 // See documents at https://jenkins.io/doc/book/pipeline/jenkinsfile/
 
-// Command to run command inside a docker container
-def dockerRun = "tests/ci_build/ci_build.sh"
-
 /* Pipeline definition */
 pipeline {
   // Each stage specify its own agent
@@ -68,8 +65,8 @@ def AMD64BuildCPU() {
     unstash name: 'srcs'
     echo "Building univeral artifact for AMD64, CPU-only"
     sh """
-    ${dockerRun} ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
-    ${dockerRun} ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
     rm -rf "${distDir}"; mkdir -p "${distDir}/py"
     cp -r python/dist "${distDir}/py"
     """
