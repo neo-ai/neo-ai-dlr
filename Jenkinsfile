@@ -67,7 +67,7 @@ def AMD64BuildCPU() {
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
     """
     withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "neo-ai-dlr/${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
+      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
     }
   }
 }
