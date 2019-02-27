@@ -46,7 +46,7 @@ def checkoutSrcs() {
     try {
       timeout(time: 2, unit: 'MINUTES') {
         checkout scm
-        sh 'git submodule update --init'
+        sh 'git submodule update --init --recursive'
       }
     } catch (exc) {
       deleteDir()
