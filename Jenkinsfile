@@ -4,7 +4,7 @@
 // See documents at https://jenkins.io/doc/book/pipeline/jenkinsfile/
 
 // Command to run command inside a docker container
-def dockerRun = 'tests/ci_build/ci_build.sh'
+def dockerRun = "tests/ci_build/ci_build.sh"
 
 /* Pipeline definition */
 pipeline {
