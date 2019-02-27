@@ -3,8 +3,8 @@
 // Jenkins pipeline
 // See documents at https://jenkins.io/doc/book/pipeline/jenkinsfile/
 
-/* Unrestricted tasks: tasks that do NOT generate artifacts.
- * Only use nodes labelled with "unrestricted" */
+// Command to run command inside a docker container
+def dockerRun = 'tests/ci_build/ci_build.sh'
 
 /* Pipeline definition */
 pipeline {
@@ -31,11 +31,10 @@ pipeline {
         milestone label: 'Sources ready', ordinal: 1
       }
     }
-    stage('Jenkins: Build & Test') {
+    stage('Jenkins: Build') {
       steps {
         script {
-          parallel ([ "hello-world-cpu" : { buildHelloWorldJob("cpu") },
-                      "hello-world-gpu" : { buildHelloWorldJob("gpu") } ])
+          parallel ([ "build-amd64-cpu" : AMD64BuildCPU() ])
         }
       }
     }
@@ -59,24 +58,21 @@ def checkoutSrcs() {
   }
 }
 
-// Placeholder for a build task
-def buildHelloWorldJob(worker_type) {
-  def nodeReq = "linux && ${worker_type} && unrestricted"
+def AMD64BuildCPU() {
+  def nodeReq = "ubuntu && amd64 && cpu-bare"
+  def dockerTarget = "cpu_bare"
+  def dockerArgs = ""
+  // Destination dir for artifacts
+  def distDir = "dist/${buildName}"
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Hello world!"
+    echo "Building univeral artifact for AMD64, CPU-only"
     sh """
-    cmake --version
-    g++ --version
-    python3 --version
-    apt-get moo
+    ${dockerRun} ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
+    ${dockerRun} ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
+    rm -rf "${distDir}"; mkdir -p "${distDir}/py"
+    cp -r python/dist "${distDir}/py"
     """
-    if (worker_type == "gpu") {
-      sh """#!/bin/bash
-      source ${WORKSPACE}/tests/ci_build/setup_cuda_path.sh
-      nvcc --version
-      nvidia-smi --query-gpu=gpu_name,gpu_bus_id,vbios_version --format=csv
-      """
-    }
+    archiveArtifacts artifacts: "${distDir}/**/*.*", allowEmptyArchive: true
   }
 }
