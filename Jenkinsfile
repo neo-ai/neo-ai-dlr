@@ -63,7 +63,7 @@ def AMD64BuildCPU() {
   def dockerTarget = "cpu_bare"
   def dockerArgs = ""
   // Destination dir for artifacts
-  def distDir = "dist/${buildName}"
+  def distDir = "dist/build-amd64-cpu"
   node(nodeReq) {
     unstash name: 'srcs'
     echo "Building univeral artifact for AMD64, CPU-only"
