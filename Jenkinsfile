@@ -79,7 +79,7 @@ def AMD64BuildGPU() {
     unstash name: 'srcs'
     echo "Building artifact for AMD64 with GPU capability. Using CUDA 8.0, CuDNN 7, TensorRT 4"
     sh """
-    tests/ci_build/build_via_cmake.sh
+    tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
     sudo update-ca-certificates -f
     PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
     """
