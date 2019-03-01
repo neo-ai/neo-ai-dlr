@@ -20,7 +20,7 @@ pipeline {
   stages {
     stage('Jenkins: Get sources') {
       agent {
-        label 'cpu-bare'
+        label 'cpu-build'
       }
       steps {
         checkoutSrcs()
@@ -31,7 +31,8 @@ pipeline {
     stage('Jenkins: Build') {
       steps {
         script {
-          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() } ])
+          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() },
+                      "build-amd64-gpu" : { AMD64BuildGPU() } ])
         }
       }
     }
@@ -56,7 +57,7 @@ def checkoutSrcs() {
 }
 
 def AMD64BuildCPU() {
-  def nodeReq = "ubuntu && amd64 && cpu-bare"
+  def nodeReq = "ubuntu && amd64 && cpu-build"
   def dockerTarget = "cpu_bare"
   def dockerArgs = ""
   node(nodeReq) {
@@ -64,7 +65,23 @@ def AMD64BuildCPU() {
     echo "Building universal artifact for AMD64, CPU-only"
     sh """
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh manylinux1_x86_64
+    """
+    withAWS(credentials:'Neo-AI-CI-Fleet') {
+      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
+    }
+  }
+}
+
+def AMD64BuildGPU() {
+  def nodeReq = "ubuntu && amd64 && gpu-build"
+  node(nodeReq) {
+    unstash name: 'srcs'
+    echo "Building artifact for AMD64 with GPU capability. Using CUDA 8.0, CuDNN 7, TensorRT 4"
+    sh """
+    tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
+    sudo update-ca-certificates -f
+    PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
     """
     withAWS(credentials:'Neo-AI-CI-Fleet') {
       s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
