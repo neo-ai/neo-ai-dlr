@@ -45,10 +45,10 @@ setup(
 
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
-    long_description=read('README.md'),
+    long_description=open(os.path.join(CURRENT_DIR, '../README.md')).read(),
     author = 'AWS Neo',
     author_email = 'aws.neo-ai@amazon.com',
-    url='https://github.com/neo-ai/neo-ai-dlr'
+    url='https://github.com/neo-ai/neo-ai-dlr',
     license = "Apache-2.0",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
