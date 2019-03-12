@@ -3,6 +3,11 @@
 // Jenkins pipeline
 // See documents at https://jenkins.io/doc/book/pipeline/jenkinsfile/
 
+// List of cloud targets
+def cloudTargetMatrix = [
+  "c4", "c5", "m4", "m5"
+]
+
 /* Pipeline definition */
 pipeline {
   // Each stage specify its own agent
@@ -33,6 +38,15 @@ pipeline {
         script {
           parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() },
                       "build-amd64-gpu" : { AMD64BuildGPU() } ])
+        }
+      }
+    }
+    stage('Jenkins: Install & Test') {
+      steps {
+        script {
+          parallel (cloudTargetMatrix.collectEntries{
+            [(it): { CloudInstallAndTest(it) } ]
+          })
         }
       }
     }
@@ -86,5 +100,23 @@ def AMD64BuildGPU() {
     withAWS(credentials:'Neo-AI-CI-Fleet') {
       s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
     }
+  }
+}
+
+def CloudInstallAndTest(cloudTarget) {
+  def nodeReq = "ubuntu && amd64 && ${cloudTarget}"
+  node(nodeReq) {
+    echo "Installing DLR package for ${cloudTarget} target"
+    withAWS(credentials:'Neo-AI-CI-Fleet') {
+      files = s3FindFiles(bucket: 'neo-ai-dlr-jenkins-artifacts', glob: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/dlr-*-manylinux1_x86_64.whl")
+      assert files.size() == 1
+      files.each {
+        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path
+      }
+    }
+    sh """
+    ls -lh *.whl
+    pip3 install *.whl
+    """
   }
 }

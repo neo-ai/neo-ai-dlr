@@ -184,14 +184,12 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
 void DLRModel::SetupTreeliteModule(const std::string& model_path) {
   ModelPath paths = get_treelite_paths(model_path);
   int num_worker_threads = -1; // use the maximum amount of threads
-  int include_master_thread = 1;
   num_inputs_ = 1;
   num_outputs_ = 1;
   // Give a dummy input name to Treelite model.
   input_names_.push_back("data");
   CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(),
                                  num_worker_threads,
-                                 include_master_thread,
                                  &treelite_model_), 0) << TreeliteGetLastError();
   CHECK_EQ(
       TreelitePredictorQueryNumFeature(treelite_model_, &treelite_num_feature_),
