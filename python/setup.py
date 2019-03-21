@@ -34,7 +34,7 @@ setup(
     version="1.0",
 
     zip_safe=False,
-    install_requires=['numpy', 'decorator'],
+    install_requires=['numpy'],
 
     # declare your packages
     packages=find_packages(),
