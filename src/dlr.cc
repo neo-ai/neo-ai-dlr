@@ -202,7 +202,8 @@ void DLRModel::SetupTreeliteModule(const std::string& model_path) {
                                                 &num_output_class),
            0)
       << TreeliteGetLastError();
-  treelite_output_.reset(nullptr);
+  treelite_output_buffer_size_ = num_output_class;
+  treelite_output_.empty();
   // NOTE: second dimension of the output shape is smaller than num_output_class
   //       when a multi-class classifier outputs only the class prediction (argmax)
   //       To detect this edge case, run TreelitePredictorPredictInst() once.
@@ -329,7 +330,7 @@ void DLRModel::GetOutput(int index, float* out) {
     get_output(index, &output_tensor);
   } else if (backend_ == DLRBackend::kTREELITE) {
     CHECK(treelite_input_);
-    std::memcpy(out, treelite_output_.get(),
+    std::memcpy(out, treelite_output_.data(),
                 sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
   } else {
     LOG(FATAL) << "Unsupported backend!";
@@ -369,10 +370,9 @@ void DLRModel::Run() {
   } else if (backend_ == DLRBackend::kTREELITE) {
     size_t out_result_size;
     CHECK(treelite_input_);
-    treelite_output_.reset(new float[treelite_input_->num_row * treelite_output_size_]);
-    CHECK(treelite_output_);
+    treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
     CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle,
-                                           1, 0, 0, treelite_output_.get(),
+                                           1, 0, 0, treelite_output_.data(),
                                            &out_result_size), 0)
       << TreeliteGetLastError();
   }
