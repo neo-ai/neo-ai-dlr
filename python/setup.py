@@ -1,4 +1,5 @@
 import os
+import io
 from setuptools import setup, find_packages
 from subprocess import check_output
 from setuptools.dist import Distribution
@@ -45,7 +46,7 @@ setup(
 
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
-    long_description=open(os.path.join(CURRENT_DIR, '../README.md')).read(),
+    long_description=io.open(os.path.join(CURRENT_DIR, '../README.md'), encoding='utf-8').read(),
     author = 'AWS Neo',
     author_email = 'aws-neo-ai@amazon.com',
     url='https://github.com/neo-ai/neo-ai-dlr',
