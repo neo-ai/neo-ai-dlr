@@ -121,7 +121,7 @@ def CloudInstallAndTest(cloudTarget) {
     unstash name: 'srcs'
     def tarball = "mnist-ml_${cloudTarget}.tar.gz"
     withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Download file: tarball, bucket: '', path: "xgboost/${tarball}", force: true
+      s3Download file: tarball, bucket: 'dlr-test-model-artifacts', path: "xgboost/${tarball}", force: true
     }
     sh """
     mkdir model
