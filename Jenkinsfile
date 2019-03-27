@@ -110,7 +110,7 @@ def CloudInstallAndTest(cloudTarget) {
       files = s3FindFiles(bucket: 'neo-ai-dlr-jenkins-artifacts', glob: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/dlr-*-manylinux1_x86_64.whl")
       assert files.size() == 1
       files.each {
-        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path
+        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path, force: true
       }
     }
     sh """
@@ -121,7 +121,7 @@ def CloudInstallAndTest(cloudTarget) {
     unstash name: 'srcs'
     def tarball = "mnist-ml_${cloudTarget}.tar.gz"
     withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Download file: tarball, bucket: '', path: "xgboost/${tarball}"
+      s3Download file: tarball, bucket: '', path: "xgboost/${tarball}", force: true
     }
     sh """
     mkdir model
