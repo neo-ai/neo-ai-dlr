@@ -50,6 +50,22 @@ pipeline {
         }
       }
     }
+    stage('Jenkins: Build Container') {
+      agent {
+        label 'cpu-build'
+      }
+      steps {
+        script {
+          unstash name: 'srcs'
+          echo "Building inference container"
+          sh """
+          cd container
+          docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
+          docker build --build-arg APP=image_classification -t xgboost-cpu -f Dockerfile.cpu .
+          """
+        }
+      }
+    }
   }
 }
 
