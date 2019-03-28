@@ -94,7 +94,6 @@ def AMD64BuildGPU() {
     echo "Building artifact for AMD64 with GPU capability. Using CUDA 8.0, CuDNN 7, TensorRT 4"
     sh """
     tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
-    sudo update-ca-certificates -f
     PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
     """
     withAWS(credentials:'Neo-AI-CI-Fleet') {
@@ -111,12 +110,24 @@ def CloudInstallAndTest(cloudTarget) {
       files = s3FindFiles(bucket: 'neo-ai-dlr-jenkins-artifacts', glob: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/dlr-*-manylinux1_x86_64.whl")
       assert files.size() == 1
       files.each {
-        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path
+        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path, force: true
       }
     }
     sh """
     ls -lh *.whl
     pip3 install *.whl
+    """
+    echo "Testing XGBoost MNIST model"
+    unstash name: 'srcs'
+    def tarball = "mnist-ml_${cloudTarget}.tar.gz"
+    withAWS(credentials:'Neo-AI-CI-Fleet') {
+      s3Download file: tarball, bucket: 'dlr-test-model-artifacts', path: "xgboost/${tarball}", force: true
+    }
+    sh """
+    rm -rf tests/python/integration/xgboost-mnist/model
+    mkdir -p tests/python/integration/xgboost-mnist/model
+    tar xvf ${tarball} -C tests/python/integration/xgboost-mnist/model
+    python3 -m pytest -v -s --fulltrace tests/python/integration/load_and_test_xgboost_mnist.py
     """
   }
 }

@@ -85,9 +85,10 @@ class DLRModel {
   /* fields for Treelite model */
   PredictorHandle treelite_model_;
   size_t treelite_num_feature_;
+  size_t treelite_output_buffer_size_;  // size of temporary buffer per instance
   size_t treelite_output_size_;  // size of output per instance
   std::unique_ptr<TreeliteInput> treelite_input_;
-  std::unique_ptr<float[]> treelite_output_;
+  std::vector<float> treelite_output_;
 
  public:
   /*! /brief Extract the .tar file and load the model.
