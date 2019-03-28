@@ -124,10 +124,9 @@ def CloudInstallAndTest(cloudTarget) {
       s3Download file: tarball, bucket: 'dlr-test-model-artifacts', path: "xgboost/${tarball}", force: true
     }
     sh """
-    mkdir model
-    cd model
-    tar xvf ../${tarball}
-    cd ..
+    rm -rf tests/python/integration/xgboost-mnist/model
+    mkdir -p tests/python/integration/xgboost-mnist/model
+    tar xvf ${tarball} -C tests/python/integration/xgboost-mnist/model
     python3 -m pytest -v -s --fulltrace tests/python/integration/load_and_test_xgboost_mnist.py
     """
   }
