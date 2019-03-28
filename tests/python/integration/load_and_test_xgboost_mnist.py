@@ -16,4 +16,4 @@ def test_mnist():
 
     X, _ = load_svmlight_file(data_file, zero_based=True)
     for _ in range(100):   # Should not crash
-        assert model.run(_sparse_to_dense(X)) == 7.0
+        assert model.run(_sparse_to_dense(X))[0] == 7.0
