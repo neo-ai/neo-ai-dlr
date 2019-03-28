@@ -8,6 +8,10 @@ def cloudTargetMatrix = [
   "c4", "c5", "m4", "m5"
 ]
 
+def inferenceContainerApps = [
+  "xgboost", "image_classification"
+]
+
 /* Pipeline definition */
 pipeline {
   // Each stage specify its own agent
@@ -56,13 +60,9 @@ pipeline {
       }
       steps {
         script {
-          unstash name: 'srcs'
-          echo "Building inference container"
-          sh """
-          cd container
-          docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
-          docker build --build-arg APP=image_classification -t xgboost-cpu -f Dockerfile.cpu .
-          """
+          parallel (inferenceContainerApps.collectEntries{
+            [(it): { BuildInferenceContainer(it) } ]
+          })
         }
       }
     }
@@ -86,6 +86,7 @@ def checkoutSrcs() {
   }
 }
 
+// Build for AMD64 CPU target
 def AMD64BuildCPU() {
   def nodeReq = "ubuntu && amd64 && cpu-build"
   def dockerTarget = "cpu_bare"
@@ -103,6 +104,7 @@ def AMD64BuildCPU() {
   }
 }
 
+// Build for AMD64 + CUDA target
 def AMD64BuildGPU() {
   def nodeReq = "ubuntu && amd64 && gpu-build"
   node(nodeReq) {
@@ -118,6 +120,7 @@ def AMD64BuildGPU() {
   }
 }
 
+// Install and test DLR for cloud targets
 def CloudInstallAndTest(cloudTarget) {
   def nodeReq = "ubuntu && amd64 && ${cloudTarget}"
   node(nodeReq) {
@@ -144,6 +147,19 @@ def CloudInstallAndTest(cloudTarget) {
     mkdir -p tests/python/integration/xgboost-mnist/model
     tar xvf ${tarball} -C tests/python/integration/xgboost-mnist/model
     python3 -m pytest -v -s --fulltrace tests/python/integration/load_and_test_xgboost_mnist.py
+    """
+  }
+}
+
+// Build DLR inference containers
+def BuildInferenceContainer(app) {
+  def nodeReq = "ubuntu && amd64 && cpu-build"
+  node(nodeReq) {
+    unstash name: 'srcs'
+    echo "Building inference container ${app}"
+    sh """
+    cd container
+    docker build --build-arg APP=${app} -t ${app}-cpu -f Dockerfile.cpu .
     """
   }
 }
