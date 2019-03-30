@@ -17,7 +17,7 @@ def get_arch():
     if machine_type == 'x86_64':
         return 'x86_64'
     elif machine_type == 'aarch64':
-        return 'ml_a1'
+        return 'ec2_a1'
     elif machine_type == 'armv7l':
         return 'rasp3b'
     else:
