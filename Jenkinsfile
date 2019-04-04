@@ -120,7 +120,8 @@ def CloudInstallAndTest(cloudTarget) {
     echo "Running integration tests..."
     unstash name: 'srcs'
     sh """
-    python3 -m pytest -v -s --fulltrace tests/python/integration/load_and_run_*.py
+    python3 tests/python/integration/load_and_run_tvm_model.py
+    python3 tests/python/integration/load_and_run_treelite_model.py
     """
   }
 }
