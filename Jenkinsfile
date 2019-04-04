@@ -136,17 +136,11 @@ def CloudInstallAndTest(cloudTarget) {
     ls -lh *.whl
     pip3 install *.whl
     """
-    echo "Testing XGBoost MNIST model"
+    echo "Running integration tests..."
     unstash name: 'srcs'
-    def tarball = "mnist-ml_${cloudTarget}.tar.gz"
-    withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Download file: tarball, bucket: 'dlr-test-model-artifacts', path: "xgboost/${tarball}", force: true
-    }
     sh """
-    rm -rf tests/python/integration/xgboost-mnist/model
-    mkdir -p tests/python/integration/xgboost-mnist/model
-    tar xvf ${tarball} -C tests/python/integration/xgboost-mnist/model
-    python3 -m pytest -v -s --fulltrace tests/python/integration/load_and_test_xgboost_mnist.py
+    python3 tests/python/integration/load_and_run_tvm_model.py
+    python3 tests/python/integration/load_and_run_treelite_model.py
     """
   }
 }

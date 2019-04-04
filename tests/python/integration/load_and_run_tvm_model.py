@@ -1,12 +1,13 @@
+from __future__ import print_function
 from dlr import DLRModel
 import numpy as np
 import os
-import logging
+from test_utils import get_arch, get_models
 
 def test_resnet():
     # Load the model
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-            'resnet18')
+            'resnet18_v1')
     classes = 1000
     device = 'cpu'
     model = DLRModel(model_path, device)
@@ -15,20 +16,10 @@ def test_resnet():
     image = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dog.npy')).astype(np.float32)
     #flatten within a input array
     input_data = {'data': image}
+    print('Testing inference on resnet18...')
     probabilities = model.run(input_data) #need to be a list of input arrays matching input names
-    assert probabilities[0].argmax() == 111
+    assert probabilities[0].argmax() == 151
 
-def test_multi_input():
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-            '2in1out')
-    device = 'cpu'
-    model = DLRModel(model_path, device)
-
-    input1 = np.asarray([1., 2.])
-    input2 = np.asarray([3., 4.])
-    input_map = {'data1': input1, 'data2': input2}
-    outputs = model.run(input_map)
-    assert outputs[0].tolist() == [4, 6]
 
 def test_multi_input_multi_output():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -44,6 +35,7 @@ def test_multi_input_multi_output():
     input3 = np.asarray([5., 6., 7])
     input4 = np.asarray([8., 9., 10])
     input_map = {'data1': input1, 'data2': input2, 'data3': input3, 'data4': input4}
+    print('Testing multi_input/multi_output support...')
     outputs = model.run(input_map)
 
     assert outputs[0].tolist() == [4, 6]
@@ -51,8 +43,10 @@ def test_multi_input_multi_output():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='test-dlr.log',level=logging.INFO)
+    arch = get_arch()
+    model_names = ['resnet18_v1', '4in2out']
+    for model_name in model_names:
+        get_models(model_name, arch, kind='tvm')
     test_resnet()
-    test_multi_input()
     test_multi_input_multi_output()
-    logging.info('All tests passed!')
+    print('All tests passed!')

@@ -1,93 +1,59 @@
-from sklearn.datasets import load_svmlight_file
-from sklearn.metrics import accuracy_score, log_loss
-import dlr
-import tarfile
-import contextlib
-import os
+from __future__ import print_function
+from dlr import DLRModel
 import numpy as np
-import logging
+import os
+from test_utils import get_arch, get_models
+from sklearn.datasets import load_svmlight_file
 
-def todense(csr_matrix):
-  out = np.full(shape=csr_matrix.shape, fill_value=np.nan, dtype=np.float32)
-  rowind = np.repeat(np.arange(csr_matrix.shape[0]), np.diff(csr_matrix.indptr))
-  out[rowind, csr_matrix.indices] = csr_matrix.data
-  return out
+def _sparse_to_dense(csr_matrix):
+    out = np.full(shape=csr_matrix.shape, fill_value=np.nan, dtype=np.float32)
+    rowind = np.repeat(np.arange(csr_matrix.shape[0]), np.diff(csr_matrix.indptr))
+    out[rowind, csr_matrix.indices] = csr_matrix.data
+    return out
 
-def load_tar(tar_path):
-  query_dims = None
-  with contextlib.closing(tarfile.open(tar_path, 'r:bz2')) as tar:
-    for file_info in tar.getmembers():
-      if file_info.name.endswith('libsvm'):
-        f = tar.extractfile(file_info)
-        X, y = load_svmlight_file(f, zero_based=True)
-      elif file_info.name.endswith('group'):
-        f = tar.extractfile(file_info)
-        query_dims = []
-        for l in f:
-          query_dims.append(int(l))
-        query_dims = np.array(query_dims)
-  return todense(X), y, query_dims
+def test_mnist():
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-mnist')
+    data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'mnist.libsvm')
+    model = DLRModel(model_path, 'cpu', 0)
 
-def run_model(model_dir, X, y):
-  model = dlr.DLRModel(model_dir)
-  output = model.run(X)[0].squeeze()
-  return output
-
-def ndcg(y_true, y_score, query_sessions):
-  def calc_dcg(query):
-    return np.sum((2**query - 1) / np.log2(np.arange(query.shape[0]) + 2))
-
-  nquery = len(query_sessions)
-  rowptr = np.concatenate(([0], np.cumsum(query_sessions)))
-  sum_ndcg = 0.0
-  for query_id in range(nquery):
-    # Sort documents in the current query by ranking scores, in descending order
-    # List relevance judgments in the same order as sorted documents
-    query_score = y_score[rowptr[query_id]:rowptr[query_id+1]]
-    query_relevance = y_true[rowptr[query_id]:rowptr[query_id+1]]
-    query_relevance = query_relevance[(-query_score).argsort(kind='mergesort')]
-    # Compute DCG
-    dcg = calc_dcg(query_relevance)
-    # Compute ideal DCG, with ideal scenario where documents are
-    #   perfectly sorted by relevance judgments
-    idcg = calc_dcg(-np.sort(-query_relevance))
-    sum_ndcg += (dcg / idcg if idcg != 0 else 1)
-
-  return sum_ndcg / nquery
+    X, _ = load_svmlight_file(data_file, zero_based=True)
+    print('Testing inference on XGBoost MNIST...')
+    assert model.run(_sparse_to_dense(X))[0] == 7.0
 
 def test_iris():
-  model_path = os.path.join(os.getcwd(), 'iris_amd64')
-  xgb_pred_path = os.path.join(model_path, 'iris_test.pred.gz')  # prediction from XGBoost
-  data_path = os.path.join(model_path, 'iris_test.tar.bz2')
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-iris')
+    data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'iris.libsvm')
+    model = DLRModel(model_path, 'cpu', 0)
 
-  X, y, _ = load_tar(data_path)
-  output = run_model(model_path, X, y)
-  assert accuracy_score(y, output.argmax(axis=1)) >= 0.95
-  y_indicator = np.zeros((y.shape[0], 3))
-  y_indicator[np.arange(y.shape[0]), y.astype(int)] = 1.0
-  assert log_loss(y_indicator, output) < 0.01
-
-  # Compare with XGBoost prediction
-  assert np.allclose(output, np.loadtxt(xgb_pred_path, delimiter=','))
+    X, _ = load_svmlight_file(data_file, zero_based=True)
+    expected = np.array([2.159504452720284462e-03, 9.946205615997314453e-01, 3.219985403120517731e-03])
+    print('Testing inference on XGBoost Iris...')
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
 
 def test_letor():
-  model_path = os.path.join(os.getcwd(), 'letor_amd64')
-  xgb_pred_path = os.path.join(model_path, 'letor_test.pred.gz')  # prediction from XGBoost
-  data_path = os.path.join(model_path, 'letor_test.tar.bz2')
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-letor')
+    data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'letor.libsvm')
+    model = DLRModel(model_path, 'cpu', 0)
 
-  X, y, query_dims = load_tar(data_path)
-  output = run_model(model_path, X, y)
-  assert ndcg(y, output, query_dims) >= 0.83
+    X, _ = load_svmlight_file(data_file, zero_based=True)
+    expected = np.array([1.372033834457397461e+00, -2.448803186416625977e+00, 8.579480648040771484e-01,
+                         1.369985580444335938e+00, -7.058695554733276367e-01, 4.134958684444427490e-01,
+                         -2.247941017150878906e+00, -2.461995363235473633e+00, -2.394921064376831055e+00,
+                         -1.191793322563171387e+00, 9.672126173973083496e-02, 2.687671184539794922e-01,
+                         1.417675256729125977e+00, -1.832636356353759766e+00, -5.582004785537719727e-02,
+                         -9.497703313827514648e-01, -1.219825387001037598e+00, 1.512521862983703613e+00,
+                         -1.179921030998229980e-01, -2.383430719375610352e+00, -9.094548225402832031e-01])
+    expected = expected.reshape((-1, 1))
+    print('Testing inference on XGBoost LETOR...')
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
 
-  # Compare with XGBoost prediction
-  assert np.allclose(output, np.loadtxt(xgb_pred_path, delimiter=','))
-
-def main():
-  logging.basicConfig(filename='test-dlr.log',level=logging.INFO)
-  test_iris()
-  test_letor()
-  logging.info('All tests passed!')
-  
 
 if __name__ == '__main__':
-  main()
+    arch = get_arch()
+    model_names = ['xgboost-mnist', 'xgboost-iris', 'xgboost-letor']
+    for model_name in model_names:
+        get_models(model_name, arch, kind='treelite')
+    test_mnist()
+    test_iris()
+    test_letor()
+    print('All tests passed!')
