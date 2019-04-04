@@ -1,9 +1,8 @@
 from __future__ import print_function
-from __future__ import absolute_import as _abs
 from dlr import DLRModel
 import numpy as np
 import os
-from .test_utils import get_arch, get_models
+from test_utils import get_arch, get_models
 from sklearn.datasets import load_svmlight_file
 
 def todense(csr_matrix):
