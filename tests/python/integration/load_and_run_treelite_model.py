@@ -51,7 +51,7 @@ if __name__ == '__main__':
     arch = get_arch()
     model_names = ['xgboost-mnist', 'xgboost-iris', 'xgboost-letor']
     for model_name in model_names:
-        get_models(model_name, arch)
+        get_models(model_name, arch, kind='treelite')
     test_mnist()
     test_iris()
     test_letor()

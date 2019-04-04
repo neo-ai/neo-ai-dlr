@@ -46,7 +46,7 @@ if __name__ == '__main__':
     arch = get_arch()
     model_names = ['resnet18_v1', '4in2out']
     for model_name in model_names:
-        get_models(model_name, arch)
+        get_models(model_name, arch, kind='tvm')
     test_resnet()
     test_multi_input_multi_output()
     print('All tests passed!')
