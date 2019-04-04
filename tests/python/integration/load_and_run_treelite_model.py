@@ -43,6 +43,7 @@ def test_letor():
                          1.417675256729125977e+00, -1.832636356353759766e+00, -5.582004785537719727e-02,
                          -9.497703313827514648e-01, -1.219825387001037598e+00, 1.512521862983703613e+00,
                          -1.179921030998229980e-01, -2.383430719375610352e+00, -9.094548225402832031e-01])
+    expected = expected.reshape((-1, 1))
     print('Testing inference on XGBoost LETOR...')
     assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
 
