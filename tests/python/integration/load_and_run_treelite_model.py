@@ -14,7 +14,7 @@ def todense(csr_matrix):
 def test_mnist():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-mnist')
     data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'mnist.libsvm')
-    model = dlr.DLRModel(model_dir, 'cpu', 0)
+    model = DLRModel(model_dir, 'cpu', 0)
 
     X, _ = load_svmlight_file(data_file, zero_based=True)
     print('Testing inference on XGBoost MNIST...')
@@ -23,7 +23,7 @@ def test_mnist():
 def test_iris():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-iris')
     data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'iris.libsvm')
-    model = dlr.DLRModel(model_dir, 'cpu', 0)
+    model = DLRModel(model_dir, 'cpu', 0)
 
     X, _ = load_svmlight_file(data_file, zero_based=True)
     expected = np.array([2.159504452720284462e-03, 9.946205615997314453e-01, 3.219985403120517731e-03])
@@ -33,7 +33,7 @@ def test_iris():
 def test_letor():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-letor')
     data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'letor.libsvm')
-    model = dlr.DLRModel(model_dir, 'cpu', 0)
+    model = DLRModel(model_dir, 'cpu', 0)
 
     X, _ = load_svmlight_file(data_file, zero_based=True)
     expected = np.array([1.372033834457397461e+00, -2.448803186416625977e+00, 8.579480648040771484e-01,
