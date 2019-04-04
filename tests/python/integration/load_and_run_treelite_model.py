@@ -5,7 +5,7 @@ import os
 from test_utils import get_arch, get_models
 from sklearn.datasets import load_svmlight_file
 
-def todense(csr_matrix):
+def _sparse_to_dense(csr_matrix):
     out = np.full(shape=csr_matrix.shape, fill_value=np.nan, dtype=np.float32)
     rowind = np.repeat(np.arange(csr_matrix.shape[0]), np.diff(csr_matrix.indptr))
     out[rowind, csr_matrix.indices] = csr_matrix.data
