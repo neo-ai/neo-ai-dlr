@@ -106,6 +106,7 @@ class DLRModel {
   void GetNumInputs(int* num_inputs) const;
   const char* GetInputName(int index) const;
   void SetInput(const char* name, const int64_t* shape, float* input, int dim);
+  void GetInput(const char* name, float* input);
   void GetNumOutputs(int* num_outputs) const;
   void GetOutputShape(int index, int64_t* shape) const;
   void GetOutputSizeDim(int index, int64_t* size, int* dim);
@@ -190,6 +191,16 @@ DLR_DLL int SetDLRInput(DLRModelHandle* handle,
                         const int64_t* shape,
                         float* input,
                         int dim);
+/*!
+ \brief Gets the current value of the input according the node name.
+ \param handle The model handle returned from CreateDLRModel().
+ \param name The input node name.
+ \param input The current value of the input will be copied to this buffer.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL int GetDLRInput(DLRModelHandle* handle,
+                        const char* name,
+                        float* input);
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().

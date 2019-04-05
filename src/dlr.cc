@@ -10,6 +10,13 @@
 #include <string>
 #include <numeric>
 
+#ifndef _WIN32
+
+/* For basename() on UNIX */
+#include <libgen.h>
+
+#endif
+
 /* OS-specific library file extension */
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -339,6 +346,21 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
   }
 }
 
+void DLRModel::GetInput(const char* name, float* input) {
+  CHECK(backend_ == DLRBackend::kTVM) << "GetInput supported only for TVM backend";
+
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+
+  DLTensor input_tensor = *(arr.operator->());
+  input_tensor.ctx = DLContext{kDLCPU, 0};
+  int64_t size = std::accumulate(
+      input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
+      std::multiplies<int64_t>());
+  std::memcpy(input, input_tensor.data, static_cast<size_t>(size));
+}
+
 void DLRModel::GetOutputShape(int index, int64_t* shape) const {
   if (backend_ == DLRBackend::kTVM) {
     std::memcpy(shape, outputs_[index]->shape,
@@ -446,6 +468,16 @@ extern "C" int SetDLRInput(DLRModelHandle* handle,
   DLRModel* model = static_cast<DLRModel *>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->SetInput(name, shape, input, dim);
+  API_END();
+}
+
+extern "C" int GetDLRInput(DLRModelHandle* handle,
+                           const char* name,
+                           float* input) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetInput(name, input);
   API_END();
 }
 
