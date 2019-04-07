@@ -118,6 +118,7 @@ class DLRModel:
 
         self.num_inputs = self._get_num_inputs()
         self.input_names = []
+        self.input_shapes = {}   # Remember shape used in _set_input()
         for i in range(self.num_inputs):
             self.input_names.append(self._get_input_name(i))
 
@@ -165,6 +166,7 @@ class DLRModel:
         """
         in_data = np.ascontiguousarray(data, dtype=np.float32)
         shape = np.array(in_data.shape, dtype=np.int64)
+        self.input_shapes[name] = shape
         _check_call(_LIB.SetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
@@ -295,4 +297,30 @@ class DLRModel:
         for i in range(self.num_outputs):
             ith_out = self._get_output(i)
             out.append(ith_out)
+        return out
+
+    def get_input(self, name, shape=None):
+        """
+        Get the current value of an input
+
+        Parameters
+        ----------
+        name : str
+            The name of an input
+        shape : np.array (optional)
+            If given, use as the shape of the returned array. Otherwise, the shape of
+            the returned array will be inferred from the last call to set_input().
+        """
+        if name not in self.input_shapes and shape is None:
+            raise ValueError('Since set_input() was never called with ' +
+                             'input {}, we cannot infer its shape. '.format(name) +
+                             'Shape parameter should be explicitly specified')
+        if shape is None:
+            shape = self.input_shapes[name]
+        shape = np.array(shape)
+        out = np.zeros(shape.prod(), dtype=np.float32)
+        _check_call(_LIB.GetDLRInput(byref(self.handle),
+                                     c_char_p(name.encode('utf-8')),
+                                     out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
+        out = out.reshape(shape)
         return out
