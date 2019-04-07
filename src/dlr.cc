@@ -197,22 +197,28 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
   tvm_module_ = std::make_shared<tvm::runtime::Module>(
       tvm::runtime::Module(tvm_graph_runtime_));
 
-  // Save the number of inputs. It excludes inputs that could be obtained
-  // through the param file, such as weights.
-  num_inputs_ = tvm_graph_runtime_->NumInputs() - GetWeightNames().size();
+  // This is the combined count of inputs and weights
+  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
   std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_; i++)  {
+  for (int i = 0; i < num_inputs_weights; i++)  {
     input_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
+  // Get list of weights
   std::vector<std::string> weight_names = tvm_graph_runtime_->GetWeightNames();
+  // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
+  // Compute set difference to get names of inputs only
+  std::sort(input_names.begin(), input_names.end());
+  std::sort(weight_names.begin(), weight_names.end());
   std::set_difference(input_names.begin(), input_names.end(),
                       weight_names.begin(), weight_names.end(),
                       std::inserter(input_names_, input_names_.begin()));
+  // Save the number of inputs
+  num_inputs_ = input_names_.size();
 
   // Get the number of output and reserve space to save output tensor
   // pointers.
   num_outputs_ = tvm_graph_runtime_->NumOutputs();
-    outputs_.resize(num_outputs_);
+  outputs_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
     tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(i);
     outputs_[i] = output.operator->();
