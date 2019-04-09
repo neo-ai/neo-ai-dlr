@@ -42,11 +42,29 @@ def test_multi_input_multi_output():
     assert outputs[1].tolist() == [13, 15, 17]
 
 
+def test_assign_op():
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+            'assign_op')
+    device = 'cpu'
+    model = DLRModel(model_path, device)
+
+    print('Testing _assign() operator...')
+    np.random.seed(seed=0)
+    input1 = np.random.random(size=(5, 3, 18, 18))
+    model.run({'w': input1})
+    input1_next = model.get_input('w2', shape=(5, 3, 18, 18))
+    assert np.allclose(input1_next, input1 + 2)
+
+    model.run({})
+    input1_next = model.get_input('w2', shape=(5, 3, 18, 18))
+    assert np.allclose(input1_next, input1 + 3)
+
 if __name__ == '__main__':
     arch = get_arch()
-    model_names = ['resnet18_v1', '4in2out']
+    model_names = ['resnet18_v1', '4in2out', 'assign_op']
     for model_name in model_names:
         get_models(model_name, arch, kind='tvm')
     test_resnet()
     test_multi_input_multi_output()
+    test_assign_op()
     print('All tests passed!')
