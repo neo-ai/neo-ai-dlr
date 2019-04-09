@@ -44,3 +44,4 @@ def get_models(model_name, arch, kind):
             except urllib.error.URLError or urllib.error.HTTPError:
                 raise ValueError('Downloading of model artifacts from %s failed' % s3_path)
                 
+    return model_path

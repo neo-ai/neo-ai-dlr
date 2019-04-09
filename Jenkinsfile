@@ -141,6 +141,7 @@ def CloudInstallAndTest(cloudTarget) {
     sh """
     python3 tests/python/integration/load_and_run_tvm_model.py
     python3 tests/python/integration/load_and_run_treelite_model.py
+    python3 -m pytest -s tests/python/unittest/test_get_set_input.py
     """
   }
 }
