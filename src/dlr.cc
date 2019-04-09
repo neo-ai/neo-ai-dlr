@@ -373,13 +373,15 @@ void DLRModel::GetInput(const char* name, float* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-
-  DLTensor input_tensor = *(arr.operator->());
+  DLTensor input_tensor;
+  input_tensor.data = input;
   input_tensor.ctx = DLContext{kDLCPU, 0};
-  int64_t size = std::accumulate(
-      input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
-      std::multiplies<int64_t>());
-  std::memcpy(input, input_tensor.data, static_cast<size_t>(size));
+  input_tensor.ndim = arr->ndim;
+  input_tensor.dtype = arr->dtype;
+  input_tensor.shape = arr->shape;
+  input_tensor.strides = nullptr;
+  input_tensor.byte_offset = 0;
+  arr.CopyTo(&input_tensor);
 }
 
 void DLRModel::GetOutputShape(int index, int64_t* shape) const {
