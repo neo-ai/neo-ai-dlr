@@ -20,7 +20,7 @@ def test_get_set_input():
     
     model.run({'data1': input1, 'data2': input2, 'data3': input3, 'data4': input4})
 
-    np.array_equal(model.get_input('data1'), input1)
-    np.array_equal(model.get_input('data2'), input2)
-    np.array_equal(model.get_input('data3'), input3)
-    np.array_equal(model.get_input('data4'), input4)
+    assert np.array_equal(model.get_input('data1'), input1)
+    assert np.array_equal(model.get_input('data2'), input2)
+    assert np.array_equal(model.get_input('data3'), input3)
+    assert np.array_equal(model.get_input('data4'), input4)
