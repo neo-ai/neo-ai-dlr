@@ -204,13 +204,14 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
     input_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
   // Get list of weights
-  std::vector<std::string> weight_names = tvm_graph_runtime_->GetWeightNames();
+  weight_names_ = tvm_graph_runtime_->GetWeightNames();
+  num_weights_ = weight_names_.size();
   // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
   // Compute set difference to get names of inputs only
   std::sort(input_names.begin(), input_names.end());
-  std::sort(weight_names.begin(), weight_names.end());
+  std::sort(weight_names_.begin(), weight_names_.end());
   std::set_difference(input_names.begin(), input_names.end(),
-                      weight_names.begin(), weight_names.end(),
+                      weight_names_.begin(), weight_names_.end(),
                       std::inserter(input_names_, input_names_.begin()));
   // Save the number of inputs
   num_inputs_ = input_names_.size();
@@ -272,12 +273,26 @@ void DLRModel::GetNumInputs(int* num_inputs) const {
   *num_inputs = num_inputs_;
 }
 
+void DLRModel::GetNumWeights(int* num_weights) const {
+  *num_weights = num_weights_;
+}
+
 const char* DLRModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   if (backend_ == DLRBackend::kTVM) {
     return input_names_[index].c_str();
   } else if (backend_ == DLRBackend::kTREELITE) {
     return "data";
+  } else {
+    LOG(FATAL) << "Unsupported backend!";
+    return ""; // unreachable
+  }
+}
+
+const char* DLRModel::GetWeightName(int index) const {
+  CHECK_LT(index, num_weights_) << "Weight index is out of range.";
+  if (backend_ == DLRBackend::kTVM) {
+    return weight_names_[index].c_str();
   } else {
     LOG(FATAL) << "Unsupported backend!";
     return ""; // unreachable
@@ -456,12 +471,29 @@ extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
   API_END();
 }
 
+extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetNumWeights(num_weights);
+  API_END();
+}
+
 extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
                                const char** input_name) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel *>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *input_name = model->GetInputName(index);
+  API_END();
+}
+
+extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
+                                const char** weight_name) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *weight_name = model->GetWeightName(index);
   API_END();
 }
 
