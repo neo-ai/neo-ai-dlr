@@ -49,6 +49,7 @@ def test_assign_op():
     model = DLRModel(model_path, device)
 
     print('Testing _assign() operator...')
+    # Example from https://github.com/dmlc/tvm/blob/bb87f044099ba61ba4782d17dd9127b869936373/nnvm/tests/python/compiler/test_top_assign.py
     np.random.seed(seed=0)
     input1 = np.random.random(size=(5, 3, 18, 18))
     model.run({'w': input1})
