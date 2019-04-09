@@ -10,6 +10,13 @@
 #include <string>
 #include <numeric>
 
+#ifndef _WIN32
+
+/* For basename() on UNIX */
+#include <libgen.h>
+
+#endif
+
 /* OS-specific library file extension */
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -190,22 +197,29 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
   tvm_module_ = std::make_shared<tvm::runtime::Module>(
       tvm::runtime::Module(tvm_graph_runtime_));
 
-  // Save the number of inputs. It excludes inputs that could be obtained
-  // through the param file, such as weights.
-  num_inputs_ = tvm_graph_runtime_->NumInputs() - GetWeightNames().size();
+  // This is the combined count of inputs and weights
+  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
   std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_; i++)  {
+  for (int i = 0; i < num_inputs_weights; i++)  {
     input_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
-  std::vector<std::string> weight_names = tvm_graph_runtime_->GetWeightNames();
+  // Get list of weights
+  weight_names_ = tvm_graph_runtime_->GetWeightNames();
+  num_weights_ = weight_names_.size();
+  // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
+  // Compute set difference to get names of inputs only
+  std::sort(input_names.begin(), input_names.end());
+  std::sort(weight_names_.begin(), weight_names_.end());
   std::set_difference(input_names.begin(), input_names.end(),
-                      weight_names.begin(), weight_names.end(),
+                      weight_names_.begin(), weight_names_.end(),
                       std::inserter(input_names_, input_names_.begin()));
+  // Save the number of inputs
+  num_inputs_ = input_names_.size();
 
   // Get the number of output and reserve space to save output tensor
   // pointers.
   num_outputs_ = tvm_graph_runtime_->NumOutputs();
-    outputs_.resize(num_outputs_);
+  outputs_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
     tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(i);
     outputs_[i] = output.operator->();
@@ -259,12 +273,26 @@ void DLRModel::GetNumInputs(int* num_inputs) const {
   *num_inputs = num_inputs_;
 }
 
+void DLRModel::GetNumWeights(int* num_weights) const {
+  *num_weights = num_weights_;
+}
+
 const char* DLRModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   if (backend_ == DLRBackend::kTVM) {
     return input_names_[index].c_str();
   } else if (backend_ == DLRBackend::kTREELITE) {
     return "data";
+  } else {
+    LOG(FATAL) << "Unsupported backend!";
+    return ""; // unreachable
+  }
+}
+
+const char* DLRModel::GetWeightName(int index) const {
+  CHECK_LT(index, num_weights_) << "Weight index is out of range.";
+  if (backend_ == DLRBackend::kTVM) {
+    return weight_names_[index].c_str();
   } else {
     LOG(FATAL) << "Unsupported backend!";
     return ""; // unreachable
@@ -337,6 +365,23 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
   } else {
     LOG(FATAL) << "Unsupported backend!";
   }
+}
+
+void DLRModel::GetInput(const char* name, float* input) {
+  CHECK(backend_ == DLRBackend::kTVM) << "GetInput supported only for TVM backend";
+
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  DLTensor input_tensor;
+  input_tensor.data = input;
+  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.ndim = arr->ndim;
+  input_tensor.dtype = arr->dtype;
+  input_tensor.shape = arr->shape;
+  input_tensor.strides = nullptr;
+  input_tensor.byte_offset = 0;
+  arr.CopyTo(&input_tensor);
 }
 
 void DLRModel::GetOutputShape(int index, int64_t* shape) const {
@@ -428,12 +473,29 @@ extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
   API_END();
 }
 
+extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetNumWeights(num_weights);
+  API_END();
+}
+
 extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
                                const char** input_name) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel *>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *input_name = model->GetInputName(index);
+  API_END();
+}
+
+extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
+                                const char** weight_name) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *weight_name = model->GetWeightName(index);
   API_END();
 }
 
@@ -446,6 +508,16 @@ extern "C" int SetDLRInput(DLRModelHandle* handle,
   DLRModel* model = static_cast<DLRModel *>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->SetInput(name, shape, input, dim);
+  API_END();
+}
+
+extern "C" int GetDLRInput(DLRModelHandle* handle,
+                           const char* name,
+                           float* input) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetInput(name, input);
   API_END();
 }
 

@@ -75,12 +75,14 @@ class DLRModel {
   std::string version_;
   DLRBackend backend_;
   size_t num_inputs_ = 1;
+  size_t num_weights_ = 0;
   size_t num_outputs_ = 1;
   /* fields for TVM model */
   std::shared_ptr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> input_names_;
+  std::vector<std::string> weight_names_;
   DLContext ctx_;
   /* fields for Treelite model */
   PredictorHandle treelite_model_;
@@ -105,8 +107,11 @@ class DLRModel {
   std::vector<std::string> GetWeightNames() const;
   void GetNumInputs(int* num_inputs) const;
   const char* GetInputName(int index) const;
+  const char* GetWeightName(int index) const;
   void SetInput(const char* name, const int64_t* shape, float* input, int dim);
+  void GetInput(const char* name, float* input);
   void GetNumOutputs(int* num_outputs) const;
+  void GetNumWeights(int* num_weights) const;
   void GetOutputShape(int index, int64_t* shape) const;
   void GetOutputSizeDim(int index, int64_t* size, int* dim);
   void GetOutput(int index, float* out);
@@ -167,6 +172,14 @@ DLR_DLL int RunDLRModel(DLRModelHandle *handle);
 DLR_DLL int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
 
 /*!
+ \brief Gets the number of weights.
+ \param handle The model handle returned from CreateDLRModel().
+ \param num_weights The pointer to save the number of weights.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
+
+/*!
  \brief Gets the name of the index-th input.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index of the input.
@@ -175,6 +188,16 @@ DLR_DLL int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
  */
 DLR_DLL int GetDLRInputName(DLRModelHandle* handle, int index,
                             const char** input_name);
+
+/*!
+ \brief Gets the name of the index-th weight.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index of the weight.
+ \param input_name The pointer to save the name of the index-th weight.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL int GetDLRWeightName(DLRModelHandle* handle, int index,
+                             const char** weight_name);
 
 /*!
  \brief Sets the input according the node name.
@@ -190,6 +213,16 @@ DLR_DLL int SetDLRInput(DLRModelHandle* handle,
                         const int64_t* shape,
                         float* input,
                         int dim);
+/*!
+ \brief Gets the current value of the input according the node name.
+ \param handle The model handle returned from CreateDLRModel().
+ \param name The input node name.
+ \param input The current value of the input will be copied to this buffer.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL int GetDLRInput(DLRModelHandle* handle,
+                        const char* name,
+                        float* input);
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().

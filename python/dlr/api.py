@@ -117,9 +117,14 @@ class DLRModel:
         self.backend = self._parse_backend()
 
         self.num_inputs = self._get_num_inputs()
+        self.num_weights = self._get_num_weights()
         self.input_names = []
+        self.weight_names = []
+        self.input_shapes = {}   # Remember shape used in _set_input()
         for i in range(self.num_inputs):
             self.input_names.append(self._get_input_name(i))
+        for i in range(self.num_weights):
+            self.weight_names.append(self._get_weight_name(i))
 
         self.num_outputs = self._get_num_outputs()
         self._lazy_init_output_shape()
@@ -137,6 +142,13 @@ class DLRModel:
                                          byref(num_inputs)))
         return num_inputs.value
 
+    def _get_num_weights(self):
+        """Get the number of weights of a network"""
+        num_weights = c_int()
+        _check_call(_LIB.GetDLRNumWeights(byref(self.handle),
+                                          byref(num_weights)))
+        return num_weights.value
+
     def get_input_names(self):
         """
         Get all input names
@@ -153,6 +165,12 @@ class DLRModel:
                                          c_int(index), byref(name)))
         return name.value.decode("utf-8")
 
+    def _get_weight_name(self, index):
+        name = ctypes.c_char_p()
+        _check_call(_LIB.GetDLRWeightName(byref(self.handle),
+                                          c_int(index), byref(name)))
+        return name.value.decode("utf-8")
+
     def _set_input(self, name, data):
         """Set the input using the input name with data
 
@@ -165,6 +183,7 @@ class DLRModel:
         """
         in_data = np.ascontiguousarray(data, dtype=np.float32)
         shape = np.array(in_data.shape, dtype=np.int64)
+        self.input_shapes[name] = shape
         _check_call(_LIB.SetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
@@ -283,7 +302,8 @@ class DLRModel:
         elif isinstance(input_values, dict):
             # TVM model
             for key, value in input_values.items():
-                if self.input_names and key not in self.input_names:
+                if (self.input_names and key not in self.input_names) and \
+                   (self.weight_names and key not in self.weight_names):
                     raise ValueError("%s is not a valid input name." % key)
                 self._set_input(key, value)
         else:
@@ -295,4 +315,30 @@ class DLRModel:
         for i in range(self.num_outputs):
             ith_out = self._get_output(i)
             out.append(ith_out)
+        return out
+
+    def get_input(self, name, shape=None):
+        """
+        Get the current value of an input
+
+        Parameters
+        ----------
+        name : str
+            The name of an input
+        shape : np.array (optional)
+            If given, use as the shape of the returned array. Otherwise, the shape of
+            the returned array will be inferred from the last call to set_input().
+        """
+        if name not in self.input_shapes and shape is None:
+            raise ValueError('Since set_input() was never called with ' +
+                             'input {}, we cannot infer its shape. '.format(name) +
+                             'Shape parameter should be explicitly specified')
+        if shape is None:
+            shape = self.input_shapes[name]
+        shape = np.array(shape)
+        out = np.zeros(shape.prod(), dtype=np.float32)
+        _check_call(_LIB.GetDLRInput(byref(self.handle),
+                                     c_char_p(name.encode('utf-8')),
+                                     out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
+        out = out.reshape(shape)
         return out
