@@ -1,16 +1,28 @@
 cmake_minimum_required (VERSION 3.6)
-project(dlr)
 include(cmake/Utils.cmake)
 include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
 
 set_default_configuration_release()
 msvc_use_static_runtime()
 
+# Option for Android on Arm --- has to come before project() function
+option(ANDROID_BUILD "Build for Android target" OFF)
+
+if(ANDROID_BUILD)
+    set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
+    set(CMAKE_ANDROID_API 26)
+    set(ANDROID_PLATFORM android-26)
+    set(ANDROID_DEPRECATED_HEADERS ON)
+    include_directories(${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+endif(ANDROID_BUILD)
+
+project(dlr)
 # Options
 option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
+
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
 # See https://blog.kitware.com/upcoming-in-cmake-2-8-12-osx-rpath-support/
