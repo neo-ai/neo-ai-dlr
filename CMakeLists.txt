@@ -179,6 +179,11 @@ set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "TVM_RUNTIME_LINKER_LIBS: " ${TVM_RUNTIME_LINKER_LIBS})
 target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
 
+add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
+set_output_directory(dlr_static ${PROJECT_SOURCE_DIR}/lib)
+set_target_properties(dlr_static PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(dlr_static treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
+
 set(OPREFIX object_)
 add_custom_target(combined_lib
 	COMMAND mkdir -p ${OPREFIX}tvm_runtime || true && cd ${OPREFIX}tvm_runtime &&  ar -x ${TVM_RUNTIME}
