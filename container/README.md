@@ -12,7 +12,7 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
   ```
   docker build --build-arg APP=image_classification -t ic-cpu -f Dockerfile.cpu .
   ```
-  - Build for GPU target
+  - Build for GPU target: First download `TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
   ```
   docker build --build-arg APP=image_classification -t ic-gpu -f Dockerfile.gpu .
   ```
@@ -21,7 +21,7 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
   ```
   docker build --build-arg APP=mxnet_byom -t mxnet-byom-cpu -f Dockerfile.cpu .
   ```
-  - Build for GPU target
+  - Build for GPU target: First download `TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
   ```
   docker build --build-arg APP=mxnet_byom -t mxnet-byom-gpu -f Dockerfile.gpu .
   ```
