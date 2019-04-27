@@ -1,11 +1,20 @@
-FROM ubuntu:18.04
-ARG APP=xgboost
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+ARG APP=image_classification
 
 ENV PYTHONUNBUFFERED TRUE
 
 # Disable thread pinning in TVM and Treelite
 ENV TVM_BIND_THREADS 0
 ENV TREELITE_BIND_THREADS 0
+
+ENV USE_GPU 1
+
+RUN mkdir -p /packages
+
+COPY TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+
+RUN cd /packages \
+    && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -29,7 +38,7 @@ RUN mkdir -p /home/model-server && cd /home/model-server \
     && git clone --recursive https://github.com/neo-ai/neo-ai-dlr \
     && cd neo-ai-dlr && git checkout 7dd33f829062e19df3c0f175912199ad176da970 \
     && git submodule update --init --recursive \
-    && mkdir build && cd build && cmake .. \
+    && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 \
     && make -j15 && cd ../python && python3 setup.py bdist_wheel \
     && pip3 install dist/*.whl
 

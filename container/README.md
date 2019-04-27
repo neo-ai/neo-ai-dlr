@@ -8,7 +8,20 @@ This directory contains Dockerfile and other files needed to build DLR inference
 docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
 ```
 * Image Classification container: Handle requests containing JPEG or PNG format. Suitable for serving image classifiers produced by the [SageMaker Image Classification algorithm](https://docs.aws.amazon.com/sagemaker/latest/dg/image-classification.html).
-```
-docker build --build-arg APP=image_classification -t ic-cpu -f Dockerfile.cpu .
-```
-* Bring Your Own Model (BYOM): coming soon
+  - Build for CPU target
+  ```
+  docker build --build-arg APP=image_classification -t ic-cpu -f Dockerfile.cpu .
+  ```
+  - Build for GPU target
+  ```
+  docker build --build-arg APP=image_classification -t ic-gpu -f Dockerfile.gpu .
+  ```
+* MXNet BYOM (Bring Your Own Model): Handle requests of any form. See [this example notebook](https://github.com/awslabs/amazon-sagemaker-examples/blob/master/sagemaker-python-sdk/mxnet_mnist/mxnet_mnist_neo.ipynb) for more details.
+  - Build for CPU target
+  ```
+  docker build --build-arg APP=mxnet_byom -t mxnet-byom-cpu -f Dockerfile.cpu .
+  ```
+  - Build for GPU target
+  ```
+  docker build --build-arg APP=mxnet_byom -t mxnet-byom-gpu -f Dockerfile.gpu .
+  ```
