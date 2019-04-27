@@ -1,6 +1,6 @@
 # DLR inference container
 
-This directory contains Dockerfile and other files needed to build DLR inference containers.
+This directory contains Dockerfile and other files needed to build DLR inference containers. The containers make use of [MXNet Model Server](https://github.com/awslabs/mxnet-model-server) to serve HTTP requests.
 
 ## How to build
 * XGBoost container: Handle requests containing CSV or LIBSVM format. Suitable for serving XGBoost models.
