@@ -122,6 +122,20 @@ Once the compilation is completed, install the Python package by running ``setup
   cd python
   python3 setup.py install --user
 
+Building for Android on ARM
+====================
+
+Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
+
+Also required is `NDK standlone toolchain <https://developer.android.com/ndk/guides/standalone_toolchain>`_. Follow the instructions to generate necessary build-essential tools.
+
+Once done with above steps, invoke cmake with following commands to build Android shared lib:
+
+.. code-block:: bash
+
+  cmake .. -DANDROID_BUILD=ON -DNDK_ROOT=/path/to/your/ndk/folder -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake 
+  make -j4
+
 ************************
 Validation
 ************************
