@@ -92,9 +92,16 @@ class TFModelImpl:
             dev_id = 0 if dev_id is None else dev_id
             device = "/{}:{}".format(dev_type, dev_id)
 
-        self.graph = _load_frozen_graph(frozen_graph_file, device)
-        self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self.graph)
+        self._graph = _load_frozen_graph(frozen_graph_file, device)
+        self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self._graph)
         self.input_values = {}
+        self._sess = tf.Session(graph=self._graph)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     def _validate_input_name(self, name):
         if name not in self.input_tensor_names:
@@ -166,16 +173,21 @@ class TFModelImpl:
             Prediction result. Multiple outputs are possible.
         """
         self._validate_input(input_values)
-        with tf.Session(graph=self.graph) as sess:
-            feed_dict = {}
-            for k, v in input_values.items():
-                tensor = self.graph.get_tensor_by_name(k)
-                feed_dict[tensor] = v
-            output_tensors = []
-            for k in self.output_tensor_names:
-                tensor = self.graph.get_tensor_by_name(k)
-                output_tensors.append(tensor)
-            self.input_values = input_values
+        feed_dict = {}
+        for k, v in input_values.items():
+            tensor = self._graph.get_tensor_by_name(k)
+            feed_dict[tensor] = v
+        output_tensors = []
+        for k in self.output_tensor_names:
+            tensor = self._graph.get_tensor_by_name(k)
+            output_tensors.append(tensor)
+        self.input_values = input_values
+        out = self._sess.run(output_tensors, feed_dict=feed_dict)
+        return out
 
-            out = sess.run(output_tensors, feed_dict=feed_dict)
-            return out
+    def close(self):
+        """
+        Closes this Tensorflow session
+
+        """
+        self._sess.close()
