@@ -50,7 +50,8 @@ def _get_input_and_output_names(graph):
     output_tensor_names = set()
     op_prefix = PREFIX + "/"
     for op in graph.get_operations():
-        if not op.name.startswith(op_prefix):
+        # Ignore operators which are not directly under PREFIX node
+        if not op.name.startswith(op_prefix) or op.name.find('/', len(op_prefix)) > -1:
             continue
         if op.type == 'Placeholder' and op.inputs.__len__() == 0 and op.outputs.__len__() == 1:
             input_tensor_names.append(op.outputs[0].name)
