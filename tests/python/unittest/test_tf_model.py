@@ -10,7 +10,8 @@ def _generate_frozen_graph():
     a = tf.placeholder(tf.float32, shape=[2, 2], name="input1")
     b = tf.placeholder(tf.float32, shape=[2, 2], name="input2")
     ab = tf.matmul(a, b)
-    mm = tf.matmul(a, ab)
+    mm = tf.matmul(a, ab, name="preproc/mm")
+    tf.argmax(mm, name="preproc/mm_argmax")
     tf.square(mm, name="output1")
     mm_flat = tf.reshape(mm, shape=[-1])
     tf.argmax(mm_flat, name="output2")
@@ -18,7 +19,7 @@ def _generate_frozen_graph():
         output_graph_def = tf.graph_util.convert_variables_to_constants(
             sess,
             tf.get_default_graph().as_graph_def(),
-            ["output1", "output2"]
+            ["output1", "output2", "preproc/mm_argmax"]
         )
         with tf.gfile.GFile(FROZEN_GRAPH_PATH, "wb") as f:
             f.write(output_graph_def.SerializeToString())
