@@ -188,6 +188,13 @@ Once done with above steps, invoke cmake with following commands to build Androi
   cmake .. -DANDROID_BUILD=ON -DNDK_ROOT=/path/to/your/ndk/folder -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake 
   make -j4
 
+For arm64 targets, add 
+
+.. code-block:: bash
+  -DANDROID_ABI=arm64-v8a 
+  
+to cmake flags.
+
 ***********************************
 Validation After Build (Linux Only)
 ***********************************
