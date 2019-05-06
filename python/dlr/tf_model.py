@@ -5,6 +5,7 @@ import tensorflow as tf
 
 # A prefix that will be prepended to the names in graph_def
 PREFIX = "import"
+UNLIKELY_OUTPUT_TYPES = {"Const", "Assign", "NoOp", "Placeholder"}
 
 
 def _load_frozen_graph(frozen_graph_file, device):
@@ -50,17 +51,20 @@ def _get_input_and_output_names(graph):
     output_tensor_names = set()
     op_prefix = PREFIX + "/"
     for op in graph.get_operations():
-        # Ignore operators which are not directly under PREFIX node
-        if not op.name.startswith(op_prefix) or op.name.find('/', len(op_prefix)) > -1:
+        if not op.name.startswith(op_prefix):
             continue
         if op.type == 'Placeholder' and op.inputs.__len__() == 0 and op.outputs.__len__() == 1:
             input_tensor_names.append(op.outputs[0].name)
-        if op.outputs.__len__() == 1:
+        if op.type not in UNLIKELY_OUTPUT_TYPES and op.outputs.__len__() == 1:
             output_tensor_names.add(op.outputs[0].name)
     for op in graph.get_operations():
         for in_t in op.inputs:
             if in_t.name in output_tensor_names:
                 output_tensor_names.remove(in_t.name)
+        for cont_op in op.control_inputs:
+            for out_t in cont_op.outputs:
+                if out_t.name in output_tensor_names:
+                    output_tensor_names.remove(out_t.name)
     # Sort list of output tensor names in order to get consistent output in run()
     output_tensor_names = list(output_tensor_names)
     output_tensor_names.sort()
