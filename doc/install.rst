@@ -126,7 +126,7 @@ Once the compilation is completed, install the Python package by running ``setup
 Building on Mac OS X
 --------------------
 
-Install GCC and CMake from `Homebrew  https://brew.sh/ `_:
+Install GCC and CMake from `Homebrew <https://brew.sh/>`_:
 
 .. code-block:: bash
 
@@ -154,7 +154,7 @@ Once the compilation is completed, install the Python package by running ``setup
 Building on Windows
 -------------------
 
-DLR requires `Visual Studio 2017  https://visualstudio.microsoft.com/downloads/ `_ as well as `CMake  https://cmake.org/ `_.
+DLR requires `Visual Studio 2017 <https://visualstudio.microsoft.com/downloads/>`_ as well as `CMake <https://cmake.org/>`_.
 
 In the DLR directory, first run CMake to generate a Visual Studio project:
 
@@ -178,9 +178,9 @@ Once the compilation is completed, install the Python package by running ``setup
 Building for Android on ARM
 ---------------------------
 
-Android build requires `Android NDK  https://developer.android.com/ndk/downloads/ `_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
+Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
 
-Also required is `NDK standlone toolchain  https://developer.android.com/ndk/guides/standalone_toolchain `_. Follow the instructions to generate necessary build-essential tools.
+Also required is `NDK standlone toolchain <https://developer.android.com/ndk/guides/standalone_toolchain>`_. Follow the instructions to generate necessary build-essential tools.
 
 Once done with above steps, invoke cmake with following commands to build Android shared lib:
 
