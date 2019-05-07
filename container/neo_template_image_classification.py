@@ -58,7 +58,7 @@ class NeoImageClassificationPredictor():
     def initialize(self, context):
         manifest = context.manifest
         model_dir = context.system_properties.get("model_dir")
-        print("Loading the model from directroy {}".format(model_dir))
+        print("Loading the model from directory {}".format(model_dir))
 
         # Load shape info
         self.shape_info = None

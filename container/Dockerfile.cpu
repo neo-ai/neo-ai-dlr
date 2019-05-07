@@ -21,7 +21,7 @@ RUN apt-get update && \
 
 RUN pip3 install --pre --no-cache-dir mxnet-model-server
 
-RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six
+RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests
 
 #RUN pip3 install --no-cache-dir dlr
 
@@ -38,6 +38,7 @@ RUN useradd -m model-server \
     && mkdir -p /home/model-server/model
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+COPY allocate_workers.py /home/model-server/allocate_workers.py
 COPY config.properties /home/model-server/config.properties
 
 COPY neo_template_$APP.py /home/model-server/neo_template.py

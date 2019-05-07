@@ -2,14 +2,31 @@
 set -e
 set -x
 
+export IFS=' '
+if read -r -a worker_config <<< $(python3 allocate_workers.py)
+then
+  MMS_INSTANCE_TYPE="${worker_config[0]}"
+  MMS_NUM_WORKER="${worker_config[1]}"
+  MMS_NUM_THREAD_PER_WORKER="${worker_config[2]}"
+fi
+
 if [[ "$1" = "serve" ]]; then
+    shift 1
     cp -v /opt/ml/model/* /home/model-server/model
     cp -v /home/model-server/neo_template.py /home/model-server/model
     model-archiver --handler neo_template:predict --model-name neomodel --model-path /home/model-server/model -f --export-path /home/model-server
     mv /home/model-server/neomodel.mar /home/model-server/model
 
-    shift 1
-    mxnet-model-server --start --mms-config config.properties
+    if [ ! -z "${MMS_NUM_WORKER}" ]
+    then
+      sed -e "s/#default_workers_per_model=35/default_workers_per_model=${MMS_NUM_WORKER}/" \
+        /home/model-server/config.properties > /home/model-server/config.properties.new
+      export OMP_NUM_THREADS=${MMS_NUM_THREAD_PER_WORKER}
+      mxnet-model-server --start --mms-config config.properties.new
+    else
+      mxnet-model-server --start --mms-config config.properties
+    fi
+
 else
     eval "$@"
 fi
