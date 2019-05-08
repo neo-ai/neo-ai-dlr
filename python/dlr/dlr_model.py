@@ -151,6 +151,16 @@ class DLRModelImpl:
         """
         return self.input_names
 
+    def get_output_names(self):
+        """
+        Get all output names
+
+        Returns
+        -------
+        out : list of :py:class:`str`
+        """
+        raise NotImplementedError
+
     def _get_input_name(self, index):
         name = ctypes.c_char_p()
         _check_call(_LIB.GetDLRInputName(byref(self.handle),

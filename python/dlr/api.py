@@ -18,6 +18,10 @@ class IDLRModel:
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_output_names(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def run(self, input_data):
         raise NotImplementedError
 
@@ -48,3 +52,6 @@ class DLRModel(IDLRModel):
 
     def get_input(self, name, shape=None):
         return self._impl.get_input(name, shape)
+
+    def get_output_names(self):
+        return self._impl.get_output_names()

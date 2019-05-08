@@ -32,7 +32,7 @@ def test_tf_model(model_path, dev_type=None, dev_id=None):
     inp_names = model.get_input_names()
     assert inp_names == ['import/input1:0', 'import/input2:0']
 
-    out_names = model._impl._get_output_names()
+    out_names = model.get_output_names()
     assert out_names == ['import/preproc/output1:0', 'import/preproc/output2:0']
 
     inp1 = [[4., 1.], [3., 2.]]
