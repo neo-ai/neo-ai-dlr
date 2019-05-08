@@ -27,6 +27,9 @@ def test_multi_input_multi_output():
     device = 'cpu'
     model = DLRModel(model_path, device)
 
+    assert model._impl._get_output_size_dim(0) == (2, 1)
+    assert model._impl._get_output_size_dim(1) == (3, 1)
+
     input1 = np.asarray([1., 2.])
     input2 = np.asarray([3., 4.])
     input3 = np.asarray([5., 6., 7])

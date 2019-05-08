@@ -132,7 +132,7 @@ class TFModelImpl:
         """
         return self.input_tensor_names
 
-    def get_output_names(self):
+    def _get_output_names(self):
         """
         Get all output names
 

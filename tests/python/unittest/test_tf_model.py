@@ -1,11 +1,10 @@
 # coding: utf-8
+from __future__ import print_function
 from dlr import DLRModel
 import numpy as np
+import os
 
-FROZEN_GRAPH_PATH = "/tmp/test_graph.pb"
-
-
-def _generate_frozen_graph():
+def _generate_frozen_graph(model_path):
     import tensorflow as tf
     graph = tf.get_default_graph()
     a = tf.placeholder(tf.float32, shape=[2, 2], name="input1")
@@ -23,37 +22,43 @@ def _generate_frozen_graph():
             graph.as_graph_def(),
             ["preproc/output1", "preproc/output2"]
         )
-        with tf.gfile.GFile(FROZEN_GRAPH_PATH, "wb") as f:
+        with tf.gfile.GFile(model_path, "wb") as f:
             f.write(output_graph_def.SerializeToString())
 
 
-def test_tf_model(dev_type=None, dev_id=None):
-    _generate_frozen_graph()
-    with DLRModel(FROZEN_GRAPH_PATH, dev_type, dev_id) as m:
-        inp_names = m.get_input_names()
-        assert inp_names == ['import/input1:0', 'import/input2:0']
+def test_tf_model(model_path, dev_type=None, dev_id=None):
+    _generate_frozen_graph(model_path)
+    model = DLRModel(model_path, dev_type, dev_id)
+    inp_names = model.get_input_names()
+    assert inp_names == ['import/input1:0', 'import/input2:0']
 
-        out_names = m.get_output_names()
-        assert out_names == ['import/preproc/output1:0', 'import/preproc/output2:0']
+    out_names = model._impl._get_output_names()
+    assert out_names == ['import/preproc/output1:0', 'import/preproc/output2:0']
 
-        inp1 = [[4., 1.], [3., 2.]]
-        inp2 = [[0., 1.], [1., 0.]]
+    inp1 = [[4., 1.], [3., 2.]]
+    inp2 = [[0., 1.], [1., 0.]]
 
-        res = m.run({'import/input1:0': inp1, 'import/input2:0': inp2})
-        assert res is not None
-        assert len(res) == 2
-        assert np.alltrue(res[0] == [[36., 361.], [49.,  324.]])
-        assert res[1] == 1
+    res = model.run({'import/input1:0': inp1, 'import/input2:0': inp2})
+    assert res is not None
+    assert len(res) == 2
+    assert np.alltrue(res[0] == [[36., 361.], [49.,  324.]])
+    assert res[1] == 1
 
-        m_inp1 = m.get_input('import/input1:0')
-        m_inp2 = m.get_input('import/input2:0')
-        assert np.alltrue(m_inp1 == inp1)
-        assert np.alltrue(m_inp2 == inp2)
-
-
-def test_tf_model_on_cpu_0():
-    test_tf_model("cpu", 0)
+    m_inp1 = model.get_input('import/input1:0')
+    m_inp2 = model.get_input('import/input2:0')
+    assert np.alltrue(m_inp1 == inp1)
+    assert np.alltrue(m_inp2 == inp2)
 
 
-def test_tf_model_on_gpu_0():
-    test_tf_model("gpu", 0)
+def test_tf_model_on_cpu_0(model_path):
+    test_tf_model(model_path, "cpu", 0)
+
+
+def test_tf_model_on_gpu_0(model_path):
+    test_tf_model(model_path, "gpu", 0)
+
+if __name__ == '__main__':
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        'test_graph.pb')
+    test_tf_model_on_cpu_0(model_path)
+    print('All tests passed!')
