@@ -1,5 +1,5 @@
 # coding: utf-8
-from dlr.tf_model import TFModelImpl
+from dlr import DLRModel
 import numpy as np
 
 FROZEN_GRAPH_PATH = "/tmp/test_graph.pb"
@@ -29,7 +29,7 @@ def _generate_frozen_graph():
 
 def test_tf_model(dev_type=None, dev_id=None):
     _generate_frozen_graph()
-    with TFModelImpl(FROZEN_GRAPH_PATH, dev_type, dev_id) as m:
+    with DLRModel(FROZEN_GRAPH_PATH, dev_type, dev_id) as m:
         inp_names = m.get_input_names()
         assert inp_names == ['import/input1:0', 'import/input2:0']
 
