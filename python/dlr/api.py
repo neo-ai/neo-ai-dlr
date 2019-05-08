@@ -350,23 +350,27 @@ class IDLRModel:
 
     @abc.abstractmethod
     def get_input_names(self):
-        return
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_input(self, name, shape=None):
-        return
+        raise NotImplementedError
 
     @abc.abstractmethod
     def run(self, input_data):
-        return
+        raise NotImplementedError
 
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
-        if model_path.endswith(".pb"):
-            from .tf_model import TFModelImpl
-            self._impl = TFModelImpl(model_path, dev_type, dev_id)
-        else:
+        #Determine if 3rdparty package needed
+        for (dirpath, dirnames, filenames) in os.walk(model_path):
+            for filename in filenames:
+                if filename.endswith('.pb'): 
+                    from .tf_model import TFModelImpl
+                    self._impl = TFModelImpl(model_path, dev_type, dev_id)
+        # Default to DLR model
+        if not hasattr(self, 'impl'):
             self._impl = DLRModelImpl(model_path, dev_type, dev_id) 
 
     def run(self, input_values):
