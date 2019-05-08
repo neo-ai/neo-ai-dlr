@@ -60,5 +60,5 @@ def test_tf_model_on_gpu_0():
     test_tf_model("gpu", 0)
 
 if __name__ == '__main__':
-    test_tf_model_on_cpu_0()
+    test_tf_model()
     print('All tests passed!')

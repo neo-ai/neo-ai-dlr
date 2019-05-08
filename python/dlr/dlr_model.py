@@ -1,9 +1,9 @@
 # coding: utf-8
 import ctypes
-from ctypes import cdll
-from ctypes import c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_longlong
+from ctypes import cdll, c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_longlong
 import numpy as np
 import os
+from .api import IDLRModel
 
 from .libpath import find_lib_path
 
@@ -63,7 +63,7 @@ def _load_lib():
 # load the DLR library globally
 _LIB = _load_lib()
 
-class DLRModelImpl:
+class DLRModelImpl(IDLRModel):
     """
     Load a Neo-compiled model
 

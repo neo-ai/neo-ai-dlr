@@ -2,8 +2,9 @@
 from __future__ import absolute_import as _abs
 
 import abc
-import sys
+import glob
 import os
+import sys
 
 # Interface
 class IDLRModel:
@@ -29,18 +30,21 @@ class IDLRModel:
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
         #Determine if 3rdparty package needed
+        tf_model_path = None
         if os.path.isfile(model_path):    
             if model_path.endswith('.pb'):
-                from .tf_model import TFModelImpl
-                self._impl = TFModelImpl(model_path, dev_type, dev_id)
+                tf_model_path = model_path
         else:
-            for (dirpath, dirnames, filenames) in os.walk(model_path):
-                for filename in filenames:
-                    if filename.endswith('.pb'): 
-                        from .tf_model import TFModelImpl
-                        self._impl = TFModelImpl(model_path, dev_type, dev_id)
+            model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*.pb')))
+            if len(model_files) > 1:
+                raise ValueError('Multiple .pb files found under ' + model_path)
+            elif len(model_files) == 1:
+                tf_model_path = model_files[0]
         # Default to DLR model
-        if not hasattr(self, '_impl'):
+        if tf_model_path is not None:
+            from .tf_model import TFModelImpl
+            self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
+        else:
             from .dlr_model import DLRModelImpl
             self._impl = DLRModelImpl(model_path, dev_type, dev_id) 
 
