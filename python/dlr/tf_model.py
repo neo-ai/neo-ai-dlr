@@ -74,7 +74,7 @@ def _get_input_and_output_names(graph):
 
 class TFModelImpl(IDLRModel):
     """
-    TFModelImpl is a wrapper on top of tensorflow which implements DLRModel API
+    TFModelImpl is a wrapper on top of Tensorflow which implements IDLRModel API
 
     Parameters
     ----------
@@ -86,8 +86,10 @@ class TFModelImpl(IDLRModel):
         Optional. Device ID
     """
     def __init__(self, frozen_graph_file, dev_type=None, dev_id=None):
+        if not frozen_graph_file.endswith(".pb"):
+            raise ValueError("Not a frozen graph file: {}".format(frozen_graph_file))
         if not os.path.exists(frozen_graph_file):
-            raise ValueError("frozen_graph_file %s doesn't exist" % frozen_graph_file)
+            raise ValueError("Frozen graph file {} doesn't exist".format(frozen_graph_file))
         self.frozen_graph_file = frozen_graph_file
 
         device = None
