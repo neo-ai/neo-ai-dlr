@@ -1,9 +1,10 @@
 # coding: utf-8
-from dlr.tf_model import TFModelImpl
+from __future__ import print_function
+from dlr import DLRModel
 import numpy as np
+import os
 
 FROZEN_GRAPH_PATH = "/tmp/test_graph.pb"
-
 
 def _generate_frozen_graph():
     import tensorflow as tf
@@ -29,26 +30,26 @@ def _generate_frozen_graph():
 
 def test_tf_model(dev_type=None, dev_id=None):
     _generate_frozen_graph()
-    with TFModelImpl(FROZEN_GRAPH_PATH, dev_type, dev_id) as m:
-        inp_names = m.get_input_names()
-        assert inp_names == ['import/input1:0', 'import/input2:0']
+    model = DLRModel(FROZEN_GRAPH_PATH, dev_type, dev_id)
+    inp_names = model.get_input_names()
+    assert inp_names == ['import/input1:0', 'import/input2:0']
 
-        out_names = m.get_output_names()
-        assert out_names == ['import/preproc/output1:0', 'import/preproc/output2:0']
+    out_names = model.get_output_names()
+    assert out_names == ['import/preproc/output1:0', 'import/preproc/output2:0']
 
-        inp1 = [[4., 1.], [3., 2.]]
-        inp2 = [[0., 1.], [1., 0.]]
+    inp1 = [[4., 1.], [3., 2.]]
+    inp2 = [[0., 1.], [1., 0.]]
 
-        res = m.run({'import/input1:0': inp1, 'import/input2:0': inp2})
-        assert res is not None
-        assert len(res) == 2
-        assert np.alltrue(res[0] == [[36., 361.], [49.,  324.]])
-        assert res[1] == 1
+    res = model.run({'import/input1:0': inp1, 'import/input2:0': inp2})
+    assert res is not None
+    assert len(res) == 2
+    assert np.alltrue(res[0] == [[36., 361.], [49.,  324.]])
+    assert res[1] == 1
 
-        m_inp1 = m.get_input('import/input1:0')
-        m_inp2 = m.get_input('import/input2:0')
-        assert np.alltrue(m_inp1 == inp1)
-        assert np.alltrue(m_inp2 == inp2)
+    m_inp1 = model.get_input('import/input1:0')
+    m_inp2 = model.get_input('import/input2:0')
+    assert np.alltrue(m_inp1 == inp1)
+    assert np.alltrue(m_inp2 == inp2)
 
 
 def test_tf_model_on_cpu_0():
@@ -57,3 +58,7 @@ def test_tf_model_on_cpu_0():
 
 def test_tf_model_on_gpu_0():
     test_tf_model("gpu", 0)
+
+if __name__ == '__main__':
+    test_tf_model()
+    print('All tests passed!')

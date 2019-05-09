@@ -2,6 +2,7 @@
 import logging
 import os
 import tensorflow as tf
+from .api import IDLRModel
 
 # A prefix that will be prepended to the names in graph_def
 PREFIX = "import"
@@ -71,7 +72,7 @@ def _get_input_and_output_names(graph):
     return input_tensor_names, output_tensor_names
 
 
-class TFModelImpl:
+class TFModelImpl(IDLRModel):
     """
     TFModelImpl is a wrapper on top of tensorflow which implements DLRModel API
 
