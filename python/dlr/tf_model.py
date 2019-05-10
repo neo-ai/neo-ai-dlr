@@ -101,7 +101,12 @@ class TFModelImpl(IDLRModel):
         self._graph = _load_frozen_graph(frozen_graph_file, device)
         self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self._graph)
         self.input_values = {}
-        self._sess = tf.Session(graph=self._graph)
+        # Turn on XLA JIT compilation
+        # Turning on JIT at the session level will not result in operations being compiled for the CPU.
+        # Currently JIT at the session level only supports GPU.
+        config = tf.ConfigProto()
+        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+        self._sess = tf.Session(graph=self._graph, config=config)
 
     def __enter__(self):
         return self
