@@ -127,6 +127,7 @@ def CloudInstallAndTest(cloudTarget) {
     echo "Installing DLR package for ${cloudTarget} target"
     withAWS(credentials:'Neo-AI-CI-Fleet') {
       files = s3FindFiles(bucket: 'neo-ai-dlr-jenkins-artifacts', glob: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/dlr-*-manylinux1_x86_64.whl")
+      echo files.size()
       assert files.size() == 1
       files.each {
         s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path, force: true
