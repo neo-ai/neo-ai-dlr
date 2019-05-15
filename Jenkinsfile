@@ -98,9 +98,7 @@ def AMD64BuildCPU() {
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh manylinux1_x86_64
     """
-    withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
-    }
+    stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
   }
 }
 
@@ -114,9 +112,7 @@ def AMD64BuildGPU() {
     tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
     PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
     """
-    withAWS(credentials:'Neo-AI-CI-Fleet') {
-      s3Upload bucket: 'neo-ai-dlr-jenkins-artifacts', acl: 'Private', path: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/", includePathPattern:'python/dist/**'
-    }
+    stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
   }
 }
 
@@ -125,17 +121,25 @@ def CloudInstallAndTest(cloudTarget) {
   def nodeReq = "ubuntu && amd64 && ${cloudTarget}"
   node(nodeReq) {
     echo "Installing DLR package for ${cloudTarget} target"
-    withAWS(credentials:'Neo-AI-CI-Fleet') {
-      files = s3FindFiles(bucket: 'neo-ai-dlr-jenkins-artifacts', glob: "${env.JOB_NAME}/${env.BUILD_ID}/artifacts/dlr-*-manylinux1_x86_64.whl")
-      assert files.size() == 1
-      files.each {
-        s3Download file: it.name, bucket: 'neo-ai-dlr-jenkins-artifacts', path: it.path, force: true
-      }
+    if (cloudTarget == "p2" || cloudTarget == "p3") {
+      unstash 'dlr_gpu_whl'
+    } else {
+      unstash 'dlr_cpu_whl'
     }
     sh """
-    ls -lh *.whl
-    pip3 install *.whl
-    sudo pip3 install --upgrade --force-reinstall tensorflow
+    ls -lh python/dist/*.whl
+    pip3 install python/dist/*.whl
+    """
+    if (cloudTarget == "p2" || cloudTarget == "p3") {
+      sh """
+      sudo pip3 install --upgrade --force-reinstall tensorflow_gpu
+      """
+    } else {
+      sh """
+      sudo pip3 install --upgrade --force-reinstall tensorflow
+      """
+    }
+    sh """
     type toco_from_protos
     """
     echo "Running integration tests..."
