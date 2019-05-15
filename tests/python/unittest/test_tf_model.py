@@ -2,9 +2,9 @@
 from __future__ import print_function
 from dlr import DLRModel
 import numpy as np
-import os
 
 FROZEN_GRAPH_PATH = "/tmp/test_graph.pb"
+
 
 def _generate_frozen_graph():
     import tensorflow as tf
@@ -58,6 +58,7 @@ def test_tf_model_on_cpu_0():
 
 def test_tf_model_on_gpu_0():
     test_tf_model("gpu", 0)
+
 
 if __name__ == '__main__':
     test_tf_model()
