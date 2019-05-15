@@ -132,13 +132,16 @@ def CloudInstallAndTest(cloudTarget) {
     """
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       sh """
-      pip3 install tensorflow_gpu
+      sudo pip3 install --upgrade --force-reinstall tensorflow_gpu
       """
     } else {
       sh """
-      pip3 install tensorflow
+      sudo pip3 install --upgrade --force-reinstall tensorflow
       """
     }
+    sh """
+    type toco_from_protos
+    """
     echo "Running integration tests..."
     unstash name: 'srcs'
     sh """
@@ -146,6 +149,7 @@ def CloudInstallAndTest(cloudTarget) {
     python3 tests/python/integration/load_and_run_treelite_model.py
     python3 -m pytest -v --fulltrace -s tests/python/unittest/test_get_set_input.py
     python3 -m pytest -v --fulltrace -s tests/python/unittest/test_tf_model.py
+    python3 -m pytest -v --fulltrace -s tests/python/unittest/test_tflite_model.py
     """
   }
 }
