@@ -129,8 +129,16 @@ def CloudInstallAndTest(cloudTarget) {
     sh """
     ls -lh python/dist/*.whl
     pip3 install python/dist/*.whl
-    pip3 install tensorflow
     """
+    if (cloudTarget == "p2" || cloudTarget == "p3") {
+      sh """
+      pip3 install tensorflow_gpu
+      """
+    } else {
+      sh """
+      pip3 install tensorflow
+      """
+    }
     echo "Running integration tests..."
     unstash name: 'srcs'
     sh """
