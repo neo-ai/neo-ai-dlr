@@ -110,13 +110,17 @@ Download compiled model from s3 bucket
 ```
 cd models
 
+mkdir yolov3_darknet53
+
+cd yolov3_darknet53
+
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_param.params
 
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_graph.json
 
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_lib.so
 
-cd ..
+cd ../..
 ```
 
 Run the inference
