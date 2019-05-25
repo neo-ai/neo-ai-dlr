@@ -16,6 +16,17 @@ curl -O https://github.com/neo-ai/neo-ai-dlr/blob/demo-aisage/demo/aisage/tensor
 sudo pip3 install --upgrade tensorflow-1.13.1-cp35-none-linux_aarch64.whl
 ```
 
+### TVM runtime and gluoncv
+Install TVM runtime
+```
+sudo easy_install3 tvm-0.6.dev0-py3.5-linux-aarch64.egg
+```
+
+Install gluoncv
+```
+sudo pip3 install gluoncv
+```
+
 ### DLR
 Install DLR
 ```
