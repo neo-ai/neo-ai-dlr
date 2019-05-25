@@ -3,7 +3,9 @@ import tvm
 from matplotlib import pyplot as plt
 from tvm import relay
 from tvm.contrib import graph_runtime
-from gluoncv import model_zoo, data, utils
+from gluoncv import data, utils
+
+voc_classes = =['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
 def run(graph, lib, params, ctx):
     # Build TVM runtime
@@ -43,6 +45,6 @@ class_IDs, scores, bounding_boxs = run(graph, lib, params, ctx)
 # Display result
 
 ax = utils.viz.plot_bbox(img, bounding_boxs.asnumpy()[0], scores.asnumpy()[0],
-                         class_IDs.asnumpy()[0], class_names=['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'])
+                         class_IDs.asnumpy()[0], class_names=voc_classes)
 plt.show()
 
