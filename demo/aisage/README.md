@@ -104,3 +104,26 @@ dog.jpg - objects:
 Avg: 7,246.7 ms, Median 7,261.5 ms (stddev: 459.6477032588231)
 Memory RSS: 1,836,998,656
 ```
+
+### Gluoncv yolo3_darknet53_voc
+Download compiled model from s3 bucket
+```
+cd models
+
+mkdir yolov3_darknet53
+
+cd yolov3_darknet53
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_param.params
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_graph.json
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_yolo_v3_darknet_300_acer/deploy_lib.so
+
+cd ../..
+```
+
+Run the inference
+```
+python3 run_yolo_gluoncv.py
+```
