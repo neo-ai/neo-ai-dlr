@@ -93,9 +93,9 @@ class DLRModel {
   std::vector<float> treelite_output_;
 
  public:
-  /*! /brief Extract the .tar file and load the model.
+  /*! /brief Load model files from given folder path.
    */
-  explicit DLRModel(const std::string& tar_path,
+  explicit DLRModel(const std::string& model_path,
                     const DLContext& ctx);
 
   /*! /brief Get the output of the given input x.

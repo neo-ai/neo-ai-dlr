@@ -2,9 +2,11 @@
 import logging
 import os
 import tensorflow as tf
+from .api import IDLRModel
 
 # A prefix that will be prepended to the names in graph_def
 PREFIX = "import"
+UNLIKELY_OUTPUT_TYPES = {"Const", "Assign", "NoOp", "Placeholder"}
 
 
 def _load_frozen_graph(frozen_graph_file, device):
@@ -54,21 +56,25 @@ def _get_input_and_output_names(graph):
             continue
         if op.type == 'Placeholder' and op.inputs.__len__() == 0 and op.outputs.__len__() == 1:
             input_tensor_names.append(op.outputs[0].name)
-        if op.outputs.__len__() == 1:
+        if op.type not in UNLIKELY_OUTPUT_TYPES and op.outputs.__len__() == 1:
             output_tensor_names.add(op.outputs[0].name)
     for op in graph.get_operations():
         for in_t in op.inputs:
             if in_t.name in output_tensor_names:
                 output_tensor_names.remove(in_t.name)
+        for cont_op in op.control_inputs:
+            for out_t in cont_op.outputs:
+                if out_t.name in output_tensor_names:
+                    output_tensor_names.remove(out_t.name)
     # Sort list of output tensor names in order to get consistent output in run()
     output_tensor_names = list(output_tensor_names)
     output_tensor_names.sort()
     return input_tensor_names, output_tensor_names
 
 
-class TFModelImpl:
+class TFModelImpl(IDLRModel):
     """
-    TFModelImpl is a wrapper on top of tensorflow which implements DLRModel API
+    TFModelImpl is a wrapper on top of Tensorflow which implements IDLRModel API
 
     Parameters
     ----------
@@ -80,8 +86,10 @@ class TFModelImpl:
         Optional. Device ID
     """
     def __init__(self, frozen_graph_file, dev_type=None, dev_id=None):
+        if not frozen_graph_file.endswith(".pb"):
+            raise ValueError("Not a frozen graph file: {}".format(frozen_graph_file))
         if not os.path.exists(frozen_graph_file):
-            raise ValueError("frozen_graph_file %s doesn't exist" % frozen_graph_file)
+            raise ValueError("Frozen graph file {} doesn't exist".format(frozen_graph_file))
         self.frozen_graph_file = frozen_graph_file
 
         device = None
@@ -92,9 +100,21 @@ class TFModelImpl:
             dev_id = 0 if dev_id is None else dev_id
             device = "/{}:{}".format(dev_type, dev_id)
 
-        self.graph = _load_frozen_graph(frozen_graph_file, device)
-        self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self.graph)
+        self._graph = _load_frozen_graph(frozen_graph_file, device)
+        self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self._graph)
         self.input_values = {}
+        # Turn on XLA JIT compilation
+        # Turning on JIT at the session level will not result in operations being compiled for the CPU.
+        # Currently JIT at the session level only supports GPU.
+        config = tf.ConfigProto()
+        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+        self._sess = tf.Session(graph=self._graph, config=config)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     def _validate_input_name(self, name):
         if name not in self.input_tensor_names:
@@ -166,16 +186,21 @@ class TFModelImpl:
             Prediction result. Multiple outputs are possible.
         """
         self._validate_input(input_values)
-        with tf.Session(graph=self.graph) as sess:
-            feed_dict = {}
-            for k, v in input_values.items():
-                tensor = self.graph.get_tensor_by_name(k)
-                feed_dict[tensor] = v
-            output_tensors = []
-            for k in self.output_tensor_names:
-                tensor = self.graph.get_tensor_by_name(k)
-                output_tensors.append(tensor)
-            self.input_values = input_values
+        feed_dict = {}
+        for k, v in input_values.items():
+            tensor = self._graph.get_tensor_by_name(k)
+            feed_dict[tensor] = v
+        output_tensors = []
+        for k in self.output_tensor_names:
+            tensor = self._graph.get_tensor_by_name(k)
+            output_tensors.append(tensor)
+        self.input_values = input_values
+        out = self._sess.run(output_tensors, feed_dict=feed_dict)
+        return out
 
-            out = sess.run(output_tensors, feed_dict=feed_dict)
-            return out
+    def close(self):
+        """
+        Closes this Tensorflow session
+
+        """
+        self._sess.close()

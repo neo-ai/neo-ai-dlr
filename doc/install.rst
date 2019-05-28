@@ -6,6 +6,59 @@ Installing DLR
   :local:
   :backlinks: none
 
+***********************************************
+Installing Pre-built DLR Wheels for Your Device
+***********************************************
+
+DLR has been built and tested aginast devices in table 1. If you find your device(s) listed below, you can install DLR with the corresponding S3 link via 
+
+  .. code-block:: bash
+
+    pip install  link-to-matching-wheel-on-S3 
+
+Table 1: List of Supported Devices
+----------------------------------
+
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Manufacturer | Device Name  | Wheel URL on S3                                                                                                                                      |
++==============+==============+======================================================================================================================================================+
+| Acer         | TV AISage    |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/acer-aarch64-linaro4_4_154-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl           |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Amazon       | A1 Instance  |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/a1-aarch64-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl               |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Amazon       | P3 Instance  |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/p3-x86_64-cu90-linux-glibc2_17-libstdpp3_4/dlr-1.0-py2.py3-none-any.whl                  |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Amazon       | Deeplens     |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/deeplens-x86_64-igp-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl      |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Asus         | Tinker       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/tinker-armv7l-mali-linaro4_4_103-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl     |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Rockchips    | RK3399       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/deeplens-x86_64-igp-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl      |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Huawei       | Hikey 960    |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/hikey-aarch64-mali-linaro-4_19_5-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl     |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Nvidia       | Jetson_TX1   |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/jetsontx1-aarch64-cu90-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl   |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Nvidia       | Jetson_TX2   |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/jetsontx2-aarch64-cu90-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl   |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Nvidia       | Jetson_Nano  |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/jetsonnano-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl  |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Raspberry    | Rasp2b       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl            |
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+If your device is not listed in the table, use table2. You will identify your device by the processor architecture, operating system, and versions of GLIBC and LIBSTDC++. Of note, DLR installation may depend on other configuration differences or even location of dependency libraries; if the provided wheel URL does not work, please consider compiling DLR from source (see `Building DLR from source`_ section).
+
+Table2: List of Supported Architectures (Incomplete)
+----------------------------------------------------
+
++------------------------+--------------+---------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------+ 
+| Processor architecture | OS           | GLIBC version | LIBSTDC++ version | Wheel URL on S3                                                                                                                         | 
++========================+==============+===============+===================+=========================================================================================================================================+ 
+| aarch64                | Ubuntu 16.04 | 2.23+         | 3.4+              |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/a1-aarch64-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl  | 
++------------------------+--------------+---------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------+ 
+| armv7l                 | Debian 9.0   | 2.24+         | 3.4+              |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/a1-aarch64-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl  | 
++------------------------+--------------+---------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------+ 
+
+
 ************************
 Building DLR from source
 ************************
@@ -24,7 +77,7 @@ Building DLR consists of two steps:
     git clone --recursive https://github.com/neo-ai/neo-ai-dlr
 
 Building on Linux
-=================
+-----------------
 
 Ensure that all necessary software packages are installed: GCC (or Clang), CMake, and Python. For example, in Ubuntu, you can run
 
@@ -32,7 +85,7 @@ Ensure that all necessary software packages are installed: GCC (or Clang), CMake
 
   sudo apt-get update
   sudo apt-get install -y python3 python3-pip gcc build-essential cmake
-
+  
 To build, create a subdirectory ``build`` and invoke CMake:
 
 .. code-block:: bash
@@ -71,7 +124,7 @@ Once the compilation is completed, install the Python package by running ``setup
   python3 setup.py install --user
 
 Building on Mac OS X
-====================
+--------------------
 
 Install GCC and CMake from `Homebrew <https://brew.sh/>`_:
 
@@ -99,7 +152,7 @@ Once the compilation is completed, install the Python package by running ``setup
   python3 setup.py install --user --prefix=''
 
 Building on Windows
-===================
+-------------------
 
 DLR requires `Visual Studio 2017 <https://visualstudio.microsoft.com/downloads/>`_ as well as `CMake <https://cmake.org/>`_.
 
@@ -122,12 +175,32 @@ Once the compilation is completed, install the Python package by running ``setup
   cd python
   python3 setup.py install --user
 
-************************
-Validation
-************************
+Building for Android on ARM
+---------------------------
 
-Validation on Linux
-===================
+Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
+
+Also required is `NDK standlone toolchain <https://developer.android.com/ndk/guides/standalone_toolchain>`_. Follow the instructions to generate necessary build-essential tools.
+
+Once done with above steps, invoke cmake with following commands to build Android shared lib:
+
+.. code-block:: bash
+
+  cmake .. -DANDROID_BUILD=ON -DNDK_ROOT=/path/to/your/ndk/folder -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake 
+  make -j4
+
+For arm64 targets, add 
+
+.. code-block:: bash
+
+  -DANDROID_ABI=arm64-v8a 
+  
+to cmake flags.
+
+***********************************
+Validation After Build (Linux Only)
+***********************************
+
 .. code-block:: cmd
 
   cd tests/python/integration/

@@ -1,344 +1,83 @@
 # coding: utf-8
 from __future__ import absolute_import as _abs
 
-import ctypes
-from ctypes import cdll
-from ctypes import c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_longlong
-import numpy as np
-from functools import reduce
-from operator import mul
-from argparse import ArgumentParser
-import sys
+import abc
+import glob
+import logging
 import os
 
-from .libpath import find_lib_path
 
-class DLRError(Exception):
-    """Error thrown by DLR"""
-    pass
+# Interface
+class IDLRModel:
+    __metaclass__=abc.ABCMeta
 
-def _load_lib():
-    """Load DLR library."""
-    lib_paths = find_lib_path()
-    if len(lib_paths) == 0:
-        return None
-    try:
-        pathBackup = os.environ['PATH'].split(os.pathsep)
-    except KeyError:
-        pathBackup = []
-    lib_success = False
-    os_error_list = []
-    for lib_path in lib_paths:
-        try:
-            # needed when the lib is linked with non-system-available dependencies
-            os.environ['PATH'] = os.pathsep.join(pathBackup + [os.path.dirname(lib_path)])
-            lib = ctypes.cdll.LoadLibrary(lib_path)
-            lib_success = True
-        except OSError as e:
-            os_error_list.append(str(e))
-            continue
-        finally:
-            os.environ['PATH'] = os.pathsep.join(pathBackup)
-    if not lib_success:
-        libname = os.path.basename(lib_paths[0])
-        raise DLRError(
-            'DLR library ({}) could not be loaded.\n'.format(libname) +
-            'Likely causes:\n' +
-            '  * OpenMP runtime is not installed ' +
-            '(vcomp140.dll or libgomp-1.dll for Windows, ' +
-            'libgomp.so for UNIX-like OSes)\n' +
-            '  * You are running 32-bit Python on a 64-bit OS\n' +
-            'Error message(s): {}\n'.format(os_error_list))
-    lib.DLRGetLastError.restype = ctypes.c_char_p
-    return lib
-
-
-# load the DLR library globally
-_LIB = _load_lib()
-
-
-def _check_call(ret):
-    """
-    Check the return value of C API call
-    This function will raise exception when error occurs.
-    Wrap every API call with this function
-
-    Parameters
-    ----------
-    ret : int
-        return value from API calls
-    """
-    if ret != 0:
-        raise DLRError(_LIB.DLRGetLastError().decode('ascii'))
-
-class DLRModel:
-    """
-    Load a Neo-compiled model
-
-    Parameters
-    ----------
-    model_path : str
-        Full path to the directory containing the compiled model
-    dev_type : str
-        Device type ('cpu', 'gpu', or 'opencl')
-    dev_id : int
-        Device ID
-    """
-
-    def _lazy_init_output_shape(self):
-        self.output_shapes = []
-        self.output_size_dim = []
-        for i in range(self.num_outputs):
-            shape = self._get_output_shape(i)
-            self.output_shapes.append(shape)
-
-    def _parse_backend(self):
-        backend = c_char_p()
-        _check_call(_LIB.GetDLRBackend(byref(self.handle),
-                                       byref(backend)))
-        return backend.value.decode('ascii')
-
-    def __init__(self, model_path, dev_type='cpu', dev_id=0):
-        if not os.path.exists(model_path):
-            raise ValueError("model_path %s doesn't exist" % model_path)
-
-        self.handle = c_void_p()
-        device_table = {
-            'cpu': 1,
-            'gpu': 2,
-            'opencl': 4,
-        }
-
-        _check_call(_LIB.CreateDLRModel(byref(self.handle),
-                                        c_char_p(model_path.encode()),
-                                        c_int(device_table[dev_type]),
-                                        c_int(dev_id)))
-
-        self.backend = self._parse_backend()
-
-        self.num_inputs = self._get_num_inputs()
-        self.num_weights = self._get_num_weights()
-        self.input_names = []
-        self.weight_names = []
-        self.input_shapes = {}   # Remember shape used in _set_input()
-        for i in range(self.num_inputs):
-            self.input_names.append(self._get_input_name(i))
-        for i in range(self.num_weights):
-            self.weight_names.append(self._get_weight_name(i))
-
-        self.num_outputs = self._get_num_outputs()
-        self._lazy_init_output_shape()
-
-    def __del__(self):
-        if getattr(self, "handle", None) is not None and self.handle is not None:
-            if getattr(self, "lib", None) is not None:
-                _check_call(_LIB.DeleteDLRModel(byref(self.handle)))
-            self.handle = None
-
-    def _get_num_inputs(self):
-        """Get the number of inputs of a network"""
-        num_inputs = c_int()
-        _check_call(_LIB.GetDLRNumInputs(byref(self.handle),
-                                         byref(num_inputs)))
-        return num_inputs.value
-
-    def _get_num_weights(self):
-        """Get the number of weights of a network"""
-        num_weights = c_int()
-        _check_call(_LIB.GetDLRNumWeights(byref(self.handle),
-                                          byref(num_weights)))
-        return num_weights.value
-
+    @abc.abstractmethod
     def get_input_names(self):
-        """
-        Get all input names
+        raise NotImplementedError
 
-        Returns
-        -------
-        out : list of :py:class:`str`
-        """
-        return self.input_names
+    @abc.abstractmethod
+    def get_input(self, name, shape=None):
+        raise NotImplementedError
 
-    def _get_input_name(self, index):
-        name = ctypes.c_char_p()
-        _check_call(_LIB.GetDLRInputName(byref(self.handle),
-                                         c_int(index), byref(name)))
-        return name.value.decode("utf-8")
+    @abc.abstractmethod
+    def get_output_names(self):
+        raise NotImplementedError
 
-    def _get_weight_name(self, index):
-        name = ctypes.c_char_p()
-        _check_call(_LIB.GetDLRWeightName(byref(self.handle),
-                                          c_int(index), byref(name)))
-        return name.value.decode("utf-8")
+    @abc.abstractmethod
+    def run(self, input_data):
+        raise NotImplementedError
 
-    def _set_input(self, name, data):
-        """Set the input using the input name with data
 
-        Parameters
-        __________
-        name : str
-            The name of an input.
-        data : list of numbers
-            The data to be set.
-        """
-        in_data = np.ascontiguousarray(data, dtype=np.float32)
-        shape = np.array(in_data.shape, dtype=np.int64)
-        self.input_shapes[name] = shape
-        _check_call(_LIB.SetDLRInput(byref(self.handle),
-                                     c_char_p(name.encode('utf-8')),
-                                     shape.ctypes.data_as(POINTER(c_longlong)),
-                                     in_data.ctypes.data_as(POINTER(c_float)),
-                                     c_int(in_data.ndim)))
-        if self.backend == 'treelite':
-            self._lazy_init_output_shape()
+def _find_model_file(model_path, ext):
+    if os.path.isfile(model_path) and model_path.endswith(ext):
+        return model_path
+    model_files = glob.glob(os.path.abspath(os.path.join(model_path, ext)))
+    if len(model_files) > 1:
+        raise ValueError('Multiple {} files found under {}'.format(ext, mdel_path))
+    elif len(model_files) == 1:
+        return model_files[0]
+    return None
 
-    def _run(self):
-        """A light wrapper to call run in the DLR backend."""
-        _check_call(_LIB.RunDLRModel(byref(self.handle)))
 
-    def _get_num_outputs(self):
-        """Get the number of outputs of a network"""
-        num_outputs = c_int()
-        _check_call(_LIB.GetDLRNumOutputs(byref(self.handle),
-                                          byref(num_outputs)))
-        return num_outputs.value
-
-    def _get_output_size_dim(self, index):
-        """Get the size and the dimenson of the index-th output.
-
-        Parameters
-        __________
-        index : int
-            The index of the output.
-
-        Returns
-        _______
-        size : int
-            The size of the index-th output.
-        dim : int
-            The dimension of the index-th output.
-        """
-        idx = ctypes.c_int(index)
-        size = ctypes.c_longlong()
-        dim = ctypes.c_int()
-        _check_call(_LIB.GetDLROutputSizeDim(byref(self.handle), idx,
-                                                      byref(size), byref(dim)))
-        return size.value, dim.value
-
-    def _get_output_shape(self, index):
-        """Get the shape for the index-th output.
-
-        Parameters
-        __________
-        index : int
-            The index of the output.
-
-        Returns
-        _______
-        shape : list
-            The shape of the index-th output.
-        """
-        size, dim = self._get_output_size_dim(index)
-        if not self.output_size_dim:
-            self.output_size_dim = [(0, 0)] * self._get_num_outputs()
-        self.output_size_dim[index] = (size, dim)
-        shape = np.zeros(dim, dtype=np.int64)
-        _check_call(_LIB.GetDLROutputShape(byref(self.handle),
-                                                    c_int(index),
-                    shape.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))))
-        return shape
-
-    def _get_output(self, index):
-        """Get the index-th output
-
-        Parameters
-        __________
-        index : int
-            The index of the output.
-
-        Returns
-        _______
-        out : np.array
-            A numpy array contains the values of the index-th output
-        """
-        if index >= len(self.output_shapes) or index < 0:
-            raise ValueError("index is expected between 0 and "
-                             "len(output_shapes)-1, but got %d" % index)
-
-        output = np.zeros(self.output_size_dim[index][0], dtype=np.float32)
-        _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
-                    output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
-        out = output.reshape(self.output_shapes[index])
-        return out
+# Wrapper class
+class DLRModel(IDLRModel):
+    def __init__(self, model_path, dev_type=None, dev_id=None):
+        # Find correct runtime implementation for the model
+        tf_model_path = _find_model_file(model_path, '.pb')
+        tflite_model_path = _find_model_file(model_path, '.tflite')
+        # Check if found both Tensorflow and TFLite files
+        if tf_model_path is not None and tflite_model_path is not None:
+            raise ValueError('Found both .pb and .tflite files under {}'.format(mdel_path))
+        # Tensorflow
+        if tf_model_path is not None:
+            from .tf_model import TFModelImpl
+            self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
+            return
+        # TFLite
+        if tflite_model_path is not None:
+            if dev_type is not None:
+                logging.warning("dev_type parameter is not supported")
+            if dev_id is not None:
+                logging.warning("dev_id parameter is not supported")
+            from .tflite_model import TFLiteModelImpl
+            self._impl = TFLiteModelImpl(tflite_model_path)
+            return
+        # Default to TVM+Treelite
+        from .dlr_model import DLRModelImpl
+        if dev_type is None:
+            dev_type = 'cpu'
+        if dev_id is None:
+            dev_id = 0
+        self._impl = DLRModelImpl(model_path, dev_type, dev_id)
 
     def run(self, input_values):
-        """
-        Run inference with given input(s)
-
-        Parameters
-        ----------
-        input_values : a single :py:class:`numpy.ndarray` or a dictionary
-            For decision tree models, provide a single :py:class:`numpy.ndarray`
-            to indicate a single input, as decision trees always accept only one
-            input.
-
-            For deep learning models, provide a dictionary where keys are input
-            names (of type :py:class:`str`) and values are input tensors (of type
-            :py:class:`numpy.ndarray`). Deep learning models allow more than one
-            input, so each input must have a unique name.
-
-        Returns
-        -------
-        out : :py:class:`numpy.ndarray`
-            Prediction result
-        """
-        out = []
-        # set input(s)
-        if isinstance(input_values, (np.ndarray, np.generic)):
-            # Treelite model or single input tvm/treelite model.
-            # Treelite has a dummy input name 'data'.
-            if self.input_names:
-                self._set_input(self.input_names[0], input_values)
-        elif isinstance(input_values, dict):
-            # TVM model
-            for key, value in input_values.items():
-                if (self.input_names and key not in self.input_names) and \
-                   (self.weight_names and key not in self.weight_names):
-                    raise ValueError("%s is not a valid input name." % key)
-                self._set_input(key, value)
-        else:
-            raise ValueError("input_values must be of type dict (tvm model) " +
-                             "or a np.ndarray/generic (representing treelite models)")
-        # run model
-        self._run()
-        # get output
-        for i in range(self.num_outputs):
-            ith_out = self._get_output(i)
-            out.append(ith_out)
-        return out
+        return self._impl.run(input_values)
+    
+    def get_input_names(self):
+        return self._impl.get_input_names()
 
     def get_input(self, name, shape=None):
-        """
-        Get the current value of an input
+        return self._impl.get_input(name, shape)
 
-        Parameters
-        ----------
-        name : str
-            The name of an input
-        shape : np.array (optional)
-            If given, use as the shape of the returned array. Otherwise, the shape of
-            the returned array will be inferred from the last call to set_input().
-        """
-        if name not in self.input_shapes and shape is None:
-            raise ValueError('Since set_input() was never called with ' +
-                             'input {}, we cannot infer its shape. '.format(name) +
-                             'Shape parameter should be explicitly specified')
-        if shape is None:
-            shape = self.input_shapes[name]
-        shape = np.array(shape)
-        out = np.zeros(shape.prod(), dtype=np.float32)
-        _check_call(_LIB.GetDLRInput(byref(self.handle),
-                                     c_char_p(name.encode('utf-8')),
-                                     out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
-        out = out.reshape(shape)
-        return out
+    def get_output_names(self):
+        return self._impl.get_output_names()
