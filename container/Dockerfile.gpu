@@ -47,7 +47,6 @@ RUN useradd -m model-server \
     && mkdir -p /home/model-server/model
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
-COPY allocate_workers.py /home/model-server/allocate_workers.py
 COPY config.properties /home/model-server/config.properties
 
 COPY neo_template_$APP.py /home/model-server/neo_template.py
