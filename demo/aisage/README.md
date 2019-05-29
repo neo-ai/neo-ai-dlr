@@ -138,6 +138,13 @@ Run the inference
 ```
 python3 run_yolo_gluoncv.py
 ```
+The script has 5 warmup runs and 10 test runs, output as follows:
+```
+warm up..
+cost per image: 1.2862s
+test..
+cost per image: 1.2872s
+```
 ### Gluoncv ssd_512_mobilenet1.0_voc
 Download compiled model from s3 bucket
 ```
@@ -159,4 +166,11 @@ cd ../..
 Run the inference
 ```
 python3 run_ssd_gluoncv.py
+```
+The script has 5 warmup runs and 10 test runs, output as follows:
+```
+warm up..
+cost per image: 0.4823s
+test..
+cost per image: 0.4712s
 ```

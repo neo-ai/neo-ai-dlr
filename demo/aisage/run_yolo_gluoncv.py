@@ -9,10 +9,23 @@ voc_classes = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', '
 def run(m, x, ctx):
     # Build TVM runtime
     tvm_input = tvm.nd.array(x.asnumpy(), ctx=ctx)
+    m.set_input('data', tvm_input)
     # execute
-    m.run(data=tvm_input)
+    m.run()
+    # to show the performance test if needed
+    num_warmup = 5
+    num_test   = 10
+    # perform some warm up runs
+    print("warm up..")
+    warm_up_timer = m.module.time_evaluator("run", ctx, num_warmup)
+    warmup = warm_up_timer()
+    print("cost per image: %.4fs" % warmup.mean)
+    # test
+    print("test..")
+    ftimer = m.module.time_evaluator("run", ctx, num_test)
+    prof_res = ftimer()
+    print("cost per image: %.4fs" % prof_res.mean)
     # get outputs
-    class_id = m.get_output(0)
     class_IDs, scores, bounding_boxs = m.get_output(0), m.get_output(1), m.get_output(2)
     return class_IDs, scores, bounding_boxs
 
@@ -20,12 +33,12 @@ def run(m, x, ctx):
 ######################################################################
 # Download and pre-process demo image
 
-im_fname = 'dog.jpg'
+im_fname = 'street_small.jpg'
 x, img = data.transforms.presets.ssd.load_test(im_fname, short=300)
 
-path_lib = "./models/yolov3_darknet53/deploy_lib.so"
-path_graph = "./models/yolov3_darknet53/deploy_graph.json"
-path_param = "./models/yolov3_darknet53/deploy_param.params"
+path_lib = "./models/ssd_mobilenet1.0/deploy_lib.so"
+path_graph = "./models/ssd_mobilenet1.0/deploy_graph.json"
+path_param = "./models/ssd_mobilenet1.0/deploy_param.params"
 
 graph = open(path_graph).read()
 params = bytearray(open(path_param, "rb").read())
@@ -39,6 +52,8 @@ m = graph_runtime.create(graph, lib, ctx)
 m.load_params(params)
 
 class_IDs, scores, bounding_boxs = run(m, x, ctx)
+# uncomment to print the results if needed
+#print(class_IDs, scores, bounding_boxs)
 
 ######################################################################
 # Display result
