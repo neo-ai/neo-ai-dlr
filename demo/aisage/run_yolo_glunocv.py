@@ -1,7 +1,6 @@
 import tvm
 
 from matplotlib import pyplot as plt
-from tvm import relay
 from tvm.contrib import graph_runtime
 from gluoncv import model_zoo, data, utils
 
