@@ -138,3 +138,25 @@ Run the inference
 ```
 python3 run_yolo_gluoncv.py
 ```
+### Gluoncv ssd_512_mobilenet1.0_voc
+Download compiled model from s3 bucket
+```
+cd models
+
+mkdir ssd_mobilenet1.0
+
+cd ssd_mobilenet1.0
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_param.params
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_graph.json
+
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_lib.so
+
+cd ../..
+```
+
+Run the inference
+```
+python3 run_ssd_gluoncv.py
+```
