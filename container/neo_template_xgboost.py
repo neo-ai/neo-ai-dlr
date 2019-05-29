@@ -28,7 +28,7 @@ class NeoXGBoostPredictor():
     def initialize(self, context):
         manifest = context.manifest
         model_dir = context.system_properties.get("model_dir")
-        print("Loading the model from directroy {}".format(model_dir))
+        print("Loading the model from directory {}".format(model_dir))
         self.model = dlr.DLRModel(model_dir)
         self.initialized = True
 

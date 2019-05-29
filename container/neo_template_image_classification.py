@@ -58,7 +58,7 @@ class NeoImageClassificationPredictor():
     def initialize(self, context):
         manifest = context.manifest
         model_dir = context.system_properties.get("model_dir")
-        print("Loading the model from directroy {}".format(model_dir))
+        print("Loading the model from directory {}".format(model_dir))
 
         # Load shape info
         self.shape_info = None
@@ -72,7 +72,11 @@ class NeoImageClassificationPredictor():
         if self.shape_info is None:
             raise Exception('Shape info must be given as {}'.format(SHAPES_FILE))
 
-        self.model = dlr.DLRModel(model_dir)
+        USE_GPU = os.getenv('USE_GPU', None)
+        if USE_GPU == '1':
+            self.model = dlr.DLRModel(model_dir, dev_type='gpu')
+        else:
+            self.model = dlr.DLRModel(model_dir)
         self.initialized = True
 
     def preprocess(self, context, data):

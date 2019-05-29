@@ -2,7 +2,6 @@
 set -e
 set -x
 
-export IFS=' '
 MMS_NUM_WORKER=1
 MMS_NUM_THREAD_PER_WORKER=`nproc`
 if [[ "$1" = "serve" ]]; then
