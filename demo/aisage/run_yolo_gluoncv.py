@@ -34,11 +34,11 @@ def run(m, x, ctx):
 # Download and pre-process demo image
 
 im_fname = 'street_small.jpg'
-x, img = data.transforms.presets.ssd.load_test(im_fname, short=300)
+x, img = data.transforms.presets.yolo.load_test(im_fname, short=300)
 
-path_lib = "./models/ssd_mobilenet1.0/deploy_lib.so"
-path_graph = "./models/ssd_mobilenet1.0/deploy_graph.json"
-path_param = "./models/ssd_mobilenet1.0/deploy_param.params"
+path_lib = "./models/yolov3_darknet53/deploy_lib.so"
+path_graph = "./models/yolov3_darknet53/deploy_graph.json"
+path_param = "./models/yolov3_darknet53/deploy_param.params"
 
 graph = open(path_graph).read()
 params = bytearray(open(path_param, "rb").read())
@@ -52,8 +52,6 @@ m = graph_runtime.create(graph, lib, ctx)
 m.load_params(params)
 
 class_IDs, scores, bounding_boxs = run(m, x, ctx)
-# uncomment to print the results if needed
-#print(class_IDs, scores, bounding_boxs)
 
 ######################################################################
 # Display result
