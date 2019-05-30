@@ -138,12 +138,25 @@ Run the inference
 ```
 python3 run_yolo_gluoncv.py
 ```
-The script has 5 warmup runs and 10 test runs, output as follows:
+The script will run the model 10 times and dumps the result to console:
 ```
-warm up..
-cost per image: 1.2862s
-test..
-cost per image: 1.2872s
+Inference time: 1,284 ms
+Inference time: 1,274 ms
+Inference time: 1,284 ms
+Inference time: 1,263 ms
+Inference time: 1,273 ms
+Inference time: 1,262 ms
+Inference time: 1,342 ms
+Inference time: 1,294 ms
+Inference time: 1,271 ms
+Inference time: 1,285 ms
+0 14 person 0.9947595 [ 16.338623 121.93883   57.51333  209.91515 ]
+1 6 car 0.9909543 [149.0418  128.55173 216.31621 169.59064]
+2 1 bicycle 0.9865054 [175.475   153.96129 282.6286  238.53874]
+3 14 person 0.95648724 [117.49012 115.61078 148.5764  191.71698]
+4 14 person 0.9378013 [195.87904 123.14607 265.96475 228.11818]
+5 14 person 0.72334594 [ 78.89762  124.670456  87.09647  158.53853 ]
+6 14 person 0.53352076 [ 46.620457 125.701904  59.702282 159.13812 ]
 ```
 ### Gluoncv ssd_512_mobilenet1.0_voc
 Download compiled model from s3 bucket
