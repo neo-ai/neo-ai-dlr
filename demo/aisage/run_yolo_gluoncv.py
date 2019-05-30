@@ -1,10 +1,27 @@
+#!/usr/bin/env python3
+
 import tvm
 from tvm.contrib import graph_runtime
 import numpy as np
+import cv2
 import time
 ms = lambda: int(round(time.time() * 1000))
 
 voc_classes = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+
+def open_and_norm_image(f, target_res = (300, 300), mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]):
+    img = cv2.imread(f)
+    # BGR to RGB
+    img = img[..., ::-1]
+    # GluonCV uses INTER_CUBIC interpolation method to resize the image
+    img = cv2.resize(img, target_res, interpolation = cv2.INTER_CUBIC)
+    img = np.asarray(img, "float32")
+    img /= 255.0
+    img -= np.array(mean)
+    img /= np.array(std)
+    img = img.transpose((2, 0, 1))
+    img = img[np.newaxis, :]
+    return img
 
 def run(m, x, ctx):
     tvm_input = tvm.nd.array(x, ctx=ctx)
@@ -14,8 +31,8 @@ def run(m, x, ctx):
 
 
 ######################################################################
-# Load pre-processed demo image
-x = np.load('street_small.jpg.npy')
+# Load, resize and normalize demo image
+x = open_and_norm_image('street_small.jpg')
 
 path_lib = "./models/yolov3_darknet53/deploy_lib.so"
 path_graph = "./models/yolov3_darknet53/deploy_graph.json"
