@@ -7,12 +7,12 @@ Table of Contents
    * [Table of Contents](#table-of-contents)
       * [Installation](#installation)
          * [pip](#pip)
-         * [Tensorflow](#tensorflow)
+         * [TensorFlow](#tensorflow)
          * [TVM runtime and OpenCV](#tvm-runtime-and-opencv)
          * [DLR](#dlr)
       * [Run Inference](#run-inference)
-         * [ssd_mobilenet_v1_0.75_depth_quantized_coco](#ssd_mobilenet_v1_075_depth_quantized_coco)
-         * [YOLOv3](#yolov3)
+         * [TensorFlow Lite ssd_mobilenet_v1_0.75_depth_quantized_coco](#tensorflow-lite-ssd_mobilenet_v1_075_depth_quantized_coco)
+         * [TensorFlow YOLOv3](#tensorflow-yolov3)
          * [Gluoncv yolo3_darknet53_voc](#gluoncv-yolo3_darknet53_voc)
          * [Gluoncv ssd_512_mobilenet1.0_voc](#gluoncv-ssd_512_mobilenet10_voc)
          * [MXNet SSD Mobilenet 512 voc](#mxnet-ssd-mobilenet-512-voc)
@@ -27,7 +27,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 sudo python3 get-pip.py
 ```
 
-### Tensorflow
+### TensorFlow
 Install Tensorflow
 ```
 curl -O https://github.com/neo-ai/neo-ai-dlr/blob/demo-aisage/demo/aisage/tensorflow-1.13.1-cp35-none-linux_aarch64.whl
@@ -54,7 +54,7 @@ sudo pip3 install --upgrade dlr-1.0-py2.py3-none-any.whl
 
 ## Run Inference
 
-### ssd_mobilenet_v1_0.75_depth_quantized_coco
+### TensorFlow Lite ssd_mobilenet_v1_0.75_depth_quantized_coco
 Edit `run-ssd.py` file and make sure that the following line is uncommented
 ```
 model_path, input_tensor_name = "models/ssd_mobilenet_v1_0.75_depth_quantized_300x300_coco14_sync_2018_07_18.tflite", "normalized_input_image_tensor"
@@ -90,7 +90,7 @@ Avg: 131.7 ms, Median 132.0 ms (stddev: 0.48304589153964794)
 Memory RSS: 178,184,192
 ```
 
-### YOLOv3
+### TensorFlow YOLOv3
 Set Swap memory size to minimum 3GB
 ```
 free -h
