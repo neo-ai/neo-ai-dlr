@@ -4,6 +4,7 @@ Table of Contents
 =================
 
    * [Acer aiSage Demo](#acer-aisage-demo)
+   * [Table of Contents](#table-of-contents)
       * [Installation](#installation)
          * [pip](#pip)
          * [Tensorflow](#tensorflow)
@@ -15,6 +16,7 @@ Table of Contents
          * [Gluoncv yolo3_darknet53_voc](#gluoncv-yolo3_darknet53_voc)
          * [Gluoncv ssd_512_mobilenet1.0_voc](#gluoncv-ssd_512_mobilenet10_voc)
          * [MXNet SSD Mobilenet 512 voc](#mxnet-ssd-mobilenet-512-voc)
+         * [MXNet SSD Resnet50 512 voc](#mxnet-ssd-resnet50-512-voc)
 
 ## Installation
 
@@ -236,5 +238,41 @@ time: 666 ms
 time: 687 ms
 1  car [6.         0.9542924  0.6018397  0.13442558 0.89551395 0.29527432]
 2  dog [11.          0.8844297   0.14165549  0.38350004  0.40806746  0.9418139 ]
+```
+To display the image with boundary boxes uncomment two last lines in the script
+
+### MXNet SSD Resnet50 512 voc
+Download compiled mxnet-ssd-resnet50-512 model from s3
+```
+cd models
+mkdir mxnet-ssd-resnet50-512
+cd mxnet-ssd-resnet50-512
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.params
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.json
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.so
+cd ../..
+```
+Run the inference
+```
+python3 run-mxnet-ssd-resnet50-512.py
+```
+Script warms up the model and runs the inference 10 times. The output:
+```
+models/mxnet-ssd-resnet50-512/model.so
+Warming up...
+Running...
+time: 6694 ms
+time: 3300 ms
+time: 3336 ms
+time: 3473 ms
+time: 3376 ms
+time: 3219 ms
+time: 3293 ms
+time: 3299 ms
+time: 3182 ms
+time: 3330 ms
+1 car [6.         0.9989802  0.6128727  0.13521719 0.8909892  0.294108  ]
+2 dog [11.          0.91762155  0.168013    0.33782458  0.39899638  0.9333589 ]
+3 bicycle [1.         0.8148663  0.18910009 0.2178039  0.7376316  0.7913436 ]
 ```
 To display the image with boundary boxes uncomment two last lines in the script
