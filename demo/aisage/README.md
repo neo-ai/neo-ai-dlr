@@ -187,3 +187,38 @@ cost per image: 0.4823s
 test..
 cost per image: 0.4712s
 ```
+
+### MXNet SSD Mobilenet 512 voc
+Download compiled mxnet-ssd-mobilenet-512 model from s3
+```
+cd models
+mkdir mxnet-ssd-mobilenet-512
+cd mxnet-ssd-mobilenet-512
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.params
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.json
+curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.so
+cd ../..
+```
+Run
+```
+python3 run-mxnet-ssd-mobilenet-512.py
+```
+Script output
+```
+models/mxnet-ssd-mobilenet-512/model.so
+Warming up...
+Running...
+time: 1391 ms
+time: 686 ms
+time: 672 ms
+time: 641 ms
+time: 660 ms
+time: 700 ms
+time: 703 ms
+time: 659 ms
+time: 666 ms
+time: 687 ms
+1  car [6.         0.9542924  0.6018397  0.13442558 0.89551395 0.29527432]
+2  dog [11.          0.8844297   0.14165549  0.38350004  0.40806746  0.9418139 ]
+```
+To display the image with boundary boxes uncomment two last line in the script
