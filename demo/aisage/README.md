@@ -1,5 +1,21 @@
 # Acer aiSage Demo
 
+Table of Contents
+=================
+
+   * [Acer aiSage Demo](#acer-aisage-demo)
+      * [Installation](#installation)
+         * [pip](#pip)
+         * [Tensorflow](#tensorflow)
+         * [TVM runtime and OpenCV](#tvm-runtime-and-opencv)
+         * [DLR](#dlr)
+      * [Run Inference](#run-inference)
+         * [ssd_mobilenet_v1_0.75_depth_quantized_coco](#ssd_mobilenet_v1_075_depth_quantized_coco)
+         * [YOLOv3](#yolov3)
+         * [Gluoncv yolo3_darknet53_voc](#gluoncv-yolo3_darknet53_voc)
+         * [Gluoncv ssd_512_mobilenet1.0_voc](#gluoncv-ssd_512_mobilenet10_voc)
+         * [MXNet SSD Mobilenet 512 voc](#mxnet-ssd-mobilenet-512-voc)
+
 ## Installation
 
 ### pip
@@ -16,16 +32,16 @@ curl -O https://github.com/neo-ai/neo-ai-dlr/blob/demo-aisage/demo/aisage/tensor
 sudo pip3 install --upgrade tensorflow-1.13.1-cp35-none-linux_aarch64.whl
 ```
 
-### TVM runtime and gluoncv
+### TVM runtime and OpenCV
 Install TVM runtime
 ```
 sudo easy_install3 tvm-0.6.dev0-py3.5-linux-aarch64.egg
 ```
 
-Install gluoncv
-```
-sudo pip3 install gluoncv
-```
+Install OpenCV as described below
+
+https://docs.opencv.org/4.0.1/d7/d9f/tutorial_linux_install.html
+
 
 ### DLR
 Install DLR
@@ -199,11 +215,11 @@ curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.so
 cd ../..
 ```
-Run
+Run the inference
 ```
 python3 run-mxnet-ssd-mobilenet-512.py
 ```
-Script output
+Script warms up the model and runs the inference 10 times. The output:
 ```
 models/mxnet-ssd-mobilenet-512/model.so
 Warming up...
@@ -221,4 +237,4 @@ time: 687 ms
 1  car [6.         0.9542924  0.6018397  0.13442558 0.89551395 0.29527432]
 2  dog [11.          0.8844297   0.14165549  0.38350004  0.40806746  0.9418139 ]
 ```
-To display the image with boundary boxes uncomment two last line in the script
+To display the image with boundary boxes uncomment two last lines in the script
