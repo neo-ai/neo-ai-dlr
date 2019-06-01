@@ -215,6 +215,12 @@ cd mxnet-ssd-mobilenet-512
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.params
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.json
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-mobilenet-512/model.so
+
+ls -la
+#-rw-r--r-- 1 linaro linaro    44755 Jun  1 03:13 model.json
+#-rw-r--r-- 1 linaro linaro 74886881 Jun  1 03:13 model.params
+#-rw-r--r-- 1 linaro linaro  1616584 Jun  1 03:13 model.so
+
 cd ../..
 ```
 Run the inference
@@ -226,18 +232,18 @@ Script warms up the model and runs the inference 10 times. The output:
 models/mxnet-ssd-mobilenet-512/model.so
 Warming up...
 Running...
-time: 1391 ms
-time: 686 ms
-time: 672 ms
-time: 641 ms
-time: 660 ms
-time: 700 ms
-time: 703 ms
-time: 659 ms
-time: 666 ms
-time: 687 ms
-1  car [6.         0.9542924  0.6018397  0.13442558 0.89551395 0.29527432]
-2  dog [11.          0.8844297   0.14165549  0.38350004  0.40806746  0.9418139 ]
+time: 1098 ms
+time: 555 ms
+time: 565 ms
+time: 634 ms
+time: 584 ms
+time: 567 ms
+time: 571 ms
+time: 616 ms
+time: 566 ms
+time: 560 ms
+1 car [6.         0.9542936  0.60183954 0.13442554 0.895514   0.2952745 ]
+2 dog [11.          0.88442934  0.14165542  0.38349992  0.40806755  0.9418141 ]
 ```
 To display the image with boundary boxes uncomment two last lines in the script
 
