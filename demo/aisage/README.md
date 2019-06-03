@@ -256,6 +256,12 @@ cd mxnet-ssd-resnet50-512
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.params
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.json
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/aisage/mxnet-ssd-resnet50-512/model.so
+
+ls -la
+# -rw-r--r-- 1 linaro linaro     76371 Jun  3 19:53 model.json
+# -rw-r--r-- 1 linaro linaro 279212654 Jun  3 19:54 model.params
+# -rwxr-xr-x 1 linaro linaro   2345544 Jun  3 19:54 model.so
+
 cd ../..
 ```
 Run the inference
@@ -267,18 +273,18 @@ Script warms up the model and runs the inference 10 times. The output:
 models/mxnet-ssd-resnet50-512/model.so
 Warming up...
 Running...
-time: 6694 ms
-time: 3300 ms
-time: 3336 ms
-time: 3473 ms
-time: 3376 ms
-time: 3219 ms
-time: 3293 ms
-time: 3299 ms
-time: 3182 ms
-time: 3330 ms
-1 car [6.         0.9989802  0.6128727  0.13521719 0.8909892  0.294108  ]
-2 dog [11.          0.91762155  0.168013    0.33782458  0.39899638  0.9333589 ]
-3 bicycle [1.         0.8148663  0.18910009 0.2178039  0.7376316  0.7913436 ]
+time: 2314 ms
+time: 2186 ms
+time: 2280 ms
+time: 2274 ms
+time: 2280 ms
+time: 2249 ms
+time: 2179 ms
+time: 2294 ms
+time: 2234 ms
+time: 2279 ms
+1 car [6.         0.9989819  0.6128868  0.13524562 0.89104104 0.29410914]
+2 dog [11.          0.9176801   0.16801469  0.3378617   0.39896053  0.93334997]
+3 bicycle [1.         0.8154005  0.18903047 0.21784124 0.7376166  0.79141533]
 ```
 To display the image with boundary boxes uncomment two last lines in the script
