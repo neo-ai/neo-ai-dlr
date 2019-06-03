@@ -180,16 +180,17 @@ Inference time: 1,285 ms
 Download compiled model from s3 bucket
 ```
 cd models
-
 mkdir ssd_mobilenet1.0
-
 cd ssd_mobilenet1.0
 
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_param.params
-
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_graph.json
-
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_lib.so
+
+ls -la
+# -rw-r--r-- 1 linaro linaro   100851 Jun  3 20:37 deploy_graph.json
+# -rw-r--r-- 1 linaro linaro  1059600 Jun  3 20:37 deploy_lib.so
+# -rw-r--r-- 1 linaro linaro 68144642 Jun  3 20:37 deploy_param.params
 
 cd ../..
 ```
@@ -201,9 +202,9 @@ python3 run_ssd_gluoncv.py
 The script has 5 warmup runs and 10 test runs, output as follows:
 ```
 warm up..
-cost per image: 0.4823s
+cost per image: 0.5124s
 test..
-cost per image: 0.4712s
+cost per image: 0.5233s
 ```
 
 ### MXNet SSD Mobilenet 512 voc
