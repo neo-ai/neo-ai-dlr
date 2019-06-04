@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-import tvm
+import dlr
 import numpy as np
 import time
-
-from tvm.contrib import graph_runtime
 
 ms = lambda: int(round(time.time() * 1000))
 
@@ -24,17 +22,8 @@ def open_and_norm_image(f):
     img = np.expand_dims(img, axis=0)
     return orig_img, img
 
-ctx = tvm.cl()
-
-base = "models/mxnet-ssd-mobilenet-512/"
-path_lib = base + "model.so"
-path_graph = base + "model.json"
-path_param = base + "model.params"
-print(path_lib)
-
-graph = open(path_graph).read()
-params = bytearray(open(path_param, "rb").read())
-lib = tvm.module.load(path_lib)
+model_path = "models/mxnet-ssd-mobilenet-512"
+print(model_path)
 
 class_names = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair",
                "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant",
@@ -43,24 +32,24 @@ class_names = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "
 ######################################################################
 # Create TVM runtime and do inference
 
-# Build TVM runtime
-m = graph_runtime.create(graph, lib, ctx)
-m.load_params(params)
+# Build DLR runtime
+device = 'opencl'
+m = dlr.DLRModel(model_path, device)
 
 orig_img, img_data = open_and_norm_image(test_image)
-input_data = tvm.nd.array(img_data.astype(dtype))
+input_data = img_data.astype(dtype)
 
 # dryrun
 print("Warming up...")
-m.run(data = input_data)
+m.run(input_data)
 # execute
 print("Running...")
 N = 10
 for i in range(N):
     t1 = ms()
-    m.run(data = input_data)
+    m_out = m.run(input_data)
     # get outputs
-    out = m.get_output(0).asnumpy()[0]
+    out = m_out[0][0]
     t2 = ms()
     print("time: {} ms".format(t2 - t1))
 
