@@ -188,9 +188,9 @@ curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_
 curl -O https://s3.us-east-2.amazonaws.com/dlc-models/demo_ssd_mobilenet1.0_300_acer/deploy_lib.so
 
 ls -la
-# -rw-r--r-- 1 linaro linaro   100851 Jun  3 20:37 deploy_graph.json
-# -rw-r--r-- 1 linaro linaro  1059600 Jun  3 20:37 deploy_lib.so
-# -rw-r--r-- 1 linaro linaro 68144642 Jun  3 20:37 deploy_param.params
+#-rw-r--r-- 1 linaro linaro   104306 Jun 11 21:06 deploy_graph.json
+#-rw-r--r-- 1 linaro linaro  1448592 Jun 11 21:06 deploy_lib.so
+#-rw-r--r-- 1 linaro linaro 56675570 Jun 11 21:06 deploy_param.params
 
 cd ../..
 ```
@@ -199,12 +199,26 @@ Run the inference
 ```
 python3 run_ssd_gluoncv.py
 ```
-The script has 5 warmup runs and 10 test runs, output as follows:
+The script will run the model 10 times and dumps the result to console:
 ```
-warm up..
-cost per image: 0.5124s
-test..
-cost per image: 0.5233s
+Warming up...
+Run
+Inference time: 658 ms
+Inference time: 523 ms
+Inference time: 490 ms
+Inference time: 505 ms
+Inference time: 521 ms
+Inference time: 508 ms
+Inference time: 494 ms
+Inference time: 497 ms
+Inference time: 502 ms
+Inference time: 519 ms
+0 1 bicycle 0.9741237 [172.66663 158.28613 286.02094 238.5332 ]
+1 6 car 0.9716955 [143.26068 131.61815 219.55444 175.22414]
+2 14 person 0.8749042 [104.93566 117.74303 137.54279 191.69618]
+3 14 person 0.84338117 [116.56376 121.43619 150.0251  193.48737]
+4 14 person 0.7564636 [  8.947611 127.189606  59.59655  217.4589  ]
+5 14 person 0.743564 [197.30463  124.381676 269.9327   231.34436 ]
 ```
 
 ### MXNet SSD Mobilenet 512 voc
