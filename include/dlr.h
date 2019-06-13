@@ -5,7 +5,7 @@
 #include <tvm/runtime/module.h>
 #include <treelite/predictor.h>
 #include <treelite/c_api_runtime.h>
-#include "../3rdparty/treelite/dmlc-core/src/io/filesys.h"
+#include "../3rdparty/treelite/dmlc-core/include/dmlc/filesystem.h"
 //#include <graph/graph_runtime.cc>
 //#include <graph/debug/graph_runtime_debug.cc>
 #include <runtime_base.h>
