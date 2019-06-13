@@ -5,7 +5,7 @@
 #include <tvm/runtime/module.h>
 #include <treelite/predictor.h>
 #include <treelite/c_api_runtime.h>
-#include "../3rdparty/treelite/dmlc-core/src/io/filesys.h"
+#include "../3rdparty/treelite/dmlc-core/include/dmlc/filesystem.h"
 //#include <graph/graph_runtime.cc>
 //#include <graph/debug/graph_runtime_debug.cc>
 #include <runtime_base.h>
@@ -15,6 +15,19 @@
 #include <sys/types.h>
 
 #define LINE_SIZE 256
+/*!
+ * \brief The DLContext device types supported by DLR.
+ */
+typedef enum {
+  /*! \brief CPU device */
+  kDLRCPU = 1,
+  /*! \brief CUDA GPU device */
+  kDLRGPU = 2,
+  /*! \brief OpenCL devices. */
+  kDLROpenCL = 4,
+} DLRDeviceType;
+
+static const DLRDeviceType device_list[] = {kDLRCPU, kDLRGPU, kDLROpenCL};
 
 /* special symbols for DLL library on Windows */
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -83,7 +96,7 @@ class DLRModel {
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> input_names_;
   std::vector<std::string> weight_names_;
-  DLContext ctx_;
+  std::vector<DLContext> ctx_;
   /* fields for Treelite model */
   PredictorHandle treelite_model_;
   size_t treelite_num_feature_;
@@ -96,7 +109,7 @@ class DLRModel {
   /*! /brief Load model files from given folder path.
    */
   explicit DLRModel(const std::string& model_path,
-                    const DLContext& ctx);
+                    const std::vector<DLContext>& ctx);
 
   /*! /brief Get the output of the given input x.
    */

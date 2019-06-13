@@ -162,7 +162,7 @@ DLRBackend get_backend(const std::string &dirname) {
 }
 
 DLRModel::DLRModel(const std::string& model_path,
-                   const DLContext& ctx) {
+                   const std::vector<DLContext>& ctx) {
   backend_ = get_backend(model_path);
   ctx_ = ctx;
 
@@ -192,7 +192,7 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
   }
   tvm_graph_runtime_ =
     std::make_shared<tvm::runtime::GraphRuntime>();
-  tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
+  tvm_graph_runtime_->Init(json_blob.str(), module, ctx_);
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(
@@ -572,9 +572,23 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
                               int dev_type, int dev_id) {
   API_BEGIN();
   const std::string model_path_string(model_path);   
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
+  std::vector<DLContext> ctx;
+  // We feed all device types we support to TVM runtime, all with default device id 0
+  // This would work for heterogeneous TVM models no matter what type/id user specifies
+  // For non-heterogeneous models, TVM runtime uses ctx[0], so we place user-specified
+  // device type/id at the beginning of ctx list.
+  for (const auto d : device_list) {
+    ctx.push_back(DLContext({static_cast<DLDeviceType>(d), 0}));
+  }
+  DLContext user_ctx({static_cast<DLDeviceType>(dev_type), dev_id});
+  for (auto it = ctx.begin(); it != ctx.end(); it++) {
+    if ( (it->device_type == user_ctx.device_type) && (it->device_id == user_ctx.device_id) ){
+      ctx.erase(it);
+      break;
+    }
+  }
+  ctx.insert(ctx.begin(), user_ctx);
+ 
   DLRModel *model = new DLRModel(model_path_string, 
                                 ctx);
   *handle = model;
