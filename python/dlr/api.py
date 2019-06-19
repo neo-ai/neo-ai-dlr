@@ -31,7 +31,7 @@ class IDLRModel:
 def _find_model_file(model_path, ext):
     if os.path.isfile(model_path) and model_path.endswith(ext):
         return model_path
-    model_files = glob.glob(os.path.abspath(os.path.join(model_path, ext)))
+    model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*'+ext)))
     if len(model_files) > 1:
         raise ValueError('Multiple {} files found under {}'.format(ext, mdel_path))
     elif len(model_files) == 1:
