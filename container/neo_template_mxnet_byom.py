@@ -70,8 +70,10 @@ class NeoBYOMPredictor():
         return self.model.run(data)
 
     def postprocess(self, preds):
-        assert len(preds) == 1
-        return_data, content_type = self.user_module.neo_postprocess(preds[0])
+        if len(preds) == 1:
+            return_data, content_type = self.user_module.neo_postprocess(preds[0])
+        else:
+            return_data, content_type = self.user_module.neo_postprocess(preds)
         return [return_data], content_type
 
     def initialize(self, context):
@@ -96,8 +98,14 @@ class NeoBYOMPredictor():
                     script_name = member_info.name
         if script_name is None:
             raise RuntimeError('{} contains no *.py file'.format(source_tar))
-
-        self.user_module = import_user_module(tempdir, script_name[:-3])
+        cur_dir = tempdir
+        script_path = script_name[:-3]
+        if '/' in script_path:
+            file_depth = len(script_path.split('/')) - 1
+            for i in range(file_depth):
+                cur_dir = os.path.join(cur_dir, script_name[:-3].split('/')[i])
+            script_path = script_path.split('/')[file_depth]
+        self.user_module = import_user_module(cur_dir, script_path)
 
         USE_GPU = os.getenv('USE_GPU', None)
         if USE_GPU == '1':

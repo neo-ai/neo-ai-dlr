@@ -6,8 +6,8 @@ MMS_NUM_WORKER=1
 MMS_NUM_THREAD_PER_WORKER=`nproc`
 if [[ "$1" = "serve" ]]; then
     shift 1
-    cp -v /opt/ml/model/* /home/model-server/model
-    cp -v /home/model-server/neo_template.py /home/model-server/model
+    cp -v -r /opt/ml/model/* /home/model-server/model
+    cp -v -r /home/model-server/neo_template.py /home/model-server/model
     model-archiver --handler neo_template:predict --model-name neomodel --model-path /home/model-server/model -f --export-path /home/model-server
     mv /home/model-server/neomodel.mar /home/model-server/model
 
