@@ -19,9 +19,9 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* \
     && cd /tmp
 
-RUN pip3 install --pre --no-cache-dir mxnet-model-server
+RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.0.5b20190521
 
-RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests
+RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet
 
 RUN pip3 install --upgrade --force-reinstall tensorflow
 

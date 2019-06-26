@@ -34,13 +34,13 @@ def import_user_module(path, script_name):
             return DummyModule(name)
 
     # Intercept import semantics, to ignore ImportError
-    realimport, builtins.__import__ = builtins.__import__, tryimport
+    #realimport, builtins.__import__ = builtins.__import__, tryimport
 
     sys.path.insert(0, path)
     user_module = importlib.import_module(script_name)
 
     # Restore import semantics
-    builtins.__import__ = realimport
+    #builtins.__import__ = realimport
 
     return user_module
 
