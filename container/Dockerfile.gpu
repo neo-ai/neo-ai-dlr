@@ -28,16 +28,21 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/* \
     && cd /tmp
 
-RUN pip3 install --pre --no-cache-dir mxnet-model-server
+RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.0.5b20190521
 
-RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests
+RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet
+
+RUN pip3 install --upgrade --force-reinstall tensorflow_gpu
 
 #RUN pip3 install --no-cache-dir dlr
 
 RUN mkdir -p /home/model-server && cd /home/model-server \
     && git clone --recursive https://github.com/neo-ai/neo-ai-dlr \
-    && cd neo-ai-dlr && git checkout 7dd33f829062e19df3c0f175912199ad176da970 \
+    && cd neo-ai-dlr \
     && git submodule update --init --recursive \
+    && cd 3rdparty/tvm \
+    && git checkout dev \
+    && cd ../.. \
     && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 \
     && make -j15 && cd ../python && python3 setup.py bdist_wheel \
     && pip3 install dist/*.whl
