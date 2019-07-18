@@ -3,6 +3,7 @@ import pickle as pkl
 import csv
 import numpy as np
 from scipy.sparse import csr_matrix
+import io
 import os
 import dlr
 
@@ -22,8 +23,11 @@ class NeoXGBoostPredictor():
 
     def postprocess(self, preds):
         assert len(preds) == 1
-        ret = [','.join([str(x) for x in row]) for row in preds[0].tolist()]
-        return ret
+        preds = preds[0]
+        with io.StringIO() as f:
+            np.savetxt(f, preds, delimiter=',', newline='\n')
+            ret = f.getvalue()
+        return [ret]
 
     def initialize(self, context):
         manifest = context.manifest
@@ -42,7 +46,7 @@ class NeoXGBoostPredictor():
         batch_size = len(req_ids)
 
         if batch_size != 1:
-            raise Exception('Batch prediction not yet supported')
+            raise Exception('Batching multiple requests is not yet supported')
 
         for k in range(batch_size):
             req_id = req_ids[k]
