@@ -24,6 +24,9 @@ class NeoXGBoostPredictor():
     def postprocess(self, preds):
         assert len(preds) == 1
         preds = preds[0]
+        assert preds.ndim == 2
+        if preds.shape[1] == 1:
+            preds = preds.reshape((1, -1))
         with io.StringIO() as f:
             np.savetxt(f, preds, delimiter=',', newline='\n')
             ret = f.getvalue()
