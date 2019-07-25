@@ -9,7 +9,7 @@ def cloudTargetMatrix = [
 ]
 
 def inferenceContainerApps = [
-  "xgboost", "image_classification"
+  ["xgboost", "cpu"], ["image_classification", "cpu"], ["image_classification", "gpu"]
 ]
 
 /* Pipeline definition */
@@ -61,7 +61,7 @@ pipeline {
       steps {
         script {
           parallel (inferenceContainerApps.collectEntries{
-            [(it): { BuildInferenceContainer(it) } ]
+            [(it[0] + '-' + it[1]): { BuildInferenceContainer(it[0], it[1]) } ]
           })
         }
       }
@@ -155,14 +155,20 @@ def CloudInstallAndTest(cloudTarget) {
 }
 
 // Build DLR inference containers
-def BuildInferenceContainer(app) {
+def BuildInferenceContainer(app, target) {
   def nodeReq = "ubuntu && amd64 && cpu-build"
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Building inference container ${app}"
+    echo "Building inference container ${app} for target ${target}"
+    if (target == "gpu") {
+      // Download TensorRT library
+      s3Download(file: 'container/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz',
+                 bucket: 'neo-ai-dlr-jenkins-artifacts',
+                 path: 'TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz')
+    }
     sh """
     cd container
-    docker build --build-arg APP=${app} -t ${app}-cpu -f Dockerfile.cpu .
+    docker build --build-arg APP=${app} -t ${app}-${target} -f Dockerfile.${target} .
     """
   }
 }
