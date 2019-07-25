@@ -49,7 +49,7 @@ class NeoImageClassificationPredictor():
         self.initialized = False
 
     def inference(self, data):
-        return self.model.run({self.model.input_names[0]: data})
+        return self.model.run({self.input_names[0]: data})
 
     def postprocess(self, preds):
         assert len(preds) == 1
@@ -77,6 +77,7 @@ class NeoImageClassificationPredictor():
             self.model = dlr.DLRModel(model_dir, dev_type='gpu')
         else:
             self.model = dlr.DLRModel(model_dir)
+        self.input_names = self.model.get_input_names()
         self.initialized = True
 
     def preprocess(self, context, data):
