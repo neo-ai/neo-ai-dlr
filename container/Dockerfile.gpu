@@ -42,6 +42,7 @@ RUN mkdir -p /home/model-server && cd /home/model-server \
     && git submodule update --init --recursive \
     && cd 3rdparty/tvm \
     && git checkout dev \
+    && sed -i '1s;^;#include <cstring>\n;' src/runtime/cuda/cuda_device_api.cc \
     && cd ../.. \
     && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 \
     && make -j15 && cd ../python && python3 setup.py bdist_wheel \
