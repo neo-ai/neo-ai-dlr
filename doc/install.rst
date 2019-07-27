@@ -197,6 +197,14 @@ For arm64 targets, add
   
 to cmake flags.
 
+You can include whole ``libtensorflow-lite.a`` library into ``libdlr.so`` shared library. Use ``WITH_TENSORFLOW_LITE_LIB=<path_to_libtensorflow-lite.a>`` cmake flag.
+
+.. code-block:: bash
+
+  -DWITH_TENSORFLOW_LITE_LIB=/opt/tensorflow/tensorflow/lite/tools/make/gen/arm-linux-android/lib/libtensorflow-lite.a
+
+To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
+
 ***********************************
 Validation After Build (Linux Only)
 ***********************************
