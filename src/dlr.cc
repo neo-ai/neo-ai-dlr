@@ -7,6 +7,7 @@
 #include <iterator>
 #include <vector>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <numeric>
 
@@ -228,7 +229,10 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
 
 void DLRModel::SetupTreeliteModule(const std::string& model_path) {
   ModelPath paths = get_treelite_paths(model_path);
-  int num_worker_threads = -1; // use the maximum amount of threads
+  // If OMP_NUM_THREADS is set, use it to determine number of threads;
+  // if not, use the maximum amount of threads
+  const char* val = std::getenv("OMP_NUM_THREADS");
+  int num_worker_threads = (val ? std::atoi(val) : -1);
   num_inputs_ = 1;
   num_outputs_ = 1;
   // Give a dummy input name to Treelite model.
