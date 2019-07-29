@@ -1,0 +1,4 @@
+#!/bin/bash
+
+MMS_NUM_WORKER=1
+MMS_NUM_THREAD_PER_WORKER=`nproc`

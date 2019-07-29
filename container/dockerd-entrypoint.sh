@@ -2,8 +2,8 @@
 set -e
 set -x
 
-MMS_NUM_WORKER=1
-MMS_NUM_THREAD_PER_WORKER=`nproc`
+source /home/model-server/mms_config.sh
+
 if [[ "$1" = "serve" ]]; then
     shift 1
     cp -v -r /opt/ml/model/* /home/model-server/model

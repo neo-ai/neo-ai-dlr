@@ -56,6 +56,7 @@ COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 COPY config.properties /home/model-server/config.properties
 
 COPY neo_template_$APP.py /home/model-server/neo_template.py
+COPY mms_config_$APP.sh /home/model-server/mms_config.sh
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
     && chown -R model-server /home/model-server
