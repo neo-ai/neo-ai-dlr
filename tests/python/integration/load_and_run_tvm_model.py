@@ -20,6 +20,24 @@ def test_resnet():
     probabilities = model.run(input_data) #need to be a list of input arrays matching input names
     assert probabilities[0].argmax() == 151
 
+def test_heterogeneous_model():
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+            'hetero')
+    model = DLRModel(model_path)
+
+    shape = (4,)
+
+    tensor_a = np.random.uniform(size=shape).astype(np.float32)
+    tensor_b = np.random.uniform(size=shape).astype(np.float32)
+    tensor_c = np.random.uniform(size=shape).astype(np.float32)
+    tensor_d = np.random.uniform(size=shape).astype(np.float32)
+    
+    input_dict = {'A': tensor_a, 'B': tensor_b, 'C': tensor_c, 'D': tensor_d}
+    print('Testing inference on heterogeneouse model...')
+    output = model.run(input_dict)
+
+    np.testing.assert_equal(
+                output[0], tensor_a + tensor_b - tensor_c + tensor_d)
 
 def test_multi_input_multi_output():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -68,4 +86,5 @@ if __name__ == '__main__':
     test_resnet()
     test_multi_input_multi_output()
     test_assign_op()
+    test_heterogeneous_model()
     print('All tests passed!')
