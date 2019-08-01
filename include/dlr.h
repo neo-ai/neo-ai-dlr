@@ -97,6 +97,7 @@ class DLRModel {
   std::vector<std::string> input_names_;
   std::vector<std::string> weight_names_;
   std::vector<DLContext> ctx_;
+  std::unordered_map<std::string, bool> device_enabled_;
   /* fields for Treelite model */
   PredictorHandle treelite_model_;
   size_t treelite_num_feature_;
@@ -130,6 +131,7 @@ class DLRModel {
   void GetOutput(int index, float* out);
 
   const char* GetBackend() const;
+  bool RuntimeEnabled(const char* target);
 
   /*! /brief DLRModel destructor
    */
@@ -289,6 +291,14 @@ DLR_DLL const char* DLRGetLastError();
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL int GetDLRBackend(DLRModelHandle* handle, const char** name);
+
+/*!
+ \brief Returns if a certain device is supported in current build 
+ \param handle The model handle returned from CreateDLRModel().
+ \param tartget The name of the target device.
+ \return true/false. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL bool DLRRuntineEnabled(DLRModelHandle* handle, const char *target);
 
 /*! \} */
 

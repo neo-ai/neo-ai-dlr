@@ -469,6 +469,25 @@ const char* DLRModel::GetBackend() const {
   }
 }
 
+bool DLRModel::RuntimeEnabled(const char *device) {
+  if (backend_ == DLRBackend::kTREELITE) {
+    if ( strcmp(device, "cpu") != 0 ) {
+      return false;
+    } else {
+      return true;
+    }
+  } else if (backend_ == DLRBackend::kTVM) {
+    if ( device_enabled_.find(device) == device_enabled_.end()) {
+      tvm::runtime::PackedFunc runtime_enabled = tvm_module_->GetFunction("_Enabled");
+      device_enabled_[device] = runtime_enabled(device);
+    }
+    return device_enabled_[device];
+  } else {
+    LOG(FATAL) << "Unsupported backend!";
+    return false;
+  }
+}
+
 extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel *>(*handle);
@@ -618,3 +637,6 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_END();
 }
 
+extern "C" bool DLRRuntineEnabled(DLRModelHandle* handle, const char *target) {
+  return static_cast<DLRModel *>(*handle)->RuntimeEnabled(target);
+}
