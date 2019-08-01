@@ -637,6 +637,6 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_END();
 }
 
-extern "C" bool DLRRuntineEnabled(DLRModelHandle* handle, const char *target) {
+extern "C" bool DLRRuntimeEnabled(DLRModelHandle* handle, const char *target) {
   return static_cast<DLRModel *>(*handle)->RuntimeEnabled(target);
 }
