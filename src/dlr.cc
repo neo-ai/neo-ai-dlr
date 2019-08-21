@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <cmath>
-#include <dlr.h>
+#include <dlr_internal.h>
 #include <fstream>
 #include <streambuf>
 #include <algorithm>
