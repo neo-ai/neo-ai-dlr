@@ -161,23 +161,7 @@ DLRBackend get_backend(const std::string &dirname) {
   return backend;
 }
 
-DLRModel::DLRModel(const std::string& model_path,
-                   const DLContext& ctx) {
-  backend_ = get_backend(model_path);
-  ctx_ = ctx;
-
-//  std::string cmdline = "tar -xf " + model_path; 
-//  system(cmdline.c_str());
-  if (backend_ == DLRBackend::kTVM) {
-    SetupTVMModule(model_path);
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    SetupTreeliteModule(model_path);
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-  }
-}
-
-void DLRModel::SetupTVMModule(const std::string& model_path) {
+void TVMModel::SetupTVMModule(const std::string& model_path) {
   ModelPath paths = get_tvm_paths(model_path);
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
@@ -227,7 +211,7 @@ void DLRModel::SetupTVMModule(const std::string& model_path) {
   }
 }
 
-void DLRModel::SetupTreeliteModule(const std::string& model_path) {
+void TreeliteModel::SetupTreeliteModule(const std::string& model_path) {
   ModelPath paths = get_treelite_paths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
@@ -266,49 +250,40 @@ void DLRModel::SetupTreeliteModule(const std::string& model_path) {
   // version_ = get_version(paths.ver_json);
 }
 
-std::vector<std::string> DLRModel::GetWeightNames() const {
-  if (backend_ != DLRBackend::kTVM) {
-    LOG(FATAL) << "Only TVM models have weight file";
-  }
+std::vector<std::string> TVMModel::GetWeightNames() const {
   return tvm_graph_runtime_->GetWeightNames();
 }
 
-void DLRModel::GetNumInputs(int* num_inputs) const {
-  *num_inputs = num_inputs_;
+std::vector<std::string> TreeliteModel::GetWeightNames() const {
+  LOG(FATAL) << "GetWeightNames is not supported by Treelite backend";
+  return std::vector<std::string>(); // unreachable
 }
 
-void DLRModel::GetNumWeights(int* num_weights) const {
-  *num_weights = num_weights_;
-}
-
-const char* DLRModel::GetInputName(int index) const {
+const char* TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  if (backend_ == DLRBackend::kTVM) {
-    return input_names_[index].c_str();
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    return "data";
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-    return ""; // unreachable
-  }
+  return input_names_[index].c_str();
 }
 
-const char* DLRModel::GetWeightName(int index) const {
+const char* TreeliteModel::GetInputName(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return "data";
+}
+
+const char* TVMModel::GetWeightName(int index) const {
   CHECK_LT(index, num_weights_) << "Weight index is out of range.";
-  if (backend_ == DLRBackend::kTVM) {
-    return weight_names_[index].c_str();
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-    return ""; // unreachable
-  }
+  return weight_names_[index].c_str();
+}
+
+const char* TreeliteModel::GetWeightName(int index) const {
+  LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
+  return ""; // unreachable
 }
 
 #define CHECK_SHAPE(msg, value, expected) \
   CHECK_EQ(value, expected) << (msg) << ". Value read: " << (value) << ", Expected: " << (expected);
 
-void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
+void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
                         int dim) {
-  if (backend_ == DLRBackend::kTVM) {
     std::string str(name);
     int index = tvm_graph_runtime_->GetInputIndex(str);
     tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -324,7 +299,10 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
                 expected_size);
     tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
     set_input(str, &input_tensor);
-  } else if (backend_ == DLRBackend::kTREELITE) {
+}
+
+void TreeliteModel::SetInput(const char* name, const int64_t* shape, float* input,
+                             int dim) {
     // NOTE: Assume that missing values are represented by NAN
     CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
     // NOTE: If number of columns is less than num_feature, missing columns
@@ -366,14 +344,9 @@ void DLRModel::SetInput(const char* name, const int64_t* shape, float* input,
                                          treelite_num_feature_,
                                          &treelite_input_->handle), 0)
        << TreeliteGetLastError();
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-  }
 }
 
-void DLRModel::GetInput(const char* name, float* input) {
-  CHECK(backend_ == DLRBackend::kTVM) << "GetInput supported only for TVM backend";
-
+void TVMModel::GetInput(const char* name, float* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -388,85 +361,75 @@ void DLRModel::GetInput(const char* name, float* input) {
   arr.CopyTo(&input_tensor);
 }
 
-void DLRModel::GetOutputShape(int index, int64_t* shape) const {
-  if (backend_ == DLRBackend::kTVM) {
-    std::memcpy(shape, outputs_[index]->shape,
-                sizeof(int64_t) * outputs_[index]->ndim);
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    // Use -1 if input is yet unspecified and batch size is not known
-    shape[0] = treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
-    shape[1] = static_cast<int64_t>(treelite_output_size_);
+void TreeliteModel::GetInput(const char* name, float* input) {
+  LOG(FATAL) << "GetInput is not supported by Treelite backend";
+}
+
+void TVMModel::GetOutputShape(int index, int64_t* shape) const {
+  std::memcpy(shape, outputs_[index]->shape,
+              sizeof(int64_t) * outputs_[index]->ndim);
+}
+
+void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
+  // Use -1 if input is yet unspecified and batch size is not known
+  shape[0] = treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
+  shape[1] = static_cast<int64_t>(treelite_output_size_);
+}
+
+void TVMModel::GetOutput(int index, float* out) {
+  DLTensor output_tensor = *outputs_[index];
+  output_tensor.ctx = DLContext{kDLCPU, 0};
+  output_tensor.data = out;
+  tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
+  get_output(index, &output_tensor);
+}
+
+void TreeliteModel::GetOutput(int index, float* out) {
+  CHECK(treelite_input_);
+  std::memcpy(out, treelite_output_.data(),
+              sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
+}
+
+void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
+  *size = 1;
+  const DLTensor* tensor = outputs_[index];
+  for (int i = 0; i < tensor->ndim; ++i) {
+    *size *= tensor->shape[i];
+  }
+  *dim = tensor->ndim;
+}
+
+void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
+  if (treelite_input_) {
+    *size = static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
   } else {
-    LOG(FATAL) << "Unsupported backend!";
+    // Input is yet unspecified and batch is not known
+    *size = treelite_output_size_;
   }
+  *dim = 2;
 }
 
-void DLRModel::GetOutput(int index, float* out) {
-  if (backend_ == DLRBackend::kTVM) {
-    DLTensor output_tensor = *outputs_[index];
-    output_tensor.ctx = DLContext{kDLCPU, 0};
-    output_tensor.data = out;
-    tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
-    get_output(index, &output_tensor);
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    CHECK(treelite_input_);
-    std::memcpy(out, treelite_output_.data(),
-                sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-  }
+void TVMModel::Run() {
+  tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
+  run();
 }
 
-void DLRModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
-  if (backend_ == DLRBackend::kTVM) {
-    *size = 1;
-    const DLTensor* tensor = outputs_[index];
-    for (int i = 0; i < tensor->ndim; ++i) {
-      *size *= tensor->shape[i];
-    }
-    *dim = tensor->ndim;
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    if (treelite_input_) {
-      *size = static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
-    } else {
-      // Input is yet unspecified and batch is not known
-      *size = treelite_output_size_;
-    }
-    *dim = 2;
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-  }
+void TreeliteModel::Run() {
+  size_t out_result_size;
+  CHECK(treelite_input_);
+  treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
+  CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle,
+                                         1, 0, 0, treelite_output_.data(),
+                                         &out_result_size), 0)
+   << TreeliteGetLastError();
 }
 
-void DLRModel::GetNumOutputs(int* num_outputs) const {
-  *num_outputs = num_outputs_;
+const char* TVMModel::GetBackend() const {
+  return "tvm";
 }
 
-void DLRModel::Run() {
-  if (backend_ == DLRBackend::kTVM) {
-    // get the function from the module(run it)
-    tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
-    run();
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    size_t out_result_size;
-    CHECK(treelite_input_);
-    treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
-    CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle,
-                                           1, 0, 0, treelite_output_.data(),
-                                           &out_result_size), 0)
-      << TreeliteGetLastError();
-  }
-}
-
-const char* DLRModel::GetBackend() const {
-  if (backend_ == DLRBackend::kTVM) {
-    return "tvm";
-  } else if (backend_ == DLRBackend::kTREELITE) {
-    return "treelite";
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-    return "";
-  }
+const char* TreeliteModel::GetBackend() const {
+  return "treelite";
 }
 
 extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
@@ -575,8 +538,17 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
-  DLRModel *model = new DLRModel(model_path_string, 
-                                ctx);
+
+  DLRBackend backend = get_backend(model_path_string);
+  DLRModel* model;
+  if (backend == DLRBackend::kTVM) {
+    model = new TVMModel(model_path_string, ctx);
+  } else if (backend == DLRBackend::kTREELITE) {
+    model = new TreeliteModel(model_path_string, ctx);
+  } else {
+    LOG(FATAL) << "Unsupported backend!";
+    return -1; // unreachable
+  }
   *handle = model;
   API_END();
 }
@@ -603,4 +575,3 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   *name = static_cast<DLRModel *>(*handle)->GetBackend();
   API_END();
 }
-
