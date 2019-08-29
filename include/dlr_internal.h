@@ -61,58 +61,91 @@ struct TreeliteInput {
   CSRBatchHandle handle;
 };
 
+// Abstract class
 class DLRModel {
- private:
+ protected:
   std::string version_;
   DLRBackend backend_;
   size_t num_inputs_ = 1;
   size_t num_weights_ = 0;
   size_t num_outputs_ = 1;
-  /* fields for TVM model */
+  DLContext ctx_;
+  std::vector<std::string> input_names_;
+ public:
+  DLRModel(const DLContext& ctx, const DLRBackend& backend): ctx_(ctx), backend_(backend) {}
+  virtual ~DLRModel() {}
+  virtual void GetNumInputs(int* num_inputs) const {*num_inputs = num_inputs_;}
+  virtual void GetNumOutputs(int* num_outputs) const {*num_outputs = num_outputs_;}
+  virtual void GetNumWeights(int* num_weights) const {*num_weights = num_weights_;}
+  virtual const char* GetInputName(int index) const =0;
+  virtual const char* GetWeightName(int index) const =0;
+  virtual std::vector<std::string> GetWeightNames() const =0;
+  virtual void GetInput(const char* name, float* input) =0;
+  virtual void SetInput(const char* name, const int64_t* shape, float* input, int dim) =0;
+  virtual void Run() =0;
+  virtual void GetOutput(int index, float* out) =0;
+  virtual void GetOutputShape(int index, int64_t* shape) const =0;
+  virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) =0;
+  virtual const char* GetBackend() const =0;
+};
+
+
+class TVMModel: public DLRModel {
+ private:
   std::shared_ptr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
-  std::vector<std::string> input_names_;
   std::vector<std::string> weight_names_;
-  DLContext ctx_;
-  /* fields for Treelite model */
-  PredictorHandle treelite_model_;
-  size_t treelite_num_feature_;
-  size_t treelite_output_buffer_size_;  // size of temporary buffer per instance
-  size_t treelite_output_size_;  // size of output per instance
-  std::unique_ptr<TreeliteInput> treelite_input_;
-  std::vector<float> treelite_output_;
-
+  void SetupTVMModule(const std::string& model_path);
  public:
   /*! /brief Load model files from given folder path.
    */
-  explicit DLRModel(const std::string& model_path,
-                    const DLContext& ctx);
+  explicit TVMModel(const std::string& model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTVM) {
+    SetupTVMModule(model_path);
+  }
 
-  /*! /brief Get the output of the given input x.
-   */
-  void Run();
+  virtual const char* GetInputName(int index) const override;
+  virtual const char* GetWeightName(int index) const override;
+  virtual std::vector<std::string> GetWeightNames() const override;
+  virtual void GetInput(const char* name, float* input) override;
+  virtual void SetInput(const char* name, const int64_t* shape, float* input, int dim) override;
+  virtual void Run() override;
+  virtual void GetOutput(int index, float* out) override;
+  virtual void GetOutputShape(int index, int64_t* shape) const override;
+  virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
+  virtual const char* GetBackend() const override;
+};
 
-  void SetupTVMModule(const std::string& model_path);
+
+class TreeliteModel: public DLRModel {
+ private:
+  // fields for Treelite model
+  PredictorHandle treelite_model_;
+  size_t treelite_num_feature_;
+  // size of temporary buffer per instance
+  size_t treelite_output_buffer_size_;
+  // size of output per instance
+  size_t treelite_output_size_;
+  std::unique_ptr<TreeliteInput> treelite_input_;
+  std::vector<float> treelite_output_;
   void SetupTreeliteModule(const std::string& model_path);
-  std::vector<std::string> GetWeightNames() const;
-  void GetNumInputs(int* num_inputs) const;
-  const char* GetInputName(int index) const;
-  const char* GetWeightName(int index) const;
-  void SetInput(const char* name, const int64_t* shape, float* input, int dim);
-  void GetInput(const char* name, float* input);
-  void GetNumOutputs(int* num_outputs) const;
-  void GetNumWeights(int* num_weights) const;
-  void GetOutputShape(int index, int64_t* shape) const;
-  void GetOutputSizeDim(int index, int64_t* size, int* dim);
-  void GetOutput(int index, float* out);
-
-  const char* GetBackend() const;
-
-  /*! /brief DLRModel destructor
+ public:
+  /*! /brief Load model files from given folder path.
    */
-  virtual ~DLRModel() {};
+  explicit TreeliteModel(const std::string& model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTREELITE) {
+    SetupTreeliteModule(model_path);
+  }
 
+  virtual const char* GetInputName(int index) const override;
+  virtual const char* GetWeightName(int index) const override;
+  virtual std::vector<std::string> GetWeightNames() const override;
+  virtual void GetInput(const char* name, float* input) override;
+  virtual void SetInput(const char* name, const int64_t* shape, float* input, int dim) override;
+  virtual void Run() override;
+  virtual void GetOutput(int index, float* out) override;
+  virtual void GetOutputShape(int index, int64_t* shape) const override;
+  virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
+  virtual const char* GetBackend() const override;
 };
 
 } // namespace dlr
