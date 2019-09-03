@@ -162,9 +162,9 @@ def BuildInferenceContainer(app, target) {
     echo "Building inference container ${app} for target ${target}"
     if (target == "gpu") {
       // Download TensorRT library
-      s3Download(file: 'container/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz',
+      s3Download(file: 'container/TensorRT-5.1.5.0.Ubuntu-18.04.2.x86_64-gnu.cuda-10.0.cudnn7.5.tar.gz',
                  bucket: 'neo-ai-dlr-jenkins-artifacts',
-                 path: 'TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz')
+                 path: 'TensorRT-5.1.5.0.Ubuntu-18.04.2.x86_64-gnu.cuda-10.0.cudnn7.5.tar.gz')
     }
     sh """
     cd container

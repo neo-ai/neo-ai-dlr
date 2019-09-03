@@ -11,10 +11,10 @@ ENV USE_GPU 1
 
 RUN mkdir -p /packages
 
-COPY TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+COPY TensorRT-5.1.5.0.Ubuntu-18.04.2.x86_64-gnu.cuda-10.0.cudnn7.5.tar.gz /packages/TensorRT-5.1.5.0.Ubuntu-18.04.2.x86_64-gnu.cuda-10.0.cudnn7.5.tar.gz
 
 RUN cd /packages \
-    && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+    && tar xzvf TensorRT-5.1.5.0.Ubuntu-18.04.2.x86_64-gnu.cuda-10.0.cudnn7.5.tar.gz
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -44,7 +44,7 @@ RUN mkdir -p /home/model-server && cd /home/model-server \
     && git checkout dev \
     && sed -i '1s;^;#include <cstring>\n;' src/runtime/cuda/cuda_device_api.cc \
     && cd ../.. \
-    && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 \
+    && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.1.5.0 \
     && make -j15 && cd ../python && python3 setup.py bdist_wheel \
     && pip3 install dist/*.whl
 
