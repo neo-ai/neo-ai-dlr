@@ -2,3 +2,5 @@ build
 dist
 *.pyc
 lib
+3rdparty/tensorflow*
+3rdparty/flatbuffers*
