@@ -171,8 +171,18 @@ if(USE_TENSORRT)
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW_LITE_LIB)
-    message("Adding TENSORFLOW_LITE_LIB to DLR shared library")
-    list(APPEND TVM_RUNTIME_LINKER_LIBS -llog -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive)
+    if(NOT WITH_TENSORFLOW_LITE_LIB MATCHES ".*libtensorflow-lite\.a$")
+        message(FATAL_ERROR "WITH_TENSORFLOW_LITE_LIB should point to static library libtensorflow-lite.a")
+    endif()
+    message("Adding libtensorflow-lite.a to DLR shared library")
+    if(ANDROID_BUILD) # Android build needs additional library liblog
+        list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -llog)
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Mac OS linker is different from Linux.
+        # Use -force_load instead of --whole-archive
+        list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,-force_load,${WITH_TENSORFLOW_LITE_LIB})
+    else() # Regulal Linux Build
+        list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive)
+    endif()
 endif()
 
 set(MAIN_EXEC "")
@@ -193,8 +203,6 @@ target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${TVM_RUNTI
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${PROJECT_SOURCE_DIR}/lib)
-set_target_properties(dlr_static PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(dlr_static treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
 
 set(OPREFIX object_)
 add_custom_target(combined_lib
