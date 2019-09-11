@@ -214,22 +214,24 @@ add_custom_target(combined_lib
         )
 
 # Tests
-set(TEST_EXECS "")
-file(GLOB TEST_SRCS test/cpp/*.cc)
-find_library(GTEST_LIB NAMES libgtest.a gtest)
+if(NOT ANDROID_BUILD)
+  include(cmake/googletest.cmake)
+  fetch_googletest(
+    ${PROJECT_SOURCE_DIR}/cmake
+    ${PROJECT_BINARY_DIR}/googletest
+    )
 
-if(GTEST_LIB)
+  enable_testing()
+
+  file(GLOB TEST_SRCS tests/cpp/*.cc)
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
-    list(APPEND TEST_EXECS ${__execname})
-    target_link_libraries(${__execname}
-      dlr ${GTEST_LIB} pthread)
-    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
-    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    target_link_libraries(${__execname} dlr gtest_main)
+    add_test(NAME ${__execname} COMMAND ${__execname})
+    message(STATUS "Added Test: " ${__execname})
   endforeach()
-  add_custom_target(dlrtest DEPENDS ${TEST_EXECS})
 endif()
 
 # Group sources
