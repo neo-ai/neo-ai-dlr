@@ -120,7 +120,7 @@ Once the compilation is completed, install the Python package by running ``setup
 
 .. code-block:: bash
 
-  cd python
+  cd ../python
   python3 setup.py install --user
 
 Building on Mac OS X
@@ -137,7 +137,7 @@ To ensure that Homebrew GCC is used (instead of default Apple compiler), specify
 
 .. code-block:: bash
 
-  mkbir build
+  mkdir build
   cd build
   CC=gcc-8 CXX=g++-8 cmake ..
   make -j4
@@ -148,7 +148,7 @@ Once the compilation is completed, install the Python package by running ``setup
 
 .. code-block:: bash
 
-  cd python
+  cd ../python
   python3 setup.py install --user --prefix=''
 
 Building on Windows
@@ -172,7 +172,7 @@ Once the compilation is completed, install the Python package by running ``setup
 
 .. code-block:: cmd
 
-  cd python
+  cd ../python
   python3 setup.py install --user
 
 Building for Android on ARM
