@@ -2,6 +2,9 @@
 #include "dlr_common.h"
 #include "dlr_tvm.h"
 #include "dlr_treelite.h"
+#ifdef DLR_TFLITE
+#include "dlr_tflite/dlr_tflite.h"
+#endif // DLR_TFLITE
 
 
 using namespace dlr;
@@ -104,13 +107,32 @@ extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
   API_END();
 }
 
+#ifdef DLR_TFLITE
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite ctor.
+ */
+int CreateDLRModelFromTFLite(DLRModelHandle *handle,
+                   const char *model_path,
+                   int threads,
+                   int use_nnapi) {
+  API_BEGIN();
+  const std::string model_path_string(model_path);
+  // TFLiteModel class does not use DLContext internally
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(1); // 1 - kDLCPU
+  ctx.device_id = 0;
+  DLRModel* model = new TFLiteModel(model_path_string, ctx, threads, (bool) use_nnapi);
+  *handle = model;
+  API_END();
+}
+#endif // DLR_TFLITE
+
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
 extern "C" int CreateDLRModel(DLRModelHandle* handle,
-                              const char* model_path,
-                              int dev_type, int dev_id) {
+                                const char* model_path,
+                                int dev_type, int dev_id) {
   API_BEGIN();
-  const std::string model_path_string(model_path);   
+  const std::string model_path_string(model_path);
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
@@ -121,6 +143,13 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
     model = new TVMModel(model_path_string, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
     model = new TreeliteModel(model_path_string, ctx);
+#ifdef DLR_TFLITE
+  } else if (backend == DLRBackend::kTFLITE) {
+    // By default use undefined number of threads - threads=0 and use_nnapi=0
+    DLRModelHandle tf_handle;
+    CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
+    model = static_cast<DLRModel *>(tf_handle);
+#endif // DLR_TFLITE
   } else {
     LOG(FATAL) << "Unsupported backend!";
     return -1; // unreachable

@@ -68,19 +68,12 @@ include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-FILE(GLOB_RECURSE DLR_SRC
+# Add only top level *.cc files (non-RECURSE)
+FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/contrib/sort/sort.cc
-)
-FILE(GLOB_RECURSE DLR_INC 
-    "src/*.h"
-    "include/*.h"
-    "${TVM_SRC}/src/*.h" 
-    "${TVM_SRC}/include/*.h"
-    "${TREELITE_SRC}/src/*.h" 
-    "${TREELITE_SRC}/include/*.h"
 )
 
 if(USE_OPENCL)
@@ -175,6 +168,47 @@ if(WITH_TENSORFLOW_LITE_LIB)
         message(FATAL_ERROR "WITH_TENSORFLOW_LITE_LIB should point to static library libtensorflow-lite.a")
     endif()
     message("Adding libtensorflow-lite.a to DLR shared library")
+
+    # Download Tensorflow and FlatBuffers source code
+    set(TENSORFLOW_VER "1.13.2")
+    set(TENSORFLOW_SHA1 "78bb81d1e78ac9c3b092dee65f6b6b3cee23b9ae")
+    set(FLATBUFFERS_VER "1.11.0")
+    set(FLATBUFFERS_SHA1 "2b2633902c57c6980b3a41b44d8ad933f214d71d")
+    set(TENSORFLOW_URL "https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VER}.tar.gz")
+    set(TENSORFLOW_TGZ "/tmp/tensorflow-${TENSORFLOW_VER}.tar.gz")
+    set(TENSORFLOW_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tensorflow-${TENSORFLOW_VER}")
+    set(FLATBUFFERS_URL "https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VER}.tar.gz")
+    set(FLATBUFFERS_TGZ "/tmp/flatbuffers-${FLATBUFFERS_VER}.tar.gz")
+    set(FLATBUFFERS_SRC "${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers-${FLATBUFFERS_VER}")
+
+    download_file(${TENSORFLOW_URL} ${TENSORFLOW_TGZ} SHA1 ${TENSORFLOW_SHA1})
+    download_file(${FLATBUFFERS_URL} ${FLATBUFFERS_TGZ} SHA1 ${FLATBUFFERS_SHA1})
+
+    # Extract Tensorflow and FlatBuffers source code
+    message(STATUS "Extracting " ${TENSORFLOW_TGZ} " ...")
+    execute_process(
+        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/tensorflow*
+        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${TENSORFLOW_TGZ}
+        RESULT_VARIABLE tf_ret
+    )
+    if(NOT tf_ret EQUAL "0")
+        message(FATAL_ERROR "Failed to extract " ${TENSORFLOW_TGZ})
+    endif()
+    message(STATUS "Extracting " ${FLATBUFFERS_TGZ} " ...")
+    execute_process(
+        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers*
+        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${FLATBUFFERS_TGZ}
+        RESULT_VARIABLE fb_ret
+    )
+    if(NOT fb_ret EQUAL "0")
+        message(FATAL_ERROR "Failed to extract " ${FLATBUFFERS_TGZ})
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DDLR_TFLITE")
+    include_directories("${TENSORFLOW_SRC}")
+    include_directories("${FLATBUFFERS_SRC}/include")
+    list(APPEND DLR_SRC "src/dlr_tflite/dlr_tflite.cc")
+
     if(ANDROID_BUILD) # Android build needs additional library liblog
         list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -llog)
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Mac OS linker is different from Linux.
@@ -224,6 +258,10 @@ if(NOT ANDROID_BUILD)
   enable_testing()
 
   file(GLOB TEST_SRCS tests/cpp/*.cc)
+  if(WITH_TENSORFLOW_LITE_LIB)
+    file(GLOB TFLITE_TEST_SRCS tests/cpp/dlr_tflite/*.cc)
+    list(APPEND TEST_SRCS ${TFLITE_TEST_SRCS})
+  endif()
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
@@ -232,6 +270,23 @@ if(NOT ANDROID_BUILD)
     add_test(NAME ${__execname} COMMAND ${__execname})
     message(STATUS "Added Test: " ${__execname})
   endforeach()
+
+  if(WITH_TENSORFLOW_LITE_LIB)
+      # Download Test TFLite model and input data
+      file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v2_0.75_224.tflite
+        ./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite
+        SHA1
+        c653a09facaf2dfb5e3910030b3f74ad04259e30
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
+        ./cat224-3.txt
+        SHA1
+        e35e82f3371bed37caa7ecece417f50876414077
+      )
+  endif() # WITH_TENSORFLOW_LITE_LIB
 endif()
 
 # Group sources

@@ -36,6 +36,21 @@ int CreateDLRModel(DLRModelHandle *handle,
                    int dev_type,
                    int dev_id);
 
+#ifdef DLR_TFLITE
+/*!
+ \brief Creates a DLR model from TFLite
+ \param handle The pointer to save the model handle.
+ \param model_path Path to tflite file or to the top-level directory containing tflite file
+ \param threads Number of threads to use.
+ \param use_nnapi Use NNAPI, 0 - false, 1 - true.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+int CreateDLRModelFromTFLite(DLRModelHandle *handle,
+                   const char *model_path,
+                   int threads,
+                   int use_nnapi);
+#endif // DLR_TFLITE
+
 /*!
  \brief Deletes a DLR model.
  \param handle The model handle returned from CreateDLRModel().
@@ -160,7 +175,7 @@ int GetDLROutputSizeDim(DLRModelHandle* handle,
 const char* DLRGetLastError();
 
 /*!
- \brief Gets the name of the backend ("tvm" / "treelite")
+ \brief Gets the name of the backend ("tvm", "treelite" or "tflite")
  \param handle The model handle returned from CreateDLRModel().
  \param name The pointer to save the null-terminated string containing the name.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
