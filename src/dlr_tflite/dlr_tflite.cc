@@ -74,11 +74,11 @@ int TFLiteModel::GetInputId(const char* name) {
 // Constructor
 TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
                          const int threads, const bool use_nnapi): DLRModel(ctx, DLRBackend::kTFLITE) {
-  const char* tflite_file = GetTFLiteFile(model_path).c_str();
+  const std::string tflite_file = GetTFLiteFile(model_path);
 
   // ensure the model and error_reporter lifetime is at least as long as interpreter's lifetime
   error_reporter_ = new tflite::StderrReporter();
-  model_ = tflite::FlatBufferModel::BuildFromFile(tflite_file, error_reporter_);
+  model_ = tflite::FlatBufferModel::BuildFromFile(tflite_file.c_str(), error_reporter_);
   if (!model_) {
     LOG(FATAL) << "Failed to load the model: " << tflite_file;
     return; // unreachable

@@ -215,7 +215,7 @@ if(WITH_TENSORFLOW_LITE_LIB)
         # Use -force_load instead of --whole-archive
         list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,-force_load,${WITH_TENSORFLOW_LITE_LIB})
     else() # Regulal Linux Build
-        list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive)
+        list(APPEND TVM_RUNTIME_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
     endif()
 endif()
 
