@@ -13,18 +13,24 @@ if(ANDROID_BUILD)
     set(CMAKE_ANDROID_API 21)
     set(ANDROID_PLATFORM android-21)
     set(ANDROID_DEPRECATED_HEADERS ON)
-    if (${ANDROID_ABI} STREQUAL "x86_64")
-        include_directories(${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
-    elseif (${ANDROID_ABI} STREQUAL "x86")
-        include_directories(${ANDROID_SYSROOT}/usr/include/i686-linux-android)
-    elseif (${ANDROID_ABI} STREQUAL "arm64-v8a")
-        include_directories(${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
-    else() # Default to armv7a which matches NDK toolchain.cmake behavior
-        include_directories(${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
-    endif()
 endif(ANDROID_BUILD)
 
 project(dlr)
+
+# CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
+if(ANDROID_BUILD)
+    if (ANDROID_ABI STREQUAL "x86_64")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
+    elseif (ANDROID_ABI STREQUAL "x86")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android)
+    elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
+    else() # Default to armv7a which matches NDK toolchain.cmake behavior
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+    endif()
+    message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
+endif(ANDROID_BUILD)
+
 # Options
 option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
