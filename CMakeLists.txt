@@ -5,6 +5,8 @@ include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
 set_default_configuration_release()
 msvc_use_static_runtime()
 
+message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
+
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
 
@@ -19,6 +21,13 @@ project(dlr)
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
+    # Use RELEASE flags for Release build. It will reduce libdlr.so size by a factor of 3.
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS_RELEASE})
+        set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE})
+        set(CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS_RELEASE})
+    endif()
+    # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
     if (ANDROID_ABI STREQUAL "x86_64")
         list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
     elseif (ANDROID_ABI STREQUAL "x86")
@@ -29,6 +38,9 @@ if(ANDROID_BUILD)
         list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
     endif()
     message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
+    message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
+    message(STATUS "Android CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
+    message(STATUS "Android CMAKE_ASM_FLAGS: " ${CMAKE_ASM_FLAGS})
 endif(ANDROID_BUILD)
 
 # Options
