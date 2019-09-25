@@ -36,7 +36,6 @@ void peek_model(DLRModelHandle model){
   input_names.resize(num_inputs);
   std::cout << "input_names: ";
   for (int i = 0; i < num_inputs; i++) {
-    std::cout << " ";
     GetDLRInputName(&model, i, &input_names[i]);
     std::cout << input_names[i] << ", ";
   }
@@ -74,19 +73,18 @@ int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " [model dir] <device_type>" << std::endl;
     return 1;
-  } else {
-    if (argc >= 3) {
-      std::string argv2(argv[2]);
-      if (argv2 == "cpu"){
-        device_type = 1;
-      } else if (argv2 == "gpu") {
-        device_type = 2;
-      } else if (argv2 == "opencl") {
-        device_type = 4;
-      } else {
-        std::cerr << "Unsupported device type!" << std::endl;
-        return 1; 
-      }
+  } 
+  if (argc >= 3) {
+    std::string argv2(argv[2]);
+    if (argv2 == "cpu"){
+      device_type = 1;
+    } else if (argv2 == "gpu") {
+      device_type = 2;
+    } else if (argv2 == "opencl") {
+      device_type = 4;
+    } else {
+      std::cerr << "Unsupported device type!" << std::endl;
+      return 1; 
     }
   }
 

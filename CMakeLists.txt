@@ -27,19 +27,15 @@ if(ANDROID_BUILD)
         set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE})
         set(CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS_RELEASE})
     endif()
-    # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-    if (ANDROID_ABI)
-      if (ANDROID_ABI STREQUAL "x86_64")
-          list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
-      elseif (ANDROID_ABI STREQUAL "x86")
-          list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android)
-      elseif (ANDROID_ABI STREQUAL "arm64-v8a")
-          list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
-      else() # Default to armv7a which matches NDK toolchain.cmake behavior
-          list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
-      endif()
-    else (ANDROID_ABI)
-      list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+  # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+    if (ANDROID_ABI STREQUAL "x86_64")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
+    elseif (ANDROID_ABI STREQUAL "x86")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android)
+    elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
+    else() # Default to armv7a which matches NDK toolchain.cmake behavior
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
     endif()
     message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
     message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
@@ -259,7 +255,6 @@ target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKE
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${PROJECT_SOURCE_DIR}/lib)
-# target_link_libraries(dlr_static treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 
 set(OPREFIX object_)
 add_custom_target(combined_lib

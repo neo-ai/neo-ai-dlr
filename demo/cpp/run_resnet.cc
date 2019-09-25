@@ -108,23 +108,22 @@ int main(int argc, char** argv) {
   if (argc < 3) {
     std::cerr << "Usage: " << argv[0] << " [model dir] [ndarray file] <device> <input name>" << std::endl;
     return 1;
-  } else {
-    if (argc >= 4) {
-      std::string argv3(argv[3]);
-      if (argv3 == "cpu"){
-        device_type = 1;
-      } else if (argv3 == "gpu") {
-        device_type = 2;
-      } else if (argv3 == "opencl") {
-        device_type = 4;
-      } else {
-        std::cerr << "Unsupported device type!" << std::endl;
-        return 1; 
-      }
+  }
+  if (argc >= 4) {
+    std::string argv3(argv[3]);
+    if (argv3 == "cpu"){
+      device_type = 1;
+    } else if (argv3 == "gpu") {
+      device_type = 2;
+    } else if (argv3 == "opencl") {
+      device_type = 4;
+    } else {
+      std::cerr << "Unsupported device type!" << std::endl;
+      return 1; 
     }
-    if (argc >= 5) {
-      input_name = argv[4];
-    }
+  }
+  if (argc >= 5) {
+    input_name = argv[4];
   }
 
   std::cout << "Loading model... " << std::endl;
