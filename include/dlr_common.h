@@ -60,7 +60,7 @@ enum class DLRBackend {
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
-DLRBackend GetBackend(const std::string& dirname);
+DLRBackend GetBackend(std::vector<std::string> dirname);
 
 
 #define CHECK_SHAPE(msg, value, expected) \

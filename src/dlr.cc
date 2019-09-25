@@ -130,17 +130,26 @@ int CreateDLRModelFromTFLite(DLRModelHandle *handle,
  */
 extern "C" int CreateDLRModel(DLRModelHandle* handle,
                                 const char* model_path,
-                                int dev_type, int dev_id) {
+                                int dev_type, int dev_id, 
+                                int addl_path_cnt, ...) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
-  DLRBackend backend = dlr::GetBackend(model_path_string);
+  std::vector<std::string> path_vec{model_path};
+  va_list valist;
+  va_start(valist, addl_path_cnt);
+  for (int i = 0; i < addl_path_cnt; i++) {
+    path_vec.push_back(std::string(va_arg(valist, const char *)));
+  }
+  va_end(valist);
+
+  DLRBackend backend = dlr::GetBackend(path_vec);
   DLRModel* model;
   if (backend == DLRBackend::kTVM) {
-    model = new TVMModel(model_path_string, ctx);
+    model = new TVMModel(path_vec, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
     model = new TreeliteModel(model_path_string, ctx);
 #ifdef DLR_TFLITE

@@ -2,14 +2,18 @@
 #define DLR_H_
 
 #include <stdint.h>
+#include <stdarg.h>
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
-#if defined(_MSC_VER) || defined(_WIN32)
-extern "C" __declspec(dllexport) { // Open extern "C" block on Windows
-#else
-extern "C" { // Open extern "C" block
-#endif
+  #if defined(_MSC_VER) || defined(_WIN32)
+    extern "C" __declspec(dllexport) { // Open extern "C" block on Windows
+  #else
+    extern "C" { // Open extern "C" block
+  #endif
+  #define DEFAULT_VALUE(value) = value
+#else 
+  #define DEFAULT_VALUE(value)
 #endif // __cplusplus
 
 /*! \brief major version */
@@ -45,7 +49,8 @@ typedef void* DLRModelHandle;
 int CreateDLRModel(DLRModelHandle *handle,
                    const char *model_path,
                    int dev_type,
-                   int dev_id);
+                   int dev_id,
+                   int addl_path_cnt DEFAULT_VALUE(0), ...);
 
 #ifdef DLR_TFLITE
 /*!

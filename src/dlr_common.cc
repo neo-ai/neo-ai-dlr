@@ -45,14 +45,16 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
-DLRBackend dlr::GetBackend(const std::string& dirname) {
+DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   // Support the case where user provides full path to tflite file.
-  if (EndsWith(dirname, ".tflite")) {
+  if (EndsWith(dir_paths[0], ".tflite")) {
     return DLRBackend::kTFLITE;
   }
   // Scan Directory content to guess the backend.
   std::vector<std::string> paths;
-  dlr::ListDir(dirname, paths);
+  for (auto dir : dir_paths) {
+    dlr::ListDir(dir, paths);  
+  }
   for (auto filename: paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
