@@ -59,7 +59,6 @@ void peek_model(DLRModelHandle model){
     output_shapes[i].resize(dim);
     GetDLROutputShape(&model, i, output_shapes[i].data());
     std::cout << "[";
-    std::string line = "";
     for (int id = 0; id < dim; id++) {
       std::cout << std::to_string(output_shapes[i][id]) << ", ";
     }
@@ -71,7 +70,7 @@ int main(int argc, char** argv) {
   int device_type = 1;
   std::string input_name = "data";
   if (argc < 2) {
-    std::cerr << "Usage: " << argv[0] << " [model dir] <device_type>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <model dir> [device_type]" << std::endl;
     return 1;
   } 
   if (argc >= 3) {

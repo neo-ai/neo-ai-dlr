@@ -21,41 +21,19 @@ struct NDArray {
 };
 
 bool is_big_endian();
-NDArray ReadNDArray(const std::string& filename);
 std::vector<std::vector<float>> RunInference(DLRModelHandle model, 
                                              const char *data_path, 
-                                             std::string input_name);
+                                             const std::string& input_name);
 
 bool is_big_endian() {
-  union {
-    int64_t i;
-    char c[4];
-  } bint = {0x01020304};
-
-  return bint.c[0] == 1; 
-}
-
-/*! \brief Read from .npy file into NDArray.
- */
-NDArray ReadNDArray(const std::string& filename) {
-  std::ifstream fp(filename, std::ios_base::in);
-  fp.exceptions(std::istream::failbit);
-  int64_t size, ndim;
-  fp.read(reinterpret_cast<char*>(&size), sizeof(int64_t));
-  fp.read(reinterpret_cast<char*>(&ndim), sizeof(int64_t));
-  std::vector<int64_t> shape(ndim);
-  fp.read(reinterpret_cast<char*>(shape.data()), sizeof(int64_t) * ndim);
-  if (std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()) != size) {
-    throw std::runtime_error("Ill-formed file; size is not compatible with shape");
-  }
-  std::vector<float> data(size);
-  fp.read(reinterpret_cast<char*>(data.data()), sizeof(float) * size);
-  return NDArray{data, shape, ndim, size};
+  int32_t n = 1;
+  // big endian if true
+  return (*(char *)&n == 0);
 }
 
 /*! \brief A generic inference function using C-API.
  */
-std::vector<std::vector<float>> RunInference(DLRModelHandle model, const char* data_path, std::string input_name) {
+std::vector<std::vector<float>> RunInference(DLRModelHandle model, const char* data_path, const std::string& input_name) {
   int num_outputs;
   GetDLRNumOutputs(&model, &num_outputs);
   std::vector<int64_t> output_sizes;
@@ -106,7 +84,7 @@ int main(int argc, char** argv) {
   int device_type = 1;
   std::string input_name = "data";
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " [model dir] [ndarray file] <device> <input name>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <model dir> <ndarray file> [device] [input name]" << std::endl;
     return 1;
   }
   if (argc >= 4) {
