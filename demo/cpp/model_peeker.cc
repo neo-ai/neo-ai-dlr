@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
   int device_type = 1;
   std::string input_name = "data";
   if (argc < 2) {
-    std::cerr << "Usage: " << argv[0] << " <model dir> [device_type]" << std::endl;
+    LOG(FATAL) << "Usage: " << argv[0] << " <model dir> [device_type]";
     return 1;
   } 
   if (argc >= 3) {
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     } else if (argv2 == "opencl") {
       device_type = 4;
     } else {
-      std::cerr << "Unsupported device type!" << std::endl;
+      LOG(FATAL) << "Unsupported device type!";
       return 1; 
     }
   }
