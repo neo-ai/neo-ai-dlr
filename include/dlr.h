@@ -18,7 +18,7 @@ extern "C" { // Open extern "C" block
 #define DLR_MINOR 0
 /*! \brief patch version */
 #define DLR_PATCH 0
-/*! \brief mxnet version */
+/*! \brief DLR version */
 #define DLR_VERSION (DLR_MAJOR*10000 + DLR_MINOR*100 + DLR_PATCH)
 /*! \brief helper for making version number */
 #define DLR_MAKE_VERSION(major, minor, patch) ((major)*10000 + (minor)*100 + patch)
