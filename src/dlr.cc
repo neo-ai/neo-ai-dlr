@@ -180,3 +180,9 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   *name = static_cast<DLRModel *>(*handle)->GetBackend();
   API_END();
 }
+
+extern "C" int GetDLRVersion(int *out) {
+  API_BEGIN();
+  *out = static_cast<int>(DLR_VERSION);
+  API_END();  
+}

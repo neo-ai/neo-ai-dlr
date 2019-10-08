@@ -90,6 +90,11 @@ class DLRModelImpl(IDLRModel):
                                        byref(backend)))
         return backend.value.decode('ascii')
 
+    def _get_version(self):
+        version = c_int()
+        _check_call(_LIB.GetDLRVersion(byref(version)))
+        return version.value
+
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
         if not os.path.exists(model_path):
             raise ValueError("model_path %s doesn't exist" % model_path)
@@ -107,6 +112,7 @@ class DLRModelImpl(IDLRModel):
                                         c_int(dev_id)))
 
         self.backend = self._parse_backend()
+        self.version = self._get_version()
 
         self.num_inputs = self._get_num_inputs()
         self.num_weights = self._get_num_weights()
@@ -160,6 +166,16 @@ class DLRModelImpl(IDLRModel):
         out : list of :py:class:`str`
         """
         raise NotImplementedError
+
+    def get_version(self):
+        """
+        Get DLR version
+
+        Returns
+        -------
+        out : py:class:`int`
+        """
+        return self.version
 
     def _get_input_name(self, index):
         name = ctypes.c_char_p()
