@@ -91,9 +91,9 @@ class DLRModelImpl(IDLRModel):
         return backend.value.decode('ascii')
 
     def _get_version(self):
-        version = c_int()
+        version = c_char_p()
         _check_call(_LIB.GetDLRVersion(byref(version)))
-        return version.value
+        return version.value.decode('ascii')
 
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
         if not os.path.exists(model_path):

@@ -193,7 +193,7 @@ const char* DLRGetLastError();
  */
 int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
-int GetDLRVersion(int *out);
+int GetDLRVersion(const char** out);
 
 /*! \} */
 
