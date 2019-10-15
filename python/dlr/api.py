@@ -24,9 +24,12 @@ class IDLRModel:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, input_data):
+    def get_version(self):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def run(self, input_data):
+        raise NotImplementedError
 
 def _find_model_file(model_path, ext):
     if os.path.isfile(model_path) and model_path.endswith(ext):
@@ -81,3 +84,6 @@ class DLRModel(IDLRModel):
 
     def get_output_names(self):
         return self._impl.get_output_names()
+
+    def get_version(self):
+        return self._impl.get_version()
