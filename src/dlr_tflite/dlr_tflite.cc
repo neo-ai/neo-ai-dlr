@@ -187,3 +187,10 @@ void TFLiteModel::Run() {
 const char* TFLiteModel::GetBackend() const {
   return "tflite";
 }
+
+void TFLiteModel::SetNumThreads(int threads) {
+  if (threads > 0) {
+    interpreter_->SetNumThreads(threads);
+    LOG(INFO) << "Set Num Threads: " << threads;
+  }
+}

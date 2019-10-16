@@ -1,6 +1,7 @@
 #include "dlr_tvm.h"
 #include <fstream>
 #include <numeric>
+#include <stdlib.h>
 
 
 using namespace dlr;
@@ -164,4 +165,11 @@ void TVMModel::Run() {
 
 const char* TVMModel::GetBackend() const {
   return "tvm";
+}
+
+void TVMModel::SetNumThreads(int threads) {
+  if (threads > 0) {
+    setenv("TVM_NUM_THREADS", std::to_string(threads).c_str(), 1);
+    LOG(INFO) << "Set Num Threads: " << threads;
+  }
 }
