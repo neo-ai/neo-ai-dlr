@@ -194,3 +194,7 @@ void TFLiteModel::SetNumThreads(int threads) {
     LOG(INFO) << "Set Num Threads: " << threads;
   }
 }
+
+void TFLiteModel::UseCPUAffinity(bool use) {
+  LOG(FATAL) << "UseCPUAffinity is not supported by TFLite backend";
+}
