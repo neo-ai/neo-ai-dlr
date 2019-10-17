@@ -173,3 +173,13 @@ void TVMModel::SetNumThreads(int threads) {
     LOG(INFO) << "Set Num Threads: " << threads;
   }
 }
+
+void TVMModel::UseCPUAffinity(bool use) {
+  if (use) {
+    setenv("TVM_BIND_THREADS", "1", 1);
+    LOG(INFO) << "CPU Affinity is enabled";
+  } else {
+    setenv("TVM_BIND_THREADS", "0", 1);
+    LOG(INFO) << "CPU Affinity is disabled";
+  }
+}

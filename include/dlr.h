@@ -208,6 +208,14 @@ int GetDLRVersion(const char** out);
  */
 int SetDLRNumThreads(DLRModelHandle* handle, int threads);
 
+/*!
+ \brief Enable or disable CPU Affinity
+ \param handle The model handle returned from CreateDLRModel().
+ \param use 0 to disable, 1 to enable
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+
 /*! \} */
 
 #ifdef __cplusplus

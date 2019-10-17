@@ -186,3 +186,7 @@ const char* TreeliteModel::GetBackend() const {
 void TreeliteModel::SetNumThreads(int threads) {
   LOG(FATAL) << "SetNumThreads is not supported by Treelite backend";
 }
+
+void TreeliteModel::UseCPUAffinity(bool use) {
+  LOG(FATAL) << "UseCPUAffinity is not supported by Treelite backend";
+}
