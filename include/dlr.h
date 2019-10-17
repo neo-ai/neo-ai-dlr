@@ -193,7 +193,20 @@ const char* DLRGetLastError();
  */
 int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
+/*!
+ \brief Get DLR version
+ \param out The pointer to save the null-terminated string containing the version.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
 int GetDLRVersion(const char** out);
+
+/*!
+ \brief Set the number of threads available to DLR
+ \param handle The model handle returned from CreateDLRModel().
+ \param threads number of threads
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+int SetDLRNumThreads(DLRModelHandle* handle, int threads);
 
 /*! \} */
 

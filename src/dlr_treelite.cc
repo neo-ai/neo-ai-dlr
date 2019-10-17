@@ -182,3 +182,7 @@ void TreeliteModel::Run() {
 const char* TreeliteModel::GetBackend() const {
   return "treelite";
 }
+
+void TreeliteModel::SetNumThreads(int threads) {
+  LOG(FATAL) << "SetNumThreads is not supported by Treelite backend";
+}

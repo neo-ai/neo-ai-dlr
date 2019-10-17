@@ -189,3 +189,11 @@ extern "C" int GetDLRVersion(const char** out) {
   *out = version_str.c_str();
   API_END();  
 }
+
+extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->SetNumThreads(threads);
+  API_END();
+}
