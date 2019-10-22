@@ -205,6 +205,27 @@ You can include whole ``libtensorflow-lite.a`` library into ``libdlr.so`` shared
 
 To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
 
+Building for Android Archive (AAR) file
+---------------------------------------
+
+Install `Android Studio <https://developer.android.com/studio`_.
+
+.. code-block:: bash
+
+  cd aar
+  # create file local.properties
+  # put line containing path to Android/sdk
+  # sdk.dir=/Users/root/Library/Android/sdk
+
+  # Run gradle build
+  ./gradlew assembleRelease
+
+  # dlr-release.aar file will be under dlr/build/outputs/aar/ folder
+  ls -lah dlr/build/outputs/aar/dlr-release.aar
+
+
+
+
 ***********************************
 Validation After Build (Linux Only)
 ***********************************

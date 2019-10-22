@@ -9,6 +9,7 @@ message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
+option(AAR_BUILD "Build Android Archive (AAR)" OFF)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
@@ -236,6 +237,9 @@ if(WITH_TENSORFLOW_LITE_LIB)
         list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
     endif()
 endif()
+if(AAR_BUILD)
+    list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
+endif()
 
 set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
@@ -286,7 +290,7 @@ endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
 # Tests
-if(NOT ANDROID_BUILD)
+if(NOT(ANDROID_BUILD OR AAR_BUILD))
   include(cmake/googletest.cmake)
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake
