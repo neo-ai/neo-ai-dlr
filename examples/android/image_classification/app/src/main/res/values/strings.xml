@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">NeoImageClassification</string>
+    <string name="description_info">Info</string>
+    <string name="request_permission">This sample needs camera permission.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="toggle_turn_on">NN:On</string>
+    <string name="toggle_turn_off">NN:Off</string>
+    <string name="toggle">Use NNAPI</string>
+    <string name="dlr">DLR</string>
+    <string name="neo">Neo</string>
+    <string name="nnapi">NNAPI</string>
+    <string name="threads">Threads:</string>
+
+    <string name="model">Model:</string>
+    <string-array name="models">
+        <item>GluonCV_MobileNet_v2_075</item>
+        <item>GluonCV_MobileNet_v2_100</item>
+        <item>GluonCV_ResNet18_v2</item>
+        <item>GluonCV_ResNet50_v2</item>
+        <item>Keras_MobileNet_v2</item>
+        <item>Tensorflow_MobileNet_v1</item>
+        <item>Pass</item>
+    </string-array>
+
+    <string name="device">Device:</string>
+    <string-array name="devices">
+        <item>CPU</item>
+    </string-array>
+</resources>

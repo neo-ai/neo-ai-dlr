@@ -1,0 +1,146 @@
+def targetFolder = "src/main/assets"
+def dlr_models_host = "https://dlc-models.s3.us-east-2.amazonaws.com/android-models/"
+// Set it to the architecture of target device
+def arch = "arm64-v8a"
+def localCache = "build/intermediates"
+
+def dlr_gluoncv_mobilenet_v2_075_url = dlr_models_host + arch + "/dlr_gluoncv_mobilenet_v2_075.tgz"
+def dlr_gluoncv_mobilenet_v2_075_lc = localCache + "/dlr_gluoncv_mobilenet_v2_075.tgz"
+
+def dlr_gluoncv_mobilenet_v2_100_url = dlr_models_host + arch + "/dlr_gluoncv_mobilenet_v2_100.tgz"
+def dlr_gluoncv_mobilenet_v2_100_lc = localCache + "/dlr_gluoncv_mobilenet_v2_100.tgz"
+
+def dlr_gluoncv_resnet18_v2_url = dlr_models_host + arch + "/dlr_gluoncv_resnet18_v2.tgz"
+def dlr_gluoncv_resnet18_v2_lc = localCache + "/dlr_gluoncv_resnet18_v2.tgz"
+
+def dlr_gluoncv_resnet50_v2_url = dlr_models_host + arch + "/dlr_gluoncv_resnet50_v2.tgz"
+def dlr_gluoncv_resnet50_v2_lc = localCache + "/dlr_gluoncv_resnet50_v2.tgz"
+
+def dlr_keras_mobilenet_v2_url = dlr_models_host + arch + "/dlr_keras_mobilenet_v2.tgz"
+def dlr_keras_mobilenet_v2_lc = localCache + "/dlr_keras_mobilenet_v2.tgz"
+
+def dlr_tf_mobilenet_v1_100_url = dlr_models_host + arch + "/dlr_tf_mobilenet_v1_100.tgz"
+def dlr_tf_mobilenet_v1_100_lc = localCache + "/dlr_tf_mobilenet_v1_100.tgz"
+
+task download_dlr_gluoncv_mobilenet_v2_075(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_gluoncv_mobilenet_v2_075_url}"
+    }
+    sourceUrl = "${dlr_gluoncv_mobilenet_v2_075_url}"
+    target = file("${dlr_gluoncv_mobilenet_v2_075_lc}")
+}
+
+task download_dlr_gluoncv_mobilenet_v2_100(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_gluoncv_mobilenet_v2_100_url}"
+    }
+    sourceUrl = "${dlr_gluoncv_mobilenet_v2_100_url}"
+    target = file("${dlr_gluoncv_mobilenet_v2_100_lc}")
+}
+
+task download_dlr_gluoncv_resnet18_v2(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_gluoncv_resnet18_v2_url}"
+    }
+    sourceUrl = "${dlr_gluoncv_resnet18_v2_url}"
+    target = file("${dlr_gluoncv_resnet18_v2_lc}")
+}
+
+task download_dlr_gluoncv_resnet50_v2(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_gluoncv_resnet50_v2_url}"
+    }
+    sourceUrl = "${dlr_gluoncv_resnet50_v2_url}"
+    target = file("${dlr_gluoncv_resnet50_v2_lc}")
+}
+
+task download_dlr_keras_mobilenet_v2(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_keras_mobilenet_v2_url}"
+    }
+    sourceUrl = "${dlr_keras_mobilenet_v2_url}"
+    target = file("${dlr_keras_mobilenet_v2_lc}")
+}
+
+task download_dlr_tf_mobilenet_v1_100(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${dlr_tf_mobilenet_v1_100_url}"
+    }
+    sourceUrl = "${dlr_tf_mobilenet_v1_100_url}"
+    target = file("${dlr_tf_mobilenet_v1_100_lc}")
+}
+
+task unzip_dlr_gluoncv_mobilenet_v2_075(type: Copy, dependsOn: 'download_dlr_gluoncv_mobilenet_v2_075') {
+    doFirst {
+        println "Unzipping ${dlr_gluoncv_mobilenet_v2_075_lc}"
+    }
+    from tarTree("${dlr_gluoncv_mobilenet_v2_075_lc}")
+    into "${targetFolder}"
+}
+
+task unzip_dlr_gluoncv_mobilenet_v2_100(type: Copy, dependsOn: 'download_dlr_gluoncv_mobilenet_v2_100') {
+    doFirst {
+        println "Unzipping ${dlr_gluoncv_mobilenet_v2_100_lc}"
+    }
+    from tarTree("${dlr_gluoncv_mobilenet_v2_100_lc}")
+    into "${targetFolder}"
+}
+
+task unzip_dlr_gluoncv_resnet18_v2(type: Copy, dependsOn: 'download_dlr_gluoncv_resnet18_v2') {
+    doFirst {
+        println "Unzipping ${dlr_gluoncv_resnet18_v2_lc}"
+    }
+    from tarTree("${dlr_gluoncv_resnet18_v2_lc}")
+    into "${targetFolder}"
+}
+
+task unzip_dlr_gluoncv_resnet50_v2(type: Copy, dependsOn: 'download_dlr_gluoncv_resnet50_v2') {
+    doFirst {
+        println "Unzipping ${dlr_gluoncv_resnet50_v2_lc}"
+    }
+    from tarTree("${dlr_gluoncv_resnet50_v2_lc}")
+    into "${targetFolder}"
+}
+
+task unzip_dlr_keras_mobilenet_v2(type: Copy, dependsOn: 'download_dlr_keras_mobilenet_v2') {
+    doFirst {
+        println "Unzipping ${dlr_keras_mobilenet_v2_lc}"
+    }
+    from tarTree("${dlr_keras_mobilenet_v2_lc}")
+    into "${targetFolder}"
+}
+
+task unzip_dlr_tf_mobilenet_v1_100(type: Copy, dependsOn: 'download_dlr_tf_mobilenet_v1_100') {
+    doFirst {
+        println "Unzipping ${dlr_tf_mobilenet_v1_100_lc}"
+    }
+    from tarTree("${dlr_tf_mobilenet_v1_100_lc}")
+    into "${targetFolder}"
+}
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}
+
+task('downloadModels') {
+    doFirst {
+        println "Downloading Neo Models for " + arch
+    }
+}
+
+downloadModels.dependsOn unzip_dlr_gluoncv_mobilenet_v2_075
+downloadModels.dependsOn unzip_dlr_gluoncv_mobilenet_v2_100
+downloadModels.dependsOn unzip_dlr_gluoncv_resnet18_v2
+downloadModels.dependsOn unzip_dlr_gluoncv_resnet50_v2
+downloadModels.dependsOn unzip_dlr_keras_mobilenet_v2
+downloadModels.dependsOn unzip_dlr_tf_mobilenet_v1_100
+
