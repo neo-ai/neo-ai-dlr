@@ -109,8 +109,7 @@ class DLRModelImpl(IDLRModel):
         _check_call(_LIB.CreateDLRModel(byref(self.handle),
                                         c_char_p(model_path.encode()),
                                         c_int(device_table[dev_type]),
-                                        c_int(dev_id),
-                                        c_int(0)))
+                                        c_int(dev_id)))
 
         self.backend = self._parse_backend()
         self.version = self._get_version()

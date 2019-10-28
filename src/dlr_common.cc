@@ -45,6 +45,18 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
+std::vector<std::string> dlr::split(const char* s, char delimiter)
+{
+   std::vector<std::string> tokens;
+   std::string token;
+   std::istringstream tokenStream(s);
+   while (std::getline(tokenStream, token, delimiter))
+   {
+      tokens.push_back(token);
+   }
+   return tokens;
+}
+
 DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   // Support the case where user provides full path to tflite file.
   if (EndsWith(dir_paths[0], ".tflite")) {

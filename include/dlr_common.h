@@ -42,6 +42,8 @@ typedef struct {
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
+std::vector<std::string> split(const char* s, char delimiter);
+
 std::string GetBasename(const std::string& path);
 
 inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
