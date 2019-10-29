@@ -14,6 +14,12 @@ For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Y
 
 Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
 
+## Examples
+We prepared several examples demonstrating how to use DLR API on different platforms
+
+* [Neo AI DLR image classification Android example application](examples/android/image_classification)
+
+
 ## License
 
 This library is licensed under the Apache License Version 2.0. 
