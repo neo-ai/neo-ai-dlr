@@ -95,6 +95,7 @@ class DLRModel {
   virtual const char* GetBackend() const =0;
   virtual void SetNumThreads(int threads) =0;
   virtual void UseCPUAffinity(bool use) =0;
+  virtual void GetRuntimeEnabled(const char* device, bool* enabled) =0;
 };
 
 } // namespace dlr

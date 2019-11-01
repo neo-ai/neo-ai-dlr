@@ -198,3 +198,7 @@ void TFLiteModel::SetNumThreads(int threads) {
 void TFLiteModel::UseCPUAffinity(bool use) {
   LOG(FATAL) << "UseCPUAffinity is not supported by TFLite backend";
 }
+
+void TFLiteModel::GetRuntimeEnabled(const char* device, bool* enabled) {
+  LOG(FATAL) << "GetRuntimeEnabled is not supported by TFLite backend";
+}

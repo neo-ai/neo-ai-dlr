@@ -190,3 +190,7 @@ void TreeliteModel::SetNumThreads(int threads) {
 void TreeliteModel::UseCPUAffinity(bool use) {
   LOG(FATAL) << "UseCPUAffinity is not supported by Treelite backend";
 }
+
+void TreeliteModel::GetRuntimeEnabled(const char* device, bool* enabled) {
+  LOG(FATAL) << "GetRuntimeEnabled is not supported by Treelite backend";
+}

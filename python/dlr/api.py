@@ -28,6 +28,10 @@ class IDLRModel:
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_enabled_devices(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def run(self, input_data):
         raise NotImplementedError
 
@@ -87,3 +91,6 @@ class DLRModel(IDLRModel):
 
     def get_version(self):
         return self._impl.get_version()
+    
+    def get_enabled_devices(self):
+        return self._impl.get_enabled_devices()        

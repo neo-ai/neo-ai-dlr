@@ -216,6 +216,15 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  */
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 
+/*!
+ \brief Check if a particular compute device is enabled for the runtime
+ \param handle The model handle returned from CreateDLRModel().
+ \param device The compute device type 
+ \param enabled Pointer to save bool result
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+int GetDLRRuntimeEnabled(DLRModelHandle* handle, const char* device, bool* enabled);
+
 /*! \} */
 
 #ifdef __cplusplus

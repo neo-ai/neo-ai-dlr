@@ -183,3 +183,10 @@ void TVMModel::UseCPUAffinity(bool use) {
     LOG(INFO) << "CPU Affinity is disabled";
   }
 }
+
+void TVMModel::GetRuntimeEnabled(const char* device, bool* enabled) {
+  if ( device_enabled_.find(device) == device_enabled_.end()) {
+    device_enabled_[device] = (*tvm::runtime::Registry::Get("module._Enabled"))(device);
+  }
+  *enabled = device_enabled_[device];
+}

@@ -55,6 +55,7 @@ class TreeliteModel: public DLRModel {
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+  virtual void GetRuntimeEnabled(const char* device, bool* enabled) override;
 };
 
 } // namespace dlr

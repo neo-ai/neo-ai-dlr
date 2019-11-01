@@ -2,6 +2,7 @@
 #define DLR_TVM_H_
 
 #include <graph/graph_runtime.h>
+#include <tvm/runtime/registry.h>
 #include "dlr_common.h"
 
 namespace dlr {
@@ -19,6 +20,7 @@ class TVMModel: public DLRModel {
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> weight_names_;
+  std::unordered_map<std::string, bool> device_enabled_;
   void SetupTVMModule(const std::string& model_path);
  public:
   /*! \brief Load model files from given folder path.
@@ -39,6 +41,7 @@ class TVMModel: public DLRModel {
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+  virtual void GetRuntimeEnabled(const char* device, bool* enabled) override;
 };
 
 } // namespace dlr

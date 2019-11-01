@@ -110,8 +110,8 @@ extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
 #ifdef DLR_TFLITE
 /*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite ctor.
  */
-int CreateDLRModelFromTFLite(DLRModelHandle *handle,
-                   const char *model_path,
+int CreateDLRModelFromTFLite(DLRModelHandle* handle,
+                   const char* model_path,
                    int threads,
                    int use_nnapi) {
   API_BEGIN();
@@ -204,4 +204,12 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->UseCPUAffinity(use);
   API_END();
+}
+
+extern "C" int GetDLRRuntimeEnabled(DLRModelHandle* handle, const char* device, bool* enabled) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetRuntimeEnabled(device, enabled);
+  API_END();  
 }
