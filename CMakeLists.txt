@@ -22,11 +22,12 @@ project(dlr)
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
-    # Use RELEASE flags for Release build. It will reduce libdlr.so size by a factor of 3.
+    # Disable debugging info for Release build by setting -g level to 0. It will reduce libdlr.so size by a factor of 3.
+    # NDK Issue https://github.com/android/ndk/issues/243
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS_RELEASE})
-        set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE})
-        set(CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS_RELEASE})
+        string(REPLACE "-g " "-g0 " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS})
     endif()
   # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
     if (ANDROID_ABI STREQUAL "x86_64")
