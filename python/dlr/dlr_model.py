@@ -100,7 +100,7 @@ class DLRModelImpl(IDLRModel):
             raise ValueError("model_path %s doesn't exist" % model_path)
 
         self.handle = c_void_p()
-        device_table = {
+        self.supported_device_table = {
             'cpu': 1,
             'gpu': 2,
             'opencl': 4,
@@ -108,7 +108,7 @@ class DLRModelImpl(IDLRModel):
 
         _check_call(_LIB.CreateDLRModel(byref(self.handle),
                                         c_char_p(model_path.encode()),
-                                        c_int(device_table[dev_type]),
+                                        c_int(self.supported_device_table[dev_type]),
                                         c_int(dev_id)))
 
         self.backend = self._parse_backend()
@@ -119,7 +119,6 @@ class DLRModelImpl(IDLRModel):
         self.input_names = []
         self.weight_names = []
         self.input_shapes = {}   # Remember shape used in _set_input()
-        self.enabled_device_table = self._get_device_enabled(device_table)
         
         for i in range(self.num_inputs):
             self.input_names.append(self._get_input_name(i))
@@ -135,10 +134,10 @@ class DLRModelImpl(IDLRModel):
                 _check_call(_LIB.DeleteDLRModel(byref(self.handle)))
             self.handle = None
 
-    def _get_device_enabled(self, device_table):
+    def _get_device_enabled(self):
         enabled_device_table = []
         enabled = c_int()
-        for device in device_table.keys():
+        for device in self.supported_device_table.keys():
             _check_call(_LIB.GetDLRRuntimeEnabled(byref(self.handle),
                                                   c_char_p(device.encode('utf-8')),
                                                   byref(enabled)))
@@ -198,7 +197,7 @@ class DLRModelImpl(IDLRModel):
         -------
         out : py:class:`list`
         """
-        return self.enabled_device_table
+        return self._get_device_enabled()
 
     def _get_input_name(self, index):
         name = ctypes.c_char_p()
