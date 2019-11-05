@@ -37,8 +37,8 @@ typedef void* DLRModelHandle;
 /*!
  \brief Creates a DLR model.
  \param handle The pointer to save the model handle.
- \param model_path Directory containing the model files. 
-                   Colon-separated paths if multiple directories needed 
+ \param model_path Path to the folder containing the model files,  
+                   or colon-separated list of folders (or files) if model files stored in different locations 
  \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
  \param dev_id Device ID.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
