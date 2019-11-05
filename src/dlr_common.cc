@@ -45,8 +45,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
-std::vector<std::string> dlr::split(const char* s, char delimiter)
-{
+std::vector<std::string> dlr::split(const char* s, char delimiter) {
    std::vector<std::string> tokens;
    std::string token;
    std::istringstream tokenStream(s);

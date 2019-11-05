@@ -31,8 +31,9 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   if ( paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty() ){
     LOG(INFO) << "No valid TVM model files found under folder:";
     for (auto dir : dirname) {
-      LOG(FATAL) << dir;
+      LOG(INFO) << dir;
     } 
+    LOG(FATAL);
   }
   return paths;
 }

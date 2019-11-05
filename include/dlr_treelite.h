@@ -20,7 +20,7 @@ struct TreeliteInput {
 
 /*! \brief Get the paths of the Treelite model files.
  */
-ModelPath GetTreelitePaths(const std::string& dirname);
+ModelPath GetTreelitePaths(std::vector<std::string> dirname);
 
 /*! \brief class TreeliteModel
  */
@@ -35,11 +35,11 @@ class TreeliteModel: public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float> treelite_output_;
-  void SetupTreeliteModule(const std::string& model_path);
+  void SetupTreeliteModule(std::vector<std::string> model_path);
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(const std::string& model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTREELITE) {
+  explicit TreeliteModel(std::vector<std::string> model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTREELITE) {
     SetupTreeliteModule(model_path);
   }
 

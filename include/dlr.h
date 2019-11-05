@@ -2,18 +2,14 @@
 #define DLR_H_
 
 #include <stdint.h>
-#include <stdarg.h>
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
-  #if defined(_MSC_VER) || defined(_WIN32)
-    extern "C" __declspec(dllexport) { // Open extern "C" block on Windows
-  #else
-    extern "C" { // Open extern "C" block
-  #endif
-  #define DEFAULT_VALUE(value) = value
-#else 
-  #define DEFAULT_VALUE(value)
+#if defined(_MSC_VER) || defined(_WIN32)
+extern "C" __declspec(dllexport) { // Open extern "C" block on Windows
+#else
+extern "C" { // Open extern "C" block
+#endif
 #endif // __cplusplus
 
 /*! \brief major version */
@@ -41,7 +37,8 @@ typedef void* DLRModelHandle;
 /*!
  \brief Creates a DLR model.
  \param handle The pointer to save the model handle.
- \param colon-separated path string to the directories containing the model files.
+ \param model_path Directory containing the model files. 
+                   Colon-separated paths if multiple directories needed 
  \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
  \param dev_id Device ID.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.

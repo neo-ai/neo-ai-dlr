@@ -132,7 +132,6 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
                                 const char* model_path,
                                 int dev_type, int dev_id) {
   API_BEGIN();
-  const std::string model_path_string(model_path);
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
@@ -144,7 +143,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
   if (backend == DLRBackend::kTVM) {
     model = new TVMModel(path_vec, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
-    model = new TreeliteModel(model_path_string, ctx);
+    model = new TreeliteModel(path_vec, ctx);
 #ifdef DLR_TFLITE
   } else if (backend == DLRBackend::kTFLITE) {
     // By default use undefined number of threads - threads=0 and use_nnapi=0

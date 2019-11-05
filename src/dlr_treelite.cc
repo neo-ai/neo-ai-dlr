@@ -27,10 +27,12 @@ std::string GetVersion(const std::string& json_path) {
   return version;
 }
 
-ModelPath dlr::GetTreelitePaths(const std::string& dirname) {
+ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
   ModelPath paths;
   std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
+  for (auto dir : dirname) {
+    ListDir(dir, paths_vec);
+  }
   for (auto filename : paths_vec) {
     if (EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
@@ -39,12 +41,16 @@ ModelPath dlr::GetTreelitePaths(const std::string& dirname) {
     }
   }
   if ( paths.model_lib.empty() ){
-    LOG(FATAL) << "No valid Treelite model files found under folder:" << dirname;
+    LOG(INFO) << "No valid Treelite model files found under folder(s):";
+    for (auto dir : dirname) {
+      LOG(INFO) << dir;
+    } 
+    LOG(FATAL);
   }
   return paths;
 }
 
-void TreeliteModel::SetupTreeliteModule(const std::string& model_path) {
+void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTreelitePaths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
