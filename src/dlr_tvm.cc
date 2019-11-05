@@ -44,7 +44,7 @@ void TVMModel::SetupTVMModule(const std::string& model_path) {
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(paths.params);
+  std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
