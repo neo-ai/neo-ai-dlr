@@ -2,11 +2,6 @@ cmake_minimum_required (VERSION 3.6)
 include(cmake/Utils.cmake)
 include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
 
-set_default_configuration_release()
-msvc_use_static_runtime()
-
-message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
-
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
 option(AAR_BUILD "Build Android Archive (AAR)" OFF)
@@ -19,6 +14,12 @@ if(ANDROID_BUILD)
 endif(ANDROID_BUILD)
 
 project(dlr)
+
+# The following lines should be after project()
+set_default_configuration_release()
+msvc_use_static_runtime()
+message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
+set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
@@ -310,6 +311,7 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
     target_link_libraries(${__execname} dlr gtest_main)
+    set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})
     message(STATUS "Added Test: " ${__execname})
   endforeach()
