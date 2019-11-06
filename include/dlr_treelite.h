@@ -2,6 +2,7 @@
 #define DLR_TREELITE_H_
 
 #include <treelite/c_api_runtime.h>
+
 #include "dlr_common.h"
 
 

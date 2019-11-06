@@ -2,6 +2,7 @@
 #define DLR_TFLITE_H_
 
 #include "tensorflow/lite/kernels/register.h"
+
 #include "dlr_common.h"
 
 namespace dlr {

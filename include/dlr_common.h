@@ -3,9 +3,10 @@
 
 #include <string>
 #include <vector>
+
 #include <sys/types.h>
-#include <dmlc/logging.h>
 #include <dmlc/common.h>
+#include <dmlc/logging.h>
 #include <runtime_base.h>
 
 #define LINE_SIZE 256

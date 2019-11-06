@@ -1,7 +1,9 @@
 #include "dlr_tvm.h"
+
+#include <stdlib.h>
+
 #include <fstream>
 #include <numeric>
-#include <stdlib.h>
 
 
 using namespace dlr;

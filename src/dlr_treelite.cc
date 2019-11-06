@@ -1,4 +1,5 @@
 #include "dlr_treelite.h"
+
 #include <cmath>
 #include <cstring>
 #include <fstream>

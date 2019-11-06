@@ -2,6 +2,7 @@
 #define DLR_TVM_H_
 
 #include <graph/graph_runtime.h>
+
 #include "dlr_common.h"
 
 namespace dlr {
