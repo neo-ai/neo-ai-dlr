@@ -136,7 +136,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
-  std::vector<std::string> path_vec = split(model_path, ':');
+  std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
 
   DLRBackend backend = dlr::GetBackend(path_vec);
   DLRModel* model;
