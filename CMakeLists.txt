@@ -9,6 +9,7 @@ message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
+option(AAR_BUILD "Build Android Archive (AAR)" OFF)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
@@ -21,11 +22,12 @@ project(dlr)
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
-    # Use RELEASE flags for Release build. It will reduce libdlr.so size by a factor of 3.
+    # Disable debugging info for Release build by setting -g level to 0. It will reduce libdlr.so size by a factor of 3.
+    # NDK Issue https://github.com/android/ndk/issues/243
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS_RELEASE})
-        set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS_RELEASE})
-        set(CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS_RELEASE})
+        string(REPLACE "-g " "-g0 " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS})
     endif()
   # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
     if (ANDROID_ABI STREQUAL "x86_64")
@@ -236,6 +238,9 @@ if(WITH_TENSORFLOW_LITE_LIB)
         list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
     endif()
 endif()
+if(AAR_BUILD)
+    list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
+endif()
 
 set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
@@ -248,13 +253,13 @@ add_library(objdlr OBJECT ${DLR_SRC})
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
-set_output_directory(dlr ${PROJECT_SOURCE_DIR}/lib)
+set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
 target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
-set_output_directory(dlr_static ${PROJECT_SOURCE_DIR}/lib)
+set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)
 
 set(OPREFIX object_)
 add_custom_target(combined_lib
@@ -279,14 +284,14 @@ foreach(__srcpath ${DEMO_SRCS})
   else (ANDROID_BUILD)
     target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
   endif ()
-  set_output_directory(${__execname} ${PROJECT_SOURCE_DIR}/bin)
+  set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
   set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
   set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
 # Tests
-if(NOT ANDROID_BUILD)
+if(NOT(ANDROID_BUILD OR AAR_BUILD))
   include(cmake/googletest.cmake)
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake

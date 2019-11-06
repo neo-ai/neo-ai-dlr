@@ -185,8 +185,24 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
 extern "C" int GetDLRVersion(const char** out) {
   API_BEGIN();
   std::string version_str = std::to_string(DLR_MAJOR) + "." +
-                            std::to_string(DLR_MINOR) + "." + 
+                            std::to_string(DLR_MINOR) + "." +
                             std::to_string(DLR_PATCH);
   *out = version_str.c_str();
-  API_END();  
+  API_END();
+}
+
+extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->SetNumThreads(threads);
+  API_END();
+}
+
+extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->UseCPUAffinity(use);
+  API_END();
 }

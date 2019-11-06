@@ -94,6 +94,8 @@ class DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const =0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) =0;
   virtual const char* GetBackend() const =0;
+  virtual void SetNumThreads(int threads) =0;
+  virtual void UseCPUAffinity(bool use) =0;
 };
 
 } // namespace dlr

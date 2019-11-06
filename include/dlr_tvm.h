@@ -38,6 +38,8 @@ class TVMModel: public DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetBackend() const override;
+  virtual void SetNumThreads(int threads) override;
+  virtual void UseCPUAffinity(bool use) override;
 };
 
 } // namespace dlr
