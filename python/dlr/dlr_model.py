@@ -105,7 +105,6 @@ class DLRModelImpl(IDLRModel):
             'gpu': 2,
             'opencl': 4,
         }
-
         _check_call(_LIB.CreateDLRModel(byref(self.handle),
                                         c_char_p(model_path.encode()),
                                         c_int(device_table[dev_type]),

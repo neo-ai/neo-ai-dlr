@@ -28,6 +28,8 @@ App Uses the following Neo pre-compiled models:
 * tf_mobilenet_v1_100
 
 
+Other models can be compiled by followng the instructions in [Compile Deep Learning Models for Android](../tvm_compiler)
+
 ## Requirements
 
 *   Android Studio 3.2 (installed on a Linux, Mac or Windows machine)

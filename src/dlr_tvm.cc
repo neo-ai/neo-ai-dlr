@@ -1,16 +1,20 @@
 #include "dlr_tvm.h"
-#include <fstream>
-#include <numeric>
+
 #include <iterator>
 #include <stdlib.h>
+
+#include <fstream>
+#include <numeric>
 
 
 using namespace dlr;
 
-ModelPath dlr::GetTvmPaths(const std::string& dirname) {
+ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   ModelPath paths;
   std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
+  for (auto dir : dirname) {
+    ListDir(dir, paths_vec);
+  }
   for (auto filename : paths_vec) {
     std::string basename = GetBasename(filename);
     if (EndsWith(filename, ".json")
@@ -29,7 +33,11 @@ ModelPath dlr::GetTvmPaths(const std::string& dirname) {
     }
   }
   if ( paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty() ){
-    LOG(FATAL) << "No valid TVM model files found under folder:" << dirname;
+    LOG(INFO) << "No valid TVM model files found under folder:";
+    for (auto dir : dirname) {
+      LOG(INFO) << dir;
+    } 
+    LOG(FATAL);
   }
   return paths;
 }
@@ -39,7 +47,7 @@ bool IsFileEmpty(const std::string &filePath){
   return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
-void TVMModel::SetupTVMModule(const std::string& model_path) {
+void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTvmPaths(model_path);
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;

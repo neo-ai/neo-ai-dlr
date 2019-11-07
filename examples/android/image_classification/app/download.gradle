@@ -1,6 +1,6 @@
 def targetFolder = "src/main/assets"
 def dlr_models_host = "https://dlc-models.s3.us-east-2.amazonaws.com/android-models/"
-// Set it to the architecture of target device
+// Set it to the architecture of target device arm64-v8a, armeabi-v7a, x86_64 or x86
 def arch = "arm64-v8a"
 def localCache = "build/intermediates"
 
