@@ -3,7 +3,9 @@
 
 #include <string>
 #include <vector>
+
 #include <sys/types.h>
+#include <dmlc/common.h>
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 
@@ -60,7 +62,7 @@ enum class DLRBackend {
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
-DLRBackend GetBackend(const std::string& dirname);
+DLRBackend GetBackend(std::vector<std::string> dirname);
 
 
 #define CHECK_SHAPE(msg, value, expected) \

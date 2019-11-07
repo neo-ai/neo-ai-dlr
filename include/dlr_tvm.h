@@ -2,13 +2,14 @@
 #define DLR_TVM_H_
 
 #include <graph/graph_runtime.h>
+
 #include "dlr_common.h"
 
 namespace dlr {
 
 /*! \brief Get the paths of the TVM model files.
  */
-ModelPath GetTvmPaths(const std::string& tar_path);
+ModelPath GetTvmPaths(std::vector<std::string> tar_path);
 
 
 /*! \brief class TVMModel
@@ -19,11 +20,12 @@ class TVMModel: public DLRModel {
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> weight_names_;
-  void SetupTVMModule(const std::string& model_path);
+  void SetupTVMModule(std::vector<std::string> model_path);
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(const std::string& model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTVM) {
+  explicit TVMModel(std::vector<std::string> model_path, 
+                    const DLContext& ctx): DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
   }
 
