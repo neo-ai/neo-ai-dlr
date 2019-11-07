@@ -5,12 +5,14 @@
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
-#if defined(_MSC_VER) || defined(_WIN32)
-extern "C" __declspec(dllexport) { // Open extern "C" block on Windows
-#else
 extern "C" { // Open extern "C" block
-#endif
 #endif // __cplusplus
+
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
 
 /*! \brief major version */
 #define DLR_MAJOR 1
@@ -43,6 +45,7 @@ typedef void* DLRModelHandle;
  \param dev_id Device ID.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int CreateDLRModel(DLRModelHandle *handle,
                    const char *model_path,
                    int dev_type,
@@ -57,6 +60,7 @@ int CreateDLRModel(DLRModelHandle *handle,
  \param use_nnapi Use NNAPI, 0 - false, 1 - true.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int CreateDLRModelFromTFLite(DLRModelHandle *handle,
                    const char *model_path,
                    int threads,
@@ -68,6 +72,7 @@ int CreateDLRModelFromTFLite(DLRModelHandle *handle,
  \param handle The model handle returned from CreateDLRModel().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int DeleteDLRModel(DLRModelHandle* handle);
 
 /*!
@@ -75,6 +80,7 @@ int DeleteDLRModel(DLRModelHandle* handle);
  \param handle The model handle returned from CreateDLRModel().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int RunDLRModel(DLRModelHandle *handle);
 
 /*!
@@ -83,6 +89,7 @@ int RunDLRModel(DLRModelHandle *handle);
  \param num_inputs The pointer to save the number of inputs.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
 
 /*!
@@ -91,6 +98,7 @@ int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
  \param num_weights The pointer to save the number of weights.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
 
 /*!
@@ -100,6 +108,7 @@ int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
  \param input_name The pointer to save the name of the index-th input.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRInputName(DLRModelHandle* handle,
                     int index,
                     const char** input_name);
@@ -111,6 +120,7 @@ int GetDLRInputName(DLRModelHandle* handle,
  \param input_name The pointer to save the name of the index-th weight.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRWeightName(DLRModelHandle* handle,
                      int index,
                      const char** weight_name);
@@ -124,6 +134,7 @@ int GetDLRWeightName(DLRModelHandle* handle,
  \param dim The dimension of the input data.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int SetDLRInput(DLRModelHandle* handle,
                 const char* name,
                 const int64_t* shape,
@@ -136,6 +147,7 @@ int SetDLRInput(DLRModelHandle* handle,
  \param input The current value of the input will be copied to this buffer.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRInput(DLRModelHandle* handle,
                 const char* name,
                 float* input);
@@ -146,6 +158,7 @@ int GetDLRInput(DLRModelHandle* handle,
  \param shape The pointer to save the shape of index-th output. This should be a pointer to an array of size "dim" from GetDLROutputSizeDim().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLROutputShape(DLRModelHandle* handle,
                       int index,
                       int64_t* shape);
@@ -157,6 +170,7 @@ int GetDLROutputShape(DLRModelHandle* handle,
  \param out The pointer to save the output data. This should be a pointer to an array of size "size" from GetDLROutputSizeDim().
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLROutput(DLRModelHandle* handle,
                  int index,
                  float* out);
@@ -166,6 +180,7 @@ int GetDLROutput(DLRModelHandle* handle,
  \param num_outputs The pointer to save the number of outputs.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
 
 /*!
@@ -176,6 +191,7 @@ int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
  \param dim The pointer to save the dimension of the index-th output.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLROutputSizeDim(DLRModelHandle* handle,
                         int index,
                         int64_t* size,
@@ -184,6 +200,7 @@ int GetDLROutputSizeDim(DLRModelHandle* handle,
  \brief Gets the last error message.
  \return Null-terminated string containing the error message.
  */
+DLR_DLL
 const char* DLRGetLastError();
 
 /*!
@@ -192,6 +209,7 @@ const char* DLRGetLastError();
  \param name The pointer to save the null-terminated string containing the name.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
 /*!
@@ -199,6 +217,7 @@ int GetDLRBackend(DLRModelHandle* handle, const char** name);
  \param out The pointer to save the null-terminated string containing the version.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int GetDLRVersion(const char** out);
 
 /*!
@@ -207,6 +226,7 @@ int GetDLRVersion(const char** out);
  \param threads number of threads
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int SetDLRNumThreads(DLRModelHandle* handle, int threads);
 
 /*!
@@ -215,6 +235,7 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  \param use 0 to disable, 1 to enable
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 
 /*! \} */

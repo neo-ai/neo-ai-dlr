@@ -1,5 +1,6 @@
 #include "dlr_tvm.h"
 
+#include <iterator>
 #include <stdlib.h>
 
 #include <fstream>
@@ -51,7 +52,7 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(paths.params);
+  std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
@@ -175,19 +176,27 @@ const char* TVMModel::GetBackend() const {
   return "tvm";
 }
 
+static inline int SetEnv(const char* key, const char* value) {
+#ifdef _WIN32
+  return static_cast<int>(_putenv_s(key, value));
+#else
+  return setenv(key, value, 1);
+#endif  // _WIN32
+}
+
 void TVMModel::SetNumThreads(int threads) {
   if (threads > 0) {
-    setenv("TVM_NUM_THREADS", std::to_string(threads).c_str(), 1);
+    SetEnv("TVM_NUM_THREADS", std::to_string(threads).c_str());
     LOG(INFO) << "Set Num Threads: " << threads;
   }
 }
 
 void TVMModel::UseCPUAffinity(bool use) {
   if (use) {
-    setenv("TVM_BIND_THREADS", "1", 1);
+    SetEnv("TVM_BIND_THREADS", "1");
     LOG(INFO) << "CPU Affinity is enabled";
   } else {
-    setenv("TVM_BIND_THREADS", "0", 1);
+    SetEnv("TVM_BIND_THREADS", "0");
     LOG(INFO) << "CPU Affinity is disabled";
   }
 }
