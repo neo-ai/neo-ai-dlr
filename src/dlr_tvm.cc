@@ -186,7 +186,7 @@ static inline int SetEnv(const char* key, const char* value) {
 
 void TVMModel::SetNumThreads(int threads) {
   if (threads > 0) {
-	SetEnv("TVM_NUM_THREADS", std::to_string(threads).c_str());
+    SetEnv("TVM_NUM_THREADS", std::to_string(threads).c_str());
     LOG(INFO) << "Set Num Threads: " << threads;
   }
 }
