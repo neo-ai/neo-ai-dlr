@@ -92,9 +92,6 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
     "src/*.cc"
-    ${TVM_SRC}/src/runtime/dso_module.cc
-    ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/contrib/sort/sort.cc
 )
 
 if(USE_OPENCL)
@@ -257,7 +254,7 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
-target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+target_link_libraries(dlr treelite_runtime_static tvm_runtime ${DLR_LINKER_LIBS})
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)
@@ -281,9 +278,9 @@ foreach(__srcpath ${DEMO_SRCS})
   list(APPEND DEMO_EXECS ${__execname})
   add_executable(${__execname} ${__srcpath} $<TARGET_OBJECTS:objdlr>)
   if (ANDROID_BUILD)
-    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -fuse-ld=gold)
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime ${DLR_LINKER_LIBS} -fuse-ld=gold)
   else (ANDROID_BUILD)
-    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime ${DLR_LINKER_LIBS} -lpthread)     
   endif ()
   set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
   set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)

@@ -9,6 +9,12 @@ On X86_64 targets running Linux, you can install latest release of DLR package v
 
 For installation of DLR on non-x86 edge devices, or building DLR from source, please refer to [Installing DLR](https://neo-ai-dlr.readthedocs.io/en/latest/install.html)
 
+## Installation of TVM Runtime
+Required if using python TVM extern with @tvm.register_func
+
+cd 3rdparty/tvm/python
+TVM_LIBRARY_PATH=../../../build/3rdparty/tvm python3 setup.py install --user
+
 ## Documentation
 For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Your Machine Learning Models Once, Run Them Anywhere](https://aws.amazon.com/blogs/aws/amazon-sagemaker-neo-train-your-machine-learning-models-once-run-them-anywhere/)
 
