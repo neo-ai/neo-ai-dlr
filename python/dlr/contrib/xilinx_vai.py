@@ -51,9 +51,16 @@ def accel_fused(kernel_name, input_name, output_name,
 
     # Create DPU Tasks for kernel
     task = n2cube.dpuCreateTask(kernel, 0)
-
+    
     # Load image to DPU
-    X = ins[0].asnumpy().reshape((-1))
+    X = ins[0].asnumpy()
+
+    # Possibly transpose input if layout is NCHW
+    if layout == 'NCHW':
+        X = np.transpose(X, (0,2,3,1)) # NCHW --> NHWC
+
+    X = X.reshape((-1))
+    
     n2cube.dpuSetInputTensorInHWCFP32(task, input_name, X, len(X))
 
     # Model run on DPU """
