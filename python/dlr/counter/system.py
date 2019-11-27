@@ -26,11 +26,13 @@ class ARM(System):
 
     def get_info(self):
         """Return a list of fields of device information"""
+        self.retrieve_info()
         return System.get_info(self)
-  
+
     def retrieve_info(self):
         """Retrieve device specific information from Linux/ARM"""
         self._device = self.get_device()
+
         self._device.machine = platform.machine()
         self._device.arch = platform.architecture()[0]
         self._device.uuid = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8*6, 8)][::-1])

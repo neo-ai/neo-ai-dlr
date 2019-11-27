@@ -25,13 +25,14 @@ class DeviceInfo:
             return value from API calls
         """
 
-        data_lst = []
-        data_lst.append(self.machine)
-        data_lst.append(self.arch)
-        data_lst.append(self.osname)
-        data_lst.append(self.name)
-        data_lst.append(self.dist)
-        data_lst.append(self.uuid)
+        data_lst = {
+            "Machine": self.machine,
+            "Arch": self.arch,
+            "OS": self.osname,
+            "Device": self.machine,
+            "OS Distribution": self.dist,
+            "UUID": self.uuid
+        }
         return data_lst
 
 
