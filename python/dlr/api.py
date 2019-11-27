@@ -8,10 +8,6 @@ import os
 
 from .counter.counter_mgr import CallCounterMgr
 
-# call counter manager handler 
-call_mgr = CallCounterMgr()
-call_mgr.runtime_loaded()
-
 # Interface
 class IDLRModel:
     __metaclass__=abc.ABCMeta
@@ -50,8 +46,9 @@ def _find_model_file(model_path, ext):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
-        # push model load count
-        call_mgr.model_loaded() 
+        # set model load count
+        call_counter = CallCounterMgr.get_instance()
+        call_counter.model_loaded()
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -81,8 +78,9 @@ class DLRModel(IDLRModel):
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
 
     def run(self, input_values):
-        #push run model count
-        call_mgr.model_executed()
+        # set model run count
+        call_counter = CallCounterMgr.get_instance()
+        call_counter.model_executed()
         return self._impl.run(input_values)
     
     def get_input_names(self):
@@ -96,3 +94,13 @@ class DLRModel(IDLRModel):
 
     def get_version(self):
         return self._impl.get_version()
+
+
+# call home feature starts
+def call_home():
+    call_counter = CallCounterMgr.get_instance()
+    call_counter.runtime_loaded()
+
+
+call_home()
+

@@ -3,21 +3,24 @@ import logging
 import queue
 import threading
 import time
+from .utils import botoutils
+import time
 
 class MsgPublisher(object):
     def __init__(self):
-        self.client = None
+        self.client = botoutils.SNS()
         self.record_queue = queue.Queue(maxsize=100)
         self.event = threading.Event()
         #start loop
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            executor.submit(self.__process_queue)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        executor.submit(self._process_queue)
 
     def send(self, data):
         self.record_queue.put(data)
 
-    def __process_queue(self, event):
+    def _process_queue(self):
         while not self.event.is_set():
+            time.sleep(10)
             while not self.record_queue.empty():
                 self.client.send(self.record_queue.get())
 

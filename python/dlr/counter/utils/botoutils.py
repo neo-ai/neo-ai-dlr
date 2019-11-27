@@ -1,5 +1,16 @@
-import config
+from .. import config
 
+
+class SNS(object):
+    def send(self, message):
+        print(message)
+        client = get_boto_client('sns')
+        response = client.publish(
+            TopicArn=config.sns_config_arn,
+            Message=message,
+            Subject='string',
+        )
+        print(response)
 
 def get_boto_client(service_name):
     import boto3
@@ -11,3 +22,4 @@ def get_boto_client(service_name):
         region_name=config.aws_region,
     )
     return client
+
