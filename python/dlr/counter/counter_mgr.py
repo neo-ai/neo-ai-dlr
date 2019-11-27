@@ -13,7 +13,7 @@ class CallCounterMgr(object):
     def get_instance():
         """return unique instance of class"""
         if CallCounterMgr._instance is None:
-            _instance = CallCounterMgr()
+            CallCounterMgr._instance = CallCounterMgr()
         return CallCounterMgr._instance
 
     def __init__(self):
@@ -38,7 +38,7 @@ class CallCounterMgr(object):
         self.msg_publisher.stop()
 
 
-# ccm = CallCounterMgr()
+# ccm = CallCounterMgr.get_instance()
 # ccm.runtime_loaded()
 # ccm.model_loaded()
 # ccm.model_executed()
