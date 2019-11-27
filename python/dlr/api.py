@@ -6,6 +6,11 @@ import glob
 import logging
 import os
 
+from .counter.counter_mgr import CallCounterMgr
+
+# call counter manager handler 
+call_mgr = CallCounterMgr()
+call_mgr.runtime_loaded()
 
 # Interface
 class IDLRModel:
@@ -45,6 +50,8 @@ def _find_model_file(model_path, ext):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
+        # push model load count
+        call_mgr.model_loaded() 
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -74,6 +81,8 @@ class DLRModel(IDLRModel):
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
 
     def run(self, input_values):
+        #push run model count
+        call_mgr.model_executed()
         return self._impl.run(input_values)
     
     def get_input_names(self):
