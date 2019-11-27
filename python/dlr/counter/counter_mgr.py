@@ -13,7 +13,7 @@ class CallCounterMgr(object):
     def get_instance():
         """return unique instance of class"""
         if CallCounterMgr._instance is None:
-            CallCounterMgr()
+            _instance = CallCounterMgr()
         return CallCounterMgr._instance
 
     def __init__(self):
