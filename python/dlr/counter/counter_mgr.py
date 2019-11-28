@@ -1,7 +1,7 @@
 from .publisher import MsgPublisher
 from .system import Factory
 import json
-
+import platform
 
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
@@ -11,14 +11,15 @@ class CallCounterMgr(object):
 
     @staticmethod
     def get_instance():
-        """return unique instance of class"""
+        """return single instance of class"""
         if CallCounterMgr._instance is None:
-            CallCounterMgr()
+            CallCounterMgr._instance = CallCounterMgr()
         return CallCounterMgr._instance
 
     def __init__(self):
         self.msg_publisher = MsgPublisher()
-        self.system = Factory.get_system('Linux')
+        self.os_name = platform.system()
+        self.system = Factory.get_system(self.os_name)
 
     def runtime_loaded(self):
         self._push(CallCounterMgr.RUNTIME_LOAD)
@@ -37,9 +38,11 @@ class CallCounterMgr(object):
     def stop(self):
         self.msg_publisher.stop()
 
+    def __del__(self):
+        self.stop()
 
-# ccm = CallCounterMgr()
-# ccm.runtime_loaded()
-# ccm.model_loaded()
-# ccm.model_executed()
-# ccm.stop()
+#ccm = CallCounterMgr()
+#ccm.runtime_loaded()
+#ccm.model_loaded()
+#ccm.model_executed()
+#ccm.stop()

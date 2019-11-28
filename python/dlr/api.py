@@ -100,6 +100,7 @@ class DLRModel(IDLRModel):
 def call_home():
     call_counter = CallCounterMgr.get_instance()
     call_counter.runtime_loaded()
+    return call_counter
 
 
 call_home()

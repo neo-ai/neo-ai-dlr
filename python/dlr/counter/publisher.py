@@ -26,3 +26,6 @@ class MsgPublisher(object):
 
     def stop(self):
         self.event.set()
+
+    def __del__(self):
+        self.stop()

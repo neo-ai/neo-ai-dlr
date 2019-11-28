@@ -7,9 +7,7 @@ class DeviceInfo:
         self.name = ""
         self.dist = ""
         self.uuid = ""
-         
 
-    # prepare a list of info
     def get_info(self):
         """
         Prepare a list of data member in sequence. 
