@@ -41,8 +41,9 @@ class CallCounterMgr(object):
     def __del__(self):
         self.stop()
 
-#ccm = CallCounterMgr()
-#ccm.runtime_loaded()
-#ccm.model_loaded()
-#ccm.model_executed()
-#ccm.stop()
+
+# ccm = CallCounterMgr.get_instance()
+# ccm.runtime_loaded()
+# ccm.model_loaded()
+# ccm.model_executed()
+# ccm.stop()
