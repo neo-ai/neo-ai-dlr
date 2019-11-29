@@ -1,6 +1,7 @@
 aws_region = "us-east-1"
 aws_service_name = "sns"
-aws_access_key = "ASIAUVKP3J2UK542YVEY"
-aws_secrete_key = "kq9e4AvwCACNWDrEqyYmuRimBShdK7mUO0hX3Au5"
-aws_session_token = "IQoJb3JpZ2luX2VjEFYaCXVzLWVhc3QtMSJHMEUCICRCYDL8NZbmv7CpcskkfJtcXqwkBj/ZWmFL0Z0xt3jnAiEAz62HuETWNvL216KS2p+Zxwcm4EaCGWT9othnoMroMAwqrwIIj///////////ARAAGgwzMjA2NzkzOTkwODAiDNd8/QRuPJsU90FZKSqDAksDB7UNlG1lqnIoCB6qSgXWer+rbD9+e6wnjrh3t0Vw2oskhFRaR8FLyuixDq33UQLgqT0Kerw540BVf/trMVZ3fZ0r6VptBFP4nD1f0RAI0gN306fsy2gMoL0YdVYbw4aERJ2Y4eOSJmDjP/cE3JySkYca/7p0sr61g2gJFgNzegFFe9qWVSIdQWIqRnEz+DJ5hQW8MtmMgxn+56i5NMcBYT0ec1E7VznmdVBHsROxgnUk2uED3Sn9+cePc5nUEjiQMJY6MtA6abrRdONVepFSFmiLdhcZvCSc0K1vH8cLMax57rqkNDYTaTh2xe8JW669blt9pHZ569vMvI/O2+y/gN4wp/v57gU66QEFs61NNTCqCOjsU1qDxFB5nOoPGC769R5eyete1HrCDpDbtIKAFv15rWgc2aVtBoLDPRBeRqqWv+u+n2j90mZddY4zb+SRBc97MIsa6dCeuB74sU8gKTQx1p60UwRSguzesfhdwzeINLH3Y7nUjrIDVrpmMTlaH2q12biXDuueyFs1N55mD/R8eYwo2+veHoRujPAfVAKN1dsA0jKC65XWtLSbJB98TqFkQyyrwtHJCI4oVKZDxG5O6pJQHVuAIDrKCszNp25mFZXo7VkKHwf3bn+8rT+prJIFYcKHEgZRc1PN+oOFStK+Ug=="
-sns_config_arn = 'arn:aws:sns:us-east-1:320679399080:test'
+aws_access_key = ""
+aws_secrete_key = ""
+aws_session_token = ""
+sns_config_arn = ''
+rest_post_api_url = 'http://127.0.0.1:5000/dlr_device_info'
