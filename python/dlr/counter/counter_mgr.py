@@ -3,6 +3,7 @@ from .system import Factory
 import json
 import platform
 
+
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
     MODEL_LOAD = 2
@@ -23,12 +24,15 @@ class CallCounterMgr(object):
 
     def runtime_loaded(self):
         self._push(CallCounterMgr.RUNTIME_LOAD)
+        return True
 
     def model_loaded(self):
         self._push(CallCounterMgr.MODEL_LOAD)
+        return True
 
     def model_executed(self):
         self._push(CallCounterMgr.MODEL_RUN)
+        return True
 
     def _push(self, record_type):
         dev_info = self.system.get_info()
@@ -40,7 +44,6 @@ class CallCounterMgr(object):
 
     def __del__(self):
         self.stop()
-
 
 # ccm = CallCounterMgr.get_instance()
 # ccm.runtime_loaded()

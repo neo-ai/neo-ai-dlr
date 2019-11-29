@@ -8,12 +8,13 @@ from .utils import restutils
 
 import time
 
+
 class MsgPublisher(object):
     def __init__(self):
         self.client = restutils.RestHandler()
         self.record_queue = queue.Queue(maxsize=100)
         self.event = threading.Event()
-        #start loop
+        # start loop
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
         executor.submit(self._process_queue)
         logging.info("Thread pool execution started")
