@@ -36,6 +36,8 @@ class MsgPublisher(object):
         logger.info("Thread pool execution stopped")
 
     def stop(self):
+        while not self.record_queue.empty():
+            pass
         self.event.set()
 
     def __del__(self):
