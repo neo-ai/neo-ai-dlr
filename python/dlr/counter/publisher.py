@@ -30,7 +30,7 @@ class MsgPublisher(object):
 
     def _process_queue(self):
         while not self.event.is_set():
-            time.sleep(10)
+            time.sleep(1)
             while not self.record_queue.empty():
                 self.client.send(self.record_queue.get())
         logger.info("Thread pool execution stopped")
