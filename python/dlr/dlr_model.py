@@ -134,7 +134,8 @@ class DLRModelImpl(IDLRModel):
                 _check_call(_LIB.DeleteDLRModel(byref(self.handle)))
             self.handle = None
         ccm = CallCounterMgr.get_instance()
-        ccm.stop()
+        if ccm:
+            ccm.stop()
         
     def _get_num_inputs(self):
         """Get the number of inputs of a network"""

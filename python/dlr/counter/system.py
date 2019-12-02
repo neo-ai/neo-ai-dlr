@@ -1,7 +1,7 @@
 import platform
 import uuid
-
 from .deviceinfo import DeviceInfo
+from .utils.dlrlogger import logger
 
 
 # wrapper class as per operating system
@@ -33,14 +33,17 @@ class ARM(System):
 
     def retrieve_info(self):
         """Retrieve device specific information from Linux/ARM"""
-        self._device.machine = platform.machine()
-        self._device.arch = platform.architecture()[0]
-        self._device.uuid = ':'.join(
-            ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
-        self._device.osname = platform.system()
-        dist = platform.dist()
-        self._device.dist = " ".join(x for x in dist)
-        self._device.name = platform.node()
+        try:
+            self._device.machine = platform.machine()
+            self._device.arch = platform.architecture()[0]
+            self._device.uuid = ':'.join(
+                ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
+            self._device.osname = platform.system()
+            dist = platform.dist()
+            self._device.dist = " ".join(x for x in dist)
+            self._device.name = platform.node()
+        except Exception as e:
+            logger.warning("System API exception occured!", exc_info=True)
 
 
 class Raspbian(ARM):

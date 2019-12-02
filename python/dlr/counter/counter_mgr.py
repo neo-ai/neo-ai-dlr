@@ -1,5 +1,7 @@
 from .publisher import MsgPublisher
 from .system import Factory
+from .utils.dlrlogger import logger
+from .config import feature
 import json
 import platform
 
@@ -13,14 +15,21 @@ class CallCounterMgr(object):
     @staticmethod
     def get_instance():
         """return single instance of class"""
-        if CallCounterMgr._instance is None:
-            CallCounterMgr._instance = CallCounterMgr()
+        if 'true' in feature:
+            print("feature enabled")
+            if CallCounterMgr._instance is None:
+                CallCounterMgr._instance = CallCounterMgr()
+        else:
+            print("feature disabled")
         return CallCounterMgr._instance
 
     def __init__(self):
-        self.msg_publisher = MsgPublisher()
-        self.os_name = platform.system()
-        self.system = Factory.get_system(self.os_name)
+        try:
+            self.msg_publisher = MsgPublisher()
+            self.os_name = platform.system()
+            self.system = Factory.get_system(self.os_name)
+        except Exception as e:
+            logger.warning("Exception in Counter Mgr init!", exc_info=True)
 
     def runtime_loaded(self):
         self._push(CallCounterMgr.RUNTIME_LOAD)
@@ -37,7 +46,7 @@ class CallCounterMgr(object):
     def _push(self, record_type):
         dev_info = self.system.get_info()
         dev_info.update({'record_type': record_type})
-        self.msg_publisher.send(json.dumps(dev_info))
+        self.msg_publisher.send(dev_info)
 
     def stop(self):
         self.msg_publisher.stop()

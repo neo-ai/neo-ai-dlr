@@ -48,7 +48,8 @@ class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
         # set model load count
         call_counter = CallCounterMgr.get_instance()
-        call_counter.model_loaded()
+        if call_counter:
+            call_counter.model_loaded()
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -80,7 +81,8 @@ class DLRModel(IDLRModel):
     def run(self, input_values):
         # set model run count
         call_counter = CallCounterMgr.get_instance()
-        call_counter.model_executed()
+        if call_counter:
+            call_counter.model_executed()
         return self._impl.run(input_values)
     
     def get_input_names(self):
@@ -99,9 +101,8 @@ class DLRModel(IDLRModel):
 # call home feature starts
 def call_home():
     call_counter = CallCounterMgr.get_instance()
-    call_counter.runtime_loaded()
-    return call_counter
-
+    if call_counter:
+        call_counter.runtime_loaded()
 
 call_home()
 

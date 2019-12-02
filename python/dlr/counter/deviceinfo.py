@@ -10,7 +10,7 @@ class DeviceInfo:
 
     def get_info(self):
         """
-        Prepare a list of data member in sequence. 
+        Prepare a dictionary of data member in sequence.
         1. Machine 
         2. Architecture
         3. Operating system
@@ -19,8 +19,8 @@ class DeviceInfo:
         6. UUID
         Parameters
         ----------
-        ret : list
-            return value from API calls
+        self :
+            return a dictionary of data members
         """
 
         data_lst = {
@@ -43,17 +43,19 @@ class ARMDevice(DeviceInfo):
 
     def get_info(self):
         """
-        Prepare a list of data member in sequence. 
+        Prepare a dictionary of data member in sequence.
         1. Processor 
         2. Speed 
         3. Arch 
         Parameters
         ----------
-        ret : list
-            return value from API calls
+        self :
+            return a dictionary of data members
         """
-        arm_data_lst = []
-        arm_data_lst.append(self.processor)
-        arm_data_lst.append(self.speed)
-        arm_data_lst.append(self.arch)
+        arm_data_lst = {
+            "Processor": self.processor,
+            "Speed": self.speed,
+            "Arch": self.arch
+        }
+
         return arm_data_lst
