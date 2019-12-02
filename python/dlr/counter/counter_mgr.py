@@ -2,7 +2,6 @@ from .publisher import MsgPublisher
 from .system import Factory
 from .utils.dlrlogger import logger
 from .config import feature
-import json
 import platform
 
 
@@ -53,9 +52,3 @@ class CallCounterMgr(object):
 
     def __del__(self):
         self.stop()
-
-# ccm = CallCounterMgr.get_instance()
-# ccm.runtime_loaded()
-# ccm.model_loaded()
-# ccm.model_executed()
-# ccm.stop()

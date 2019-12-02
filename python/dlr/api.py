@@ -5,6 +5,7 @@ import abc
 import glob
 import logging
 import os
+import atexit
 
 from .counter.counter_mgr import CallCounterMgr
 
@@ -102,6 +103,7 @@ class DLRModel(IDLRModel):
 def call_home():
     call_counter = CallCounterMgr.get_instance()
     if call_counter:
+        atexit.register(call_counter.stop)
         call_counter.runtime_loaded()
 
 call_home()
