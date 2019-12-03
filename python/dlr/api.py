@@ -5,9 +5,15 @@ import abc
 import glob
 import logging
 import os
-import atexit
 
-from .counter.counter_mgr import CallCounterMgr
+from .countermgr import CounterMgr
+
+# call home feature starts 
+def call_home():
+    inst = CounterMgr.get_instance()
+    inst.push(1)    
+
+call_home()
 
 # Interface
 class IDLRModel:
@@ -48,9 +54,8 @@ def _find_model_file(model_path, ext):
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
         # set model load count
-        call_counter = CallCounterMgr.get_instance()
-        if call_counter:
-            call_counter.model_loaded()
+        inst = CounterMgr.get_instance()
+        inst.push(2)    
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -81,9 +86,8 @@ class DLRModel(IDLRModel):
 
     def run(self, input_values):
         # set model run count
-        call_counter = CallCounterMgr.get_instance()
-        if call_counter:
-            call_counter.model_executed()
+        inst = CounterMgr.get_instance()
+        inst.push(3)    
         return self._impl.run(input_values)
     
     def get_input_names(self):
@@ -97,14 +101,3 @@ class DLRModel(IDLRModel):
 
     def get_version(self):
         return self._impl.get_version()
-
-
-# call home feature starts
-def call_home():
-    call_counter = CallCounterMgr.get_instance()
-    if call_counter:
-        atexit.register(call_counter.stop)
-        call_counter.runtime_loaded()
-
-call_home()
-
