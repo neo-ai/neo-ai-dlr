@@ -26,6 +26,8 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
       paths.model_json = filename;
     } else if (EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
+    } else if (EndsWith(filename, ".tensorrt")) {
+      paths.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
       paths.params = filename;
     } else if (filename == "version.json") {
