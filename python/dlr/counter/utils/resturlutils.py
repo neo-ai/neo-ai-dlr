@@ -6,9 +6,9 @@ from .dlrlogger import logger
 class RestUrlUtils():
     def send(self, message):
         try:
-            en_data = parse.urlencode(message)
-            en_data = en_data.encode('utf-8')
-            req = request.Request(config.rest_post_api_url, en_data)
+            headers = {'Content-Type': 'application/json'}
+            en_data = message.encode('utf-8')
+            req = request.Request(config.rest_post_api_url, en_data, headers=headers)
             resp = request.urlopen(req)
             resp_data = resp.read()
             logger.info("Rest api response: {}".format(resp_data))

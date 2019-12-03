@@ -50,7 +50,7 @@ class DLRModel(IDLRModel):
         # set model load count
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
-            call_counter.model_loaded()
+            call_counter.model_loaded(model_path)
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')

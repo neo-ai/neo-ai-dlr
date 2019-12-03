@@ -4,7 +4,8 @@ from .utils.dlrlogger import logger
 from .config import feature
 import platform
 import atexit
-
+import json
+import hashlib
 
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
@@ -35,18 +36,32 @@ class CallCounterMgr(object):
         self._push(CallCounterMgr.RUNTIME_LOAD)
         return True
 
-    def model_loaded(self):
-        self._push(CallCounterMgr.MODEL_LOAD)
+    def model_loaded(self, model):
+        _md5model = hashlib.md5(model.encode())
+        _md5model = str(_md5model.hexdigest())
+        self._push(CallCounterMgr.MODEL_LOAD, _md5model)
         return True
 
     def model_executed(self):
         self._push(CallCounterMgr.MODEL_RUN)
         return True
 
-    def _push(self, record_type):
-        dev_info = self.system.get_info()
-        dev_info.update({'record_type': record_type})
-        self.msg_publisher.send(dev_info)
+    def _push(self, record_type, model=''):
+        pub_data = {}
+        if record_type == CallCounterMgr.RUNTIME_LOAD:
+
+            pub_data = self.system.get_info()
+            pub_data.update({'record_type': record_type})
+        elif record_type == CallCounterMgr.MODEL_LOAD:
+            pub_data.update({'model': model})
+            pub_data.update({'UUID': self.system.get_device().uuid})
+            pub_data.update({'record_type': record_type})
+        else:
+            #pub_data.update({'model': model})
+            pub_data.update({'UUID': self.system.get_device().uuid})
+            pub_data.update({'record_type': record_type})
+
+        self.msg_publisher.send(json.dumps(pub_data))
 
     def stop(self):
         self.msg_publisher.stop()

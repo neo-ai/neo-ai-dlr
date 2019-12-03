@@ -2,7 +2,7 @@ import platform
 import uuid
 from .deviceinfo import DeviceInfo
 from .utils.dlrlogger import logger
-
+import hashlib
 
 # wrapper class as per operating system
 class System:
@@ -36,8 +36,10 @@ class ARM(System):
         try:
             self._device.machine = platform.machine()
             self._device.arch = platform.architecture()[0]
-            self._device.uuid = ':'.join(
+            _uuid = ':'.join(
                 ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
+            _md5uuid = hashlib.md5(_uuid.encode())
+            self._device.uuid = str(_md5uuid.hexdigest())
             self._device.osname = platform.system()
             dist = platform.dist()
             self._device.dist = " ".join(x for x in dist)
