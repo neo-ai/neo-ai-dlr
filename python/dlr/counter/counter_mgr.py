@@ -16,7 +16,6 @@ class CallCounterMgr(object):
     def get_instance():
         """return single instance of class"""
         if 'true' in feature:
-            print("feature enabled")
             if CallCounterMgr._instance is None:
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
