@@ -7,6 +7,8 @@
 #include "dlr_tflite/dlr_tflite.h"
 #endif // DLR_TFLITE
 
+#include <locale>
+
 
 using namespace dlr;
 
@@ -137,7 +139,18 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
-  std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
+  /* Logic to handle Windows drive letter */
+  std::string model_path_string{model_path};
+  std::string special_prefix{""};
+  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
+    std::isalpha(model_path_string[0], std::locale("C"))) {
+    // Handle drive letter
+    special_prefix = model_path_string.substr(0, 2);
+    model_path_string = model_path_string.substr(2);
+  }
+
+  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
+  path_vec[0] = special_prefix + path_vec[0];
 
   DLRBackend backend = dlr::GetBackend(path_vec);
   DLRModel* model;
