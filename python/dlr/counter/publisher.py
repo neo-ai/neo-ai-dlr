@@ -1,13 +1,13 @@
 import concurrent.futures
 import queue
 import threading
-import time
 from .utils import resturlutils
 from .utils.dlrlogger import logger
-import time
 
 
 class MsgPublisher(object):
+    _processing = True
+
     def __init__(self):
         try:
             self.client = resturlutils.RestUrlUtils()
@@ -23,22 +23,22 @@ class MsgPublisher(object):
     def send(self, data):
         try:
             self.record_queue.put(data)
+            self.event.set()
         except queue.Full as e:
             logger.warning("Queue full !")
         except Exception as e:
             logger.warning("Unable to record messages in queue !", exc_info=True)
 
     def _process_queue(self):
-        while not self.event.is_set():
-            time.sleep(1)
-            while not self.record_queue.empty():
-                self.client.send(self.record_queue.get())
+        while self.event.wait() and MsgPublisher._processing:
+            self.client.send(self.record_queue.get(block=True))
+
         logger.info("Thread pool execution stopped")
 
     def stop(self):
         while not self.record_queue.empty():
             pass
-        self.event.set()
+        MsgPublisher._processing = False
 
     def __del__(self):
         self.stop()

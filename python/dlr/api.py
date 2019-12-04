@@ -50,7 +50,7 @@ class DLRModel(IDLRModel):
         # set model load count
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
-            call_counter.model_loaded(model_path)
+            call_counter.model_loaded(model_path, id(self))
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -83,7 +83,7 @@ class DLRModel(IDLRModel):
         # set model run count
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
-            call_counter.model_executed()
+            call_counter.model_executed(id(self))
         return self._impl.run(input_values)
     
     def get_input_names(self):

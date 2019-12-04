@@ -14,7 +14,7 @@ class RestUrlUtils():
             logger.info("Rest api response: {}".format(resp_data))
         except error.HTTPError as e:
             logger.warning("Rest api error code: {}".format(e.code()), exc_info=True)
-        except:
+        except Exception as e:
             logger.warning("Rest api miscellaneous exception error", exc_info=True)
 
 

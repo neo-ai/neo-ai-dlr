@@ -24,12 +24,12 @@ class DeviceInfo:
         """
 
         data_lst = {
+            "UUID": self.uuid,
             "Machine": self.machine,
             "Arch": self.arch,
             "OS": self.osname,
             "Device": self.machine,
-            "OS Distribution": self.dist,
-            "UUID": self.uuid
+            "OS Distribution": self.dist
         }
         return data_lst
 

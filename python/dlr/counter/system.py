@@ -87,11 +87,9 @@ class Factory:
     def get_system(sys_typ):
         """Return instance of System as per operating system type"""
         if sys_typ == 'Linux':
-            system = ARM()
-            return system
+            return ARM()
         elif sys_typ == 'Android':
-            system = Android()
-            return system
+            return Android()
         else:
             # no system  wrapper available to retrieve info
             pass
