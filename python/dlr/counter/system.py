@@ -1,11 +1,13 @@
 import platform
 import uuid
-from .deviceinfo import DeviceInfo
-from .utils.dlrlogger import logger
 import hashlib
 
+from .deviceinfo import DeviceInfo
+from .utils.dlrlogger import logger
+
+
 # wrapper class as per operating system
-class System:
+class System(object):
     def __init__(self):
         """create a instance of DeviceInfo() type"""
         self._device = DeviceInfo()
@@ -28,6 +30,19 @@ class ARM(System):
 
     def get_info(self):
         """Return a list of fields of device information"""
+        pass
+
+    def retrieve_info(self):
+        """Retrieve device specific information from Linux/ARM"""
+        pass
+
+
+class Linux(ARM):
+    def __init__(self):
+        ARM.__init__(self)
+
+    def get_info(self):
+        """Return a list of fields of device information"""
         self.retrieve_info()
         return System.get_info(self)
 
@@ -45,7 +60,7 @@ class ARM(System):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logger.warning("System API exception occured!", exc_info=True)
+            logger.warning("Linux API exception occured!", exc_info=True)
 
 
 class Raspbian(ARM):
@@ -86,10 +101,9 @@ class Factory:
     @staticmethod
     def get_system(sys_typ):
         """Return instance of System as per operating system type"""
-        if sys_typ == 'Linux':
-            return ARM()
-        elif sys_typ == 'Android':
-            return Android()
-        else:
-            # no system  wrapper available to retrieve info
-            pass
+        try:
+            system_class = globals()[sys_typ]
+            return system_class()
+        except Exception as e:
+            logger.warning("Exception in Factory!")
+

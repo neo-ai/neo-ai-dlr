@@ -1,5 +1,5 @@
 # a data structure for device specific information
-class DeviceInfo:
+class DeviceInfo(object):
     def __init__(self):
         self.machine = ""
         self.arch = ""
@@ -24,12 +24,12 @@ class DeviceInfo:
         """
 
         data_lst = {
-            "UUID": self.uuid,
-            "Machine": self.machine,
-            "Arch": self.arch,
-            "OS": self.osname,
-            "Device": self.machine,
-            "OS Distribution": self.dist
+            "uuid": self.uuid,
+            "machine": self.machine,
+            "arch": self.arch,
+            "os": self.osname,
+            "device": self.machine,
+            "os distribution": self.dist
         }
         return data_lst
 
@@ -53,9 +53,9 @@ class ARMDevice(DeviceInfo):
             return a dictionary of data members
         """
         arm_data_lst = {
-            "Processor": self.processor,
-            "Speed": self.speed,
-            "Arch": self.arch
+            "processor": self.processor,
+            "speed": self.speed,
+            "arch": self.arch
         }
 
         return arm_data_lst

@@ -6,8 +6,8 @@ import glob
 import logging
 import os
 
-
 from .counter.counter_mgr import CallCounterMgr
+
 
 # Interface
 class IDLRModel:
@@ -47,10 +47,8 @@ def _find_model_file(model_path, ext):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
-        # set model load count
+        # get ccm instance to set model load count
         call_counter = CallCounterMgr.get_instance()
-        if call_counter:
-            call_counter.model_loaded(model_path, id(self))
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -61,6 +59,8 @@ class DLRModel(IDLRModel):
         if tf_model_path is not None:
             from .tf_model import TFModelImpl
             self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
+            if call_counter:
+                call_counter.model_loaded(model_path, id(self))
             return
         # TFLite
         if tflite_model_path is not None:
@@ -70,6 +70,8 @@ class DLRModel(IDLRModel):
                 logging.warning("dev_id parameter is not supported")
             from .tflite_model import TFLiteModelImpl
             self._impl = TFLiteModelImpl(tflite_model_path)
+            if call_counter:
+                call_counter.model_loaded(model_path, id(self))
             return
         # Default to TVM+Treelite
         from .dlr_model import DLRModelImpl
@@ -78,13 +80,16 @@ class DLRModel(IDLRModel):
         if dev_id is None:
             dev_id = 0
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
+        if call_counter:
+            call_counter.model_loaded(model_path, id(self))
 
     def run(self, input_values):
+        res = self._impl.run(input_values)
         # set model run count
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
             call_counter.model_executed(id(self))
-        return self._impl.run(input_values)
+        return res
     
     def get_input_names(self):
         return self._impl.get_input_names()
