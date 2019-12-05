@@ -23,7 +23,7 @@ class DeviceInfo(object):
             return a dictionary of data members
         """
 
-        data_lst = {
+        dict_device = {
             "uuid": self.uuid,
             "machine": self.machine,
             "arch": self.arch,
@@ -31,7 +31,7 @@ class DeviceInfo(object):
             "device": self.machine,
             "os distribution": self.dist
         }
-        return data_lst
+        return dict_device
 
 
 class ARMDevice(DeviceInfo):
@@ -52,10 +52,10 @@ class ARMDevice(DeviceInfo):
         self :
             return a dictionary of data members
         """
-        arm_data_lst = {
+        dict_arm = {
             "processor": self.processor,
             "speed": self.speed,
             "arch": self.arch
         }
 
-        return arm_data_lst
+        return dict_arm

@@ -19,7 +19,7 @@ class MsgPublisher(object):
             executor.submit(self._process_queue)
             logger.info("Thread pool execution started")
         except Exception as e:
-            logger.warning("Thread pool not started due to exception!", exc_info=True)
+            logger.exception("Thread pool not started due to exception", exc_info=True)
 
     def send(self, data):
         try:
@@ -28,12 +28,11 @@ class MsgPublisher(object):
         except queue.Full as e:
             logger.warning("Queue full !")
         except Exception as e:
-            logger.warning("Unable to record messages in queue !", exc_info=True)
+            logger.exception("Unable to record messages in queue", exc_info=True)
 
     def _process_queue(self):
         while self.event.wait() and MsgPublisher._processing:
             self.client.send(self.record_queue.get(block=True))
-
         logger.info("Thread pool execution stopped")
 
     def stop(self):

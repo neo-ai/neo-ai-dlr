@@ -60,7 +60,7 @@ class Linux(ARM):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logger.warning("Linux API exception occured!", exc_info=True)
+            logger.exception("Linux API exception occurred", exc_info=True)
 
 
 class Raspbian(ARM):
@@ -105,5 +105,5 @@ class Factory:
             system_class = globals()[sys_typ]
             return system_class()
         except Exception as e:
-            logger.warning("Exception in Factory!")
+            logger.exception("Exception in factory method")
 

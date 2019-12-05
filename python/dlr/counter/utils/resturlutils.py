@@ -14,8 +14,8 @@ class RestUrlUtils(object):
             resp_data = resp.read()
             logger.info("Rest api response: {}".format(resp_data))
         except error.HTTPError as e:
-            logger.warning("Rest api error!", exc_info=True)
+            logger.exception("Rest api error!", exc_info=True)
         except Exception as e:
-            logger.warning("Rest api miscellaneous exception error", exc_info=True)
+            logger.exception("Rest api miscellaneous exception error", exc_info=True)
 
 

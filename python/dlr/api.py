@@ -44,12 +44,28 @@ def _find_model_file(model_path, ext):
     return None
 
 
+def call_home(func):
+    def wrapped_call_home(*args, **argv):
+        func(*args, **argv)
+        call_counter = CallCounterMgr.get_instance()
+        if call_counter:
+            if func.__name__ == "init_call_home":
+                call_counter.runtime_loaded()
+            elif func.__name__ == "__init__":
+                obj = args[0]
+                call_counter.model_loaded(obj._model)
+            else:
+                obj = args[0]
+                call_counter.model_executed(obj._model)
+        return
+    return wrapped_call_home
+
+
 # Wrapper class
 class DLRModel(IDLRModel):
+    @call_home
     def __init__(self, model_path, dev_type=None, dev_id=None):
-        # get ccm instance to set model load count
-        call_counter = CallCounterMgr.get_instance()
-        # Find correct runtime implementation for the model
+        self._model = model_path
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
         # Check if found both Tensorflow and TFLite files
@@ -59,8 +75,6 @@ class DLRModel(IDLRModel):
         if tf_model_path is not None:
             from .tf_model import TFModelImpl
             self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
-            if call_counter:
-                call_counter.model_loaded(model_path, id(self))
             return
         # TFLite
         if tflite_model_path is not None:
@@ -70,8 +84,6 @@ class DLRModel(IDLRModel):
                 logging.warning("dev_id parameter is not supported")
             from .tflite_model import TFLiteModelImpl
             self._impl = TFLiteModelImpl(tflite_model_path)
-            if call_counter:
-                call_counter.model_loaded(model_path, id(self))
             return
         # Default to TVM+Treelite
         from .dlr_model import DLRModelImpl
@@ -80,16 +92,13 @@ class DLRModel(IDLRModel):
         if dev_id is None:
             dev_id = 0
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
-        if call_counter:
-            call_counter.model_loaded(model_path, id(self))
 
     def run(self, input_values):
-        res = self._impl.run(input_values)
         # set model run count
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
-            call_counter.model_executed(id(self))
-        return res
+            call_counter.model_executed(self._model)
+        return self._impl.run(input_values)
     
     def get_input_names(self):
         return self._impl.get_input_names()
@@ -105,10 +114,9 @@ class DLRModel(IDLRModel):
 
 
 # call home feature starts
-def call_home():
-    call_counter = CallCounterMgr.get_instance()
-    if call_counter:
-        call_counter.runtime_loaded()
+@call_home
+def init_call_home():
+    pass
 
-call_home()
+init_call_home()
 

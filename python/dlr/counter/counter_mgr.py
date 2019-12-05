@@ -15,20 +15,16 @@ class CallCounterMgr(object):
     MODEL_RUN = 3
     CCM_CONFIG_FILE = 'ccm.json'
     _instance = None
-    _ccm_cfg_read = False
-    _ccm_flag = True
 
     @staticmethod
     def get_instance():
         """return single instance of class"""
         if CallCounterMgr._instance is None:
-            if not CallCounterMgr._ccm_cfg_read:
-                CallCounterMgr.check_feature_config()
-            if CallCounterMgr._ccm_flag:
+            if CallCounterMgr.is_feature_enabled():
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
-                logger.info("CCM feature disabled!")
+                logger.info("CCM feature disabled")
         return CallCounterMgr._instance
 
     def __init__(self):
@@ -36,13 +32,11 @@ class CallCounterMgr(object):
             self.msg_publisher = MsgPublisher()
             self.os_name = platform.system()
             self.system = Factory.get_system(self.os_name)
-            self._uuid = {}
-            self._moddict = {}
         except Exception as e:
-            logger.warning("Exception in Counter Mgr init!", exc_info=True)
+            logger.exception("Exception in Counter Mgr init", exc_info=True)
 
     @staticmethod
-    def check_feature_config():
+    def is_feature_enabled():
         """Load the configuration file, check if ccm.json file present in root folder,
         config like to disable ccm feature "ccm": "false" """
         try:
@@ -50,55 +44,49 @@ class CallCounterMgr(object):
                 with open(CallCounterMgr.CCM_CONFIG_FILE, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if 'false' == str(data['ccm']).lower():
-                        CallCounterMgr._ccm_flag = False
+                        return False
                     else:
-                        CallCounterMgr._ccm_flag = True
+                        return True
             else:
-                CallCounterMgr._ccm_flag = True
-
-            CallCounterMgr._ccm_cfg_read = True
+                return True
         except Exception as e:
-            logger.warning("Excpetion in reading ccm config file!")
-            CallCounterMgr._ccm_cfg_read = True
-            CallCounterMgr._ccm_flag = True
+            logger.exception("Excpetion in reading ccm config file")
 
     def runtime_loaded(self):
         """push device information at event AI.DLR library loaded"""
         try:
             pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
             pub_data.update(self.system.get_info())
-            self._uuid = {'uuid': pub_data['uuid']}
             self._push(pub_data)
         except Exception as e:
-            logger.warning("Exception in runtime load!", exc_info=True)
-
+            logger.exception("Exception in runtime load", exc_info=True)
         return True
 
-    def model_loaded(self, model, oid):
+    def model_loaded(self, model):
         """push model load information at event ML/DL model loaded"""
         try:
             _md5model = hashlib.md5(model.encode())
             _md5model = str(_md5model.hexdigest())
             pub_data = {'record_type': CallCounterMgr.MODEL_LOAD}
-            pub_data.update(self._uuid)
+            pub_data.update({'uuid': self.system.get_info()['uuid']})
             pub_data.update({'model': _md5model})
-            self._moddict = {oid: _md5model}
             self._push(pub_data)
         except Exception as e:
-            logger.warning("Exception in model load push!", exc_info=True)
+            logger.exception("Exception in model load push", exc_info=True)
 
         return True
 
-    def model_executed(self, oid):
+    def model_executed(self, model):
         """push model run information at event ML/DL model run"""
         try:
+            _md5model = hashlib.md5(model.encode())
+            _md5model = str(_md5model.hexdigest())
             pub_data = {'record_type': CallCounterMgr.MODEL_RUN}
-            pub_data.update(self._uuid)
-            pub_data.update({'model': self._moddict[oid]})
+            pub_data.update({'uuid': self.system.get_info()['uuid']})
+            pub_data.update({'model': _md5model})
             self._push(pub_data)
         except Exception as e:
-            logger.warning("Exception in model execution!", exc_info=True)
-
+            logger.exception("Exception in model execution", exc_info=True)
         return True
 
     def _push(self, data):
