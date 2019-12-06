@@ -40,10 +40,10 @@ class ARM(System):
 class Linux(ARM):
     def __init__(self):
         ARM.__init__(self)
+        self.retrieve_info()
 
     def get_info(self):
         """Return a list of fields of device information"""
-        self.retrieve_info()
         return System.get_info(self)
 
     def retrieve_info(self):
