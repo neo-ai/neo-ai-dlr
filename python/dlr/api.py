@@ -47,7 +47,6 @@ def _find_model_file(model_path, ext):
 
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
-
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
             if func.__name__ == "init_call_home":
@@ -56,11 +55,11 @@ def call_home(func):
             elif func.__name__ == "__init__":
                 func(*args, **kwargs)
                 obj = args[0]
-                call_counter.model_loaded(obj._model)
+                call_counter.model_count(CallCounterMgr.MODEL_LOAD, obj._model)
             else:
                 res = func(*args, **kwargs)
                 obj = args[0]
-                call_counter.model_executed(obj._model)
+                call_counter.model_count(CallCounterMgr.MODEL_RUN, obj._model)
                 return res
 
     return wrapped_call_home

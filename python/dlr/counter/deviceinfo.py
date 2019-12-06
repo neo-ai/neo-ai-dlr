@@ -15,7 +15,7 @@ class DeviceInfo(object):
         2. Architecture
         3. Operating system
         4. Machine name 
-        5. Operating system distrubution
+        5. Operating system distribution
         6. UUID
         Parameters
         ----------

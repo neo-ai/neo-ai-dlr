@@ -13,12 +13,12 @@ def test_counter_mgr():
         ret = ccm.runtime_loaded()
         assert ret == True
         # check device info
-        data = ccm.system.get_info()
+        data = ccm.system.get_device_info()
         assert data['os'] == "Linux"
         # model loaded push check, pass fake oid and model hash
-        ret = ccm.model_loaded("123456789")
+        ret = ccm.model_count(CallCounterMgr.MODEL_LOAD, "123456789")
         assert ret == True
         # model run push check
-        ret = ccm.model_executed("123456789")
+        ret = ccm.model_count(CallCounterMgr.MODEL_RUN, "123456789")
         assert ret == True
         ccm.stop()

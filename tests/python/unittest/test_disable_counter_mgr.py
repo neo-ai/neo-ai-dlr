@@ -6,7 +6,7 @@ import os
 
 def create_ccm_config():
     # create ccm.json file, feature disabled configuration
-    fp = open('ccm.json', 'w')
+    fp = open('ccm_config.json', 'w')
     fp.write('{\n    "ccm" : "false"\n}')
     fp.flush()
     fp.close()
@@ -15,8 +15,8 @@ def create_ccm_config():
 
 def remove_ccm_config():
     # remove config file if present
-    if os.path.exists('ccm.json'):
-        os.remove('ccm.json')
+    if os.path.exists('ccm_config.json'):
+        os.remove('ccm_config.json')
 
 
 # write a ccm config file

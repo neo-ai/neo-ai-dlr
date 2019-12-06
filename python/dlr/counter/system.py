@@ -12,43 +12,33 @@ class System(object):
         """create a instance of DeviceInfo() type"""
         self._device = DeviceInfo()
 
-    def get_info(self):
+    def get_device_info(self):
         """Return a list of device information"""
         return self._device.get_info()
 
-    def get_device(self):
-        """Return DeviceInfo instance"""
-        return self._device
-
-    def retrieve_info(self):
-        pass
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
+        return self._device.uuid
 
 
 class ARM(System):
     def __init__(self):
         System.__init__(self)
 
-    def get_info(self):
+    def get_device_info(self):
         """Return a list of fields of device information"""
         pass
 
-    def retrieve_info(self):
-        """Retrieve device specific information from Linux/ARM"""
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
         pass
 
 
 class Linux(ARM):
     def __init__(self):
         ARM.__init__(self)
-        self.retrieve_info()
-
-    def get_info(self):
-        """Return a list of fields of device information"""
-        return System.get_info(self)
-
-    def retrieve_info(self):
-        """Retrieve device specific information from Linux/ARM"""
         try:
+            # retrieve device information
             self._device.machine = platform.machine()
             self._device.arch = platform.architecture()[0]
             _uuid = ':'.join(
@@ -60,28 +50,41 @@ class Linux(ARM):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logger.exception("Linux API exception occurred", exc_info=True)
+            logger.exception("linux api exception occurred", exc_info=True)
+
+    def get_device_info(self):
+        """Return a list of fields of device information"""
+        return System.get_device_info(self)
+
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
+        return self._device.uuid
 
 
 class Raspbian(ARM):
     def __init__(self):
         ARM.__init__(self)
 
-    def get_info(self):
+    def get_device_info(self):
+        """Return a list of fields of device information"""
         pass
 
-    def retrieve_info(self):
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
         pass
+
 
 
 class Android(ARM):
     def __init__(self):
         ARM.__init__(self)
 
-    def get_info(self):
+    def get_device_info(self):
+        """Return a list of fields of device information"""
         pass
 
-    def retrieve_info(self):
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
         pass
 
 
@@ -89,10 +92,12 @@ class X86(System):
     def __init__(self):
         System.__init__(self)
 
-    def get_info(self):
+    def get_device_info(self):
+        """Return a list of fields of device information"""
         pass
 
-    def retrieve_info(self):
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
         pass
 
 
@@ -105,5 +110,5 @@ class Factory:
             system_class = globals()[sys_typ]
             return system_class()
         except Exception as e:
-            logger.exception("Exception in factory method")
+            logger.exception("unable to create system class instance")
 
