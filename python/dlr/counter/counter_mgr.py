@@ -7,13 +7,13 @@ import os
 from .publisher import MsgPublisher
 from .system import Factory
 from .utils.dlrlogger import logger
+from .config import *
 
 
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
     MODEL_LOAD = 2
     MODEL_RUN = 3
-    CCM_CONFIG_FILE = 'ccm.json'
     _instance = None
 
     @staticmethod
@@ -40,8 +40,8 @@ class CallCounterMgr(object):
         """Load the configuration file, check if ccm.json file present in root folder,
         config like to disable ccm feature "ccm": "false" """
         try:
-            if os.path.isfile(CallCounterMgr.CCM_CONFIG_FILE):
-                with open(CallCounterMgr.CCM_CONFIG_FILE, "r") as ccm_json_file:
+            if os.path.isfile(call_home_user_config_file):
+                with open(call_home_user_config_file, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if 'false' == str(data['ccm']).lower():
                         return False
@@ -50,14 +50,50 @@ class CallCounterMgr(object):
             else:
                 return True
         except Exception as e:
-            logger.exception("Excpetion in reading ccm config file")
+            logger.exception("Exception in reading ccm config file")
+
+    def is_device_info_publish(self):
+        flg = False
+        try:
+            ccm_rec_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                             call_home_record_file)
+            if os.path.isfile(ccm_rec_data_path):
+                fp = open(ccm_rec_data_path, "rb")
+                ccm_rec_flag = fp.read()
+                if int.from_bytes(ccm_rec_flag, byteorder='big') == CallCounterMgr.RUNTIME_LOAD:
+                    flg = True
+                else:
+                    flg = False
+                fp.close()
+            else:
+                flag = False
+        except IOError as e:
+            logger.exception("IO Exception in reading ccm event file")
+        except Exception as e:
+            logger.exception("Exception in reading ccm event file")
+        return flg
+
+    def record_publish_event(self):
+        try:
+            ccm_rec_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                             call_home_record_file)
+            if not os.path.isfile(ccm_rec_data_path):
+                fp = open(ccm_rec_data_path, "wb")
+                fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
+                fp.close()
+        except IOError as e:
+            logger.exception("IO Exception in recording ccm event")
+        except Exception as e:
+            logger.exception("Exception in recording ccm event")
 
     def runtime_loaded(self):
         """push device information at event AI.DLR library loaded"""
         try:
-            pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
-            pub_data.update(self.system.get_info())
-            self._push(pub_data)
+            if not self.is_device_info_publish():
+                self.record_publish_event()
+                pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
+                pub_data.update(self.system.get_info())
+                self._push(pub_data)
         except Exception as e:
             logger.exception("Exception in runtime load", exc_info=True)
         return True

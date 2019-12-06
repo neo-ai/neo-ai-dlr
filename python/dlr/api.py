@@ -11,7 +11,7 @@ from .counter.counter_mgr import CallCounterMgr
 
 # Interface
 class IDLRModel:
-    __metaclass__=abc.ABCMeta
+    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def get_input_names(self):
@@ -33,10 +33,11 @@ class IDLRModel:
     def run(self, input_data):
         raise NotImplementedError
 
+
 def _find_model_file(model_path, ext):
     if os.path.isfile(model_path) and model_path.endswith(ext):
         return model_path
-    model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*'+ext)))
+    model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*' + ext)))
     if len(model_files) > 1:
         raise ValueError('Multiple {} files found under {}'.format(ext, mdel_path))
     elif len(model_files) == 1:
@@ -45,19 +46,23 @@ def _find_model_file(model_path, ext):
 
 
 def call_home(func):
-    def wrapped_call_home(*args, **argv):
-        func(*args, **argv)
+    def wrapped_call_home(*args, **kwargs):
+
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
             if func.__name__ == "init_call_home":
+                func(*args, **kwargs)
                 call_counter.runtime_loaded()
             elif func.__name__ == "__init__":
+                func(*args, **kwargs)
                 obj = args[0]
                 call_counter.model_loaded(obj._model)
             else:
+                res = func(*args, **kwargs)
                 obj = args[0]
                 call_counter.model_executed(obj._model)
-        return
+                return res
+
     return wrapped_call_home
 
 
@@ -93,13 +98,10 @@ class DLRModel(IDLRModel):
             dev_id = 0
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
 
+    @call_home
     def run(self, input_values):
-        # set model run count
-        call_counter = CallCounterMgr.get_instance()
-        if call_counter:
-            call_counter.model_executed(self._model)
         return self._impl.run(input_values)
-    
+
     def get_input_names(self):
         return self._impl.get_input_names()
 
@@ -118,5 +120,5 @@ class DLRModel(IDLRModel):
 def init_call_home():
     pass
 
-init_call_home()
 
+init_call_home()
