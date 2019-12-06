@@ -26,7 +26,7 @@ class MsgPublisher(object):
             self.record_queue.put(data)
             self.event.set()
         except queue.Full as e:
-            logger.warning("Queue full !")
+            logger.exception("Queue full !")
         except Exception as e:
             logger.exception("Unable to record messages in queue", exc_info=True)
 

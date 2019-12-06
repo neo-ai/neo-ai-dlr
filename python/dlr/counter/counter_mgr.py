@@ -24,7 +24,7 @@ class CallCounterMgr(object):
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
-                logger.info("CCM feature disabled")
+                logger.warning("CCM feature disabled")
         return CallCounterMgr._instance
 
     def __init__(self):
