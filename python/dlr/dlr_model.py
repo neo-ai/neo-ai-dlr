@@ -7,7 +7,6 @@ from .api import IDLRModel
 
 from .libpath import find_lib_path
 
-from .counter.counter_mgr import CallCounterMgr
 
 class DLRError(Exception):
     """Error thrown by DLR"""

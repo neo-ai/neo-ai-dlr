@@ -47,7 +47,6 @@ class MsgPublisher(object):
 
     def stop(self):
         while not self.record_queue.empty():
-            logger.info("waiting for ccm queue to empty")
             pass
         MsgPublisher._stop_processing = True
 

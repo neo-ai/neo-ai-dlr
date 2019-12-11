@@ -69,6 +69,7 @@ def call_home(func):
 class DLRModel(IDLRModel):
     @call_home
     def __init__(self, model_path, dev_type=None, dev_id=None):
+        # Find correct runtime implementation for the model
         self._model = model_path
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
