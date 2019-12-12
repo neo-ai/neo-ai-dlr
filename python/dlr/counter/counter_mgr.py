@@ -82,7 +82,8 @@ class CallCounterMgr(object):
         try:
             if not self.is_device_info_published():
                 pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
-                pub_data.update(self.system.get_device_info())
+                if self.system:
+                    pub_data.update(self.system.get_device_info())
                 self._push(pub_data)
         except Exception as e:
             logging.exception("while dlr runtime load", exc_info=True)
@@ -94,7 +95,8 @@ class CallCounterMgr(object):
             _md5model = hashlib.md5(model.encode())
             _md5model = str(_md5model.hexdigest())
             pub_data = {'record_type': count_type}
-            pub_data.update({'uuid': self.system.get_device_uuid()})
+            if self.system:
+                pub_data.update({'uuid': self.system.get_device_uuid()})
             pub_data.update({'model': _md5model})
             self._push(pub_data)
         except Exception as e:
@@ -103,10 +105,12 @@ class CallCounterMgr(object):
 
     def _push(self, data):
         """publish information to AWS Server"""
-        self.msg_publisher.send(json.dumps(data))
+        if self.msg_publisher:
+            self.msg_publisher.send(json.dumps(data))
 
     def stop(self):
-        self.msg_publisher.stop()
+        if self.msg_publisher:
+            self.msg_publisher.stop()
 
     def __del__(self):
         self.stop()

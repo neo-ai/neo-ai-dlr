@@ -3,7 +3,6 @@ import uuid
 import hashlib
 import logging
 import abc
-from abc import ABC
 
 from .deviceinfo import DeviceInfo
 
@@ -25,18 +24,7 @@ class System:
 
 # Wrapper class
 class ARM(System):
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def get_device_info(self):
-        """Return a list of device information"""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_device_uuid(self):
-        """Return DeviceInfo uuid"""
-        raise NotImplementedError
-
+    pass
 
 class Linux_ARM(ARM):
     def __init__(self):
@@ -67,32 +55,10 @@ class Linux_ARM(ARM):
 
 
 class Android(ARM):
-    __metaclass__ = abc.ABCMeta
+    pass
 
-    @abc.abstractmethod
-    def get_device_info(self):
-        """Return a list of device information"""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_device_uuid(self):
-        """Return DeviceInfo uuid"""
-        raise NotImplementedError
-
-
-class X86(System, ABC):
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def get_device_info(self):
-        """Return a list of device information"""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_device_uuid(self):
-        """Return DeviceInfo uuid"""
-        raise NotImplementedError
-
+class X86(System):
+    pass
 
 class Linux_x86(X86):
     def __init__(self):
@@ -133,7 +99,8 @@ class Factory:
         """Return instance of System as per operating system type"""
         try:
             map_sys_typ = [item for item in system_list if item.lower() in sys_typ.lower()]
-            system_class = globals()[map_sys_typ[0]]
-            return system_class()
+            if map_sys_typ:
+                system_class = globals()[map_sys_typ[0]]
+                return system_class()
         except Exception as e:
             logging.exception("unable to create system class instance")
