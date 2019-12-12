@@ -3,10 +3,10 @@ import atexit
 import json
 import hashlib
 import os
+import logging
 
 from .publisher import MsgPublisher
 from .system import Factory
-from .utils.dlrlogger import logger
 from .config import *
 
 
@@ -24,21 +24,24 @@ class CallCounterMgr(object):
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
-                logger.warning("call home feature disabled")
+                logging.warning("call home feature disabled")
         return CallCounterMgr._instance
 
     def __init__(self):
         try:
             self.msg_publisher = MsgPublisher.get_instance()
-            self.os_name = platform.system()
-            self.system = Factory.get_system(self.os_name)
+            machine_typ = platform.machine()
+            os_name = platform.system()
+            os_name += "_" + machine_typ
+            self.system = Factory.get_system(os_name)
         except Exception as e:
-            logger.exception("while in counter mgr init", exc_info=True)
+            logging.exception("while in counter mgr init", exc_info=True)
 
     @staticmethod
     def is_feature_enabled():
-        """Load the configuration file, check if ccm.json file present in root folder,
-        config like to disable ccm feature "ccm": "false" """
+        """check if ccm_config.json file present in root folder,
+           if present then retrieve value for configuration key i.e. "ccm".
+           Disable feature needs below config., "ccm": "false" """
         try:
             if os.path.isfile(call_home_user_config_file):
                 with open(call_home_user_config_file, "r") as ccm_json_file:
@@ -50,49 +53,43 @@ class CallCounterMgr(object):
             else:
                 return True
         except Exception as e:
-            logger.exception("while in reading ccm config file")
+            logging.exception("while in reading ccm config file")
         return True
 
     def is_device_info_published(self):
-        """check if device information send only one time in DLR installation life time.
-            Create dummy binary file <DLR installation path>/ccm_record.txt to store flag
+        """check if device information send only single time in DLR installation life time.
+            create a dummy binary file in DLR installation path to store a flag.
         """
         flag = False
         try:
             ccm_rec_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                              call_home_record_file)
             if os.path.exists(ccm_rec_data_path):
-                fp = open(ccm_rec_data_path, "rb")
-                ccm_rec_flag = fp.read()
-                if int.from_bytes(ccm_rec_flag, byteorder='big') == CallCounterMgr.RUNTIME_LOAD:
-                    flag = True
-                else:
-                    flag = False
-                fp.close()
+                flag = True
             else:
-                # write a file if not exist, content runtime_load as a flag
-                fp = open(ccm_rec_data_path, "wb")
-                fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
-                fp.close()
+                # write runtime_load as a flag in a file
+                with open(ccm_rec_data_path, "wb") as fp:
+                    fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
+                    fp.close()
         except IOError as e:
-            logger.exception("while reading ccm event file")
+            logging.exception("while reading ccm publish data check file")
         except Exception as e:
-            logger.exception("while reading ccm event file")
+            logging.exception("while reading ccm publish data check file")
         return flag
 
     def runtime_loaded(self):
-        """push device information at event AI.DLR library loaded"""
+        """push device information on AI.DLR library load"""
         try:
             if not self.is_device_info_published():
                 pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
                 pub_data.update(self.system.get_device_info())
                 self._push(pub_data)
         except Exception as e:
-            logger.exception("while dlr runtime load", exc_info=True)
+            logging.exception("while dlr runtime load", exc_info=True)
         return True
 
     def model_count(self, count_type, model):
-        """push model load information at event ML/DL model loaded"""
+        """push model load information at time ML/DL model load time"""
         try:
             _md5model = hashlib.md5(model.encode())
             _md5model = str(_md5model.hexdigest())
@@ -101,7 +98,7 @@ class CallCounterMgr(object):
             pub_data.update({'model': _md5model})
             self._push(pub_data)
         except Exception as e:
-            logger.exception("unable to complete model count", exc_info=True)
+            logging.exception("unable to complete model count", exc_info=True)
         return True
 
     def _push(self, data):

@@ -1,42 +1,47 @@
 import platform
 import uuid
 import hashlib
+import logging
+import abc
+from abc import ABC
 
 from .deviceinfo import DeviceInfo
-from .utils.dlrlogger import logger
 
 
-# wrapper class as per operating system
-class System(object):
-    def __init__(self):
-        """create a instance of DeviceInfo() type"""
-        self._device = DeviceInfo()
+# Interface
+class System:
+    __metaclass__ = abc.ABCMeta
 
+    @abc.abstractmethod
     def get_device_info(self):
         """Return a list of device information"""
-        return self._device.get_info()
+        raise NotImplementedError
 
+    @abc.abstractmethod
     def get_device_uuid(self):
         """Return DeviceInfo uuid"""
-        return self._device.uuid
+        raise NotImplementedError
 
 
+# Wrapper class
 class ARM(System):
-    def __init__(self):
-        System.__init__(self)
+    __metaclass__ = abc.ABCMeta
 
+    @abc.abstractmethod
     def get_device_info(self):
-        """Return a list of fields of device information"""
-        pass
+        """Return a list of device information"""
+        raise NotImplementedError
 
+    @abc.abstractmethod
     def get_device_uuid(self):
         """Return DeviceInfo uuid"""
-        pass
+        raise NotImplementedError
 
 
-class Linux(ARM):
+class Linux_ARM(ARM):
     def __init__(self):
-        ARM.__init__(self)
+        self._device = DeviceInfo()
+
         try:
             # retrieve device information
             self._device.machine = platform.machine()
@@ -50,55 +55,75 @@ class Linux(ARM):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logger.exception("linux api exception occurred", exc_info=True)
+            logging.exception("linux_arm api exception occurred", exc_info=True)
 
     def get_device_info(self):
         """Return a list of fields of device information"""
-        return System.get_device_info(self)
+        return self._device.get_info()
 
     def get_device_uuid(self):
         """Return DeviceInfo uuid"""
         return self._device.uuid
 
 
-class Raspbian(ARM):
-    def __init__(self):
-        ARM.__init__(self)
-
-    def get_device_info(self):
-        """Return a list of fields of device information"""
-        pass
-
-    def get_device_uuid(self):
-        """Return DeviceInfo uuid"""
-        pass
-
-
-
 class Android(ARM):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_device_info(self):
+        """Return a list of device information"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
+        raise NotImplementedError
+
+
+class X86(System, ABC):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_device_info(self):
+        """Return a list of device information"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_device_uuid(self):
+        """Return DeviceInfo uuid"""
+        raise NotImplementedError
+
+
+class Linux_x86(X86):
     def __init__(self):
-        ARM.__init__(self)
+        self._device = DeviceInfo()
+
+        try:
+            # retrieve device information
+            self._device.machine = platform.machine()
+            self._device.arch = platform.architecture()[0]
+            _uuid = ':'.join(
+                ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
+            _md5uuid = hashlib.md5(_uuid.encode())
+            self._device.uuid = str(_md5uuid.hexdigest())
+            self._device.osname = platform.system()
+            dist = platform.dist()
+            self._device.dist = " ".join(x for x in dist)
+            self._device.name = platform.node()
+        except Exception as e:
+            logging.exception("linux_x86 api exception occurred", exc_info=True)
 
     def get_device_info(self):
         """Return a list of fields of device information"""
-        pass
+        return self._device.get_info()
 
     def get_device_uuid(self):
         """Return DeviceInfo uuid"""
-        pass
+        return self._device.uuid
 
 
-class X86(System):
-    def __init__(self):
-        System.__init__(self)
-
-    def get_device_info(self):
-        """Return a list of fields of device information"""
-        pass
-
-    def get_device_uuid(self):
-        """Return DeviceInfo uuid"""
-        pass
+# mapped system types
+system_list = ["Linux_ARM", "Linux_x86", "Android"]
 
 
 # factory class for System wrapper class
@@ -107,8 +132,8 @@ class Factory:
     def get_system(sys_typ):
         """Return instance of System as per operating system type"""
         try:
-            system_class = globals()[sys_typ]
+            map_sys_typ = [item for item in system_list if item.lower() in sys_typ.lower()]
+            system_class = globals()[map_sys_typ[0]]
             return system_class()
         except Exception as e:
-            logger.exception("unable to create system class instance")
-
+            logging.exception("unable to create system class instance")

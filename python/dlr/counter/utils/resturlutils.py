@@ -1,7 +1,7 @@
+import logging
 from urllib import request, parse, error
 
 from .. import config
-from .dlrlogger import logger
 
 
 class RestUrlUtils(object):
@@ -13,10 +13,10 @@ class RestUrlUtils(object):
             req = request.Request(config.call_home_url, en_data, headers=headers)
             resp = request.urlopen(req)
             resp_data = resp.read()
-            logger.info("rest api response: {}".format(resp_data))
+            logging.info("rest api response: {}".format(resp_data))
         except error.HTTPError as e:
-            logger.exception("rest api error!", exc_info=True)
+            logging.exception("rest api error!", exc_info=True)
         except Exception as e:
-            logger.exception("rest api miscellaneous error", exc_info=True)
+            logging.exception("rest api miscellaneous error", exc_info=True)
 
 

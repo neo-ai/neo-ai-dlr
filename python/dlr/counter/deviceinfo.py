@@ -28,7 +28,7 @@ class DeviceInfo(object):
             "machine": self.machine,
             "arch": self.arch,
             "os": self.osname,
-            "device": self.machine,
+            "device": self.name,
             "os distribution": self.dist
         }
         return dict_device
