@@ -80,11 +80,13 @@ set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
+set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
 
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
+include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -94,7 +96,7 @@ FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/contrib/sort/sort.cc
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
 if(USE_OPENCL)
