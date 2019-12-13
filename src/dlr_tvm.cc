@@ -61,7 +61,7 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
   tvm_graph_runtime_ =
-    std::make_shared<tvm::runtime::GraphRuntime>();
+    tvm::runtime::make_object<tvm::runtime::GraphRuntime>();    
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
