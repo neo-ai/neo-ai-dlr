@@ -6,7 +6,7 @@ import glob
 import logging
 import os
 
-from .counter.counter_mgr import CallCounterMgr
+from .counter.counter_mgr import call_home
 
 
 # Interface
@@ -43,26 +43,6 @@ def _find_model_file(model_path, ext):
     elif len(model_files) == 1:
         return model_files[0]
     return None
-
-
-def call_home(func):
-    def wrapped_call_home(*args, **kwargs):
-        call_counter = CallCounterMgr.get_instance()
-        if call_counter:
-            if func.__name__ == "init_call_home":
-                func(*args, **kwargs)
-                call_counter.runtime_loaded()
-            elif func.__name__ == "__init__":
-                func(*args, **kwargs)
-                obj = args[0]
-                call_counter.model_count(CallCounterMgr.MODEL_LOAD, obj._model)
-            else:
-                res = func(*args, **kwargs)
-                obj = args[0]
-                call_counter.model_count(CallCounterMgr.MODEL_RUN, obj._model)
-                return res
-
-    return wrapped_call_home
 
 
 # Wrapper class
@@ -114,6 +94,8 @@ class DLRModel(IDLRModel):
     def get_version(self):
         return self._impl.get_version()
 
+    def get_model_name(self):
+        return self._model
 
 # call home feature starts
 @call_home

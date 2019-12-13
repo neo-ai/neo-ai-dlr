@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import platform
 
 from dlr.counter.counter_mgr import CallCounterMgr
@@ -18,17 +17,17 @@ def test_counter_mgr_x86():
         # runtime loaded check
         ccm = CallCounterMgr.get_instance()
         ret = ccm.runtime_loaded()
-        assert ret == True
+        assert ret is True
         # check device info
         data = ccm.system.get_device_info()
         assert data['os'].lower() == os_name.lower()
         assert data['machine'].lower() == machine_typ.lower()
-        # model loaded push check, pass fake oid and model hash
-        ret = ccm.model_count(CallCounterMgr.MODEL_LOAD, "123456789")
-        assert ret == True
+        # model loaded push check, pass fake model hash
+        ret = ccm.model_loaded("123456789")
+        assert ret is True
         # model run push check
-        ret = ccm.model_count(CallCounterMgr.MODEL_RUN, "123456789")
-        assert ret == True
+        ret = ccm.model_run("123456789")
+        assert ret is True
         ccm.stop()
 
 
@@ -42,15 +41,15 @@ def test_counter_mgr_linux_arm():
         # runtime loaded check
         ccm = CallCounterMgr.get_instance()
         ret = ccm.runtime_loaded()
-        assert ret == True
+        assert ret is True
         # check device info
         data = ccm.system.get_device_info()
         assert data['os'].lower() == os_name.lower()
         assert data['machine'].lower() == machine_typ.lower()
         # model loaded push check, pass fake oid and model hash
         ret = ccm.model_count(CallCounterMgr.MODEL_LOAD, "123456789")
-        assert ret == True
+        assert ret is True
         # model run push check
-        ret = ccm.model_count(CallCounterMgr.MODEL_RUN, "123456789")
-        assert ret == True
+        ret = ccm.model_loaded(CallCounterMgr.MODEL_RUN, "123456789")
+        assert ret is True
         ccm.stop()

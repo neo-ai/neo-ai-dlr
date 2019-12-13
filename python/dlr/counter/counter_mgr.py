@@ -4,10 +4,33 @@ import json
 import hashlib
 import os
 import logging
+import threading
+import time
 
 from .publisher import MsgPublisher
 from .system import Factory
 from .config import *
+from .model_exec_counter import ModelExecCounter
+
+
+def call_home(func):
+    def wrapped_call_home(*args, **kwargs):
+        call_counter = CallCounterMgr.get_instance()
+        if call_counter:
+            if func.__name__ == "init_call_home":
+                func(*args, **kwargs)
+                call_counter.runtime_loaded()
+            elif func.__name__ == "__init__":
+                func(*args, **kwargs)
+                obj = args[0]
+                call_counter.model_loaded(obj.get_model_name())
+            else:
+                res = func(*args, **kwargs)
+                obj = args[0]
+                call_counter.model_run(obj.get_model_name())
+                return res
+
+    return wrapped_call_home
 
 
 class CallCounterMgr(object):
@@ -21,8 +44,10 @@ class CallCounterMgr(object):
         """return single instance of class"""
         if CallCounterMgr._instance is None:
             if CallCounterMgr.is_feature_enabled():
+                print(call_home_usr_notification)
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
+                CallCounterMgr._instance.thread.start()
             else:
                 logging.warning("call home feature disabled")
         return CallCounterMgr._instance
@@ -34,6 +59,8 @@ class CallCounterMgr(object):
             os_name = platform.system()
             os_name += "_" + machine_typ
             self.system = Factory.get_system(os_name)
+            self.thread = threading.Thread(name='non-daemon', target=self.push_model_matric)
+            self._stop_model_count = False
         except Exception as e:
             logging.exception("while in counter mgr init", exc_info=True)
 
@@ -70,7 +97,6 @@ class CallCounterMgr(object):
                 # write runtime_load as a flag in a file
                 with open(ccm_rec_data_path, "wb") as fp:
                     fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
-                    fp.close()
         except IOError as e:
             logging.exception("while reading ccm publish data check file")
         except Exception as e:
@@ -89,28 +115,50 @@ class CallCounterMgr(object):
             logging.exception("while dlr runtime load", exc_info=True)
         return True
 
-    def model_count(self, count_type, model):
+    def model_loaded(self, model):
+        self.model_info_publish(CallCounterMgr.MODEL_LOAD, model)
+        return True
+
+    def model_run(self, model):
+        ModelExecCounter.add_model_run_count(model)
+        return True
+
+    def model_info_publish(self, model_event_type, model, count=0):
         """push model load information at time ML/DL model load time"""
         try:
             _md5model = hashlib.md5(model.encode())
             _md5model = str(_md5model.hexdigest())
-            pub_data = {'record_type': count_type}
+            pub_data = {'record_type': model_event_type}
             if self.system:
                 pub_data.update({'uuid': self.system.get_device_uuid()})
             pub_data.update({'model': _md5model})
+            if model_event_type == CallCounterMgr.MODEL_RUN:
+                pub_data.update({'run_count': count})
             self._push(pub_data)
         except Exception as e:
             logging.exception("unable to complete model count", exc_info=True)
         return True
 
     def _push(self, data):
-        """publish information to AWS Server"""
+        """publish information to Server"""
         if self.msg_publisher:
             self.msg_publisher.send(json.dumps(data))
 
+    def push_model_matric(self):
+        while True:
+            time.sleep(call_home_model_run_count_time)
+            for key, val in ModelExecCounter.get_model_counts_dict().items():
+                self.model_info_publish(CallCounterMgr.MODEL_RUN, key, val)
+            ModelExecCounter.clear_model_counts()
+            if self._stop_model_count:
+                break
+
     def stop(self):
+        self._stop_model_count = True
         if self.msg_publisher:
             self.msg_publisher.stop()
 
     def __del__(self):
         self.stop()
+
+

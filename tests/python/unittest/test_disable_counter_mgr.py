@@ -8,8 +8,6 @@ def create_ccm_config():
     # create ccm.json file, feature disabled configuration
     with open(CCM_CONFIG_FILE, 'w') as fp:
         fp.write('{\n    "ccm" : "false"\n}')
-        fp.flush()
-        fp.close()
 
 
 def remove_ccm_config():
