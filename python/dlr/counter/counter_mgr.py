@@ -6,6 +6,7 @@ import os
 import logging
 import threading
 import time
+import concurrent.futures
 
 from .publisher import MsgPublisher
 from .system import Factory
@@ -47,7 +48,7 @@ class CallCounterMgr(object):
                 print(call_home_usr_notification)
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
-                CallCounterMgr._instance.thread.start()
+                CallCounterMgr._instance.executor.submit(CallCounterMgr._instance.push_model_metric)
             else:
                 logging.warning("call home feature disabled")
         return CallCounterMgr._instance
@@ -59,16 +60,15 @@ class CallCounterMgr(object):
             os_name = platform.system()
             os_name += "_" + machine_typ
             self.system = Factory.get_system(os_name)
-            self.thread = threading.Thread(name='non-daemon', target=self.push_model_matric)
-            self._stop_model_count = False
+            self.event = threading.Event()
+            self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=call_home_max_workers_threads)
+            self._pub_model_metric = True
         except Exception as e:
             logging.exception("while in counter mgr init", exc_info=True)
 
     @staticmethod
     def is_feature_enabled():
-        """check if ccm_config.json file present in root folder,
-           if present then retrieve value for configuration key i.e. "ccm".
-           Disable feature needs below config., "ccm": "false" """
+        """check feature disabled config. ccm_config.json file present in root folder"""
         try:
             if os.path.isfile(call_home_user_config_file):
                 with open(call_home_user_config_file, "r") as ccm_json_file:
@@ -144,21 +144,21 @@ class CallCounterMgr(object):
         if self.msg_publisher:
             self.msg_publisher.send(json.dumps(data))
 
-    def push_model_matric(self):
-        while True:
+    def push_model_metric(self):
+        """publishing model run metric"""
+        while self._pub_model_metric:
             time.sleep(call_home_model_run_count_time)
             for key, val in ModelExecCounter.get_model_counts_dict().items():
                 self.model_info_publish(CallCounterMgr.MODEL_RUN, key, val)
             ModelExecCounter.clear_model_counts()
-            if self._stop_model_count:
-                break
 
     def stop(self):
-        self._stop_model_count = True
+        self._pub_model_metric = False
+        for key, val in ModelExecCounter.get_model_counts_dict().items():
+            self.model_info_publish(CallCounterMgr.MODEL_RUN, key, val)
+        ModelExecCounter.clear_model_counts()
         if self.msg_publisher:
             self.msg_publisher.stop()
 
     def __del__(self):
         self.stop()
-
-

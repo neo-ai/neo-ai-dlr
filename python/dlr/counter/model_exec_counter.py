@@ -1,5 +1,6 @@
 class ModelExecCounter(object):
     model_dict = {}
+
     @staticmethod
     def add_model_run_count(model):
         """keep counting model inference in dictionary"""

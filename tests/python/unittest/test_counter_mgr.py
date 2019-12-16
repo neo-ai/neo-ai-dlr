@@ -1,10 +1,13 @@
 from __future__ import print_function
 import platform
+import time
 
 from dlr.counter.counter_mgr import CallCounterMgr
 
 LINUX_X86 = 'Linux_x86'
 LINUX_ARM = 'Linux_arm'
+SLEEP_SECS = 10
+MODEL_HASH = "123456789"
 
 
 def test_counter_mgr_x86():
@@ -23,10 +26,16 @@ def test_counter_mgr_x86():
         assert data['os'].lower() == os_name.lower()
         assert data['machine'].lower() == machine_typ.lower()
         # model loaded push check, pass fake model hash
-        ret = ccm.model_loaded("123456789")
+        ret = ccm.model_loaded(MODEL_HASH)
         assert ret is True
         # model run push check
-        ret = ccm.model_run("123456789")
+        ret = ccm.model_run(MODEL_HASH)
+        assert ret is True
+        time.sleep(SLEEP_SECS)
+        ret = ccm.model_run(MODEL_HASH)
+        assert ret is True
+        time.sleep(SLEEP_SECS)
+        ret = ccm.model_run(MODEL_HASH)
         assert ret is True
         ccm.stop()
 
@@ -46,10 +55,16 @@ def test_counter_mgr_linux_arm():
         data = ccm.system.get_device_info()
         assert data['os'].lower() == os_name.lower()
         assert data['machine'].lower() == machine_typ.lower()
-        # model loaded push check, pass fake oid and model hash
-        ret = ccm.model_count(CallCounterMgr.MODEL_LOAD, "123456789")
+        # model loaded push check, pass model hash
+        ret = ccm.model_loaded(MODEL_HASH)
         assert ret is True
         # model run push check
-        ret = ccm.model_loaded(CallCounterMgr.MODEL_RUN, "123456789")
+        ret = ccm.model_run(MODEL_HASH)
+        assert ret is True
+        time.sleep(SLEEP_SECS)
+        ret = ccm.model_run(MODEL_HASH)
+        assert ret is True
+        time.sleep(SLEEP_SECS)
+        ret = ccm.model_run(MODEL_HASH)
         assert ret is True
         ccm.stop()
