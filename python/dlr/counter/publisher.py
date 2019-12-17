@@ -4,7 +4,7 @@ import threading
 import logging
 
 from .utils import resturlutils
-from .config import *
+from . import config
 
 
 # Singleton class
@@ -22,10 +22,10 @@ class MsgPublisher(object):
     def __init__(self):
         try:
             self.client = resturlutils.RestUrlUtils()
-            self.record_queue = queue.Queue(maxsize=call_home_publish_message_max_queue_size)
+            self.record_queue = queue.Queue(maxsize=config.CALL_HOME_PUBLISH_MESSAGE_MAX_QUEUE_SIZE)
             self.event = threading.Event()
             # start loop
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=call_home_max_workers_threads)
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
             executor.submit(self._process_queue)
             logging.info("msg publisher thread pool execution started")
         except Exception as e:

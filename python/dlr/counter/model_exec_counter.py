@@ -7,9 +7,9 @@ class ModelExecCounter(object):
         cnt = ModelExecCounter.model_dict.get(model)
         if cnt:
             cnt += 1
-            ModelExecCounter.model_dict.update({str(model): cnt})
+            ModelExecCounter.model_dict[str(model)] = cnt
         else:
-            ModelExecCounter.model_dict.update({str(model): 1})
+            ModelExecCounter.model_dict[str(model)] = 1
 
     @staticmethod
     def get_model_counts_dict():

@@ -3,6 +3,7 @@ import uuid
 import hashlib
 import logging
 import abc
+from abc import ABC
 
 from .deviceinfo import DeviceInfo
 
@@ -23,8 +24,9 @@ class System:
 
 
 # Wrapper class
-class ARM(System):
+class ARM(System, ABC):
     pass
+
 
 class Linux_ARM(ARM):
     def __init__(self):
@@ -54,11 +56,13 @@ class Linux_ARM(ARM):
         return self._device.uuid
 
 
-class Android(ARM):
+class Android(ARM, ABC):
     pass
 
-class X86(System):
+
+class X86(System, ABC):
     pass
+
 
 class Linux_x86(X86):
     def __init__(self):

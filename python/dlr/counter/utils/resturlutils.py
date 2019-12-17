@@ -10,7 +10,7 @@ class RestUrlUtils(object):
         try:
             headers = {'Content-Type': 'application/x-amz-json-1.1'}
             en_data = message.encode('utf-8')
-            req = request.Request(config.call_home_url, en_data, headers=headers)
+            req = request.Request(config.CALL_HOME_URL, en_data, headers=headers)
             resp = request.urlopen(req)
             resp_data = resp.read()
             logging.info("rest api response: {}".format(resp_data))
