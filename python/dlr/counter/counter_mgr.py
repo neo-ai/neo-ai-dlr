@@ -4,14 +4,12 @@ import json
 import hashlib
 import os
 import logging
-import threading
-import time
-import concurrent.futures
 
 from .publisher import MsgPublisher
 from .system import Factory
-from .model_exec_counter import ModelExecCounter
 from . import config
+from .model_exec_counter import ModelExecCounter
+from .model_metric import ModelMetric
 
 
 def call_home(func):
@@ -48,7 +46,6 @@ class CallCounterMgr(object):
                 print(config.CALL_HOME_USR_NOTIFICATION)
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
-                CallCounterMgr._instance.executor.submit(CallCounterMgr._instance.push_model_metric)
             else:
                 logging.warning("call home feature disabled")
         return CallCounterMgr._instance
@@ -60,9 +57,7 @@ class CallCounterMgr(object):
             os_name = platform.system()
             os_supt = "{0}_{1}".format(os_name, machine_typ)
             self.system = Factory.get_system(os_supt)
-            self.event = threading.Event()
-            self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
-            self._pub_model_metric = True
+            self.model_metric = ModelMetric.get_instance(self.system.get_device_uuid())
         except Exception as e:
             logging.exception("while in counter mgr init", exc_info=True)
 
@@ -139,21 +134,11 @@ class CallCounterMgr(object):
         if self.msg_publisher:
             self.msg_publisher.send(json.dumps(data))
 
-    def push_model_metric(self):
-        """publishing model run metric"""
-        while self._pub_model_metric:
-            time.sleep(config.CALL_HOME_MODEL_RUN_COUNT_TIME)
-            for key, val in ModelExecCounter.get_model_counts_dict().items():
-                self.model_info_publish(CallCounterMgr.MODEL_RUN, key, val)
-            ModelExecCounter.clear_model_counts()
-
     def stop(self):
-        self._pub_model_metric = False
-        for key, val in ModelExecCounter.get_model_counts_dict().items():
-            self.model_info_publish(CallCounterMgr.MODEL_RUN, key, val)
-        ModelExecCounter.clear_model_counts()
         if self.msg_publisher:
             self.msg_publisher.stop()
+        if self.model_metric:
+            self.model_metric.stop()
 
     def __del__(self):
         self.stop()

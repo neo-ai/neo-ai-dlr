@@ -96,11 +96,3 @@ class DLRModel(IDLRModel):
 
     def get_model_name(self):
         return self._model
-
-# call home feature starts
-@call_home
-def init_call_home():
-    pass
-
-
-init_call_home()
