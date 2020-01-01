@@ -3,6 +3,7 @@
 #include "dlr_common.h"
 #include "dlr_tvm.h"
 #include "dlr_treelite.h"
+#include "counter/counter_mgr.h"
 #ifdef DLR_TFLITE
 #include "dlr_tflite/dlr_tflite.h"
 #endif // DLR_TFLITE
@@ -134,6 +135,9 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
                                 int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
+  CounterMgr* instance = CounterMgr::get_instance();
+  instance->runtime_loaded();
+
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
@@ -157,6 +161,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
     return -1; // unreachable
   }
   *handle = model;
+  instance->model_loaded(model_path);
   API_END();
 }
 

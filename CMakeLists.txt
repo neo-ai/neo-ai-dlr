@@ -95,6 +95,7 @@ FILE(GLOB DLR_SRC
     ${TVM_SRC}/src/runtime/dso_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/contrib/sort/sort.cc
+    "src/counter/*.cc"
 )
 
 if(USE_OPENCL)
