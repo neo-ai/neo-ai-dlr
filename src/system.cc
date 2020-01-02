@@ -15,15 +15,11 @@ Android::Android()
   // cpu arch
   __system_property_get("ro.product.cpu.abi", value);
   device->arch.assign(value);
-  // try ro.product.device
   __system_property_get("ro.build.host", value);
   device->machine.assign(value);
   // machine name
   __system_property_get("ro.product.name", value);
   device->name.assign(value);
-
-  //__system_property_get("ro.gsm.imei", value);
-  //device->uuid.assign(value);
   #endif
 };
 

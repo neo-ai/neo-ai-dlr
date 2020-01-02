@@ -9,6 +9,8 @@
 #include "system.h"
 #include "publisher.h"
 #include "config.h"
+#include "model_exec_counter.h"
+#include "model_metric.h"
 
 using namespace std;
 
@@ -18,12 +20,8 @@ class CounterMgr {
   static bool is_feature_enabled();
   bool is_device_info_published();
   void runtime_loaded();
-  void model_loaded(std::string model) {
-    model_info_published(MODEL_LOAD, model);
-  }
-  void model_run() {
-  }
-  std::string get_test_string()  {  return test_str;  };
+  void model_loaded(std::string model);
+  void model_run(std::string model);
  protected:
   void model_info_published(int msg_type, string model, int count =0);
   void push(string& data){ if (msg_publisher)  {msg_publisher->send(data);} };
@@ -37,7 +35,7 @@ private:
   System *system;
   static CounterMgr* instance;
   MsgPublisher* msg_publisher;
-  string test_str;
+  ModelMetric* model_metric;
 };
 
 

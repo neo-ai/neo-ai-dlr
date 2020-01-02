@@ -4,19 +4,18 @@ CounterMgr::CounterMgr()
 {
   // Msg Publisher
   msg_publisher = MsgPublisher::get_instance();
-
-  //TODO - Dynamic retrieve system
+  #if defined(__ANDROID__)
   system = Factory::get_system(3);
-
-  //
+  #else
+  system = Factory::get_system(1);
+  #endif
+  model_metric = ModelMetric::get_instance();
 }
 
 CounterMgr* CounterMgr::get_instance()
 {
   if (is_feature_enabled()) {
-    if (instance)
-      return instance;
-    else {
+    if (!instance) {
       instance = new CounterMgr();
     }
   }
@@ -47,30 +46,21 @@ bool CounterMgr::is_device_info_published()
 
   ifstream fin;
   fin.open(file_path);
+  std::string dev_id;
+  getline(fin, dev_id);
+  //std::string str (id);
 
-  test_str += "\n file open for reading, ";
-  std::string id;
-  getline(fin, id);
-  std::string str (id);
-
-  if (id.length() < 2)
+  if (dev_id.length() < 2)
   {
-    test_str += "\n ELSE file open for writing, ";
     ofstream fout;
     fout.open(file_path);
-    //if (fout.is_open()){
-    test_str += "\n file open for writing, ";
     std::string id = system->retrieve_id();
-    test_str += "id =>";
-    test_str += id;
     system->set_device_id(id);
-
     fout << id << std::endl;
     fout.close();
     return false;
   }
-  test_str += str;
-  system->set_device_id(str);
+  system->set_device_id(dev_id);
   fin.close();
   return true;
 }
@@ -79,29 +69,35 @@ void CounterMgr::runtime_loaded()
 {
   if (!is_device_info_published())
   {
-    std::string pubdata = "record_type:";
-    pubdata += std::to_string(RUNTIME_LOAD);
+    std::string pubdata = "{\"record_type\":";
+    pubdata += std::to_string(RUNTIME_LOAD) + ", ";
     pubdata += system->get_device_info();
-
-    test_str += pubdata;
+    pubdata += "}";
+    push(pubdata);
   }
-  else
-    test_str += "Device Information already published !";
-  //test_str += pSystem->get_device_info();
 };
-
 
 void CounterMgr::model_info_published(int msg_type, std::string model, int count)
 {
   std::string str_pub = "{\"record_type\":";
   str_pub += std::to_string(msg_type) + ", ";
-  str_pub += "\"model\":";
-  str_pub += model + ", ";
+  str_pub += "\"model\":\"";
+  std::size_t model_hash = std::hash<std::string>{}(model);
+  str_pub += std::to_string(model_hash) + "\", ";
   str_pub += "\"uuid\":";
   str_pub += "\"" + system->get_device_id() + "\" }";
-
-  test_str += str_pub;
   push(str_pub);
 };
+
+void CounterMgr::model_loaded(std::string model) {
+  std::string uid = instance->system->get_device_id();
+  instance->model_metric->set_device_id(uid);
+  model_info_published(MODEL_LOAD, model);
+};
+
+void CounterMgr::model_run(std::string model) {
+  std::size_t model_hash = std::hash<std::string>{}(model);
+  ModelExecCounter::add_model_run_count(model_hash);
+}
 
 CounterMgr * CounterMgr::instance = nullptr;

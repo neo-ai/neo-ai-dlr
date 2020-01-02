@@ -176,7 +176,7 @@ extern "C" int RunDLRModel(DLRModelHandle *handle) {
   API_BEGIN();
   CounterMgr* instance = CounterMgr::get_instance();
   static_cast<DLRModel *>(*handle)->Run();
-  instance->model_run();
+  instance->model_run("test");
   API_END();
 }
 

@@ -19,15 +19,15 @@ class DeviceInfo {
   std::string get_info() const
   {
     std::string str = "\"os distribution\":";
-    str += "\"" + dist + "\"";
+    str += "\"" + dist + "\", ";
     str += "\"uuid\":" ;
-    str += "\"" + uuid + "\"" ;
+    str += "\"" + uuid + "\", " ;
     str += "\"machine\":";
-    str += "\"" + machine + "\"";
+    str += "\"" + machine + "\", ";
     str += "\"arch\":";
-    str += "\"" + arch + "\"";
+    str += "\"" + arch + "\", ";
     str += "\"os\":";
-    str += "\"" + osname + "\"";
+    str += "\"" + osname + "\", ";
     str += "\"device\":";
     str += "\"" + name + "\"";
     return str;

@@ -3,8 +3,11 @@
 
 #include <iostream>
 #include <fstream>
-//#include <android/log.h>
+
+#if defined(__ANDROID__)
+#include <android/log.h>
 //#include <curl/curl.h>
+#endif
 
 #include "config.h"
 
@@ -15,7 +18,9 @@ class RestClient {
   ~RestClient() {
   };
   void send(std::string data) {
-    //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "inside restclient send %s ", data.c_str());
+    #if defined(__ANDROID__)
+      //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "inside restclient send %s ", data.c_str());
+    #endif
     //CURLcode res;
     //CURL *handle;
     //struct curl_slist *headers=NULL;
