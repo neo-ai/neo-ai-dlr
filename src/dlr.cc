@@ -174,7 +174,9 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
 
 extern "C" int RunDLRModel(DLRModelHandle *handle) {
   API_BEGIN();
+  CounterMgr* instance = CounterMgr::get_instance();
   static_cast<DLRModel *>(*handle)->Run();
+  instance->model_run();
   API_END();
 }
 
