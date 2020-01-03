@@ -6,8 +6,8 @@
 
 #if defined(__ANDROID__)
 #include <android/log.h>
-//#include <curl/curl.h>
 #endif
+#include <curl.h>
 
 #include "config.h"
 
@@ -18,23 +18,30 @@ class RestClient {
   ~RestClient() {
   };
   void send(std::string data) {
+    CURL *curl;
+    CURLcode res;
+    curl_global_init(CURL_GLOBAL_ALL);
+    /* get a curl handle */
+    curl = curl_easy_init();
     #if defined(__ANDROID__)
       //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "inside restclient send %s ", data.c_str());
     #endif
-    //CURLcode res;
-    //CURL *handle;
-    //struct curl_slist *headers=NULL;
-    // TODO - Convert to reqd. content type
-    //'Content-Type': 'application/x-amz-json-1.1'
-    //headers = curl_slist_append(headers, "Content-Type: text/xml");
-    //handle = curl_easy_init();
-    // {
-    //      curl_easy_setopt(handle, CURLOPT_POSTFIELDS, data);
-    //      curl_easy_setopt(handle, CURLOPT_URL, CALL_HOME_URL.c_str());
-    //      curl_easy_perform(handle); /* post away! */
-    // }
-    //curl_slist_free_all(headers); /* free the header list */
+    if(curl) {
+
+      struct curl_slist *headers=NULL;
+      headers=curl_slist_append(headers, "Content-Type: application/x-amz-json-1.1");
+      curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:5000/dlr_device_info");
+      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+      res = curl_easy_perform(curl);
+      if(res != CURLE_OK)
+        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+              curl_easy_strerror(res));
+      curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
   };
+ private:
+   
 };
 
 #endif //MY_APPLICATION_RESTCLIENT_H

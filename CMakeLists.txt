@@ -40,6 +40,7 @@ if(ANDROID_BUILD)
     else() # Default to armv7a which matches NDK toolchain.cmake behavior
         list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
     endif()
+    
     message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
     message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
     message(STATUS "Android CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
@@ -88,6 +89,8 @@ include_directories("${DMLC_CORE_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("/usr/include/curl")
+
 
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
