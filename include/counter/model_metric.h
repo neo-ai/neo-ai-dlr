@@ -18,10 +18,16 @@ class ModelMetric {
  public:
   static ModelMetric* modelmetric;
   static ModelMetric* get_instance();
+  static void release_instance() {
+    modelmetric->stop_process = true;
+    modelmetric->thrd->join();
+    delete modelmetric;
+    modelmetric = nullptr;
+  }
   ~ModelMetric();
   void process_queue();
   void set_device_id(std::string dev_id) {
-   device_id.assign(dev_id);
+    device_id.assign(dev_id);
   }
  private:
   ModelMetric() {

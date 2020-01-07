@@ -6,7 +6,7 @@ CounterMgr::CounterMgr()
   msg_publisher = MsgPublisher::get_instance();
   #if defined(__ANDROID__)
   system = Factory::get_system(3);
-  #else
+  #elif defined(__LINUX__) || defined(__linux__)
   system = Factory::get_system(1);
   #endif
   model_metric = ModelMetric::get_instance();
@@ -24,7 +24,7 @@ CounterMgr* CounterMgr::get_instance()
 
 bool CounterMgr::is_feature_enabled()
 {
-  std::string file_path = "/sdcard/";
+  /*std::string file_path = "/sdcard/";
   file_path += CALL_HOME_USER_CONFIG_FILE;
   ifstream fin(file_path);
   if (fin.is_open())
@@ -35,13 +35,13 @@ bool CounterMgr::is_feature_enabled()
     ofstream fout(file_path);
     fout << 1 << endl;
     fout.close();
-  }
+  } */ 
   return true;
 };
 
 bool CounterMgr::is_device_info_published()
 {
-  std::string file_path = "/sdcard/";
+  /*std::string file_path = "/sdcard/";
   file_path += CALL_HOME_RECORD_FILE;
 
   ifstream fin;
@@ -61,8 +61,8 @@ bool CounterMgr::is_device_info_published()
     return false;
   }
   system->set_device_id(dev_id);
-  fin.close();
-  return true;
+  fin.close();*/
+  return false;
 }
 
 void CounterMgr::runtime_loaded()

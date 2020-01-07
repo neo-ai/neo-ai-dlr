@@ -16,6 +16,10 @@ class MsgPublisher {
  public:
   static MsgPublisher* msgpublisher;
   static MsgPublisher* get_instance();
+  static void release_instance() {
+    delete msgpublisher; 
+    msgpublisher = nullptr;
+  }
   ~MsgPublisher();
   void send(std::string str) {
     msg_que.push(str);
@@ -23,8 +27,8 @@ class MsgPublisher {
   void process_queue();
  private:
   MsgPublisher() {
-   restcon = new RestClient();
-   stop_process = false;
+    restcon = new RestClient();
+    stop_process = false;
   };
   RestClient *restcon;
   std::thread *thrd;

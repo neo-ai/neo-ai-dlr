@@ -19,6 +19,7 @@ class System {
   virtual std::string get_device_id() const =0;
   virtual void set_device_id(std::string str) =0;
   virtual std::string retrieve_id() =0;
+  virtual ~System() {};
 };
 
 class ARM : public System {
@@ -28,9 +29,17 @@ class Linux_ARM: public ARM {
  public:
   Linux_ARM()
   {
-        #ifdef LINUX
-
-        #endif
+    device = new DeviceInfo();
+    #if defined(__LINUX__) ||  defined(__linux__)
+    device->osname.assign("Linux ARM");
+    device->uuid.assign("1234566");
+    device->dist.assign("LINUX Release ARM");
+    device->name.assign("LINUX");
+    #endif
+  }
+  ~Linux_ARM()
+  {
+    delete device;
   }
   std::string get_device_info() const
   {
@@ -56,6 +65,10 @@ class Android : public ARM
 {
  public:
   Android();
+  ~Android()
+  {
+     delete device;
+  }
   std::string retrieve_id();
   std::string get_device_info() const
   {
@@ -81,8 +94,13 @@ class Linux_x86:public X86
  public:
   Linux_x86()
   {
-        #ifdef LINUX_X86
-        #endif
+     device = new DeviceInfo();
+     #if defined(__LINUX__)
+     #endif
+  }
+  ~Linux_x86()
+  {
+     delete device;
   }
   std::string get_device_info() const
   {

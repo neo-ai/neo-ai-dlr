@@ -3,7 +3,6 @@
 #include "dlr_common.h"
 #include "dlr_tvm.h"
 #include "dlr_treelite.h"
-#include "counter/counter_mgr.h"
 #ifdef DLR_TFLITE
 #include "dlr_tflite/dlr_tflite.h"
 #endif // DLR_TFLITE
@@ -135,9 +134,6 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
                                 int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
-  CounterMgr* instance = CounterMgr::get_instance();
-  instance->runtime_loaded();
-
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
@@ -161,7 +157,6 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
     return -1; // unreachable
   }
   *handle = model;
-  instance->model_loaded(model_path);
   API_END();
 }
 
@@ -174,9 +169,7 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
 
 extern "C" int RunDLRModel(DLRModelHandle *handle) {
   API_BEGIN();
-  CounterMgr* instance = CounterMgr::get_instance();
   static_cast<DLRModel *>(*handle)->Run();
-  instance->model_run("test");
   API_END();
 }
 
@@ -214,3 +207,40 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   model->UseCPUAffinity(use);
   API_END();
 }
+
+#if defined(__ANDROID__)
+//extern "C" 
+//{
+//imei_number =0;
+void get_imei(JNIEnv* env, jobject instance)
+{
+    jobject activity = env->NewGlobalRef(instance);
+    jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
+                                     "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    if (mid == nullptr)
+    {
+        //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "mid null");
+    }
+    jobject telephony_manager = env->CallObjectMethod(activity, mid,
+                                                      env->NewStringUTF("phone"));
+    mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
+                           "getImei", "()Ljava/lang/String;");
+
+    if (mid == nullptr)
+    {
+        //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "mid null");
+    }
+
+    jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
+                                                    mid);
+    size_t length = (size_t) env->GetStringLength(s_imei);
+    const char* imei_number = env->GetStringUTFChars(s_imei, 0);
+
+    //imei_number.assign(newDir);
+
+    //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "IMEI string length = %d",length);
+    //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "IMEI string = %s", newDir);
+
+}
+//}
+#endif

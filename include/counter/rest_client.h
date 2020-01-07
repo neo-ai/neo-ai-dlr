@@ -7,7 +7,7 @@
 #if defined(__ANDROID__)
 #include <android/log.h>
 #endif
-#include <curl.h>
+//#include <curl/curl.h>
 
 #include "config.h"
 
@@ -18,10 +18,10 @@ class RestClient {
   ~RestClient() {
   };
   void send(std::string data) {
-    CURL *curl;
+    std::cout << "Sending message " << data << std::endl; 
+    /*CURL *curl;
     CURLcode res;
     curl_global_init(CURL_GLOBAL_ALL);
-    /* get a curl handle */
     curl = curl_easy_init();
     #if defined(__ANDROID__)
       //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "inside restclient send %s ", data.c_str());
@@ -38,7 +38,7 @@ class RestClient {
               curl_easy_strerror(res));
       curl_easy_cleanup(curl);
     }
-    curl_global_cleanup();
+    curl_global_cleanup();*/
   };
  private:
    

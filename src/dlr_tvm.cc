@@ -59,9 +59,10 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   tvm::runtime::Module module;
   if (!IsFileEmpty(paths.model_lib)){
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
+    model_path_.assign(paths.model_lib);
   }
   tvm_graph_runtime_ =
-    std::make_shared<tvm::runtime::GraphRuntime>();
+    tvm::runtime::make_object<tvm::runtime::GraphRuntime>();    
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
@@ -170,6 +171,11 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 void TVMModel::Run() {
   tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
   run();
+  CounterMgr *instance = CounterMgr::get_instance();
+  if (instance)
+  {
+    instance->model_run(model_path_);
+  }
 }
 
 const char* TVMModel::GetBackend() const {

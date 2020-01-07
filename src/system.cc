@@ -1,4 +1,5 @@
 #include "counter/system.h"
+const char * imei_number;
 
 Android::Android()
 {
@@ -20,16 +21,19 @@ Android::Android()
   // machine name
   __system_property_get("ro.product.name", value);
   device->name.assign(value);
+
+  // uuid
+  device->uuid.assign(imei_number);
   #endif
 };
 
 std::string Android::retrieve_id()
-{
+{ 
   random_device rd;
   mt19937 gen(rd());
   std::stringstream stream;
   stream << std::hex << gen();
   stream << std::hex << gen();
   device->uuid = stream.str();
-  return device->uuid;
+  return ""; //device->uuid;
 };

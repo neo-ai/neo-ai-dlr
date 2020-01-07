@@ -1,6 +1,5 @@
 #include "counter/model_exec_counter.h"
 
-
 void ModelExecCounter::add_model_run_count(std::size_t model_hash)
 {
   std::map<std::size_t, int>::iterator res =  model_dict.find(model_hash);
