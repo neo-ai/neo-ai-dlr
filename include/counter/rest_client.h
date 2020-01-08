@@ -6,20 +6,36 @@
 
 #if defined(__ANDROID__)
 #include <android/log.h>
+#include <curl/curl.h>
 #endif
-//#include <curl/curl.h>
 
 #include "config.h"
 
 class RestClient {
  public:
+  #if defined(__ANDROID__)
+  //std::ofstream fout;
+  #endif
   RestClient() {
+     #if defined(__ANDROID__)
+     
+     //fout.open("/sdcard/msg_dump.txt"); 
+     #endif
+
   };
   ~RestClient() {
+     #if defined(__ANDROID__)
+     
+     //fout.close(); 
+     #endif
+     
   };
   void send(std::string data) {
     std::cout << "Sending message " << data << std::endl; 
-    /*CURL *curl;
+
+     #if defined(__ANDROID__)
+    
+    CURL *curl;
     CURLcode res;
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
@@ -38,7 +54,8 @@ class RestClient {
               curl_easy_strerror(res));
       curl_easy_cleanup(curl);
     }
-    curl_global_cleanup();*/
+    curl_global_cleanup();
+     #endif
   };
  private:
    
