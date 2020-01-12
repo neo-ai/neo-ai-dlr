@@ -1,7 +1,10 @@
+#include <mutex>
 #include "counter/publisher.h"
+std::mutex g_pub_mutex;
 
 MsgPublisher* MsgPublisher::get_instance()
 {
+  g_pub_mutex.lock();
   if (!msgpublisher)
   {
     msgpublisher = new MsgPublisher();
@@ -9,14 +12,12 @@ MsgPublisher* MsgPublisher::get_instance()
       msgpublisher->thrd = new std::thread(&MsgPublisher::process_queue, msgpublisher);
     }
   }
+  g_pub_mutex.unlock();
   return msgpublisher;
 };
 
 MsgPublisher::~MsgPublisher()
 {
-  while (!msg_que.empty());
-  stop_process = true;
-  thrd->join();
   delete thrd;
   delete restcon;
 };

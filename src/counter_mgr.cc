@@ -1,4 +1,7 @@
+#include <mutex>
 #include "counter/counter_mgr.h"
+
+std::mutex g_ccm_mutex;
 
 CounterMgr::CounterMgr()
 {
@@ -14,55 +17,65 @@ CounterMgr::CounterMgr()
 
 CounterMgr* CounterMgr::get_instance()
 {
-  if (is_feature_enabled()) {
-    if (!instance) {
+  g_ccm_mutex.lock();
+  if (!instance) {
+    if (is_feature_enabled()) {
+      std::cout << CALL_HOME_USR_NOTIFICATION  << std::endl;
       instance = new CounterMgr();
-    }
+    } else std::cout << "call home feature disabled" << std::endl;
   }
+  g_ccm_mutex.unlock();
   return instance;
 };
 
 bool CounterMgr::is_feature_enabled()
 {
-  /*std::string file_path = "/sdcard/";
+  #if defined(__ANDROID__)
+  std::string file_path;
+  file_path.assign(ext_path);
   file_path += CALL_HOME_USER_CONFIG_FILE;
-  ifstream fin(file_path);
-  if (fin.is_open())
-  {
+
+  ifstream fin;
+  fin.open(file_path);
+
+  if (fin.is_open()) {
+    fin.close();
+    return false; 
+  } else {
+    fin.close();
     return true;
   }
-  else {
-    ofstream fout(file_path);
-    fout << 1 << endl;
-    fout.close();
-  } */ 
+  #else
   return true;
+  #endif
 };
 
 bool CounterMgr::is_device_info_published()
 {
-  /*std::string file_path = "/sdcard/";
+  #if defined(__ANDROID__)
+  std::string file_path;
+  file_path.assign(ext_path);
   file_path += CALL_HOME_RECORD_FILE;
 
   ifstream fin;
   fin.open(file_path);
-  std::string dev_id;
-  getline(fin, dev_id);
-  //std::string str (id);
 
-  if (dev_id.length() < 2)
-  {
+  if (fin.is_open()) {
+    fin.close();
+    return true; 
+  } else {
     ofstream fout;
     fout.open(file_path);
-    std::string id = system->retrieve_id();
-    system->set_device_id(id);
-    fout << id << std::endl;
+    if (fout.is_open()) {
+      string id = system->get_device_id();
+      fout << id << std::endl;
+    }
     fout.close();
     return false;
   }
-  system->set_device_id(dev_id);
-  fin.close();*/
+  #else
   return false;
+  #endif
 }
 
 void CounterMgr::runtime_loaded()
@@ -77,7 +90,7 @@ void CounterMgr::runtime_loaded()
   }
 };
 
-void CounterMgr::model_info_published(int msg_type, std::string model, int count)
+void CounterMgr::model_load_publish(int msg_type, std::string model, int count)
 {
   std::string str_pub = "{\"record_type\":";
   str_pub += std::to_string(msg_type) + ", ";
@@ -92,7 +105,7 @@ void CounterMgr::model_info_published(int msg_type, std::string model, int count
 void CounterMgr::model_loaded(std::string model) {
   std::string uid = instance->system->get_device_id();
   instance->model_metric->set_device_id(uid);
-  model_info_published(MODEL_LOAD, model);
+  model_load_publish(MODEL_LOAD, model);
 };
 
 void CounterMgr::model_run(std::string model) {

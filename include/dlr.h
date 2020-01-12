@@ -5,6 +5,10 @@
 #if defined(__ANDROID__)
 #include <jni.h>
 #endif
+
+#include "counter/counter_mgr.h"
+#include "counter/system.h"
+
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
 extern "C" { // Open extern "C" block
@@ -240,10 +244,8 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 #if defined(__ANDROID__)
-//extern "C" {
-extern const char* imei_number;
 void get_imei(JNIEnv* env, jobject instance);
-//}
+void get_external_storage_path(JNIEnv* env, jobject instance);
 #endif
 /*! \} */
 

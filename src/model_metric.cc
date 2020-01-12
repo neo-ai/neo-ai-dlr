@@ -16,8 +16,6 @@ ModelMetric* ModelMetric::get_instance()
 
 ModelMetric::~ModelMetric()
 {
-  //stop_process = true;
-  //thrd->join();
   delete thrd;
   delete restcon;
 };

@@ -17,6 +17,9 @@ class MsgPublisher {
   static MsgPublisher* msgpublisher;
   static MsgPublisher* get_instance();
   static void release_instance() {
+    while (!msgpublisher->msg_que.empty());
+    msgpublisher->stop_process = true;
+    msgpublisher->thrd->join();
     delete msgpublisher; 
     msgpublisher = nullptr;
   }

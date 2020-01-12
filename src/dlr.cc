@@ -209,38 +209,34 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
 }
 
 #if defined(__ANDROID__)
-//extern "C" 
-//{
-//imei_number =0;
+const char* ext_path;
+const char* imei_number;
+
 void get_imei(JNIEnv* env, jobject instance)
 {
-    jobject activity = env->NewGlobalRef(instance);
-    jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
-                                     "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-    if (mid == nullptr)
-    {
-        //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "mid null");
-    }
-    jobject telephony_manager = env->CallObjectMethod(activity, mid,
-                                                      env->NewStringUTF("phone"));
-    mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
-                           "getImei", "()Ljava/lang/String;");
-
-    if (mid == nullptr)
-    {
-        //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "mid null");
-    }
-
-    jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
-                                                    mid);
-    size_t length = (size_t) env->GetStringLength(s_imei);
-    const char* imei_number = env->GetStringUTFChars(s_imei, 0);
-
-    //imei_number.assign(newDir);
-
-    //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "IMEI string length = %d",length);
-    //__android_log_print(ANDROID_LOG_DEBUG, "MyAPP", "IMEI string = %s", newDir);
-
+  jobject activity = env->NewGlobalRef(instance);
+  jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
+                                   "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+  jobject telephony_manager = env->CallObjectMethod(activity, mid,
+                                                    env->NewStringUTF("phone"));
+  mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
+                         "getImei", "()Ljava/lang/String;");
+  jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
+                                                  mid);
+  size_t length = (size_t) env->GetStringLength(s_imei);
+  imei_number = env->GetStringUTFChars(s_imei, 0);
 }
-//}
+
+void get_external_storage_path(JNIEnv* env, jobject instance)
+{
+  jclass envcls = env->FindClass("android/os/Environment");
+  jmethodID mid = env->GetStaticMethodID(envcls,
+                                        "getExternalStorageDirectory", "()Ljava/io/File;");
+  jobject fileext = env->CallStaticObjectMethod(envcls, mid);
+  jmethodID midf = env->GetMethodID(env->GetObjectClass(fileext),
+                                                       "getAbsolutePath", "()Ljava/lang/String;");
+  jstring path = (jstring) env->CallObjectMethod(fileext, midf);
+  size_t length = (size_t) env->GetStringLength(path);
+  ext_path = env->GetStringUTFChars(path, 0);
+}
 #endif

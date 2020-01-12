@@ -11,14 +11,13 @@
 #endif
 
 #include "device_info.h"
+extern const char* imei_number;
 using namespace std;
 
 class System {
  public:
   virtual std::string get_device_info() const =0;
   virtual std::string get_device_id() const =0;
-  virtual void set_device_id(std::string str) =0;
-  virtual std::string retrieve_id() =0;
   virtual ~System() {};
 };
 
@@ -49,14 +48,6 @@ class Linux_ARM: public ARM {
   {
     return device->uuid;
   }
-  void set_device_id(string id)
-  {
-    device->uuid.assign(id);
-  }
-  std::string retrieve_id()
-  {
-    return "";
-  };
  private:
   DeviceInfo* device;
 };
@@ -69,7 +60,6 @@ class Android : public ARM
   {
      delete device;
   }
-  std::string retrieve_id();
   std::string get_device_info() const
   {
     return device->get_info();
@@ -77,10 +67,6 @@ class Android : public ARM
   std::string get_device_id() const
   {
     return device->uuid;
-  };
-  void set_device_id(std::string id)
-  {
-    device->uuid.assign(id);
   };
  private:
   DeviceInfo* device;
@@ -109,13 +95,6 @@ class Linux_x86:public X86
   std::string get_device_id() const
   {
     return device->uuid;
-  }
-  void set_device_id(std::string str)
-  {
-    device->uuid.assign(str);
-  }
-  std::string retrieve_id() {
-    return "";
   }
  private:
   DeviceInfo* device;

@@ -13,6 +13,8 @@
 #include "model_metric.h"
 
 using namespace std;
+ 
+extern const char* ext_path;
 
 class CounterMgr {
  public:
@@ -31,7 +33,7 @@ class CounterMgr {
   void model_loaded(std::string model);
   void model_run(std::string model);
  protected:
-  void model_info_published(int msg_type, string model, int count =0);
+  void model_load_publish(int msg_type, string model, int count =0);
   void push(string& data) { 
     if (msg_publisher) {
       msg_publisher->send(data);
