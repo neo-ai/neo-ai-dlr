@@ -276,6 +276,7 @@ else(ANDROID_BUILD)
        #target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} /home/dipak_kasar/Curl_Android/curl-android-ios/prebuilt-with-ssl/android/armeabi-v7a/libcurl.a /home/dipak_kasar/Android_libz/prebuilt-libz/android-21-armeabi-v7a/lib/libz.a)
        target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} )
     endif()
+    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
 endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
