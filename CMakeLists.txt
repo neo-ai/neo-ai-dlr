@@ -80,11 +80,13 @@ set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
+set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
 
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
+include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -92,9 +94,9 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
     "src/*.cc"
-    ${TVM_SRC}/src/runtime/dso_module.cc
+    ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/contrib/sort/sort.cc
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
 if(USE_OPENCL)
@@ -257,7 +259,11 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
-target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+if(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+else(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)

@@ -2,7 +2,7 @@
 #define DLR_TVM_H_
 
 #include <graph/graph_runtime.h>
-
+#include <tvm/runtime/memory.h>
 #include "dlr_common.h"
 
 namespace dlr {
@@ -16,7 +16,7 @@ ModelPath GetTvmPaths(std::vector<std::string> tar_path);
  */
 class TVMModel: public DLRModel {
  private:
-  std::shared_ptr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
+  tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;  
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> weight_names_;
