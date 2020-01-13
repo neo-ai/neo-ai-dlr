@@ -6,14 +6,6 @@ import glob
 import logging
 import os
 
-from .countermgr import CounterMgr
-
-# call home feature starts 
-def call_home():
-    inst = CounterMgr.get_instance()
-    inst.push(1)    
-
-call_home()
 
 # Interface
 class IDLRModel:
@@ -53,9 +45,6 @@ def _find_model_file(model_path, ext):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None):
-        # set model load count
-        inst = CounterMgr.get_instance()
-        inst.push(2)    
         # Find correct runtime implementation for the model
         tf_model_path = _find_model_file(model_path, '.pb')
         tflite_model_path = _find_model_file(model_path, '.tflite')
@@ -85,9 +74,6 @@ class DLRModel(IDLRModel):
         self._impl = DLRModelImpl(model_path, dev_type, dev_id)
 
     def run(self, input_values):
-        # set model run count
-        inst = CounterMgr.get_instance()
-        inst.push(3)    
         return self._impl.run(input_values)
     
     def get_input_names(self):
