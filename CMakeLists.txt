@@ -20,6 +20,7 @@ set_default_configuration_release()
 msvc_use_static_runtime()
 message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
+set(distribution_DIR "${PROJECT_SOURCE_DIR}/3rdparty/curl")
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
@@ -32,13 +33,13 @@ if(ANDROID_BUILD)
     endif()
   # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
     if (ANDROID_ABI STREQUAL "x86_64")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android ${distribution_DIR}/include)
     elseif (ANDROID_ABI STREQUAL "x86")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android ${distribution_DIR}/include)
     elseif (ANDROID_ABI STREQUAL "arm64-v8a")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android ${distribution_DIR}/include)
     else() # Default to armv7a which matches NDK toolchain.cmake behavior
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi ${distribution_DIR}/include)
     endif()
     message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
     message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
@@ -90,9 +91,10 @@ include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${distribution_DIR}/include")
 
 # Add only top level *.cc files (non-RECURSE)
-FILE(GLOB DLR_SRC
+FILE(GLOB  DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
@@ -252,6 +254,8 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
+
+
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -259,10 +263,19 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
+
+
+#if(ANDROID_BUILD)
+  add_library(lib_curl STATIC IMPORTED)
+  set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
+        ${distribution_DIR}/lib/${ANDROID_ABI}/libcurl.a)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl log)
+#endif()
+
 if(ANDROID_BUILD)
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 else(ANDROID_BUILD)
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+  #target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
@@ -289,7 +302,8 @@ foreach(__srcpath ${DEMO_SRCS})
   if (ANDROID_BUILD)
     target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -fuse-ld=gold)
   else (ANDROID_BUILD)
-    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
+    #target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})     
   endif ()
   set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
   set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
