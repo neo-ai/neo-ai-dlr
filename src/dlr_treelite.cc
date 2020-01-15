@@ -64,6 +64,7 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(),
                                  num_worker_threads,
                                  &treelite_model_), 0) << TreeliteGetLastError();
+  model_path_.assign(paths.model_lib.c_str());
   CHECK_EQ(
       TreelitePredictorQueryNumFeature(treelite_model_, &treelite_num_feature_),
       0)
@@ -184,6 +185,7 @@ void TreeliteModel::Run() {
                                          1, 0, 0, treelite_output_.data(),
                                          &out_result_size), 0)
    << TreeliteGetLastError();
+   CallHome(3, model_path_);
 }
 
 const char* TreeliteModel::GetBackend() const {

@@ -28,10 +28,10 @@ void ModelMetric::process_queue()
     for(auto pair_dict :  dict) {
       std::string pub_data ("{");
       pub_data += "\"record_type\":";
-      pub_data += std::to_string(MODEL_RUN) + ", ";
-      pub_data += "\"model\":\"" + std::to_string(pair_dict.first) + "\", ";
-      pub_data += "\"uuid\": \"" + device_id + "\",";
-      pub_data += "\"run_count\":" + std::to_string(pair_dict.second) + "}";
+      pub_data += " \"" + std::to_string(MODEL_RUN) + "\", ";
+      pub_data += "\"model\": \"" + std::to_string(pair_dict.first) + "\", ";
+      pub_data += "\"uuid\": \"" + device_id + "\", ";
+      pub_data += "\"run_count\": \"" + std::to_string(pair_dict.second) + "\"}";
       restcon->send(pub_data);
     }
     ModelExecCounter::clear_model_counts();

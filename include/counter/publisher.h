@@ -5,13 +5,12 @@
 #include <queue>
 #include <fstream>
 #include <ostream>
-
-#if defined(__ANDROID__)
-#include <android/log.h>
-#endif
+#include <dmlc/logging.h>
 
 #include "rest_client.h"
 
+/*! \brief class MsgPublisher
+ */
 class MsgPublisher {
  public:
   static MsgPublisher* msgpublisher;
@@ -31,6 +30,7 @@ class MsgPublisher {
  private:
   MsgPublisher() {
     restcon = new RestClient();
+    if (!restcon) {stop_process = true; LOG(FATAL) << "Message Publisher object null !";}
     stop_process = false;
   };
   RestClient *restcon;

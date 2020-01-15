@@ -171,11 +171,7 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 void TVMModel::Run() {
   tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
   run();
-  CounterMgr *instance = CounterMgr::get_instance();
-  if (instance)
-  {
-    instance->model_run(model_path_);
-  }
+  CallHome(3, model_path_);
 }
 
 const char* TVMModel::GetBackend() const {

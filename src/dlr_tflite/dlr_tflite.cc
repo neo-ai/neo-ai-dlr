@@ -76,7 +76,8 @@ int TFLiteModel::GetInputId(const char* name) {
 TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
                          const int threads, const bool use_nnapi): DLRModel(ctx, DLRBackend::kTFLITE) {
   const std::string tflite_file = GetTFLiteFile(model_path);
-
+  model_path_.assign(tflite_file.c_str());
+_
   // ensure the model and error_reporter lifetime is at least as long as interpreter's lifetime
   error_reporter_ = new tflite::StderrReporter();
   model_ = tflite::FlatBufferModel::BuildFromFile(tflite_file.c_str(), error_reporter_);
@@ -112,7 +113,7 @@ TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
   // Save the number of outputs
   num_outputs_ = interpreter_->outputs().size();
   GenTensorSpec(false);
-
+  CallHome(2, model_path_);
   LOG(INFO) << "TFLiteModel was created";
 }
 
@@ -183,6 +184,7 @@ void TFLiteModel::Run() {
     LOG(FATAL) << "Failed to invoke interpreter!";
     return; // unreachable
   }
+  CallHome(3, model_path_);
 }
 
 const char* TFLiteModel::GetBackend() const {

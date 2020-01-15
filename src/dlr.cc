@@ -210,31 +210,56 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
 
 #if defined(__ANDROID__)
 const char* ext_path;
-const char* imei_number;
-
+//const char* imei_number;
+/*
 void get_imei(JNIEnv* env, jobject instance)
 {
-  jobject activity = env->NewGlobalRef(instance);
+jobject activity = env->NewGlobalRef(instance);
+  if (activity == 0) {
+    return;  
+  }
   jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
                                    "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+  if (mid == 0) {
+    return;
+  }
   jobject telephony_manager = env->CallObjectMethod(activity, mid,
                                                     env->NewStringUTF("phone"));
+  if (telephony_manager == 0) {
+    return;
+  }
   mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
                          "getImei", "()Ljava/lang/String;");
+  if (mid == 0) {
+    return;
+  }
   jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
                                                   mid);
   size_t length = (size_t) env->GetStringLength(s_imei);
   imei_number = env->GetStringUTFChars(s_imei, 0);
+  imei_number = "1234";
 }
-
+*/
 void get_external_storage_path(JNIEnv* env, jobject instance)
 {
   jclass envcls = env->FindClass("android/os/Environment");
+  if (envcls == 0) {
+    return;
+  }
   jmethodID mid = env->GetStaticMethodID(envcls,
                                         "getExternalStorageDirectory", "()Ljava/io/File;");
+  if (mid == 0) {
+    return;
+  }
   jobject fileext = env->CallStaticObjectMethod(envcls, mid);
+  if (fileext == 0) {
+    return;
+  }
   jmethodID midf = env->GetMethodID(env->GetObjectClass(fileext),
                                                        "getAbsolutePath", "()Ljava/lang/String;");
+  if (midf == 0) {
+    return;
+  }
   jstring path = (jstring) env->CallObjectMethod(fileext, midf);
   size_t length = (size_t) env->GetStringLength(path);
   ext_path = env->GetStringUTFChars(path, 0);

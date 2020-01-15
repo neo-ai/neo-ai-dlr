@@ -6,14 +6,12 @@
 #include <fstream>
 #include <ostream>
 
-#if defined(__ANDROID__)
-#include <android/log.h>
-#endif
-
 #include "rest_client.h"
 #include "config.h"
 #include "model_exec_counter.h"
 
+/*! \brief class ModelMetric 
+ */
 class ModelMetric {
  public:
   static ModelMetric* modelmetric;

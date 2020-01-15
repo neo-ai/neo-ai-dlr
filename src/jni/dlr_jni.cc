@@ -179,6 +179,7 @@ Java_com_amazon_neo_dlr_DLR_CreateDLRModel(JNIEnv* env, jobject thiz,
     }
     // Return handle as jlong
     std::uintptr_t jhandle = reinterpret_cast<std::uintptr_t>(handle);
+    get_imei(env, thiz);
     return jhandle;
 }
 
@@ -228,3 +229,32 @@ Java_com_amazon_neo_dlr_DLR_UseDLRCPUAffinity(JNIEnv* env, jobject thiz,
     DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
     return UseDLRCPUAffinity(handle, use);
 }
+
+const char* imei_number;
+void get_imei(JNIEnv* env, jobject instance)
+{
+  jobject activity = env->NewGlobalRef(instance);
+  if (activity == 0) {
+    return;
+  }
+  jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
+                                   "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+  if (mid == 0) {
+    return;
+  }
+  jobject telephony_manager = env->CallObjectMethod(activity, mid,
+                                                    env->NewStringUTF("phone"));
+  if (telephony_manager == 0) {
+    return;
+  }
+  mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
+                         "getImei", "()Ljava/lang/String;");
+  if (mid == 0) {
+    return;
+  }
+  jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
+                                                  mid);
+  size_t length = (size_t) env->GetStringLength(s_imei);
+  imei_number = env->GetStringUTFChars(s_imei, 0);
+}
+

@@ -9,6 +9,8 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 
+#include "counter/counter_mgr.h"
+
 #define LINE_SIZE 256
 
 #ifndef _WIN32
@@ -79,9 +81,10 @@ class DLRModel {
   size_t num_outputs_ = 1;
   DLContext ctx_;
   std::vector<std::string> input_names_;
+  std::string model_path_;
  public:
   DLRModel(const DLContext& ctx, const DLRBackend& backend): ctx_(ctx), backend_(backend) {}
-  virtual ~DLRModel() {}
+  virtual ~DLRModel() {CallHome(0);}
   virtual void GetNumInputs(int* num_inputs) const {*num_inputs = num_inputs_;}
   virtual void GetNumOutputs(int* num_outputs) const {*num_outputs = num_outputs_;}
   virtual void GetNumWeights(int* num_weights) const {*num_weights = num_weights_;}

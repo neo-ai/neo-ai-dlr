@@ -4,6 +4,7 @@
 #include <fstream>
 #include <ostream>
 #include <iostream>
+#include <dmlc/logging.h>
 
 #include "device_info.h"
 #include "system.h"
@@ -13,9 +14,11 @@
 #include "model_metric.h"
 
 using namespace std;
- 
+
 extern const char* ext_path;
 
+/*! \brief class CounterMgr
+ */
 class CounterMgr {
  public:
   static CounterMgr* get_instance();
@@ -37,7 +40,7 @@ class CounterMgr {
   void push(string& data) { 
     if (msg_publisher) {
       msg_publisher->send(data);
-    } 
+    }
   };
  private:
   CounterMgr();
@@ -55,5 +58,31 @@ class CounterMgr {
   ModelMetric* model_metric;
 };
 
+/*! \brief Hook for Call Home Feature.
+ */
+extern CounterMgr *instance;
+inline void CallHome(int type, std::string model= std::string())
+{
+  CounterMgr* instance;
+  if (!instance) {
+    instance = CounterMgr::get_instance();
+    if (!instance)  LOG(FATAL) << "Call Home Feature not initialize!";
+  }
+  switch (type) {
+    case 1:
+      instance->runtime_loaded();
+      break;
+    case 2:
+      instance->model_loaded(model);
+      break;
+    case 3:
+      instance->model_run(model);
+      break;
+    case 0:
+      instance->release_instance();
+      break;
+  }
+}
+ 
 
 #endif //MY_APPLICATION_COUNTERMGR_H

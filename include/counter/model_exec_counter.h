@@ -6,6 +6,8 @@
 
 using namespace std;
 
+/*! \brief class ModelExecCounter
+ */
 class ModelExecCounter
 {
  public:

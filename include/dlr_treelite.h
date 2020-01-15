@@ -42,6 +42,7 @@ class TreeliteModel: public DLRModel {
    */
   explicit TreeliteModel(std::vector<std::string> model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTREELITE) {
     SetupTreeliteModule(model_path);
+    CallHome(2, model_path_);
   }
 
   virtual const char* GetInputName(int index) const override;

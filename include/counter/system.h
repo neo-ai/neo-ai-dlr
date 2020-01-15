@@ -14,6 +14,8 @@
 extern const char* imei_number;
 using namespace std;
 
+/*! \brief class System (Abstract Class) 
+ */
 class System {
  public:
   virtual std::string get_device_info() const =0;
@@ -52,6 +54,8 @@ class Linux_ARM: public ARM {
   DeviceInfo* device;
 };
 
+/*! \brief class Android
+ */
 class Android : public ARM
 {
  public:

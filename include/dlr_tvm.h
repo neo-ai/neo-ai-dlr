@@ -4,7 +4,6 @@
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
 #include "dlr_common.h"
-#include "counter/counter_mgr.h"
 
 namespace dlr {
 
@@ -21,7 +20,6 @@ class TVMModel: public DLRModel {
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<const DLTensor *> outputs_;
   std::vector<std::string> weight_names_;
-  std::string model_path_;
   void SetupTVMModule(std::vector<std::string> model_path);
  public:
   /*! \brief Load model files from given folder path.
@@ -29,16 +27,9 @@ class TVMModel: public DLRModel {
   explicit TVMModel(std::vector<std::string> model_path, 
                     const DLContext& ctx): DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
-    CounterMgr *instance = CounterMgr::get_instance();
-    if (instance)
-    {
-      instance->runtime_loaded();
-      instance->model_loaded(model_path_);
-    }
+    CallHome(2, model_path_);
   }
-  ~TVMModel() {
-    CounterMgr::release_instance();
-  }
+  ~TVMModel() {} 
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
