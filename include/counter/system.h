@@ -32,10 +32,6 @@ class Linux_ARM: public ARM {
   {
     device = new DeviceInfo();
     #if defined(__LINUX__) ||  defined(__linux__)
-    device->osname.assign("Linux ARM");
-    device->uuid.assign("1234566");
-    device->dist.assign("LINUX Release ARM");
-    device->name.assign("LINUX");
     #endif
   }
   ~Linux_ARM()

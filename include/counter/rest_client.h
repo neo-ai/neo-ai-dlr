@@ -7,7 +7,6 @@
 
 #if defined(__ANDROID__)
 #include <curl/curl.h>
-#include <android/log.h>
 #endif
 
 #include "config.h"

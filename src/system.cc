@@ -1,5 +1,4 @@
 #include "counter/system.h"
-#include <android/log.h>
 Android::Android()
 {
   #if defined(__ANDROID__)
