@@ -15,7 +15,7 @@
 
 using namespace std;
 
-extern const char* ext_path;
+extern std::string ext_path;
 
 /*! \brief class CounterMgr
  */
@@ -61,7 +61,7 @@ class CounterMgr {
 /*! \brief Hook for Call Home Feature.
  */
 extern CounterMgr *instance;
-inline void CallHome(int type, std::string model= std::string())
+inline void CallHome(int type, std::string model= std::string(), int flag=1)
 {
   CounterMgr* instance;
   if (!instance) {

@@ -11,7 +11,7 @@
 #endif
 
 #include "device_info.h"
-extern const char* imei_number;
+extern std::string uuid_;
 using namespace std;
 
 /*! \brief class System (Abstract Class) 

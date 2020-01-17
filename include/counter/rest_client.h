@@ -7,6 +7,7 @@
 
 #if defined(__ANDROID__)
 #include <curl/curl.h>
+#include <android/log.h>
 #endif
 
 #include "config.h"
@@ -43,12 +44,14 @@ class RestClient {
       char *s = curl_easy_escape(curl, data.c_str(), data.length());       
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
       res = curl_easy_perform(curl);
+
       if(res != CURLE_OK) {
         LOG(INFO) << "Rest client perform return code :" << res; 
       } else {
         long resp_code;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resp_code);
-        LOG(INFO) << "Rest client response code :" << resp_code; 
+        LOG(INFO) << "Rest client response code :" << resp_code;
+ 
       } 
       curl_free(s);
       curl_easy_cleanup(curl);

@@ -208,38 +208,18 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   API_END();
 }
 
-#if defined(__ANDROID__)
-const char* ext_path;
-//const char* imei_number;
-/*
-void get_imei(JNIEnv* env, jobject instance)
-{
-jobject activity = env->NewGlobalRef(instance);
-  if (activity == 0) {
-    return;  
-  }
-  jmethodID mid = env->GetMethodID(env->GetObjectClass(activity),
-                                   "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-  if (mid == 0) {
-    return;
-  }
-  jobject telephony_manager = env->CallObjectMethod(activity, mid,
-                                                    env->NewStringUTF("phone"));
-  if (telephony_manager == 0) {
-    return;
-  }
-  mid = env->GetMethodID(env->GetObjectClass(telephony_manager),
-                         "getImei", "()Ljava/lang/String;");
-  if (mid == 0) {
-    return;
-  }
-  jstring s_imei = (jstring)env->CallObjectMethod(telephony_manager,
-                                                  mid);
-  size_t length = (size_t) env->GetStringLength(s_imei);
-  imei_number = env->GetStringUTFChars(s_imei, 0);
-  imei_number = "1234";
+
+extern "C" int SetDataCollectionConsent(DLRModelHandle* handle, int flag) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel *>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  CallHome(1, "", flag); 
+  API_END();
 }
-*/
+
+#if defined(__ANDROID__)
+std::string ext_path;
+std::string uuid_;
 void get_external_storage_path(JNIEnv* env, jobject instance)
 {
   jclass envcls = env->FindClass("android/os/Environment");
@@ -262,6 +242,39 @@ void get_external_storage_path(JNIEnv* env, jobject instance)
   }
   jstring path = (jstring) env->CallObjectMethod(fileext, midf);
   size_t length = (size_t) env->GetStringLength(path);
-  ext_path = env->GetStringUTFChars(path, 0);
+  ext_path.assign(env->GetStringUTFChars(path, 0));
+}
+
+void get_uuid()
+{
+  FILE *fp;
+  std::string result;
+  fp = popen("/system/bin/ip link", "r");
+  if (fp == NULL) {
+    fp = popen("/usr/bin/ifconfig -a", "r");
+    if (fp == NULL)
+      LOG(FATAL) << "System command failed to retrieve uuid "; 
+    exit(1);
+  }
+  size_t len;
+  ssize_t read;
+  char * line = NULL;
+  std::string sub_str;
+  while((read =getline(&line, &len, fp)) != -1) {
+    std::string str_line (line);
+    size_t p = str_line.find("link/ether");
+    if (p != std::string::npos) {
+      sub_str = str_line.substr(str_line.find(' ', p), 18);
+      sub_str.erase(std::remove(sub_str.begin(), sub_str.end(), ':'), sub_str.end());
+      std::string::size_type sz=0;
+      unsigned long long dev_id = stoull(sub_str, &sz, 0);
+      if (dev_id > 0) {
+        std::size_t uuid_hash = std::hash<std::string>{}(sub_str);
+        uuid_.assign(std::to_string(uuid_hash).c_str());
+        break;
+      }
+    }
+  }
+  pclose(fp);
 }
 #endif

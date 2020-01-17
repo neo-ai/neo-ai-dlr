@@ -30,12 +30,12 @@ CounterMgr* CounterMgr::get_instance()
   g_ccm_mutex.lock();
   if (!instance) {
     if (is_feature_enabled()) {
-      std::cout << CALL_HOME_USR_NOTIFICATION  << std::endl;
+      LOG(INFO) << CALL_HOME_USR_NOTIFICATION  << std::endl;
       instance = new CounterMgr();
       if (instance) {
         instance->runtime_loaded();
       }
-    } else std::cout << "call home feature disabled" << std::endl;
+    } else LOG(INFO) << "call home feature disabled" << std::endl;
   }
   g_ccm_mutex.unlock();
   return instance;
@@ -45,7 +45,7 @@ bool CounterMgr::is_feature_enabled()
 {
   #if defined(__ANDROID__)
   std::string file_path;
-  file_path.assign(ext_path);
+  file_path.assign(ext_path.c_str());
   file_path += CALL_HOME_USER_CONFIG_FILE;
 
   ifstream fin;
@@ -67,7 +67,7 @@ bool CounterMgr::is_device_info_published()
 {
   #if defined(__ANDROID__)
   std::string file_path;
-  file_path.assign(ext_path);
+  file_path.assign(ext_path.c_str());
   file_path += CALL_HOME_RECORD_FILE;
 
   ifstream fin;

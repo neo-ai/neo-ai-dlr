@@ -243,9 +243,15 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  */
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+
+
+DLR_DLL
+int SetDataCollectionConsent(DLRModelHandle* handle, int flag);
+
 #if defined(__ANDROID__)
 void get_imei(JNIEnv* env, jobject instance);
 void get_external_storage_path(JNIEnv* env, jobject instance);
+void get_uuid();
 #endif
 /*! \} */
 

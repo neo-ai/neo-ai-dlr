@@ -1,5 +1,5 @@
 #include "counter/system.h"
-
+#include <android/log.h>
 Android::Android()
 {
   #if defined(__ANDROID__)
@@ -16,7 +16,7 @@ Android::Android()
   device->machine.assign(value);
   __system_property_get("ro.product.name", value);
   device->name.assign(value);
-  device->uuid.assign(imei_number);
+  device->uuid.assign(uuid_.c_str());
   #endif
 };
 
