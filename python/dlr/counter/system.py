@@ -1,12 +1,11 @@
 import platform
 import uuid
-import hashlib
 import logging
 import abc
 from abc import ABC
 
 from .deviceinfo import DeviceInfo
-
+from .utils.helper import *
 
 # Interface
 class System:
@@ -38,7 +37,7 @@ class Linux_ARM(ARM):
             self._device.arch = platform.architecture()[0]
             _uuid = ':'.join(
                 ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
-            _md5uuid = hashlib.md5(_uuid.encode())
+            _md5uuid = get_hash_string(_uuid.encode()) 
             self._device.uuid = str(_md5uuid.hexdigest())
             self._device.osname = platform.system()
             dist = platform.dist()
@@ -74,7 +73,7 @@ class Linux_x86(X86):
             self._device.arch = platform.architecture()[0]
             _uuid = ':'.join(
                 ['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
-            _md5uuid = hashlib.md5(_uuid.encode())
+            _md5uuid = get_hash_string(_uuid.encode()) 
             self._device.uuid = str(_md5uuid.hexdigest())
             self._device.osname = platform.system()
             dist = platform.dist()

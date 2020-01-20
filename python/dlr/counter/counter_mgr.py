@@ -1,7 +1,6 @@
 import platform
 import atexit
 import json
-import hashlib
 import os
 import logging
 
@@ -10,7 +9,7 @@ from .system import Factory
 from . import config
 from .model_exec_counter import ModelExecCounter
 from .model_metric import ModelMetric
-
+from .utils.helper import *
 
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
@@ -37,13 +36,13 @@ class CallCounterMgr(object):
     MODEL_LOAD = 2
     MODEL_RUN = 3
     _instance = None
+    DEFAULT_ENABLE_FEATURE = True
 
     @staticmethod
     def get_instance():
         """return single instance of class"""
         if CallCounterMgr._instance is None:
             if CallCounterMgr.is_feature_enabled():
-                print(config.CALL_HOME_USR_NOTIFICATION)
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
@@ -64,19 +63,20 @@ class CallCounterMgr(object):
     @staticmethod
     def is_feature_enabled():
         """check feature disabled config. ccm_config.json file present in root folder"""
+        feature_enb = CallCounterMgr.DEFAULT_ENABLE_FEATURE 
         try:
             if os.path.isfile(config.CALL_HOME_USER_CONFIG_FILE):
                 with open(config.CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if 'false' == str(data['ccm']).lower():
-                        return False
+                        feature_enb = False
                     else:
-                        return True
+                        feature_enb = True
             else:
-                return True
+                feature_enb = True
         except Exception as e:
             logging.exception("while in reading ccm config file")
-        return True
+        return feature_enb 
 
     def is_device_info_published(self):
         """check if device information send only single time in DLR installation life time.
@@ -118,7 +118,7 @@ class CallCounterMgr(object):
     def model_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""
         try:
-            _md5model = hashlib.md5(model.encode())
+            _md5model = get_hash_string(model.encode())
             _md5model = str(_md5model.hexdigest())
             pub_data = {'record_type': model_event_type, 'model': _md5model}
             if self.system:

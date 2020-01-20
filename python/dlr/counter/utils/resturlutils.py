@@ -7,6 +7,7 @@ from .. import config
 class RestUrlUtils(object):
     def send(self, message):
         """send data to AWS Rest server"""
+        resp_code = 0
         try:
             headers = {'Content-Type': 'application/x-amz-json-1.1'}
             en_data = message.encode('utf-8')
@@ -14,9 +15,13 @@ class RestUrlUtils(object):
             resp = request.urlopen(req)
             resp_data = resp.read()
             logging.info("rest api response: {}".format(resp_data))
+            resp_code = resp.getcode()
         except error.HTTPError as e:
-            logging.exception("rest api error!", exc_info=True)
+            logging.exception("rest api error!")
+            resp_code = -1
         except Exception as e:
-            logging.exception("rest api miscellaneous error", exc_info=True)
+            logging.exception("rest api miscellaneous error")
+            resp_code = -1
+        return resp_code
 
 
