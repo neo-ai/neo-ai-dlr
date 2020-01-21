@@ -1,5 +1,5 @@
-#ifndef MY_APPLICATION_MODEL_METRIC_H
-#define MY_APPLICATION_MODEL_METRIC_H
+#ifndef MODEL_METRIC_H
+#define MODEL_METRIC_H
 
 #include <thread>
 #include <queue>
@@ -39,4 +39,4 @@ class ModelMetric {
   const int MODEL_RUN = 3;
 };
 
-#endif //MY_APPLICATION_MODEL_METRIC_H
+#endif //MODEL_METRIC_H

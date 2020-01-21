@@ -1,8 +1,8 @@
 #include "counter/model_exec_counter.h"
 
-void ModelExecCounter::add_model_run_count(std::size_t model_hash)
+void ModelExecCounter::add_model_run_count(std::string model_hash)
 {
-  std::map<std::size_t, int>::iterator res =  model_dict.find(model_hash);
+  std::map<std::string, int>::iterator res =  model_dict.find(model_hash);
   if (res != model_dict.end()) {
     int count = res->second + 1;
     model_dict[model_hash] = count;
@@ -11,4 +11,4 @@ void ModelExecCounter::add_model_run_count(std::size_t model_hash)
   }
 }
 
-std::map<std::size_t, int > ModelExecCounter::model_dict = {};
+std::map<std::string, int > ModelExecCounter::model_dict = {};

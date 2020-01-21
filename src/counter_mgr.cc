@@ -1,7 +1,6 @@
 #include <mutex>
 
 #include "counter/counter_mgr.h"
-
 std::mutex g_ccm_mutex;
 
 CounterMgr::CounterMgr()
@@ -12,10 +11,6 @@ CounterMgr::CounterMgr()
     if (!msg_publisher) LOG(FATAL) << "Call Home Message Publisher object null !";
     #if defined(__ANDROID__)
     system = Factory::get_system(3);
-    #elif defined(__LINUX__) || defined(__linux__)
-    system = Factory::get_system(1);
-    #else
-    system = Factory::get_system(2);   
     #endif
     if (!system) LOG(FATAL) << "Call Home System object null !"; 
     model_metric = ModelMetric::get_instance();
@@ -36,43 +31,34 @@ CounterMgr* CounterMgr::get_instance()
         instance->runtime_loaded();
       }
     } else LOG(INFO) << "call home feature disabled" << std::endl;
+           
   }
   g_ccm_mutex.unlock();
   return instance;
 };
 
+void CounterMgr::set_data_consent(int val)
+{
+  feature_enable = val;
+}
+
 bool CounterMgr::is_feature_enabled()
 {
   #if defined(__ANDROID__)
-  std::string file_path;
-  file_path.assign(ext_path.c_str());
-  file_path += CALL_HOME_USER_CONFIG_FILE;
-
-  ifstream fin;
-  fin.open(file_path);
-
-  if (fin.is_open()) {
-    fin.close();
-    return false; 
-  } else {
-    fin.close();
+  if (feature_enable)
     return true;
-  }
-  #else
-  return true;
+  else return false;
   #endif
 };
 
 bool CounterMgr::is_device_info_published()
 {
   #if defined(__ANDROID__)
-  std::string file_path;
-  file_path.assign(ext_path.c_str());
+  std::string file_path(ext_path.c_str());
+  file_path += "/";
   file_path += CALL_HOME_RECORD_FILE;
-
   ifstream fin;
   fin.open(file_path);
-
   if (fin.is_open()) {
     fin.close();
     return true; 
@@ -108,8 +94,7 @@ void CounterMgr::model_load_publish(int msg_type, std::string model, int count)
   std::string str_pub = "{\"record_type\":";
   str_pub += "\"" +std::to_string(msg_type) + "\", ";
   str_pub += "\"model\":\"";
-  std::size_t model_hash = std::hash<std::string>{}(model);
-  str_pub += std::to_string(model_hash) + "\", ";
+  str_pub += get_hash_string(model) + "\", ";
   str_pub += "\"uuid\":";
   str_pub += "\"" + system->get_device_id() + "\" }";
   push(str_pub);
@@ -122,8 +107,8 @@ void CounterMgr::model_loaded(std::string model) {
 };
 
 void CounterMgr::model_run(std::string model) {
-  std::size_t model_hash = std::hash<std::string>{}(model);
-  ModelExecCounter::add_model_run_count(model_hash);
+  ModelExecCounter::add_model_run_count(get_hash_string(model).c_str());
 }
 
 CounterMgr * CounterMgr::instance = nullptr;
+int CounterMgr::feature_enable = 1;

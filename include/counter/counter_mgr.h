@@ -1,5 +1,5 @@
-#ifndef MY_APPLICATION_COUNTERMGR_H
-#define MY_APPLICATION_COUNTERMGR_H
+#ifndef COUNTERMGR_H
+#define COUNTERMGR_H
 
 #include <fstream>
 #include <ostream>
@@ -12,6 +12,7 @@
 #include "config.h"
 #include "model_exec_counter.h"
 #include "model_metric.h"
+#include "helper.h"
 
 using namespace std;
 
@@ -30,6 +31,7 @@ class CounterMgr {
     delete instance;
     instance = nullptr;
   }
+  static void set_data_consent(int);
   static bool is_feature_enabled();
   bool is_device_info_published();
   void runtime_loaded();
@@ -52,6 +54,8 @@ class CounterMgr {
   const int RUNTIME_LOAD = 1;
   const int MODEL_LOAD = 2;
   const int MODEL_RUN = 3;
+  static int feature_enable;
+  static int DEFAULT_ENABLE_FEATURE;
   System *system;
   static CounterMgr* instance;
   MsgPublisher* msg_publisher;
@@ -61,12 +65,19 @@ class CounterMgr {
 /*! \brief Hook for Call Home Feature.
  */
 extern CounterMgr *instance;
-inline void CallHome(int type, std::string model= std::string(), int flag=1)
+inline void CallHome(int type, std::string model= std::string())
 {
   CounterMgr* instance;
   if (!instance) {
+    #if defined(__ANDROID__)
     instance = CounterMgr::get_instance();
-    if (!instance)  LOG(FATAL) << "Call Home Feature not initialize!";
+    if (!instance)  {
+      LOG(FATAL) << "Call Home Feature not initialize!";
+      return;
+    }
+    #else
+    return;
+    #endif
   }
   switch (type) {
     case 1:
@@ -85,4 +96,4 @@ inline void CallHome(int type, std::string model= std::string(), int flag=1)
 }
  
 
-#endif //MY_APPLICATION_COUNTERMGR_H
+#endif //COUNTERMGR_H

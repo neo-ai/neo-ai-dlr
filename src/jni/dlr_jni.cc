@@ -234,10 +234,8 @@ Java_com_amazon_neo_dlr_DLR_UseDLRCPUAffinity(JNIEnv* env, jobject thiz,
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_amazon_neo_dlr_DLR_SetDataCollectionConsent(JNIEnv* env, jobject thiz,
-                                                     jlong jhandle,
-                                                     jboolean flag) {
-    DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
-    return SetDataCollectionConsent(handle, flag);
+Java_com_amazon_neo_dlr_DLR_SetDLRDataCollectionConsent(JNIEnv* env, jobject thiz,
+                                                        jboolean flag) {
+    return SetDLRDataCollectionConsent(flag);
 }
 

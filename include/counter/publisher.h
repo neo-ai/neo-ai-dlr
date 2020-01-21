@@ -1,5 +1,5 @@
-#ifndef MY_APPLICATION_PUBLISHER_H
-#define MY_APPLICATION_PUBLISHER_H
+#ifndef PUBLISHER_H
+#define PUBLISHER_H
 
 #include <thread>
 #include <queue>
@@ -39,4 +39,4 @@ class MsgPublisher {
   bool stop_process;
 };
 
-#endif //MY_APPLICATION_PUBLISHER_H
+#endif //PUBLISHER_H

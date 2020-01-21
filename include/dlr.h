@@ -245,11 +245,15 @@ DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 
 
+/*!
+ \brief Enable or disable Call Home Feature 
+ \param use 0 to disable, 1 to enable
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
 DLR_DLL
-int SetDataCollectionConsent(DLRModelHandle* handle, int flag);
+int SetDLRDataCollectionConsent(int flag);
 
 #if defined(__ANDROID__)
-void get_imei(JNIEnv* env, jobject instance);
 void get_external_storage_path(JNIEnv* env, jobject instance);
 void get_uuid();
 #endif

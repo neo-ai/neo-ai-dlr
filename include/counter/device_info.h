@@ -1,5 +1,5 @@
-#ifndef MY_APPLICATION_DEVICEINFO_H
-#define MY_APPLICATION_DEVICEINFO_H
+#ifndef DEVICEINFO_H
+#define DEVICEINFO_H
 
 #include <iostream>
 
@@ -35,4 +35,4 @@ class DeviceInfo {
 };
 
 
-#endif //MY_APPLICATION_DEVICEINFO_H
+#endif //DEVICEINFO_H

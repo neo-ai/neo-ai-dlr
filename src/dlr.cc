@@ -209,11 +209,9 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
 }
 
 
-extern "C" int SetDataCollectionConsent(DLRModelHandle* handle, int flag) {
+extern "C" int SetDLRDataCollectionConsent(int flag) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  CallHome(1, "", flag); 
+  CounterMgr::set_data_consent(flag); 
   API_END();
 }
 
@@ -251,9 +249,7 @@ void get_uuid()
   std::string result;
   fp = popen("/system/bin/ip link", "r");
   if (fp == NULL) {
-    fp = popen("/usr/bin/ifconfig -a", "r");
-    if (fp == NULL)
-      LOG(FATAL) << "System command failed to retrieve uuid "; 
+    LOG(FATAL) << "System command failed to retrieve uuid "; 
     exit(1);
   }
   size_t len;
@@ -269,8 +265,7 @@ void get_uuid()
       std::string::size_type sz=0;
       unsigned long long dev_id = stoull(sub_str, &sz, 0);
       if (dev_id > 0) {
-        std::size_t uuid_hash = std::hash<std::string>{}(sub_str);
-        uuid_.assign(std::to_string(uuid_hash).c_str());
+        uuid_.assign(get_hash_string(sub_str).c_str());
         break;
       }
     }

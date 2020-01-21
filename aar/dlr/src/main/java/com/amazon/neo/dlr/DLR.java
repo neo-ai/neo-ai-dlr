@@ -44,4 +44,6 @@ public class DLR {
     public static native int SetDLRNumThreads(long jhandle, int threads);
 
     public static native int UseDLRCPUAffinity(long jhandle, boolean use);
+
+    public static native int SetDLRDataCollectionConsent(boolean consent);
 }

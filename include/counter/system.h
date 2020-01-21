@@ -1,5 +1,5 @@
-#ifndef MY_APPLICATION_SYSTEM_H
-#define MY_APPLICATION_SYSTEM_H
+#ifndef SYSTEM_H
+#define SYSTEM_H
 
 #include <iostream>
 #include <random>
@@ -117,4 +117,4 @@ class Factory
   }
 };
 
-#endif //MY_APPLICATION_SYSTEM_H
+#endif //SYSTEM_H
