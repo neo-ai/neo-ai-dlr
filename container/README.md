@@ -43,4 +43,4 @@ print(r.status_code)   # should print 200 for successful response
 print(r.text)          # prints response content
 ```
 
-Non-200 responses indicate an error. To investigate the root cause of an error, you can look at the `errors.log` file under the mounted `errros/` directory.
+Non-200 responses indicate an error. To investigate the root cause of an error, you can look at the `errors.log` file under the mounted `errors/` directory.
