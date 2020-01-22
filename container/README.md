@@ -25,3 +25,22 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
   ```
   docker build --build-arg APP=mxnet_byom -t mxnet-byom-gpu -f Dockerfile.gpu .
   ```
+
+## How to test container locally
+The following command runs `xgboost-cpu:latest` container locally. You can run other containers by replacing `xgboost-cpu` with the appropriate tag. 
+```bash
+docker run -v ${PWD}/model:/opt/ml/model -v ${PWD}/errors:/opt/ml/errors -p 127.0.0.1:8888:8080/tcp xgboost-cpu:latest serve
+```
+Once the serving container finishes initializing, you can send HTTP requests to the URL `http://localhost:8888/invocations`:
+```python
+payload = ('106,0,274.4,120,198.6,82,160.8,62,6.0,3,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,'
+  + '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0')
+
+r = requests.post('http://localhost:8888/invocations',
+                  data=payload.encode('utf-8'),
+                  headers={'Content-type': 'text/csv'})
+print(r.status_code)   # should print 200 for successful response
+print(r.text)          # prints response content
+```
+
+Non-200 responses indicate an error. To investigate the root cause of an error, you can look at the `errors.log` file under the mounted `errros/` directory.
