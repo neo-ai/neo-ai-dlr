@@ -29,7 +29,8 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f Dockerfile.cpu .
 ## How to test container locally
 The following command runs `xgboost-cpu:latest` container locally. You can run other containers by replacing `xgboost-cpu` with the appropriate tag. 
 ```bash
-docker run -v ${PWD}/model:/opt/ml/model -v ${PWD}/errors:/opt/ml/errors -p 127.0.0.1:8888:8080/tcp xgboost-cpu:latest serve
+docker run -v ${PWD}/model:/opt/ml/model -v ${PWD}/errors:/opt/ml/errors -p 127.0.0.1:8888:8080/tcp \
+    xgboost-cpu:latest serve
 ```
 Once the serving container finishes initializing, you can send HTTP requests to the URL `http://localhost:8888/invocations`:
 ```python
@@ -44,3 +45,8 @@ print(r.text)          # prints response content
 ```
 
 Non-200 responses indicate an error. To investigate the root cause of an error, you can look at the `errors.log` file under the mounted `errors/` directory.
+
+When you are done, stop the running container with the command
+```bash
+docker stop $(docker ps -a -q --filter ancestor=xgboost-cpu:latest)
+```
