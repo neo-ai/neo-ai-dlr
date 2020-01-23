@@ -24,7 +24,6 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    openjdk-8-jdk-headless \
     cmake \
     git \
     && rm -rf /var/lib/apt/lists/*
