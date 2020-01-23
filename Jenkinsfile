@@ -167,8 +167,7 @@ def BuildInferenceContainer(app, target) {
                  path: 'TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz')
     }
     sh """
-    cd container
-    docker build --build-arg APP=${app} -t ${app}-${target} -f Dockerfile.${target} .
+    docker build --build-arg APP=${app} -t ${app}-${target} -f container/Dockerfile.${target} .
     """
   }
 }
