@@ -7,7 +7,7 @@ FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 AS base
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN mkdir -p /packages
-COPY TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+COPY container/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
 RUN cd /packages \
     && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
 
