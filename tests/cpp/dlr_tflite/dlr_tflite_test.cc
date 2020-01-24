@@ -123,6 +123,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
     FAIL() << "GetDLRInput failed";
   }
   EXPECT_TRUE(std::equal(img, img + img_size, input2));
+  LOG(INFO) << "GetDLRInput - OK";
 
   // RunDLRModel
   if (RunDLRModel(&handle)) {
