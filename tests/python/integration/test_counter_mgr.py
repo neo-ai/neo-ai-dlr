@@ -1,6 +1,6 @@
 import io
 import sys
-import pytest
+# import pytest
 
 from dlr import DLRModel
 import numpy as np
