@@ -7,6 +7,8 @@ import numpy as np
 import os
 from test_utils import get_arch, get_models
 
+from dlr.counter.config import CALL_HOME_USR_NOTIFICATION
+
 
 # def test_notification(capsys):
 #     model_path = None
@@ -30,7 +32,7 @@ def setup_mock_dlr():
 
 def test_notification(capsys):
     setup_mock_dlr()
-    
+
     # integration model mirror load_and_run_tvm_model.py
     # load the model
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resnet18_v1')
@@ -40,8 +42,9 @@ def test_notification(capsys):
 
     # test the notification capture
     captured = capsys.readouterr()
-    print(captured)
+    print('captured', captured)
     assert captured.out is not ''
+    assert captured.out.find(CALL_HOME_USR_NOTIFICATION) >= 0
 
     # run the model
     image = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dog.npy')).astype(np.float32)
