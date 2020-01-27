@@ -19,11 +19,18 @@ from test_utils import get_arch, get_models
 #     print(captured)
 #     assert captured.out == ''
 
+def setup_mock_dlr():
+    print("set up mock dlr")
+
+    arch = get_arch()
+    model_names = ['resnet18_v1']
+    for model_name in model_names:
+        get_models(model_name, arch, kind='tvm')
+
 
 def test_notification(capsys):
-    # setup purpose
     setup_mock_dlr()
-
+    
     # integration model mirror load_and_run_tvm_model.py
     # load the model
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resnet18_v1')
@@ -44,16 +51,3 @@ def test_notification(capsys):
     probabilities = model.run(input_data)  # need to be a list of input arrays matching input names
 
     assert probabilities[0].argmax() == 151
-
-
-@pytest.fixture(scope="module")
-def setup_mock_dlr():
-    print("set up mock dlr")
-    
-    arch = get_arch()
-    model_names = ['resnet18_v1']
-    for model_name in model_names:
-        get_models(model_name, arch, kind='tvm')
-
-    # test_notification()
-    # print('All tests passed!')
