@@ -92,7 +92,7 @@ class Linux_x86(X86):
 
 
 # mapped system types
-system_list = ["Linux_ARM", "Linux_x86", "Android"]
+system_list = ["Linux_ARM", "Linux_x86"]
 
 
 # factory class for System wrapper class
