@@ -20,7 +20,6 @@ def call_home(func):
                 func(*args, **kwargs)
                 call_counter.runtime_loaded()
             elif func.__name__ == "__init__":
-                print("__init__")
                 func(*args, **kwargs)
                 obj = args[0]
                 call_counter.model_loaded(obj.get_model_name())
