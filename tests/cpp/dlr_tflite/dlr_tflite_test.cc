@@ -1,10 +1,11 @@
-#include <gtest/gtest.h>
-#include "dlr.h"
 #include <dmlc/logging.h>
+#include <gtest/gtest.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#include "dlr.h"
 
 float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
   std::string line;
@@ -12,7 +13,7 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
   float* img = new float[size];
   size_t i = 0;
   if (fp.is_open()) {
-    while (getline (fp, line) && i < size) {
+    while (getline(fp, line) && i < size) {
       int v = std::stoi(line);
       float fv = 2.0f / 255.0f * v - 1.0f;
       img[i++] = fv;
@@ -21,7 +22,7 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
   }
 
   EXPECT_EQ(size, i);
-  LOG(INFO) << "Image read - OK, float[" << i << "]" ;
+  LOG(INFO) << "Image read - OK, float[" << i << "]";
   return img;
 }
 
@@ -106,12 +107,13 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
 
   // Load image
-  size_t img_size = 224*224*3;
+  size_t img_size = 224 * 224 * 3;
   float* img = LoadImageAndPreprocess("cat224-3.txt", img_size);
-  LOG(INFO) << "Input sample: " << img[0] << "," << img[1] << " ... " << img[img_size - 1];
+  LOG(INFO) << "Input sample: " << img[0] << "," << img[1] << " ... "
+            << img[img_size - 1];
 
   // SetDLRInput
-  const int64_t in_shape[4] = {1,224,224,3};
+  const int64_t in_shape[4] = {1, 224, 224, 3};
   if (SetDLRInput(&handle, input_name, in_shape, img, 4)) {
     FAIL() << "SetDLRInput failed";
   }
@@ -139,20 +141,23 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   size_t max_id = ArgMax(output, out_size);
   LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << output[max_id];
   // TFLite class range is 1-1000 (output size 1001)
-  // Imagenet1000 class range is 0-999 https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
-  EXPECT_EQ(283, max_id); // TFLite 283 maps to Imagenet 282 - tiger cat
+  // Imagenet1000 class range is 0-999
+  // https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
+  EXPECT_EQ(283, max_id);  // TFLite 283 maps to Imagenet 282 - tiger cat
   EXPECT_GE(output[max_id], 0.5f);
-  EXPECT_GE(output[282], 0.3f); // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
+  EXPECT_GE(output[282],
+            0.3f);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
 
   // clean up
-  delete [] img;
-  delete [] input2;
-  delete [] output;
+  delete[] img;
+  delete[] input2;
+  delete[] output;
 }
 
 TEST(TFLite, CreateDLRModelFromTFLite) {
   // CreateDLRModelFromTFLite (use tflite file)
-  const char* model_file = "./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite";
+  const char* model_file =
+      "./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite";
   int threads = 2;
   int use_nn_api = 0;
 
@@ -171,7 +176,7 @@ TEST(TFLite, CreateDLRModelFromTFLite) {
 TEST(TFLite, CreateDLRModel) {
   // CreateDLRModel (use folder containing tflite file)
   const char* model_dir = "./mobilenet_v2_0.75_224";
-  int dev_type = 1; // 1 - kDLCPU
+  int dev_type = 1;  // 1 - kDLCPU
   int dev_id = 0;
 
   DLRModelHandle handle;
@@ -186,7 +191,7 @@ TEST(TFLite, CreateDLRModel) {
   DeleteDLRModel(&handle);
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 #ifndef _WIN32
   testing::FLAGS_gtest_death_test_style = "threadsafe";
