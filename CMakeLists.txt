@@ -241,6 +241,12 @@ if(WITH_TENSORFLOW_LITE_LIB)
         list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
     endif()
 endif()
+if(WITH_TENSORFLOW_LIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW")
+    include_directories("${WITH_TENSORFLOW_LIB}/include")
+    list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
+    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow_framework -ltensorflow)
+endif()
 if(AAR_BUILD)
     list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
 endif()
@@ -312,6 +318,10 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
     file(GLOB TFLITE_TEST_SRCS tests/cpp/dlr_tflite/*.cc)
     list(APPEND TEST_SRCS ${TFLITE_TEST_SRCS})
   endif()
+  if(WITH_TENSORFLOW_LIB)
+    file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
+    list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
+  endif()
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
@@ -338,6 +348,22 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
         e35e82f3371bed37caa7ecece417f50876414077
       )
   endif() # WITH_TENSORFLOW_LITE_LIB
+  if(WITH_TENSORFLOW_LIB)
+      # Download Test Tensorflow model and input data
+      file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
+        ./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb
+        SHA1
+        4df8525bcf2ec96296098ba7fec0fff1abe32fce
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/cat224-3.txt
+        ./cat224-3.txt
+        SHA1
+        e35e82f3371bed37caa7ecece417f50876414077
+      )
+  endif() # WITH_TENSORFLOW_LIB
 endif()
 
 # Group sources

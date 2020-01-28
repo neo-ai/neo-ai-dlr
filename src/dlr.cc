@@ -6,6 +6,9 @@
 #ifdef DLR_TFLITE
 #include "dlr_tflite/dlr_tflite.h"
 #endif // DLR_TFLITE
+#ifdef DLR_TENSORFLOW
+#include "dlr_tensorflow/dlr_tensorflow.h"
+#endif // DLR_TENSORFLOW
 
 #include <locale>
 
@@ -128,6 +131,30 @@ int CreateDLRModelFromTFLite(DLRModelHandle *handle,
   API_END();
 }
 #endif // DLR_TFLITE
+
+#ifdef DLR_TENSORFLOW
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow ctor.
+ */
+int CreateDLRModelFromTensorflow(DLRModelHandle *handle,
+                                 const char *model_path,
+                                 const char* inputs[], int input_size,
+                                 const char* outputs[], int output_size,
+                                 const int batch_size,
+                                 int threads) {
+  API_BEGIN();
+  const std::string model_path_string(model_path);
+  // TensorflowModel class does not use DLContext internally
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(1); // 1 - kDLCPU
+  ctx.device_id = 0;
+  std::vector<std::string> v_inputs(inputs, inputs + input_size);
+  std::vector<std::string> v_outputs(outputs, outputs + output_size);
+  DLRModel* model = new TensorflowModel(
+      model_path_string, ctx, v_inputs, v_outputs, batch_size, threads);
+  *handle = model;
+  API_END();
+}
+#endif // DLR_TENSORFLOW
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
