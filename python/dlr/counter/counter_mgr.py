@@ -21,7 +21,6 @@ def call_home(func):
                 call_counter.runtime_loaded()
             elif func.__name__ == "__init__":
                 print("__init__")
-                print(config.CALL_HOME_USR_NOTIFICATION)
                 func(*args, **kwargs)
                 obj = args[0]
                 call_counter.model_loaded(obj.get_model_name())
@@ -46,7 +45,6 @@ class CallCounterMgr(object):
         """return single instance of class"""
         if CallCounterMgr._instance is None:
             if CallCounterMgr.is_feature_enabled():
-                print
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
