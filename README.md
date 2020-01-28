@@ -29,7 +29,8 @@ You can disable this feature by using below configuration steps.
 We prepared several examples demonstrating how to use DLR API on different platforms
 
 * [Neo AI DLR image classification Android example application](examples/android/image_classification)
-
+* [DL Model compiler for Android](examples/android/tvm_compiler)
+* [DL Model compiler for AWS EC2 instances](container/ec2_compilation_container)
 
 ## License
 

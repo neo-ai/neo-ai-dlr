@@ -94,7 +94,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
     "src/*.cc"
-    ${TVM_SRC}/src/runtime/dso_module.cc
+    ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
@@ -259,7 +259,11 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
-target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+if(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+else(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)

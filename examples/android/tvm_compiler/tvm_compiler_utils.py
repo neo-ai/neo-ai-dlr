@@ -22,7 +22,7 @@ def tvm_compile(func, params, arch, dlr_model_name):
     target = "llvm -model=x5-Z8350 -target=i686-linux-android -mattr=+ssse3"
     sysroot="/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
     toolchain="/opt/android-ndk/toolchains/x86-4.9/prebuilt/linux-x86_64"
-    os.environ['TVM_NDK_CC'] = "/opt/android-ndk-r20/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++"
+    os.environ['TVM_NDK_CC'] = "/opt/android-ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++"
 
   ###arch arm64 aarch64
   elif arch == 'arm64-v8a':
