@@ -45,6 +45,7 @@ class CallCounterMgr(object):
         """return single instance of class"""
         if CallCounterMgr._instance is None:
             if CallCounterMgr.is_feature_enabled():
+                print(config.CALL_HOME_USR_NOTIFICATION)
                 CallCounterMgr._instance = CallCounterMgr()
                 atexit.register(CallCounterMgr._instance.stop)
             else:
@@ -58,6 +59,8 @@ class CallCounterMgr(object):
             os_name = platform.system()
             os_supt = "{0}_{1}".format(os_name, machine_typ)
             self.system = Factory.get_system(os_supt)
+            if self.system is None:
+                raise Exception("unsupported system")
             self.model_metric = ModelMetric.get_instance(self.system.get_device_uuid())
         except Exception as e:
             logging.exception("while in counter mgr init", exc_info=True)

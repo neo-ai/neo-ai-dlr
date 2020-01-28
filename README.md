@@ -14,6 +14,17 @@ For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Y
 
 Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
 
+CALL HOME FEATURE ENABLED
+                            
+Your device information and model load/execution count metric data being sent to a server.                             
+You can disable this feature by using below configuration steps.                             
+  1. Create a config file, ccm_config.json in your application path.                             
+  2. Added below format content in it,                             
+	{
+		"ccm" : "false"
+	}                             
+  3. Restart DLR application
+
 ## Examples
 We prepared several examples demonstrating how to use DLR API on different platforms
 

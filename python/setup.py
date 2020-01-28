@@ -30,17 +30,6 @@ for libfile in LIBPATH['find_lib_path']():
 if not LIB_PATH:
     raise RuntimeError('libdlr.so missing. Please compile first using CMake')
 
-#user data consent notification
-CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
-                            \n Your device information and model load/execution count metric data being sent to a server. \
-                            \n You can disable this feature by using below configuration steps. \
-                            \n\t1. Create a config file, ccm_config.json in your application path. \
-                            \n\t2. Added below format content in it, \
-                            \n\t\t{\n\t\t\t"ccm" : "false"\n\t\t} \
-                            \n\t3. Restart DLR application."""
-
-print(CALL_HOME_USR_NOTIFICATION)
- 
 setup(
     name="dlr",
     version="1.0",
