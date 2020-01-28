@@ -3,7 +3,6 @@
 #include <fstream>
 #include <numeric>
 
-
 using namespace dlr;
 
 std::string dlr::GetTFLiteFile(const std::string& dirname) {
@@ -11,7 +10,8 @@ std::string dlr::GetTFLiteFile(const std::string& dirname) {
   if (EndsWith(dirname, ".tflite")) {
     return dirname;
   }
-  // Scan Dir to find tflite file and check that only one tflite file is provided.
+  // Scan Dir to find tflite file and check that only one tflite file is
+  // provided.
   std::string tflite_file;
   std::vector<std::string> paths_vec;
   ListDir(dirname, paths_vec);
@@ -32,7 +32,8 @@ std::string dlr::GetTFLiteFile(const std::string& dirname) {
 }
 
 void TFLiteModel::GenTensorSpec(bool isInput) {
-  std::vector<int> t_ids = isInput ? interpreter_->inputs() : interpreter_->outputs();
+  std::vector<int> t_ids =
+      isInput ? interpreter_->inputs() : interpreter_->outputs();
   size_t n = t_ids.size();
   for (int i = 0; i < n; i++) {
     auto t_id = t_ids[i];
@@ -42,8 +43,10 @@ void TFLiteModel::GenTensorSpec(bool isInput) {
     t_spec.name = std::string(tensor->name);
     t_spec.type = tensor->type;
     t_spec.dim = tensor->dims->size;
-    // Use vector(first, last) to copy int* to vector. Do not keep pointers of internal TF data structures.
-    t_spec.shape = std::vector<int>(tensor->dims->data, tensor->dims->data + tensor->dims->size);
+    // Use vector(first, last) to copy int* to vector. Do not keep pointers of
+    // internal TF data structures.
+    t_spec.shape = std::vector<int>(tensor->dims->data,
+                                    tensor->dims->data + tensor->dims->size);
     t_spec.bytes = tensor->bytes;
     int64_t t_sz = 1;
     for (int j = 0; j < t_spec.dim; j++) {
@@ -52,7 +55,8 @@ void TFLiteModel::GenTensorSpec(bool isInput) {
     t_spec.size = t_sz;
     if (isInput) {
       input_tensors_spec_.push_back(t_spec);
-      // Fill in input_names_ vector as well because it is defined in base class DLRModel
+      // Fill in input_names_ vector as well because it is defined in base class
+      // DLRModel
       input_names_.push_back(t_spec.name);
     } else {
       output_tensors_spec_.push_back(t_spec);
@@ -69,27 +73,30 @@ int TFLiteModel::GetInputId(const char* name) {
     }
   }
   LOG(FATAL) << "Input Tensor not found, name: " << name;
-  return -1; // unreachable
+  return -1;  // unreachable
 }
 
 // Constructor
 TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
-                         const int threads, const bool use_nnapi): DLRModel(ctx, DLRBackend::kTFLITE) {
+                         const int threads, const bool use_nnapi)
+    : DLRModel(ctx, DLRBackend::kTFLITE) {
   const std::string tflite_file = GetTFLiteFile(model_path);
 
-  // ensure the model and error_reporter lifetime is at least as long as interpreter's lifetime
+  // ensure the model and error_reporter lifetime is at least as long as
+  // interpreter's lifetime
   error_reporter_ = new tflite::StderrReporter();
-  model_ = tflite::FlatBufferModel::BuildFromFile(tflite_file.c_str(), error_reporter_);
+  model_ = tflite::FlatBufferModel::BuildFromFile(tflite_file.c_str(),
+                                                  error_reporter_);
   if (!model_) {
     LOG(FATAL) << "Failed to load the model: " << tflite_file;
-    return; // unreachable
+    return;  // unreachable
   }
   // op_resolver does not need to exist for the duration of interpreter objects.
   tflite::ops::builtin::BuiltinOpResolver resolver;
   tflite::InterpreterBuilder builder(*model_, resolver);
   if (builder(&interpreter_) != kTfLiteOk) {
     LOG(FATAL) << "Failed to build TFLite Interpreter";
-    return; // unreachable
+    return;  // unreachable
   }
   interpreter_->UseNNAPI(use_nnapi);
   LOG(INFO) << "Use NNAPI: " << (use_nnapi ? "true" : "false");
@@ -101,7 +108,7 @@ TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
   // AllocateTensors
   if (interpreter_->AllocateTensors() != kTfLiteOk) {
     LOG(FATAL) << "Failed to allocate tensors";
-    return; // unreachable
+    return;  // unreachable
   }
   LOG(INFO) << "AllocateTensors - OK";
 
@@ -126,7 +133,7 @@ TFLiteModel::~TFLiteModel() {
 
 std::vector<std::string> TFLiteModel::GetWeightNames() const {
   LOG(FATAL) << "GetWeightNames is not supported by TFLite backend";
-  return std::vector<std::string>(); // unreachable
+  return std::vector<std::string>();  // unreachable
 }
 
 const char* TFLiteModel::GetInputName(int index) const {
@@ -136,16 +143,18 @@ const char* TFLiteModel::GetInputName(int index) const {
 
 const char* TFLiteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by TFLite backend";
-  return ""; // unreachable
+  return "";  // unreachable
 }
 
-void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input, int dim) {
+void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input,
+                           int dim) {
   int index = GetInputId(name);
 
   // Check Size and Dim
   CHECK_EQ(dim, input_tensors_spec_[index].dim) << "Incorrect input dim";
   for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i]) << "Incorrect input shape";
+    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
+        << "Incorrect input shape";
   }
 
   float* in_t_data = interpreter_->typed_input_tensor<float>(index);
@@ -161,7 +170,7 @@ void TFLiteModel::GetInput(const char* name, float* input) {
 void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   for (int i = 0; i < output_tensors_spec_[index].dim; i++) {
-    shape[i] = (int64_t) output_tensors_spec_[index].shape[i];
+    shape[i] = (int64_t)output_tensors_spec_[index].shape[i];
   }
 }
 
@@ -181,13 +190,11 @@ void TFLiteModel::Run() {
   // Invoke
   if (interpreter_->Invoke() != kTfLiteOk) {
     LOG(FATAL) << "Failed to invoke interpreter!";
-    return; // unreachable
+    return;  // unreachable
   }
 }
 
-const char* TFLiteModel::GetBackend() const {
-  return "tflite";
-}
+const char* TFLiteModel::GetBackend() const { return "tflite"; }
 
 void TFLiteModel::SetNumThreads(int threads) {
   if (threads > 0) {

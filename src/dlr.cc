@@ -1,17 +1,16 @@
 #include "dlr.h"
 
 #include "dlr_common.h"
-#include "dlr_tvm.h"
 #include "dlr_treelite.h"
+#include "dlr_tvm.h"
 #ifdef DLR_TFLITE
 #include "dlr_tflite/dlr_tflite.h"
-#endif // DLR_TFLITE
+#endif  // DLR_TFLITE
 #ifdef DLR_TENSORFLOW
 #include "dlr_tensorflow/dlr_tensorflow.h"
-#endif // DLR_TENSORFLOW
+#endif  // DLR_TENSORFLOW
 
 #include <locale>
-
 
 using namespace dlr;
 
@@ -19,7 +18,7 @@ using namespace dlr;
 
 extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetNumInputs(num_inputs);
   API_END();
@@ -27,7 +26,7 @@ extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
 
 extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetNumWeights(num_weights);
   API_END();
@@ -36,7 +35,7 @@ extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
 extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
                                const char** input_name) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *input_name = model->GetInputName(index);
   API_END();
@@ -45,122 +44,110 @@ extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
 extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
                                 const char** weight_name) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *weight_name = model->GetWeightName(index);
   API_END();
 }
 
-extern "C" int SetDLRInput(DLRModelHandle* handle,
-                           const char* name,
-                           const int64_t* shape,
-                           float* input,
-                           int dim) {
+extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
+                           const int64_t* shape, float* input, int dim) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->SetInput(name, shape, input, dim);
   API_END();
 }
 
-extern "C" int GetDLRInput(DLRModelHandle* handle,
-                           const char* name,
+extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name,
                            float* input) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetInput(name, input);
   API_END();
 }
 
-extern "C" int GetDLROutputShape(DLRModelHandle* handle,
-                                 int index,
+extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
                                  int64_t* shape) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutputShape(index, shape);
   API_END();
 }
 
-extern "C" int GetDLROutput(DLRModelHandle* handle,
-                            int index,
-                            float* out) {
+extern "C" int GetDLROutput(DLRModelHandle* handle, int index, float* out) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutput(index, out);
   API_END();
 }
 
-extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle,
-                                   int index,
-                                   int64_t* size,
-                                   int* dim) {
+extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
+                                   int64_t* size, int* dim) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutputSizeDim(index, size, dim);
   API_END();
 }
 
-extern "C" int GetDLRNumOutputs(DLRModelHandle* handle,
-                                int* num_outputs) {
+extern "C" int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetNumOutputs(num_outputs);
   API_END();
 }
 
 #ifdef DLR_TFLITE
-/*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite ctor.
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite
+ * ctor.
  */
-int CreateDLRModelFromTFLite(DLRModelHandle *handle,
-                   const char *model_path,
-                   int threads,
-                   int use_nnapi) {
+int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
+                             int threads, int use_nnapi) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   // TFLiteModel class does not use DLContext internally
   DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1); // 1 - kDLCPU
+  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  DLRModel* model = new TFLiteModel(model_path_string, ctx, threads, (bool) use_nnapi);
+  DLRModel* model =
+      new TFLiteModel(model_path_string, ctx, threads, (bool)use_nnapi);
   *handle = model;
   API_END();
 }
-#endif // DLR_TFLITE
+#endif  // DLR_TFLITE
 
 #ifdef DLR_TENSORFLOW
-/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow ctor.
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow
+ * ctor.
  */
-int CreateDLRModelFromTensorflow(DLRModelHandle *handle,
-                                 const char *model_path,
+int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
                                  const char* inputs[], int input_size,
                                  const char* outputs[], int output_size,
-                                 const int batch_size,
-                                 int threads) {
+                                 const int batch_size, int threads) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   // TensorflowModel class does not use DLContext internally
   DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1); // 1 - kDLCPU
+  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
   std::vector<std::string> v_inputs(inputs, inputs + input_size);
   std::vector<std::string> v_outputs(outputs, outputs + output_size);
-  DLRModel* model = new TensorflowModel(
-      model_path_string, ctx, v_inputs, v_outputs, batch_size, threads);
+  DLRModel* model = new TensorflowModel(model_path_string, ctx, v_inputs,
+                                        v_outputs, batch_size, threads);
   *handle = model;
   API_END();
 }
-#endif // DLR_TENSORFLOW
+#endif  // DLR_TENSORFLOW
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
-extern "C" int CreateDLRModel(DLRModelHandle* handle,
-                                const char* model_path,
-                                int dev_type, int dev_id) {
+extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
+                              int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
@@ -170,7 +157,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
   std::string model_path_string{model_path};
   std::string special_prefix{""};
   if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-    std::isalpha(model_path_string[0], std::locale("C"))) {
+      std::isalpha(model_path_string[0], std::locale("C"))) {
     // Handle drive letter
     special_prefix = model_path_string.substr(0, 2);
     model_path_string = model_path_string.substr(2);
@@ -190,11 +177,11 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
     // By default use undefined number of threads - threads=0 and use_nnapi=0
     DLRModelHandle tf_handle;
     CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
-    model = static_cast<DLRModel *>(tf_handle);
-#endif // DLR_TFLITE
+    model = static_cast<DLRModel*>(tf_handle);
+#endif  // DLR_TFLITE
   } else {
     LOG(FATAL) << "Unsupported backend!";
-    return -1; // unreachable
+    return -1;  // unreachable
   }
   *handle = model;
   API_END();
@@ -202,24 +189,22 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle,
 
 extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   delete model;
   API_END();
 }
 
-extern "C" int RunDLRModel(DLRModelHandle *handle) {
+extern "C" int RunDLRModel(DLRModelHandle* handle) {
   API_BEGIN();
-  static_cast<DLRModel *>(*handle)->Run();
+  static_cast<DLRModel*>(*handle)->Run();
   API_END();
 }
 
-extern "C" const char* DLRGetLastError() {
-  return TVMGetLastError();
-}
+extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
-  *name = static_cast<DLRModel *>(*handle)->GetBackend();
+  *name = static_cast<DLRModel*>(*handle)->GetBackend();
   API_END();
 }
 
@@ -234,7 +219,7 @@ extern "C" int GetDLRVersion(const char** out) {
 
 extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->SetNumThreads(threads);
   API_END();
@@ -242,7 +227,7 @@ extern "C" int SetDLRNumThreads(DLRModelHandle* handle, int threads) {
 
 extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel *>(*handle);
+  DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->UseCPUAffinity(use);
   API_END();

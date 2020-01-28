@@ -5,8 +5,8 @@
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
-extern "C" { // Open extern "C" block
-#endif // __cplusplus
+extern "C" {  // Open extern "C" block
+#endif        // __cplusplus
 
 #if defined(_MSC_VER) || defined(_WIN32)
 #define DLR_DLL __declspec(dllexport)
@@ -21,9 +21,10 @@ extern "C" { // Open extern "C" block
 /*! \brief patch version */
 #define DLR_PATCH 0
 /*! \brief DLR version */
-#define DLR_VERSION (DLR_MAJOR*10000 + DLR_MINOR*100 + DLR_PATCH)
+#define DLR_VERSION (DLR_MAJOR * 10000 + DLR_MINOR * 100 + DLR_PATCH)
 /*! \brief helper for making version number */
-#define DLR_MAKE_VERSION(major, minor, patch) ((major)*10000 + (minor)*100 + patch)
+#define DLR_MAKE_VERSION(major, minor, patch) \
+  ((major)*10000 + (minor)*100 + patch)
 
 /*!
  * \defgroup c_api
@@ -39,59 +40,53 @@ typedef void* DLRModelHandle;
 /*!
  \brief Creates a DLR model.
  \param handle The pointer to save the model handle.
- \param model_path Path to the folder containing the model files,  
-                   or colon-separated list of folders (or files) if model files stored in different locations 
- \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
- \param dev_id Device ID.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param model_path Path to the folder containing the model files,
+                   or colon-separated list of folders (or files) if model files
+ stored in different locations \param dev_type Device type. Valid values are in
+ the DLDeviceType enum in dlpack.h. \param dev_id Device ID. \return 0 for
+ success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRModel(DLRModelHandle *handle,
-                   const char *model_path,
-                   int dev_type,
+int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
                    int dev_id);
 
 #ifdef DLR_TFLITE
 /*!
  \brief Creates a DLR model from TFLite
  \param handle The pointer to save the model handle.
- \param model_path Path to tflite file or to the top-level directory containing tflite file
- \param threads Number of threads to use.
- \param use_nnapi Use NNAPI, 0 - false, 1 - true.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param model_path Path to tflite file or to the top-level directory containing
+ tflite file \param threads Number of threads to use. \param use_nnapi Use
+ NNAPI, 0 - false, 1 - true. \return 0 for success, -1 for error. Call
+ DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRModelFromTFLite(DLRModelHandle *handle,
-                   const char *model_path,
-                   int threads,
-                   int use_nnapi);
-#endif // DLR_TFLITE
+int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
+                             int threads, int use_nnapi);
+#endif  // DLR_TFLITE
 
 #ifdef DLR_TENSORFLOW
 /*!
  \brief Creates a DLR model from Tensorflow frozen model .pb file
  \param handle The pointer to save the model handle.
- \param model_path Path to .pb file or to the top-level directory containing .pb file
- \param inputs array of input names
- \param input_size size of input array
+ \param model_path Path to .pb file or to the top-level directory containing .pb
+ file \param inputs array of input names \param input_size size of input array
  \param outputs array of output names
  \param output_size size of output array
- \param batch_size set batch size for the case when the model has dynamic batch size
- \param threads Number of threads to use (ignored if zero of less)
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param batch_size set batch size for the case when the model has dynamic batch
+ size \param threads Number of threads to use (ignored if zero of less) \return
+ 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
-int CreateDLRModelFromTensorflow(DLRModelHandle *handle,
-                   const char *model_path,
-                   const char* inputs[], int input_size,
-                   const char* outputs[], int output_size,
-                   const int batch_size,
-                   const int threads);
-#endif // DLR_TENSORFLOW
+int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
+                                 const char* inputs[], int input_size,
+                                 const char* outputs[], int output_size,
+                                 const int batch_size, const int threads);
+#endif  // DLR_TENSORFLOW
 
 /*!
  \brief Deletes a DLR model.
  \param handle The model handle returned from CreateDLRModel().
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int DeleteDLRModel(DLRModelHandle* handle);
@@ -99,16 +94,18 @@ int DeleteDLRModel(DLRModelHandle* handle);
 /*!
  \brief Runs a DLR model.
  \param handle The model handle returned from CreateDLRModel().
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int RunDLRModel(DLRModelHandle *handle);
+int RunDLRModel(DLRModelHandle* handle);
 
 /*!
  \brief Gets the number of inputs.
  \param handle The model handle returned from CreateDLRModel().
  \param num_inputs The pointer to save the number of inputs.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
@@ -117,7 +114,8 @@ int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs);
  \brief Gets the number of weights.
  \param handle The model handle returned from CreateDLRModel().
  \param num_weights The pointer to save the number of weights.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
@@ -127,23 +125,22 @@ int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights);
  \param handle The model handle returned from CreateDLRModel().
  \param index The index of the input.
  \param input_name The pointer to save the name of the index-th input.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int GetDLRInputName(DLRModelHandle* handle,
-                    int index,
-                    const char** input_name);
+int GetDLRInputName(DLRModelHandle* handle, int index, const char** input_name);
 
 /*!
  \brief Gets the name of the index-th weight.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index of the weight.
  \param input_name The pointer to save the name of the index-th weight.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int GetDLRWeightName(DLRModelHandle* handle,
-                     int index,
+int GetDLRWeightName(DLRModelHandle* handle, int index,
                      const char** weight_name);
 
 /*!
@@ -153,53 +150,49 @@ int GetDLRWeightName(DLRModelHandle* handle,
  \param shape The input node shape as an array.
  \param input The data for the input as an array.
  \param dim The dimension of the input data.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int SetDLRInput(DLRModelHandle* handle,
-                const char* name,
-                const int64_t* shape,
-                float* input,
-                int dim);
+int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
+                float* input, int dim);
 /*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
  \param name The input node name.
  \param input The current value of the input will be copied to this buffer.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int GetDLRInput(DLRModelHandle* handle,
-                const char* name,
-                float* input);
+int GetDLRInput(DLRModelHandle* handle, const char* name, float* input);
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index-th output.
- \param shape The pointer to save the shape of index-th output. This should be a pointer to an array of size "dim" from GetDLROutputSizeDim().
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param shape The pointer to save the shape of index-th output. This should be a
+ pointer to an array of size "dim" from GetDLROutputSizeDim(). \return 0 for
+ success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetDLROutputShape(DLRModelHandle* handle,
-                      int index,
-                      int64_t* shape);
+int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape);
 
 /*!
  \brief Gets the index-th output from the model.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index-th output.
- \param out The pointer to save the output data. This should be a pointer to an array of size "size" from GetDLROutputSizeDim().
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param out The pointer to save the output data. This should be a pointer to an
+ array of size "size" from GetDLROutputSizeDim(). \return 0 for success, -1 for
+ error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetDLROutput(DLRModelHandle* handle,
-                 int index,
-                 float* out);
+int GetDLROutput(DLRModelHandle* handle, int index, float* out);
 /*!
  \brief Gets the number of outputs.
  \param handle The model handle returned from CreateDLRModel().
  \param num_outputs The pointer to save the number of outputs.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
@@ -210,12 +203,11 @@ int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
  \param index The index-th output.
  \param size The pointer to save the size of the index-th output.
  \param dim The pointer to save the dimension of the index-th output.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
-int GetDLROutputSizeDim(DLRModelHandle* handle,
-                        int index,
-                        int64_t* size,
+int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
                         int* dim);
 /*!
  \brief Gets the last error message.
@@ -228,15 +220,17 @@ const char* DLRGetLastError();
  \brief Gets the name of the backend ("tvm", "treelite" or "tflite")
  \param handle The model handle returned from CreateDLRModel().
  \param name The pointer to save the null-terminated string containing the name.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
 /*!
  \brief Get DLR version
- \param out The pointer to save the null-terminated string containing the version.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param out The pointer to save the null-terminated string containing the
+ version. \return 0 for success, -1 for error. Call DLRGetLastError() to get the
+ error message.
  */
 DLR_DLL
 int GetDLRVersion(const char** out);
@@ -245,7 +239,8 @@ int GetDLRVersion(const char** out);
  \brief Set the number of threads available to DLR
  \param handle The model handle returned from CreateDLRModel().
  \param threads number of threads
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int SetDLRNumThreads(DLRModelHandle* handle, int threads);
@@ -254,7 +249,8 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  \brief Enable or disable CPU Affinity
  \param handle The model handle returned from CreateDLRModel().
  \param use 0 to disable, 1 to enable
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
  */
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
@@ -262,7 +258,7 @@ int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 /*! \} */
 
 #ifdef __cplusplus
-} // Close extern "C" block
-#endif // __cplusplus
+}  // Close extern "C" block
+#endif  // __cplusplus
 
 #endif  // DLR_H_
