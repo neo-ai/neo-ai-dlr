@@ -70,73 +70,62 @@ void TensorflowModel::LoadFrozenModel(const char* pb_file) {
   TF_DeleteBuffer(graph_def);
 }
 
-void TensorflowModel::GenTensorSpec(bool is_input, const int batch_size) {
-  std::vector<std::string> tensor_names =
-      is_input ? input_names_ : output_names_;
+TF_Output TensorflowModel::ParseTensorName(const std::string& t_name) {
   std::regex r("^(.+):(\\d+)$");
-  for (std::string t_name : tensor_names) {
-    std::smatch match;
-    std::string op_name;
-    int op_out_id;
-    if (std::regex_search(t_name, match, r)) {
-      op_name = match.str(1);
-      op_out_id = std::stoi(match.str(2));
-    } else {
-      LOG(FATAL) << "ERROR: failed to parse tensor name " << t_name;
-      return;  // unreachable
-    }
+  std::smatch match;
+  if (!std::regex_search(t_name, match, r)) {
+    LOG(FATAL) << "ERROR: failed to parse tensor name " << t_name;
+  }
+  std::string op_name = match.str(1);
+  int op_out_id = std::stoi(match.str(2));
+  TF_Operation* op = TF_GraphOperationByName(graph_, op_name.c_str());
+  if (op == NULL) {
+    LOG(FATAL) << "ERROR: TF_GraphOperationByName failed for operation "
+               << op_name;
+  }
+  TF_Output oper_out = {op, op_out_id};
+  return oper_out;
+}
 
-    TF_Operation* op = TF_GraphOperationByName(graph_, op_name.c_str());
-    if (op == NULL) {
-      LOG(FATAL)
-          << "ERROR: inputOp TF_GraphOperationByName failed for operation "
-          << op_name;
-      return;  // unreachable
-    }
-    TF_Output oper_out = {op, op_out_id};
-    const int n_dim = TF_GraphGetTensorNumDims(graph_, oper_out, status_);
-    if (TF_GetCode(status_) != TF_OK) {
-      LOG(FATAL) << "ERROR: TF_GraphGetTensorNumDims failed "
-                 << TF_Message(status_);
-      return;  // unreachable
-    }
-    int64_t dims[n_dim];
-    TF_GraphGetTensorShape(graph_, oper_out, dims, n_dim, status_);
-    if (TF_GetCode(status_) != TF_OK) {
-      LOG(FATAL) << "ERROR: TF_GraphGetTensorShape failed "
-                 << TF_Message(status_);
-      return;  // unreachable
-    }
-    // Set fixed batch size if batch size is dynamic
-    if (dims[0] == -1) {
-      dims[0] = batch_size > 0 ? batch_size : 1;
-      TF_GraphSetTensorShape(graph_, oper_out, dims, n_dim, status_);
-      if (TF_GetCode(status_) != TF_OK) {
-        LOG(FATAL) << "ERROR: TF_GraphSetTensorShape failed "
-                   << TF_Message(status_);
-        return;  // unreachable
-      }
-    }
+void TensorflowModel::PrepInputs() {
+  for (int i = 0; i < num_inputs_; i++) {
+    const std::string& t_name = input_names_[i];
+    const TF_Output oper_out = ParseTensorName(t_name);
+    const std::vector<int64_t>& shape = input_shapes_[i];
+    const int64_t* dims = shape.data();
+    const int n_dim = shape.size();
     size_t num_elements = 1;
     for (int z = 0; z < n_dim; z++) {
-      if (dims[z] == -1) {
+      if (dims[z] < 1) {
         LOG(FATAL) << "ERROR: dynamic tensor shape is not supported";
         return;  // unreachable
       }
       num_elements *= dims[z];
     }
-    TF_DataType t_type = TF_OperationOutputType(oper_out);
-    size_t num_bytes = TF_DataTypeSize(t_type) * num_elements;
+    const TF_DataType t_type = TF_OperationOutputType(oper_out);
+    const size_t num_bytes = TF_DataTypeSize(t_type) * num_elements;
+
+    TF_GraphSetTensorShape(graph_, oper_out, dims, n_dim, status_);
+    if (TF_GetCode(status_) != TF_OK) {
+      LOG(FATAL) << "ERROR: TF_GraphSetTensorShape failed "
+                 << TF_Message(status_);
+      return;  // unreachable
+    }
 
     TF_Tensor* tensor = TF_AllocateTensor(t_type, dims, n_dim, num_bytes);
+    inputs_.push_back(oper_out);
+    input_tensors_.push_back(tensor);
+  }
+  LOG(INFO) << "Input Tensors were allocated";
+}
 
-    if (is_input) {
-      inputs_.push_back(oper_out);
-      input_tensors_.push_back(tensor);
-    } else {
-      outputs_.push_back(oper_out);
-      output_tensors_.push_back(tensor);
-    }
+void TensorflowModel::PrepOutputs() {
+  for (std::string& t_name : output_names_) {
+    TF_Output oper_out = ParseTensorName(t_name);
+
+    outputs_.push_back(oper_out);
+    // fill output_tensors_ vector with nulls
+    output_tensors_.push_back(nullptr);
   }
 }
 
@@ -153,11 +142,11 @@ int TensorflowModel::GetInputId(const char* name) {
 }
 
 // Constructor
-TensorflowModel::TensorflowModel(const std::string& model_path,
-                                 const DLContext& ctx,
-                                 const std::vector<std::string>& inputs,
-                                 const std::vector<std::string>& outputs,
-                                 const int batch_size, const int threads)
+TensorflowModel::TensorflowModel(
+    const std::string& model_path, const DLContext& ctx,
+    const std::vector<std::string>& inputs,
+    const std::vector<std::vector<int64_t>>& input_shapes,
+    const std::vector<std::string>& outputs, const int threads)
     : DLRModel(ctx, DLRBackend::kTENSORFLOW) {
   const std::string pb_file = GetTensorflowFile(model_path);
 
@@ -166,14 +155,15 @@ TensorflowModel::TensorflowModel(const std::string& model_path,
 
   LoadFrozenModel(pb_file.c_str());
 
-  // Using assignment operator to copy one vector to other
+  // copy vectors
   input_names_ = inputs;
+  input_shapes_ = input_shapes;
   output_names_ = outputs;
   num_inputs_ = inputs.size();
   num_outputs_ = outputs.size();
 
-  GenTensorSpec(/*is_input=*/true, batch_size);
-  GenTensorSpec(/*is_input=*/false, batch_size);
+  PrepInputs();
+  PrepOutputs();
 
   LOG(INFO) << "Tensorflow Model was created";
 
@@ -199,6 +189,16 @@ TensorflowModel::TensorflowModel(const std::string& model_path,
   }
   TF_DeleteSessionOptions(opts);
   LOG(INFO) << "Tensorflow Session was created";
+
+  // Run inference to allocate output Tensors and calculate output shapes.
+  for (int i = 0; i < num_inputs_; i++) {
+    TF_Tensor* tensor = input_tensors_[i];
+    int64_t num_elements = TF_TensorElementCount(tensor);
+    float* in_t_data = (float*)TF_TensorData(tensor);
+    std::fill_n(in_t_data, num_elements, 0.1);
+  }
+  Run();
+  LOG(INFO) << "Output Tensors were allocated";
 }
 
 // Destructor
