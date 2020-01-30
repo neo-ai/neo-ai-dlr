@@ -16,6 +16,7 @@ def call_home(func):
         call_counter = CallCounterMgr.get_instance()
         if call_counter:
             if func.__name__ == "init_call_home":
+                print(config.CALL_HOME_USR_NOTIFICATION)
                 func(*args, **kwargs)
                 call_counter.runtime_loaded()
             elif func.__name__ == "__init__":
