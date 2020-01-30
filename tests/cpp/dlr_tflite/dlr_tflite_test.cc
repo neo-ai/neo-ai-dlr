@@ -163,7 +163,7 @@ TEST(TFLite, CreateDLRModelFromTFLite) {
 
   DLRModelHandle handle;
   if (CreateDLRModelFromTFLite(&handle, model_file, threads, use_nn_api)) {
-    FAIL() << "CreateDLRModelFromTFLite failed";
+    FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTFLite - OK";
 
@@ -181,7 +181,7 @@ TEST(TFLite, CreateDLRModel) {
 
   DLRModelHandle handle;
   if (CreateDLRModel(&handle, model_dir, dev_type, dev_id)) {
-    FAIL() << "CreateDLRModel failed";
+    FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModel - OK";
 

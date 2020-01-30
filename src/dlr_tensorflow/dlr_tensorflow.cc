@@ -97,7 +97,8 @@ void TensorflowModel::PrepInputs() {
     size_t num_elements = 1;
     for (int z = 0; z < n_dim; z++) {
       if (dims[z] < 1) {
-        LOG(FATAL) << "ERROR: dynamic tensor shape is not supported";
+        LOG(FATAL) << "ERROR: non-positive dimensions are not supported. "
+                   << "tensor: " << t_name << ", dims[" << z << "]=" << dims[z];
         return;  // unreachable
       }
       num_elements *= dims[z];
