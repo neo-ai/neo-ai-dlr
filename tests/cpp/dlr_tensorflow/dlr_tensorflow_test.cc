@@ -182,7 +182,7 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   DLRModelHandle handle;
   if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
                                    threads)) {
-    FAIL() << "CreateDLRModelFromTensorflow failed";
+    FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
 
@@ -204,7 +204,7 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   DLRModelHandle handle;
   if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
                                    threads)) {
-    FAIL() << "CreateDLRModelFromTensorflow failed";
+    FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
 
