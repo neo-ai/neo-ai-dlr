@@ -3,6 +3,7 @@ import atexit
 import json
 import os
 import logging
+import threading
 
 from .publisher import MsgPublisher
 from .system import Factory
@@ -31,6 +32,8 @@ def call_home(func):
 
     return wrapped_call_home
 
+getinst = threading.Lock()
+relinst = threading.Lock()
 
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
@@ -42,14 +45,14 @@ class CallCounterMgr(object):
     @staticmethod
     def get_instance():
         """return single instance of class"""
-        if CallCounterMgr._instance is None:
-            if CallCounterMgr.is_feature_enabled():
-                print(config.CALL_HOME_USR_NOTIFICATION)
-                CallCounterMgr._instance = CallCounterMgr()
-                atexit.register(CallCounterMgr._instance.stop)
-            else:
-                logging.warning("call home feature disabled")
-        return CallCounterMgr._instance
+        with getinst:
+            if CallCounterMgr._instance is None:
+                if CallCounterMgr.is_feature_enabled():
+                    CallCounterMgr._instance = CallCounterMgr()
+                    atexit.register(CallCounterMgr._instance.stop)
+                else:
+                    logging.warning("call home feature disabled")
+            return CallCounterMgr._instance
 
     def __init__(self):
         try:
@@ -117,7 +120,7 @@ class CallCounterMgr(object):
         self.model_info_publish(CallCounterMgr.MODEL_LOAD, model)
 
     def model_run(self, model):
-        ModelExecCounter.add_model_run_count(model)
+        ModelExecCounter.update_model_run_count(model)
 
     def model_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""
@@ -139,10 +142,13 @@ class CallCounterMgr(object):
             self.msg_publisher.send(json.dumps(data))
 
     def stop(self):
-        if self.msg_publisher:
-            self.msg_publisher.stop()
-        if self.model_metric:
-            self.model_metric.stop()
+        with relinst:
+            if self.model_metric:
+                self.model_metric.stop()
+                self.model_metric = None
+            if self.msg_publisher:
+                self.msg_publisher.stop()
+                self.msg_publisher = None
 
     def __del__(self):
         self.stop()

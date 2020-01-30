@@ -3,12 +3,12 @@ import logging
 import time
 import json
 import threading
-#from concurrent import futures
 
 from .utils import resturlutils
 from . import config
 from .model_exec_counter import ModelExecCounter
 from .utils.helper import *
+from .publisher import MsgPublisher
 
 class ModelMetric(object):
     _pub_model_metric = True
@@ -25,8 +25,8 @@ class ModelMetric(object):
 
     def __init__(self, uuid=0):
         try:
-            self.client = resturlutils.RestUrlUtils()
             self.uuid = uuid
+            self.publisher = MsgPublisher.get_instance()
             # start loop
             self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
             self.f = []
@@ -39,11 +39,11 @@ class ModelMetric(object):
         """publishing model run metric"""
         while ModelMetric._pub_model_metric:
             time.sleep(config.CALL_HOME_MODEL_RUN_COUNT_TIME_SECS)
-            mod_dict = ModelExecCounter.get_model_counts_dict()
+            mod_dict = ModelExecCounter.get_dict()
             if mod_dict:
                 for key, val in mod_dict.items():
                     self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
-                ModelExecCounter.update_model_map('clear')
+                ModelExecCounter.clear_models_counts()
 
     def model_run_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""
@@ -58,20 +58,18 @@ class ModelMetric(object):
     def push(self, data):
         """publish information to Server"""
         if ModelMetric.resp_cnt < config.CALL_HOME_REQ_STOP_MAX_COUNT:
-            resp_code = self.client.send(json.dumps(data))
+            resp_code = self.publisher.send(json.dumps(data))
             if resp_code != 200:
                 ModelMetric.resp_cnt += 1
 
     def stop(self):
         ModelMetric._pub_model_metric = False
-        for x in concurrent.futures.as_completed(self.f):
-           logging.info("futures task return ", x.result())
-
-        mod_dict = ModelExecCounter.get_model_counts_dict()
+        self.executor.shutdown(False)
+        mod_dict = ModelExecCounter.get_dict()
         if mod_dict:
             for key, val in mod_dict.items():
                 self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
-        ModelExecCounter.update_model_map('clear')
+        ModelExecCounter.clear_models_counts()
 
     def __del__(self):
         self.stop()
