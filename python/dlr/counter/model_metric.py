@@ -64,12 +64,14 @@ class ModelMetric(object):
 
     def stop(self):
         ModelMetric._pub_model_metric = False
-        self.executor.shutdown(False)
-        mod_dict = ModelExecCounter.get_dict()
-        if mod_dict:
-            for key, val in mod_dict.items():
-                self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
-        ModelExecCounter.clear_models_counts()
+        if self.executor:
+            self.executor.shutdown(False)
+            mod_dict = ModelExecCounter.get_dict()
+            if mod_dict:
+                for key, val in mod_dict.items():
+                    self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
+            ModelExecCounter.clear_models_counts()
+            self.executor = None
 
     def __del__(self):
         self.stop()

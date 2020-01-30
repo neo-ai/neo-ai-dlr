@@ -25,8 +25,8 @@ class MsgPublisher(object):
             self.record_queue = queue.Queue(maxsize=config.CALL_HOME_PUBLISH_MESSAGE_MAX_QUEUE_SIZE)
             self.event = threading.Event()
             # start loop
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
-            executor.submit(self._process_queue)
+            self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
+            self.executor.submit(self._process_queue)
             logging.info("msg publisher thread pool execution started")
         except Exception as e:
             logging.exception("msg publisher thread pool not started", exc_info=True)
@@ -46,9 +46,12 @@ class MsgPublisher(object):
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
-        while not self.record_queue.empty():
-            pass
-        MsgPublisher._stop_processing = True
+        if MsgPublisher._instance:
+           while not self.record_queue.empty():
+               pass
+           MsgPublisher._stop_processing = True
+           self.executor.shutdown(False)
+           MsgPublisher._instance = None
 
     def __del__(self):
         self.stop()
