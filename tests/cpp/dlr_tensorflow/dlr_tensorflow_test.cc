@@ -175,12 +175,13 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
       "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
   int threads = 2;
   int batch_size = 1;
-  const char* inputs[1] = {"input:0"};
+  const int64_t dims[4] = {batch_size, 224, 224, 3};
+  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle;
   if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
-                                   batch_size, threads)) {
+                                   threads)) {
     FAIL() << "CreateDLRModelFromTensorflow failed";
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
@@ -191,17 +192,18 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   DeleteDLRModel(&handle);
 }
 
-TEST(Tensorflow2, CreateDLRModelFromTensorflowDir) {
+TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   // CreateDLRModelFromTensorflow (use folder containing .pb file)
   const char* model_dir = "./mobilenet_v1_1.0_224";
   int threads = 0;  // undefined
   int batch_size = 8;
-  const char* inputs[1] = {"input:0"};
+  const int64_t dims[4] = {batch_size, 224, 224, 3};
+  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle;
   if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
-                                   batch_size, threads)) {
+                                   threads)) {
     FAIL() << "CreateDLRModelFromTensorflow failed";
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";

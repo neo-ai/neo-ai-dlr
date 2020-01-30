@@ -26,22 +26,26 @@ class TensorflowModel : public DLRModel {
   TF_Graph* graph_;
   TF_Session* sess_;
   // input_names_ are declared in base class
+  std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<std::string> output_names_;
   std::vector<TF_Output> inputs_;
   std::vector<TF_Output> outputs_;
   std::vector<TF_Tensor*> input_tensors_;
   std::vector<TF_Tensor*> output_tensors_;
   void LoadFrozenModel(const char* pb_file);
-  void GenTensorSpec(bool is_input, const int batch_size);
+  TF_Output ParseTensorName(const std::string& t_name);
+  void PrepInputs();
+  void PrepOutputs();
   int GetInputId(const char* name);
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TensorflowModel(const std::string& model_path, const DLContext& ctx,
-                           const std::vector<std::string>& inputs,
-                           const std::vector<std::string>& outputs,
-                           const int batch_size, const int threads);
+  explicit TensorflowModel(
+      const std::string& model_path, const DLContext& ctx,
+      const std::vector<std::string>& inputs,
+      const std::vector<std::vector<int64_t>>& input_shapes,
+      const std::vector<std::string>& outputs, const int threads);
   ~TensorflowModel();
 
   virtual const char* GetInputName(int index) const override;

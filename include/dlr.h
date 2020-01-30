@@ -66,6 +66,15 @@ int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
 
 #ifdef DLR_TENSORFLOW
 /*!
+ \brief Input Tensor Description structure for CreateDLRModelFromTensorflow.
+ */
+typedef struct DLR_TFTensorDesc {
+  const char* name;
+  const int64_t* dims;
+  const int num_dims;
+} DLR_TFTensorDesc;
+
+/*!
  \brief Creates a DLR model from Tensorflow frozen model .pb file
  \param handle The pointer to save the model handle.
  \param model_path Path to .pb file or to the top-level directory containing .pb
@@ -77,9 +86,9 @@ int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
  0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
-                                 const char* inputs[], int input_size,
+                                 const DLR_TFTensorDesc* inputs, int input_size,
                                  const char* outputs[], int output_size,
-                                 const int batch_size, const int threads);
+                                 const int threads);
 #endif  // DLR_TENSORFLOW
 
 /*!

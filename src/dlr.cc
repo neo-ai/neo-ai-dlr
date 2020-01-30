@@ -126,19 +126,25 @@ int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
  * ctor.
  */
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
-                                 const char* inputs[], int input_size,
+                                 const DLR_TFTensorDesc* inputs, int input_size,
                                  const char* outputs[], int output_size,
-                                 const int batch_size, int threads) {
+                                 const int threads) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   // TensorflowModel class does not use DLContext internally
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  std::vector<std::string> v_inputs(inputs, inputs + input_size);
+  std::vector<std::string> v_inputs(input_size);
+  std::vector<std::vector<int64_t>> v_input_shapes(input_size);
+  for (int i = 0; i < input_size; i++) {
+    DLR_TFTensorDesc v = inputs[i];
+    v_inputs[i] = v.name;
+    v_input_shapes[i] = std::vector<int64_t>(v.dims, v.dims + v.num_dims);
+  }
   std::vector<std::string> v_outputs(outputs, outputs + output_size);
   DLRModel* model = new TensorflowModel(model_path_string, ctx, v_inputs,
-                                        v_outputs, batch_size, threads);
+                                        v_input_shapes, v_outputs, threads);
   *handle = model;
   API_END();
 }
