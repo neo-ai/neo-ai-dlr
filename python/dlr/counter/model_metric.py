@@ -29,21 +29,22 @@ class ModelMetric(object):
             self.publisher = MsgPublisher.get_instance()
             # start loop
             self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
-            self.f = []
-            self.f.append(self.executor.submit(self.push_model_metric))
+            self.condition = threading.Condition()
+            self.executor.submit(self.push_model_metric, self.condition)
             logging.info("model metric thread pool execution started")
         except Exception as e:
             logging.exception("model metric thread pool not started", exc_info=True)
 
-    def push_model_metric(self):
+    def push_model_metric(self, condv):
         """publishing model run metric"""
         while ModelMetric._pub_model_metric:
-            time.sleep(config.CALL_HOME_MODEL_RUN_COUNT_TIME_SECS)
-            mod_dict = ModelExecCounter.get_dict()
-            if mod_dict:
-                for key, val in mod_dict.items():
-                    self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
-                ModelExecCounter.clear_models_counts()
+            with condv:
+                condv.wait(config.CALL_HOME_MODEL_RUN_COUNT_TIME_SECS)
+                mod_dict = ModelExecCounter.get_dict()
+                if mod_dict:
+                    for key, val in mod_dict.items():
+                        self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
+                    ModelExecCounter.clear_models_counts()
 
     def model_run_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""
@@ -64,6 +65,8 @@ class ModelMetric(object):
 
     def stop(self):
         if self.executor:
+            with self.condition:
+                self.condition.notify_all()
             ModelMetric._pub_model_metric = False
             self.executor.shutdown(wait=False)
             mod_dict = ModelExecCounter.get_dict()
