@@ -42,15 +42,16 @@ class MsgPublisher(object):
 
     def _process_queue(self):
         while self.event.wait() and not MsgPublisher._stop_processing:
-            self.client.send(self.record_queue.get(block=True))
+            self.client.send(self.record_queue.get(block=False))
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
         if MsgPublisher._instance:
-           while not self.record_queue.empty():
-               pass
            MsgPublisher._stop_processing = True
-           self.executor.shutdown(False)
+           self.event.set()
+           self.executor.shutdown(wait=False)
+           while not self.record_queue.empty():
+               self.client.send(self.record_queue.get(block=False)) 
            MsgPublisher._instance = None
 
     def __del__(self):

@@ -1,4 +1,4 @@
-CALL_HOME_URL = 'https://r4sir2jo37.execute-api.us-east-2.amazonaws.com/testing/'
+CALL_HOME_URL = 'https://beta-neo-dlr.us-west-2.amazonaws.com'
 CALL_HOME_RECORD_FILE = 'ccm_record.txt'
 CALL_HOME_USER_CONFIG_FILE = 'ccm_config.json'
 CALL_HOME_PUBLISH_MESSAGE_MAX_QUEUE_SIZE = 100
