@@ -38,8 +38,9 @@ class MsgPublisher(object):
             logging.exception("unable to record messages in queue", exc_info=True)
 
     def _process_queue(self):
-        while True and not MsgPublisher._stop_processing:
-            self.client.send(self.record_queue.get(block=False))
+        while not MsgPublisher._stop_processing:
+            print("---- cont looping -----")
+            self.client.send(self.record_queue.get(block=True))
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
