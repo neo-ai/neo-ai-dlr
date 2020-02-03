@@ -39,13 +39,10 @@ class MsgPublisher(object):
 
     def _process_queue(self):
         while not MsgPublisher._stop_processing:
-            print("---- cont looping -----")
             self.client.send(self.record_queue.get(block=True))
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
-        # while not self.record_queue.empty():
-        #     self.client.send(self.record_queue.get(block=False))
         self.record_queue.task_done()
         MsgPublisher._stop_processing = True
         self.executor.shutdown(wait=False)
