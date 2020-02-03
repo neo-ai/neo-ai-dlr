@@ -1,6 +1,5 @@
 import logging
-from urllib import request, parse, error
-
+import urllib3
 from .. import config
 
 
@@ -9,14 +8,14 @@ class RestUrlUtils(object):
         """send data to AWS Rest server"""
         resp_code = 0
         try:
-            headers = {'Content-Type': 'application/x-amz-json-1.1'}
-            en_data = message.encode('utf-8')
-            req = request.Request(config.CALL_HOME_URL, en_data, headers=headers)
-            resp = request.urlopen(req)
-            resp_data = resp.read()
-            logging.info("rest api response: {}".format(resp_data))
-            resp_code = resp.getcode()
-        except error.HTTPError as e:
+            hrd = {'Content-Type': 'application/x-amz-json-1.1'}
+            data = message.encode('utf-8')
+            req = urllib3.PoolManager()
+            resp = req.request('POST', config.CALL_HOME_URL, headers=hrd, body=data)
+            resp_code = resp.status
+            logging.info("Response Data:", resp.data)
+            logging.info("Response Status:", resp.status)
+        except urllib3.exceptions.HTTPError as e:
             logging.exception("rest api error!")
             resp_code = -1
         except Exception as e:

@@ -64,9 +64,8 @@ class ModelMetric(object):
                 ModelMetric.resp_cnt += 1
 
     def stop(self):
-        if self.executor:
-            with self.condition:
-                self.condition.notify_all()
+        with self.condition:
+            self.condition.notify_all()
             ModelMetric._pub_model_metric = False
             self.executor.shutdown(wait=False)
             mod_dict = ModelExecCounter.get_dict()
@@ -74,7 +73,4 @@ class ModelMetric(object):
                 for key, val in mod_dict.items():
                     self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
             ModelExecCounter.clear_models_counts()
-            self.executor = None
 
-    def __del__(self):
-        self.stop()

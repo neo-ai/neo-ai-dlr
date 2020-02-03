@@ -35,7 +35,7 @@ setup(
     version="1.0",
 
     zip_safe=False,
-    install_requires=['numpy'],
+    install_requires=['numpy', 'urllib3'],
 
     # declare your packages
     packages=find_packages(),
