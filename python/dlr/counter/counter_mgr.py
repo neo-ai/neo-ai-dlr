@@ -149,6 +149,3 @@ class CallCounterMgr(object):
             if self.msg_publisher:
                 self.msg_publisher.stop()
                 self.msg_publisher = None
-
-    def __del__(self):
-        self.stop()

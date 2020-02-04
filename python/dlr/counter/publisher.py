@@ -46,6 +46,9 @@ class MsgPublisher(object):
         # ensure all messages from queue process
         while not self.record_queue.empty():
             pass
-        self.record_queue.task_done()
+        try:
+            self.record_queue.task_done()
+        except ValueError as e:
+            logging.exception("called task_done more than required times on ccm queue")
         MsgPublisher._stop_processing = True
 
