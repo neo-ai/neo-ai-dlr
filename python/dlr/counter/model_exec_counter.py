@@ -1,12 +1,15 @@
 import threading
+import copy
 
 lock = threading.Lock()
 
 class ModelExecCounter(object):
     model_dict = {}
+    intr_dict = {}
     INIT = 1
     INCREMENT = 2
     CLEAR = 3
+    GETINTDICT = 4
 
     @staticmethod
     def update_model_run_count(model):
@@ -25,13 +28,12 @@ class ModelExecCounter(object):
                 ModelExecCounter.model_dict[str(model)] = 1
             elif op == ModelExecCounter.INCREMENT:
                 ModelExecCounter.model_dict[str(model)] = cnt
-            elif op == ModelExecCounter.CLEAR:
+            elif op == ModelExecCounter.GETINTDICT:
+                ModelExecCounter.intr_dict = copy.deepcopy(ModelExecCounter.model_dict)
                 ModelExecCounter.model_dict.clear()
  
     @staticmethod
     def get_dict():
-        return ModelExecCounter.model_dict
+        ModelExecCounter.update_dict(ModelExecCounter.GETINTDICT)
+        return ModelExecCounter.intr_dict
 
-    @staticmethod
-    def clear_models_counts():
-        ModelExecCounter.update_dict(ModelExecCounter.CLEAR)

@@ -120,7 +120,9 @@ class CallCounterMgr(object):
         self.model_info_publish(CallCounterMgr.MODEL_LOAD, model)
 
     def model_run(self, model):
-        ModelExecCounter.update_model_run_count(model)
+        _md5model = get_hash_string(model.encode())
+        _md5model = str(_md5model.hexdigest())
+        ModelExecCounter.update_model_run_count(_md5model)
 
     def model_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""

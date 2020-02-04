@@ -51,4 +51,4 @@ class MsgPublisher(object):
         except ValueError as e:
             logging.exception("called task_done more than required times on ccm queue")
         MsgPublisher._stop_processing = True
-
+        self.executor.shutdown(wait=False)

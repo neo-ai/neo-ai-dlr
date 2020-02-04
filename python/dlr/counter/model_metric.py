@@ -44,14 +44,11 @@ class ModelMetric(object):
                 if mod_dict:
                     for key, val in mod_dict.items():
                         self.model_run_info_publish(ModelMetric.MODEL_RUN, key, val)
-                    ModelExecCounter.clear_models_counts()
 
     def model_run_info_publish(self, model_event_type, model, count=0):
         """push model load information at time model load time"""
         try:
-            _md5model = get_hash_string(model.encode())
-            _md5model = str(_md5model.hexdigest())
-            pub_data = {'record_type': model_event_type, 'model': _md5model, 'uuid': self.uuid, 'run_count': count}
+            pub_data = {'record_type': model_event_type, 'model': model, 'uuid': self.uuid, 'run_count': count}
             self.push(pub_data)
         except Exception as e:
             logging.exception("unable to complete model count", exc_info=True)
@@ -67,4 +64,4 @@ class ModelMetric(object):
         with self.condition:
             self.condition.notify_all()
             ModelMetric._pub_model_metric = False
-
+            self.executor.shutdown(wait=False)
