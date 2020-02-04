@@ -142,7 +142,10 @@ int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
     v_inputs[i] = v.name;
     v_input_shapes[i] = std::vector<int64_t>(v.dims, v.dims + v.num_dims);
   }
-  std::vector<std::string> v_outputs(outputs, outputs + output_size);
+  std::vector<std::string> v_outputs(output_size);
+  for (int i = 0; i < output_size; i++) {
+    v_outputs[i] = outputs[i];
+  }
   DLRModel* model = new TensorflowModel(model_path_string, ctx, v_inputs,
                                         v_input_shapes, v_outputs, threads);
   *handle = model;
@@ -182,9 +185,20 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
   } else if (backend == DLRBackend::kTFLITE) {
     // By default use undefined number of threads - threads=0 and use_nnapi=0
     DLRModelHandle tf_handle;
-    CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
+    int errC = CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
+    if (errC != 0) return errC;
     model = static_cast<DLRModel*>(tf_handle);
 #endif  // DLR_TFLITE
+#ifdef DLR_TENSORFLOW
+  } else if (backend == DLRBackend::kTENSORFLOW) {
+    // input and output tensor names will be detected automatically.
+    // use undefined number of threads - threads=0
+    DLRModelHandle tf_handle;
+    int errC = CreateDLRModelFromTensorflow(&tf_handle, model_path, NULL, 0,
+                                            NULL, 0, 0);
+    if (errC != 0) return errC;
+    model = static_cast<DLRModel*>(tf_handle);
+#endif  // DLR_TENSORFLOW
   } else {
     LOG(FATAL) << "Unsupported backend!";
     return -1;  // unreachable

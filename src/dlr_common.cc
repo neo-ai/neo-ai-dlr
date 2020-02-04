@@ -50,6 +50,9 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   if (EndsWith(dir_paths[0], ".tflite")) {
     return DLRBackend::kTFLITE;
   }
+  if (EndsWith(dir_paths[0], ".pb")) {
+    return DLRBackend::kTENSORFLOW;
+  }
   // Scan Directory content to guess the backend.
   std::vector<std::string> paths;
   for (auto dir : dir_paths) {
@@ -60,6 +63,8 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".tflite")) {
       return DLRBackend::kTFLITE;
+    } else if (EndsWith(filename, ".pb")) {
+      return DLRBackend::kTENSORFLOW;
     }
   }
   return DLRBackend::kTREELITE;

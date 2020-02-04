@@ -87,6 +87,102 @@ TF_Output TensorflowModel::ParseTensorName(const std::string& t_name) {
   return oper_out;
 }
 
+void TensorflowModel::DetectInputs() {
+  size_t pos = 0;
+  TF_Operation* op;
+  while ((op = TF_GraphNextOperation(graph_, &pos)) != nullptr) {
+    const std::string op_type = TF_OperationOpType(op);
+    const int n_in = TF_OperationNumInputs(op);
+    const int n_out = TF_OperationNumOutputs(op);
+    const std::string op_name = TF_OperationName(op);
+    if (op_type == "Placeholder" && n_in == 0 && n_out == 1) {
+      input_names_.push_back(op_name + ":0");
+    }
+  }
+  num_inputs_ = input_names_.size();
+  std::string msg =
+      "Found " + std::to_string(num_inputs_) + " possible inputs: ";
+  for (int i = 0; i < num_inputs_; i++) {
+    if (i > 0) {
+      msg += ", ";
+    }
+    msg += input_names_[i];
+  }
+  LOG(INFO) << msg;
+}
+
+void TensorflowModel::DetectOutputs() {
+  size_t pos = 0;
+  TF_Operation* op;
+  // while loop
+  while ((op = TF_GraphNextOperation(graph_, &pos)) != nullptr) {
+    const std::string op_type = TF_OperationOpType(op);
+    const int n_out = TF_OperationNumOutputs(op);
+    const int n_cout = TF_OperationNumControlOutputs(op);
+    const std::string op_name = TF_OperationName(op);
+    if (op_type != "Const" && op_type != "Assign" && op_type != "NoOp" &&
+        op_type != "Placeholder" && n_cout == 0) {
+      int n_consumers = 0;
+      for (int i = 0; i < n_out; i++) {
+        const TF_Output tf_out = {op, i};
+        n_consumers += TF_OperationOutputNumConsumers(tf_out);
+        if (n_consumers != 0) {
+          break;
+        }
+      }
+      if (n_consumers != 0) {
+        continue;  // while loop
+      }
+      for (int i = 0; i < n_out; i++) {
+        output_names_.push_back(op_name + ":" + std::to_string(i));
+      }
+    }
+  }
+  num_outputs_ = output_names_.size();
+  std::string msg =
+      "Found " + std::to_string(num_outputs_) + " possible outputs: ";
+  for (int i = 0; i < num_outputs_; i++) {
+    if (i > 0) {
+      msg += ", ";
+    }
+    msg += output_names_[i];
+  }
+  LOG(INFO) << msg;
+}
+
+void TensorflowModel::DetectInputShapes() {
+  for (int i = 0; i < num_inputs_; i++) {
+    const std::string& t_name = input_names_[i];
+    const TF_Output oper_out = ParseTensorName(t_name);
+
+    int n_dim = TF_GraphGetTensorNumDims(graph_, oper_out, status_);
+    if (TF_GetCode(status_) != TF_OK) {
+      LOG(FATAL) << "ERROR: TF_GraphGetTensorNumDims failed "
+                 << TF_Message(status_);
+      return;  // unreachable
+    }
+    int64_t dims[n_dim];
+    TF_GraphGetTensorShape(graph_, oper_out, dims, n_dim, status_);
+    if (TF_GetCode(status_) != TF_OK) {
+      LOG(FATAL) << "ERROR: TF_GraphGetTensorShape failed "
+                 << TF_Message(status_);
+      return;  // unreachable
+    }
+    // Set Batch size to 1 if undefined
+    if (dims[0] == -1) {
+      dims[0] = 1;
+    }
+    for (int z = 1; z < n_dim; z++) {
+      if (dims[z] < 1) {
+        LOG(FATAL) << "ERROR: non-positive dimensions are not supported. "
+                   << "tensor: " << t_name << ", dims[" << z << "]=" << dims[z];
+        return;  // unreachable
+      }
+    }
+    input_shapes_.push_back(std::vector<int64_t>(dims, dims + n_dim));
+  }
+}
+
 void TensorflowModel::PrepInputs() {
   for (int i = 0; i < num_inputs_; i++) {
     const std::string& t_name = input_names_[i];
@@ -156,12 +252,23 @@ TensorflowModel::TensorflowModel(
 
   LoadFrozenModel(pb_file.c_str());
 
-  // copy vectors
-  input_names_ = inputs;
-  input_shapes_ = input_shapes;
-  output_names_ = outputs;
-  num_inputs_ = inputs.size();
-  num_outputs_ = outputs.size();
+  if (inputs.empty()) {
+    DetectInputs();
+  } else {
+    input_names_ = inputs;
+    num_inputs_ = input_names_.size();
+  }
+  if (input_shapes.empty()) {
+    DetectInputShapes();
+  } else {
+    input_shapes_ = input_shapes;
+  }
+  if (outputs.empty()) {
+    DetectOutputs();
+  } else {
+    output_names_ = outputs;
+    num_outputs_ = output_names_.size();
+  }
 
   PrepInputs();
   PrepOutputs();

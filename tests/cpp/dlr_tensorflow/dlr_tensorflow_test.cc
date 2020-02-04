@@ -214,6 +214,27 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   DeleteDLRModel(&handle);
 }
 
+TEST(Tensorflow, AutodetectInputsAndOutputs) {
+  // Use generic CreateDLRModel
+  // input and output tensor names will be detected automatically.
+  const char* model_file =
+      "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
+  const int batch_size = 1;
+  const int dev_type = 1;  // 1 - kDLCPU
+  const int dev_id = 0;
+
+  DLRModelHandle handle;
+  if (CreateDLRModel(&handle, model_file, dev_type, dev_id)) {
+    FAIL() << DLRGetLastError() << std::endl;
+  }
+  LOG(INFO) << "CreateDLRModel - OK";
+
+  CheckAllDLRMethods(handle, batch_size);
+
+  // DeleteDLRModel
+  DeleteDLRModel(&handle);
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 #ifndef _WIN32
