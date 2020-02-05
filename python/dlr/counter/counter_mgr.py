@@ -15,7 +15,7 @@ from .utils.helper import *
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
         call_counter = CallCounterMgr.get_instance()
-        if call_counter:
+        if call_counter is not None:
             if func.__name__ == "init_call_home":
                 print(config.CALL_HOME_USR_NOTIFICATION)
                 func(*args, **kwargs)
@@ -48,24 +48,39 @@ class CallCounterMgr(object):
         with getinst:
             if CallCounterMgr._instance is None:
                 if CallCounterMgr.is_feature_enabled():
-                    CallCounterMgr._instance = CallCounterMgr()
-                    atexit.register(CallCounterMgr._instance.stop)
+                    try:
+                        CallCounterMgr._instance = CallCounterMgr()
+                    except Exception as e:
+                        CallCounterMgr._instance = None
+                        logging.exception("unsupported system for call home feature")
+                    else: 
+                        atexit.register(CallCounterMgr._instance.stop)
                 else:
                     logging.warning("call home feature disabled")
             return CallCounterMgr._instance
 
     def __init__(self):
         try:
-            self.msg_publisher = MsgPublisher.get_instance()
             machine_typ = platform.machine()
             os_name = platform.system()
             os_supt = "{0}_{1}".format(os_name, machine_typ)
             self.system = Factory.get_system(os_supt)
             if self.system is None:
                 raise Exception("unsupported system")
+            self.msg_publisher = MsgPublisher.get_instance()
+            if self.msg_publisher is None:
+                raise Exception("ccm publisher not initialize")
             self.model_metric = ModelMetric.get_instance(self.system.get_device_uuid())
+            if self.model_metric is None:
+                raise Exception("ccm model metric publisher not initialize")
         except Exception as e:
+            # release resources if any, log exceptions and raise it
             logging.exception("while in counter mgr init", exc_info=True)
+            if self.model_metric is not None:
+                self.model_metric.stop()
+            if self.msg_publisher is not None:
+                self.msg_publisher.stop() 
+            raise e
 
     @staticmethod
     def is_feature_enabled():
@@ -112,7 +127,7 @@ class CallCounterMgr(object):
                 pub_data = {'record_type': CallCounterMgr.RUNTIME_LOAD}
                 if self.system:
                     pub_data.update(self.system.get_device_info())
-                self.push(pub_data)
+                    self.push(pub_data)
         except Exception as e:
             logging.exception("while dlr runtime load", exc_info=True)
 
@@ -145,9 +160,11 @@ class CallCounterMgr(object):
 
     def stop(self):
         with relinst:
-            if self.model_metric:
-                self.model_metric.stop()
-                self.model_metric = None
-            if self.msg_publisher:
-                self.msg_publisher.stop()
-                self.msg_publisher = None
+            if CallCounterMgr._instance is not None: 
+                if self.model_metric:
+                    self.model_metric.stop()
+                    self.model_metric = None
+                if self.msg_publisher:
+                    self.msg_publisher.stop()
+                    self.msg_publisher = None
+                CallCounterMgr._instance = None

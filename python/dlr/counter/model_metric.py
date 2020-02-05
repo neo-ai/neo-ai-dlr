@@ -1,6 +1,5 @@
 import concurrent.futures
 import logging
-import time
 import json
 import threading
 
@@ -14,7 +13,6 @@ class ModelMetric(object):
     _pub_model_metric = True
     _instance = None
     MODEL_RUN = 3
-    resp_cnt = 0
 
     @staticmethod
     def get_instance(uuid):
@@ -55,10 +53,7 @@ class ModelMetric(object):
 
     def push(self, data):
         """publish information to Server"""
-        if ModelMetric.resp_cnt < config.CALL_HOME_REQ_STOP_MAX_COUNT:
-            resp_code = self.publisher.send(json.dumps(data))
-            if resp_code != 200:
-                ModelMetric.resp_cnt += 1
+        self.publisher.send(json.dumps(data))
 
     def stop(self):
         with self.condition:

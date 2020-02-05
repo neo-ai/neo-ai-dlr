@@ -1,15 +1,16 @@
 import concurrent.futures
 import queue
-import threading
 import logging
 
 from .utils import resturlutils
 from . import config
 
+
 # Singleton class
 class MsgPublisher(object):
     _stop_processing = False
     _instance = None
+    resp_cnt = 0
 
     @staticmethod
     def get_instance():
@@ -39,7 +40,12 @@ class MsgPublisher(object):
 
     def _process_queue(self):
         while not MsgPublisher._stop_processing:
-            self.client.send(self.record_queue.get(block=True))
+            if MsgPublisher.resp_cnt < config.CALL_HOME_REQ_STOP_MAX_COUNT:
+                resp_code = self.client.send(self.record_queue.get(block=True))
+                if resp_code != 200:
+                    MsgPublisher.resp_cnt += 1
+            else:
+                self.record_queue.get(block=True)
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
