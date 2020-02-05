@@ -12,6 +12,7 @@ from .model_exec_counter import ModelExecCounter
 from .model_metric import ModelMetric
 from .utils.helper import *
 
+
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
         call_counter = CallCounterMgr.get_instance()
@@ -32,8 +33,10 @@ def call_home(func):
 
     return wrapped_call_home
 
+
 getinst = threading.Lock()
 relinst = threading.Lock()
+
 
 class CallCounterMgr(object):
     RUNTIME_LOAD = 1
@@ -53,7 +56,7 @@ class CallCounterMgr(object):
                     except Exception as e:
                         CallCounterMgr._instance = None
                         logging.exception("unsupported system for call home feature")
-                    else: 
+                    else:
                         atexit.register(CallCounterMgr._instance.stop)
                 else:
                     logging.warning("call home feature disabled")
@@ -74,18 +77,13 @@ class CallCounterMgr(object):
             if self.model_metric is None:
                 raise Exception("ccm model metric publisher not initialize")
         except Exception as e:
-            # release resources if any, log exceptions and raise it
             logging.exception("while in counter mgr init", exc_info=True)
-            if self.model_metric is not None:
-                self.model_metric.stop()
-            if self.msg_publisher is not None:
-                self.msg_publisher.stop() 
             raise e
 
     @staticmethod
     def is_feature_enabled():
         """check feature disabled config. ccm_config.json file present in root folder"""
-        feature_enb = CallCounterMgr.DEFAULT_ENABLE_FEATURE 
+        feature_enb = CallCounterMgr.DEFAULT_ENABLE_FEATURE
         try:
             if os.path.isfile(config.CALL_HOME_USER_CONFIG_FILE):
                 with open(config.CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
@@ -98,7 +96,7 @@ class CallCounterMgr(object):
                 feature_enb = True
         except Exception as e:
             logging.exception("while in reading ccm config file")
-        return feature_enb 
+        return feature_enb
 
     def is_device_info_published(self):
         """check if device information send only single time in DLR installation life time.
@@ -160,7 +158,7 @@ class CallCounterMgr(object):
 
     def stop(self):
         with relinst:
-            if CallCounterMgr._instance is not None: 
+            if CallCounterMgr._instance is not None:
                 if self.model_metric:
                     self.model_metric.stop()
                     self.model_metric = None
