@@ -34,6 +34,9 @@ class TensorflowModel : public DLRModel {
   std::vector<TF_Tensor*> output_tensors_;
   void LoadFrozenModel(const char* pb_file);
   TF_Output ParseTensorName(const std::string& t_name);
+  void DetectInputs();
+  void DetectOutputs();
+  void DetectInputShapes();
   void PrepInputs();
   void PrepOutputs();
   int GetInputId(const char* name);
