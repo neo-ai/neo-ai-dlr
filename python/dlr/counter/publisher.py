@@ -32,7 +32,7 @@ class MsgPublisher(object):
 
     def send(self, data):
         try:
-            self.record_queue.put(data)
+            self.record_queue.put(data, block=False)
         except queue.Full as e:
             logging.exception("ccm msg publisher queue full")
         except Exception as e:
@@ -41,11 +41,11 @@ class MsgPublisher(object):
     def _process_queue(self):
         while not MsgPublisher._stop_processing:
             if MsgPublisher.resp_cnt < config.CALL_HOME_REQ_STOP_MAX_COUNT:
-                resp_code = self.client.send(self.record_queue.get(block=True))
+                resp_code = self.client.send(self.record_queue.get(block=True, timeout=2))
                 if resp_code != 200:
                     MsgPublisher.resp_cnt += 1
             else:
-                self.record_queue.get(block=True)
+                self.record_queue.get(block=False)
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
