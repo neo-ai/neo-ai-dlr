@@ -49,6 +49,12 @@ def _find_model_file(model_path, ext):
         return model_files[0]
     return None
 
+def _is_module_found(name):
+    try:
+        __import__(name)
+        return True
+    except ModuleNotFoundError:
+        return False
 
 # Wrapper class
 class DLRModel(IDLRModel):
@@ -60,13 +66,13 @@ class DLRModel(IDLRModel):
             # Check if found both Tensorflow and TFLite files
             if tf_model_path is not None and tflite_model_path is not None:
                 raise ValueError('Found both .pb and .tflite files under {}'.format(model_path))
-            # Tensorflow
-            if tf_model_path is not None:
+            # Tensorflow Python
+            if tf_model_path is not None and _is_module_found("tensorflow"):
                 from .tf_model import TFModelImpl
                 self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
                 return
-            # TFLite
-            if tflite_model_path is not None:
+            # TFLite Python
+            if tflite_model_path is not None and _is_module_found("tensorflow.lite"):
                 if dev_type is not None:
                     logging.warning("dev_type parameter is not supported")
                 if dev_id is not None:
@@ -74,7 +80,7 @@ class DLRModel(IDLRModel):
                 from .tflite_model import TFLiteModelImpl
                 self._impl = TFLiteModelImpl(tflite_model_path)
                 return
-            # Default to TVM+Treelite
+            # Default to DLR C API (Python wrapper)
             from .dlr_model import DLRModelImpl
             if dev_type is None:
                 dev_type = 'cpu'
