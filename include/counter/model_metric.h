@@ -9,6 +9,7 @@
 #include "rest_client.h"
 #include "config.h"
 #include "model_exec_counter.h"
+#include "publisher.h"
 
 /*! \brief class ModelMetric 
  */
@@ -29,10 +30,10 @@ class ModelMetric {
   }
  private:
   ModelMetric() {
-    restcon = new RestClient();
+    publisher = MsgPublisher::get_instance();
     stop_process = false;
   };
-  RestClient *restcon;
+  MsgPublisher *publisher; 
   std::thread *thrd;
   bool stop_process;
   std::string device_id;

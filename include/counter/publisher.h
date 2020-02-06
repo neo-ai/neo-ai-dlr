@@ -32,11 +32,13 @@ class MsgPublisher {
     restcon = new RestClient();
     if (!restcon) {stop_process = true; LOG(FATAL) << "Message Publisher object null !";}
     stop_process = false;
+    retrycnt = 0;
   };
   RestClient *restcon;
   std::thread *thrd;
   std::queue<std::string> msg_que;
   bool stop_process;
+  int retrycnt;
 };
 
 #endif //PUBLISHER_H

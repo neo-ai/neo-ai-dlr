@@ -12,11 +12,15 @@ CounterMgr::CounterMgr()
     #if defined(__ANDROID__)
     system = Factory::get_system(3);
     #endif
-    if (!system) LOG(FATAL) << "Call Home System object null !"; 
+    if (!system) { 
+      LOG(FATAL) << "Call Home feature not supported!"; 
+      throw "Non supported system by call home feature C-API";
+    } 
     model_metric = ModelMetric::get_instance();
     if (!model_metric) LOG(FATAL) << "Call Home model metric object null !";
   } catch (std::exception& e) {
-    LOG(FATAL) << "Exception in Counter Manger constructor"; 
+    LOG(FATAL) << "Exception in Counter Manger constructor";
+    throw e; 
   }
 }
 
@@ -26,7 +30,11 @@ CounterMgr* CounterMgr::get_instance()
   if (!instance) {
     if (is_feature_enabled()) {
       LOG(INFO) << CALL_HOME_USR_NOTIFICATION  << std::endl;
-      instance = new CounterMgr();
+      try {
+        instance = new CounterMgr();
+      } catch (std::exception& e) {
+        instance = nullptr;
+      }
       if (instance) {
         instance->runtime_loaded();
       }
@@ -107,7 +115,7 @@ void CounterMgr::model_loaded(std::string model) {
 };
 
 void CounterMgr::model_run(std::string model) {
-  ModelExecCounter::add_model_run_count(get_hash_string(model).c_str());
+  ModelExecCounter::update_model_run_count(get_hash_string(model).c_str());
 }
 
 CounterMgr * CounterMgr::instance = nullptr;

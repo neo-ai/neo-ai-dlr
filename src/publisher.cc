@@ -27,7 +27,10 @@ void MsgPublisher::process_queue()
   while (!stop_process) {
     while(!msg_que.empty()) {
       std::string msg = msg_que.front();
-      restcon->send(msg);
+      if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
+        int status = restcon->send(msg);
+        if (status != 200) retrycnt++;
+      }
       msg_que.pop();
     }
   }
