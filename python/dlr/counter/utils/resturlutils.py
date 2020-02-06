@@ -10,7 +10,7 @@ class RestUrlUtils(object):
         try:
             hrd = {'Content-Type': 'application/x-amz-json-1.1'}
             data = message.encode('utf-8')
-            req = urllib3.PoolManager()
+            req = urllib3.PoolManager(cert_reqs=None)
             resp = req.request('POST', config.CALL_HOME_URL, headers=hrd, body=data)
             resp_code = resp.status
             logging.info("Response Data:", resp.data)
