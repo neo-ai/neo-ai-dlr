@@ -70,10 +70,14 @@ inline void CallHome(int type, std::string model= std::string())
   CounterMgr* instance;
   if (!instance) {
     #if defined(__ANDROID__)
-    instance = CounterMgr::get_instance();
-    if (!instance)  {
-      LOG(FATAL) << "Call Home Feature not initialize!";
-      return;
+    try {
+      instance = CounterMgr::get_instance();
+      if (!instance)  {
+        LOG(FATAL) << "Call Home Feature not initialize!";
+      }
+    } catch (std::exception& e) {
+      instance = nullptr;
+      LOG(FATAL) << "Exception in Counter Manger Module initialization";
     }
     #else
     return;
@@ -94,6 +98,5 @@ inline void CallHome(int type, std::string model= std::string())
       break;
   }
 }
- 
 
 #endif //COUNTERMGR_H
