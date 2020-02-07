@@ -14,6 +14,8 @@ import tempfile
 import json
 import glob
 
+SAGEMAKER_ERROR_LOG_FILE = "/opt/ml/errors/errors.log"
+
 # Import user module, ignoring non-existent modules
 # This way, we don't introduce MXNet/TF dependencies
 def import_user_module(path, script_name):
@@ -78,9 +80,9 @@ class NeoBYOMPredictor():
         print('Loading the model from directory {}'.format(model_dir))
         USE_GPU = os.getenv('USE_GPU', None)
         if USE_GPU == '1':
-            self.model = dlr.DLRModel(model_dir, dev_type='gpu')
+            self.model = dlr.DLRModel(model_dir, dev_type='gpu', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         else:
-            self.model = dlr.DLRModel(model_dir)
+            self.model = dlr.DLRModel(model_dir, error_log_file=SAGEMAKER_ERROR_LOG_FILE)
 
         # Load user module
         SAGEMAKER_SUBMIT_DIRECTORY = os.getenv('SAGEMAKER_SUBMIT_DIRECTORY', None)
