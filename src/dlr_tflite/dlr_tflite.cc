@@ -119,7 +119,7 @@ TFLiteModel::TFLiteModel(const std::string& model_path, const DLContext& ctx,
   // Save the number of outputs
   num_outputs_ = interpreter_->outputs().size();
   GenTensorSpec(false);
-  CallHome(2, model_path_);
+  CallHome(MODEL_LOAD, model_path_);
   LOG(INFO) << "TFLiteModel was created";
 }
 
@@ -192,7 +192,7 @@ void TFLiteModel::Run() {
     LOG(FATAL) << "Failed to invoke interpreter!";
     return;  // unreachable
   }
-  CallHome(3, model_path_);
+  CallHome(MODEL_RUN, model_path_);
 }
 
 const char* TFLiteModel::GetBackend() const { return "tflite"; }

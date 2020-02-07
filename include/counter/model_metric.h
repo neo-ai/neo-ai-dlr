@@ -37,7 +37,6 @@ class ModelMetric {
   std::thread *thrd;
   bool stop_process;
   std::string device_id;
-  const int MODEL_RUN = 3;
 };
 
 #endif //MODEL_METRIC_H

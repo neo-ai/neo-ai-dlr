@@ -51,11 +51,7 @@ class CounterMgr {
     system = nullptr;
   }
   // fields for matric data type
-  const int RUNTIME_LOAD = 1;
-  const int MODEL_LOAD = 2;
-  const int MODEL_RUN = 3;
   static int feature_enable;
-  static int DEFAULT_ENABLE_FEATURE;
   System *system;
   static CounterMgr* instance;
   MsgPublisher* msg_publisher;
@@ -65,7 +61,7 @@ class CounterMgr {
 /*! \brief Hook for Call Home Feature.
  */
 extern CounterMgr *instance;
-inline void CallHome(int type, std::string model= std::string())
+inline void CallHome(record type, std::string model= std::string())
 {
   CounterMgr* instance;
   if (!instance) {
@@ -84,16 +80,16 @@ inline void CallHome(int type, std::string model= std::string())
     #endif
   }
   switch (type) {
-    case 1:
+    case RUNTIME_LOAD:
       instance->runtime_loaded();
       break;
-    case 2:
+    case MODEL_LOAD:
       instance->model_loaded(model);
       break;
-    case 3:
+    case MODEL_RUN:
       instance->model_run(model);
       break;
-    case 0:
+    default:
       instance->release_instance();
       break;
   }

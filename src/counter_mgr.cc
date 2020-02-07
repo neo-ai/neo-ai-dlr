@@ -52,11 +52,9 @@ void CounterMgr::set_data_consent(int val)
 
 bool CounterMgr::is_feature_enabled()
 {
-  #if defined(__ANDROID__)
   if (feature_enable)
     return true;
   else return false;
-  #endif
 };
 
 bool CounterMgr::is_device_info_published()

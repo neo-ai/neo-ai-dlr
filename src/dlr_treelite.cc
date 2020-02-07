@@ -187,7 +187,7 @@ void TreeliteModel::Run() {
                                          1, 0, 0, treelite_output_.data(),
                                          &out_result_size), 0)
    << TreeliteGetLastError();
-   CallHome(3, model_path_);
+   CallHome(MODEL_RUN, model_path_);
 }
 
 const char* TreeliteModel::GetBackend() const { return "treelite"; }

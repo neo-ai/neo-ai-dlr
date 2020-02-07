@@ -6,6 +6,7 @@
 #include <mutex>
 
 using namespace std;
+enum record { RUNTIME_LOAD, MODEL_LOAD, MODEL_RUN}; 
 
 /*! \brief class ModelExecCounter
  */

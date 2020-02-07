@@ -28,7 +28,7 @@ class TVMModel : public DLRModel {
   explicit TVMModel(std::vector<std::string> model_path, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
-    CallHome(2, model_path_);
+    CallHome(MODEL_LOAD, model_path_);
   }
   ~TVMModel() {} 
   virtual const char* GetInputName(int index) const override;
