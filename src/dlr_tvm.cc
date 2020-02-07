@@ -1,11 +1,10 @@
 #include "dlr_tvm.h"
 
-#include <iterator>
 #include <stdlib.h>
 
 #include <fstream>
+#include <iterator>
 #include <numeric>
-
 
 using namespace dlr;
 
@@ -17,14 +16,16 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   }
   for (auto filename : paths_vec) {
     std::string basename = GetBasename(filename);
-    if (EndsWith(filename, ".json")
-        && std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
-                       std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
-                       [basename](const std::string& s)
-                                 { return (s != basename); })
-        && filename != "version.json") {
+    if (EndsWith(filename, ".json") &&
+        std::all_of(
+            std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
+            std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
+            [basename](const std::string& s) { return (s != basename); }) &&
+        filename != "version.json") {
       paths.model_json = filename;
     } else if (EndsWith(filename, LIBEXT)) {
+      paths.model_lib = filename;
+    } else if (EndsWith(filename, ".tensorrt")) {
       paths.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
       paths.params = filename;
@@ -32,17 +33,18 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
       paths.ver_json = filename;
     }
   }
-  if ( paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty() ){
+  if (paths.model_json.empty() || paths.model_lib.empty() ||
+      paths.params.empty()) {
     LOG(INFO) << "No valid TVM model files found under folder:";
     for (auto dir : dirname) {
       LOG(INFO) << dir;
-    } 
+    }
     LOG(FATAL);
   }
   return paths;
 }
 
-bool IsFileEmpty(const std::string &filePath){
+bool IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
   return pFile.peek() == std::ifstream::traits_type::eof();
 }
@@ -57,11 +59,10 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   param_blob << pstream.rdbuf();
 
   tvm::runtime::Module module;
-  if (!IsFileEmpty(paths.model_lib)){
+  if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
-  tvm_graph_runtime_ =
-    tvm::runtime::make_object<tvm::runtime::GraphRuntime>();    
+  tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
@@ -71,7 +72,7 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   // This is the combined count of inputs and weights
   const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
   std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_weights; i++)  {
+  for (int i = 0; i < num_inputs_weights; i++) {
     input_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
   // Get list of weights
@@ -113,21 +114,20 @@ const char* TVMModel::GetWeightName(int index) const {
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
                         int dim) {
-    std::string str(name);
-    int index = tvm_graph_runtime_->GetInputIndex(str);
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-    DLTensor input_tensor = *(arr.operator->());
-    input_tensor.ctx = DLContext{kDLCPU, 0};
-    input_tensor.data = input;
-    int64_t read_size =
-        std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
-    int64_t expected_size = std::accumulate(
-        input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
-        std::multiplies<int64_t>());
-    CHECK_SHAPE("Mismatch found in input data size", read_size,
-                expected_size);
-    tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
-    set_input(str, &input_tensor);
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  DLTensor input_tensor = *(arr.operator->());
+  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.data = input;
+  int64_t read_size =
+      std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
+  int64_t expected_size = std::accumulate(
+      input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
+      std::multiplies<int64_t>());
+  CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
+  tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
+  set_input(str, &input_tensor);
 }
 
 void TVMModel::GetInput(const char* name, float* input) {
@@ -172,9 +172,7 @@ void TVMModel::Run() {
   run();
 }
 
-const char* TVMModel::GetBackend() const {
-  return "tvm";
-}
+const char* TVMModel::GetBackend() const { return "tvm"; }
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

@@ -1,15 +1,17 @@
-#include <iostream>
-#include <cstdio>
-#include <fstream>
-#include <numeric>
-#include <algorithm>
-#include <functional>
-#include <vector>
-#include <limits>
-#include <stdexcept>
 #include <dlr.h>
 #include <libgen.h>
+
+#include <algorithm>
+#include <cstdio>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <numeric>
+#include <stdexcept>
 #include <utility>
+#include <vector>
+
 #include "dmlc/logging.h"
 #include "npy.hpp"
 
@@ -21,19 +23,21 @@ struct NDArray {
 };
 
 bool is_big_endian();
-std::vector<std::vector<float>> RunInference(DLRModelHandle model, 
-                                             const char *data_path, 
+std::vector<std::vector<float>> RunInference(DLRModelHandle model,
+                                             const char* data_path,
                                              const std::string& input_name);
 
 bool is_big_endian() {
   int32_t n = 1;
   // big endian if true
-  return (*(char *)&n == 0);
+  return (*(char*)&n == 0);
 }
 
 /*! \brief A generic inference function using C-API.
  */
-std::vector<std::vector<float>> RunInference(DLRModelHandle model, const char* data_path, const std::string& input_name) {
+std::vector<std::vector<float>> RunInference(DLRModelHandle model,
+                                             const char* data_path,
+                                             const std::string& input_name) {
   int num_outputs;
   GetDLRNumOutputs(&model, &num_outputs);
   std::vector<int64_t> output_sizes;
@@ -60,14 +64,15 @@ std::vector<std::vector<float>> RunInference(DLRModelHandle model, const char* d
   input.ndim = shape.size();
   input.size = data.size();
 
-  if (SetDLRInput(&model, input_name.c_str(), input.shape.data(), input.data.data(), static_cast<int>(input.ndim)) != 0) {
+  if (SetDLRInput(&model, input_name.c_str(), input.shape.data(),
+                  input.data.data(), static_cast<int>(input.ndim)) != 0) {
     throw std::runtime_error("Could not set input '" + input_name + "'");
   }
   if (RunDLRModel(&model) != 0) {
-    LOG(INFO) << DLRGetLastError() << std::endl;  
+    LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not run");
   }
-  for (int i = 0; i < num_outputs; i++){
+  for (int i = 0; i < num_outputs; i++) {
     if (GetDLROutput(&model, i, outputs[i].data()) != 0) {
       throw std::runtime_error("Could not get output" + std::to_string(i));
     }
@@ -84,12 +89,14 @@ int main(int argc, char** argv) {
   int device_type = 1;
   std::string input_name = "data";
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " <model dir> <ndarray file> [device] [input name]" << std::endl;
+    std::cerr << "Usage: " << argv[0]
+              << " <model dir> <ndarray file> [device] [input name]"
+              << std::endl;
     return 1;
   }
   if (argc >= 4) {
     std::string argv3(argv[3]);
-    if (argv3 == "cpu"){
+    if (argv3 == "cpu") {
       device_type = 1;
     } else if (argv3 == "gpu") {
       device_type = 2;
@@ -97,7 +104,7 @@ int main(int argc, char** argv) {
       device_type = 4;
     } else {
       std::cerr << "Unsupported device type!" << std::endl;
-      return 1; 
+      return 1;
     }
   }
   if (argc >= 5) {
@@ -110,9 +117,10 @@ int main(int argc, char** argv) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
-  
-  std::cout << "Running inference... " << std::endl;  
-  std::vector<std::vector<float>> outputs = RunInference(model, argv[2], input_name);
+
+  std::cout << "Running inference... " << std::endl;
+  std::vector<std::vector<float>> outputs =
+      RunInference(model, argv[2], input_name);
 
   int argmax = -1;
   float max_pred = 0.0f;
@@ -123,7 +131,8 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::cout << "Max probability at " << argmax << " with probability " << max_pred <<  std::endl;
+  std::cout << "Max probability at " << argmax << " with probability "
+            << max_pred << std::endl;
 
   return 0;
 }

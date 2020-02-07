@@ -1,18 +1,20 @@
-#include <iostream>
+#include <dlr.h>
+
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
-#include <numeric>
-#include <algorithm>
 #include <functional>
-#include <vector>
+#include <iostream>
 #include <limits>
+#include <numeric>
 #include <stdexcept>
-#include <dlr.h>
+#include <vector>
+
 #include "dmlc/logging.h"
 
 /*! \brief Prints model metadata using DLR C-API.
  */
-void peek_model(DLRModelHandle model){
+void peek_model(DLRModelHandle model) {
   int num_inputs;
   int num_weights;
   int num_outputs;
@@ -40,7 +42,7 @@ void peek_model(DLRModelHandle model){
     std::cout << input_names[i] << ", ";
   }
   std::cout << std::endl;
-  
+
   // weight_names.resize(num_weights);
   // std::cout << "weight_names: ";
   // for (int i = 0; i < num_weights; i++) {
@@ -51,10 +53,10 @@ void peek_model(DLRModelHandle model){
   // std::cout << std::endl;
 
   output_shapes.resize(num_outputs);
-  std::cout  << "output shapes: " << std::endl;
+  std::cout << "output shapes: " << std::endl;
   for (int i = 0; i < num_outputs; i++) {
     int64_t size = 0;
-    int dim = 0; 
+    int dim = 0;
     GetDLROutputSizeDim(&model, i, &size, &dim);
     output_shapes[i].resize(dim);
     GetDLROutputShape(&model, i, output_shapes[i].data());
@@ -72,10 +74,10 @@ int main(int argc, char** argv) {
   if (argc < 2) {
     LOG(FATAL) << "Usage: " << argv[0] << " <model dir> [device_type]";
     return 1;
-  } 
+  }
   if (argc >= 3) {
     std::string argv2(argv[2]);
-    if (argv2 == "cpu"){
+    if (argv2 == "cpu") {
       device_type = 1;
     } else if (argv2 == "gpu") {
       device_type = 2;
@@ -83,7 +85,7 @@ int main(int argc, char** argv) {
       device_type = 4;
     } else {
       LOG(FATAL) << "Unsupported device type!";
-      return 1; 
+      return 1;
     }
   }
 
@@ -94,6 +96,6 @@ int main(int argc, char** argv) {
   }
 
   peek_model(model);
-  
+
   return 0;
 }
