@@ -1,4 +1,75 @@
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+### Multi-stage Docker image. See https://docs.docker.com/develop/develop-images/multistage-build/
+### Run "docker build" at the root directory of neo-ai-dlr
+
+### Stage 0: Base image
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 AS base
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN mkdir -p /packages
+COPY container/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+RUN cd /packages \
+    && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install wheel \
+    && rm -rf /root/.cache/pip
+
+### Stage 1: Build
+FROM base AS builder
+WORKDIR /workspace
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY CMakeLists.txt /workspace/
+COPY README.md /workspace/
+COPY include/ /workspace/include/
+COPY src/ /workspace/src/
+COPY python/ /workspace/python/
+COPY cmake/ /workspace/cmake/
+COPY 3rdparty/ /workspace/3rdparty/
+
+RUN \
+    mkdir /workspace/build && cd /workspace/build && \
+    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 && \
+    make -j15 && cd ../python && \
+    python3 setup.py bdist_wheel
+
+### Stage 2: Run
+### Stage 2-1: Runner base (everything except the APP-specific handler)
+FROM base AS runner_base
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# python3-dev and gcc are required by mxnet-model-server
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-8-jdk-headless \
+    python3-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
+
+RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.0.5b20190521 \
+    && pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet-cu100 tensorflow_gpu \
+    && pip3 install /home/model-server/dlr-*.whl \
+    && rm -rf /root/.cache/pip
+
+### Stage 2-2: Runner (APP-specific handler)
+FROM runner_base AS runner
 ARG APP=image_classification
 
 ENV PYTHONUNBUFFERED TRUE
@@ -9,59 +80,24 @@ ENV TREELITE_BIND_THREADS 0
 
 ENV USE_GPU 1
 
-RUN mkdir -p /packages
-
-COPY TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
-
-RUN cd /packages \
-    && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    build-essential \
-    python3 \
-    python3-pip \
-    openjdk-8-jdk-headless \
-    curl \
-    git \
-    cmake \
-    && rm -rf /var/lib/apt/lists/* \
-    && cd /tmp
-
-RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.0.5b20190521
-
-RUN pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet
-
-RUN pip3 install --upgrade --force-reinstall tensorflow_gpu
-
-#RUN pip3 install --no-cache-dir dlr
-
-RUN mkdir -p /home/model-server && cd /home/model-server \
-    && git clone --recursive https://github.com/neo-ai/neo-ai-dlr \
-    && cd neo-ai-dlr \
-    && mkdir build && cd build && cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 \
-    && make -j15 && cd ../python && python3 setup.py bdist_wheel \
-    && pip3 install dist/*.whl
-
 RUN useradd -m model-server \
     && mkdir -p /home/model-server/tmp \
     && mkdir -p /home/model-server/model
 
-COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
-COPY config.properties /home/model-server/config.properties
+COPY container/dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+COPY container/config.properties /home/model-server/config.properties
 
-COPY neo_template_$APP.py /home/model-server/neo_template.py
-COPY mms_config_$APP.sh /home/model-server/mms_config.sh
+COPY container/neo_template_$APP.py /home/model-server/neo_template.py
+COPY container/mms_config_$APP.sh /home/model-server/mms_config.sh
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
     && chown -R model-server /home/model-server
 
 EXPOSE 8080 8081
 
-USER model-server
 WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]
 
-LABEL maintainer="chyunsu@amazon.com, dantu@amazon.com, rakvas@amazon.com, lufen@amazon.com, dden@amazon.com"
+LABEL maintainer="guas@amazon.com, chyunsu@amazon.com"

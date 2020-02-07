@@ -2,7 +2,6 @@
 
 #include <dmlc/filesystem.h>
 
-
 using namespace dlr;
 
 std::string dlr::GetBasename(const std::string& path) {
@@ -22,8 +21,8 @@ std::string dlr::GetBasename(const std::string& path) {
   }
   std::vector<char> fname(path_.length() + 1);
   std::vector<char> ext(path_.length() + 1);
-  _splitpath_s(path_.c_str(), NULL, 0, NULL, 0,
-    &fname[0], path_.length() + 1, &ext[0], path_.length() + 1);
+  _splitpath_s(path_.c_str(), NULL, 0, NULL, 0, &fname[0], path_.length() + 1,
+               &ext[0], path_.length() + 1);
   return std::string(&fname[0]) + std::string(&ext[0]);
 #else
   char* path_ = strdup(path.c_str());
@@ -51,16 +50,21 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   if (EndsWith(dir_paths[0], ".tflite")) {
     return DLRBackend::kTFLITE;
   }
+  if (EndsWith(dir_paths[0], ".pb")) {
+    return DLRBackend::kTENSORFLOW;
+  }
   // Scan Directory content to guess the backend.
   std::vector<std::string> paths;
   for (auto dir : dir_paths) {
-    dlr::ListDir(dir, paths);  
+    dlr::ListDir(dir, paths);
   }
-  for (auto filename: paths) {
+  for (auto filename : paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".tflite")) {
       return DLRBackend::kTFLITE;
+    } else if (EndsWith(filename, ".pb")) {
+      return DLRBackend::kTENSORFLOW;
     }
   }
   return DLRBackend::kTREELITE;

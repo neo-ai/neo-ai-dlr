@@ -1,16 +1,18 @@
 #include <dmlc/logging.h>
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include "dlr.h"
 
-float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
+float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
+                              int batch_size) {
   std::string line;
   std::ifstream fp(img_path);
-  float* img = new float[size];
+  float* img = new float[size * batch_size];
   size_t i = 0;
   if (fp.is_open()) {
     while (getline(fp, line) && i < size) {
@@ -23,13 +25,17 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
 
   EXPECT_EQ(size, i);
   LOG(INFO) << "Image read - OK, float[" << i << "]";
+
+  for (int j = 1; j < batch_size; j++) {
+    std::memcpy(img + j * size, img, size * sizeof(float));
+  }
   return img;
 }
 
-int ArgMax(float* data, int size) {
+int ArgMax(float* data, int start, int size) {
   int idx = 0;
   float v = 0.0f;
-  for (int i = 0; i < size; i++) {
+  for (int i = start; i < start + size; i++) {
     float vi = data[i];
     if (vi > v) {
       idx = i;
@@ -39,14 +45,14 @@ int ArgMax(float* data, int size) {
   return idx;
 }
 
-void CheckAllDLRMethods(DLRModelHandle& handle) {
+void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
   // GetDLRBackend
   const char* backend_name;
   if (GetDLRBackend(&handle, &backend_name)) {
     FAIL() << "GetDLRBackend failed";
   }
   LOG(INFO) << "GetDLRBackend: " << backend_name;
-  EXPECT_STREQ("tflite", backend_name);
+  EXPECT_STREQ("tensorflow", backend_name);
 
   // GetDLRNumInputs
   int num_inputs;
@@ -78,7 +84,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
     FAIL() << "GetDLRInputName failed";
   }
   LOG(INFO) << "DLRInputName: " << input_name;
-  EXPECT_STREQ("input", input_name);
+  EXPECT_STREQ("input:0", input_name);
 
   // GetDLROutputSizeDim
   int64_t out_size;
@@ -88,7 +94,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   }
   LOG(INFO) << "GetDLROutputSizeDim.size: " << out_size;
   LOG(INFO) << "GetDLROutputSizeDim.dim: " << out_dim;
-  EXPECT_EQ(1001, out_size);
+  EXPECT_EQ(1001 * batch_size, out_size);
   EXPECT_EQ(2, out_dim);
 
   // GetDLROutputShape
@@ -103,17 +109,20 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   }
   ss << ")";
   LOG(INFO) << ss.str();
-  const int64_t exp_shape[2] = {1, 1001};
+  const int64_t exp_shape[2] = {batch_size, 1001};
   EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
 
   // Load image
   size_t img_size = 224 * 224 * 3;
-  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size);
-  LOG(INFO) << "Input sample: " << img[0] << "," << img[1] << " ... "
-            << img[img_size - 1];
+  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
+  LOG(INFO) << "Input sample: [" << img[0] << "," << img[1] << "..."
+            << img[img_size - 1] << "]...[" << img[img_size * (batch_size - 1)]
+            << "," << img[img_size * (batch_size - 1) + 1] << "..."
+            << img[img_size * batch_size - 1] << "]";
+  img_size *= batch_size;
 
   // SetDLRInput
-  const int64_t in_shape[4] = {1, 224, 224, 3};
+  const int64_t in_shape[4] = {batch_size, 224, 224, 3};
   if (SetDLRInput(&handle, input_name, in_shape, img, 4)) {
     FAIL() << "SetDLRInput failed";
   }
@@ -133,20 +142,26 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   }
   LOG(INFO) << "RunDLRModel - OK";
 
-  // GetDLROutput
+  // GetDLROutput (the first and the last item in the batch)
   float* output = new float[out_size];
   if (GetDLROutput(&handle, 0, output)) {
     FAIL() << "GetDLROutput failed";
   }
-  size_t max_id = ArgMax(output, out_size);
-  LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << output[max_id];
-  // TFLite class range is 1-1000 (output size 1001)
-  // Imagenet1000 class range is 0-999
-  // https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
-  EXPECT_EQ(283, max_id);  // TFLite 283 maps to Imagenet 282 - tiger cat
-  EXPECT_GE(output[max_id], 0.5f);
-  EXPECT_GE(output[282],
-            0.3f);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
+  LOG(INFO) << "GetDLROutput - OK";
+  size_t out_size0 = out_size / batch_size;
+  for (int i = 0; i < batch_size; i++) {
+    size_t out_offset = i * out_size0;
+    size_t max_id = ArgMax(output, out_offset, out_size0);
+    LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << output[max_id];
+    // Tensorflow class range is 1-1000 (output size 1001)
+    // Imagenet1000 class range is 0-999
+    // https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
+    // Tensorflow 283 maps to Imagenet 282 - tiger cat
+    EXPECT_EQ(out_offset + 283, max_id);
+    EXPECT_GE(output[max_id], 0.5f);
+    // Tensorflow 282 maps to Imagenet 281 - tabby, tabby cat
+    EXPECT_GE(output[out_offset + 282], 0.3f);
+  }
 
   // clean up
   delete[] img;
@@ -154,38 +169,67 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   delete[] output;
 }
 
-TEST(TFLite, CreateDLRModelFromTFLite) {
-  // CreateDLRModelFromTFLite (use tflite file)
+TEST(Tensorflow, CreateDLRModelFromTensorflow) {
+  // CreateDLRModelFromTensorflow (use .pb file)
   const char* model_file =
-      "./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite";
+      "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
   int threads = 2;
-  int use_nn_api = 0;
+  int batch_size = 1;
+  const int64_t dims[4] = {batch_size, 224, 224, 3};
+  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
+  const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle;
-  if (CreateDLRModelFromTFLite(&handle, model_file, threads, use_nn_api)) {
+  if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
+                                   threads)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
-  LOG(INFO) << "CreateDLRModelFromTFLite - OK";
+  LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
 
-  CheckAllDLRMethods(handle);
+  CheckAllDLRMethods(handle, batch_size);
 
   // DeleteDLRModel
   DeleteDLRModel(&handle);
 }
 
-TEST(TFLite, CreateDLRModel) {
-  // CreateDLRModel (use folder containing tflite file)
-  const char* model_dir = "./mobilenet_v2_0.75_224";
-  int dev_type = 1;  // 1 - kDLCPU
-  int dev_id = 0;
+TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
+  // CreateDLRModelFromTensorflow (use folder containing .pb file)
+  const char* model_dir = "./mobilenet_v1_1.0_224";
+  int threads = 0;  // undefined
+  int batch_size = 8;
+  const int64_t dims[4] = {batch_size, 224, 224, 3};
+  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
+  const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle;
-  if (CreateDLRModel(&handle, model_dir, dev_type, dev_id)) {
+  if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
+                                   threads)) {
+    FAIL() << DLRGetLastError() << std::endl;
+  }
+  LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
+
+  CheckAllDLRMethods(handle, batch_size);
+
+  // DeleteDLRModel
+  DeleteDLRModel(&handle);
+}
+
+TEST(Tensorflow, AutodetectInputsAndOutputs) {
+  // Use generic CreateDLRModel
+  // input and output tensor names will be detected automatically.
+  const char* model_file =
+      "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
+  const int batch_size = 1;
+  const int dev_type = 1;  // 1 - kDLCPU
+  const int dev_id = 0;
+
+  DLRModelHandle handle;
+  if (CreateDLRModel(&handle, model_file, dev_type, dev_id)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModel - OK";
 
-  CheckAllDLRMethods(handle);
+  CheckAllDLRMethods(handle, batch_size);
 
   // DeleteDLRModel
   DeleteDLRModel(&handle);

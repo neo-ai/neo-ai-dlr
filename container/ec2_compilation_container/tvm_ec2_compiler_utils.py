@@ -24,9 +24,9 @@ def tvm_compile(func, params, arch, dlr_model_name):
   elif arch in ['p2', 'ml_p2']:
     target = "cuda"
     gpu_code = "sm_37"
-  ###arch lambda ssse3,sse4.2
+  ###arch lambda ssse3,sse4.2,avx
   elif arch == 'lambda':
-    target = "llvm -mattr=+ssse3,+sse4.2"
+    target = "llvm -mcpu=ivybridge"
   else:
     print("Valid arch: c4, m4, c5, m5, lambda")
     return
