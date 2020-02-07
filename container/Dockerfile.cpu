@@ -80,7 +80,7 @@ COPY container/dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 COPY container/config.properties /home/model-server/config.properties
 
 COPY container/neo_template_$APP.py /home/model-server/neo_template.py
-COPY container/neo_utils.py /home/model-server/neo_utils.py
+COPY container/neo_utils.py /home/model-server/neo_container_utils.py
 COPY container/mms_config_$APP.sh /home/model-server/mms_config.sh
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
