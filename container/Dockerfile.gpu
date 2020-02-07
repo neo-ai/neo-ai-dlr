@@ -7,9 +7,9 @@ FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 AS base
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN mkdir -p /packages
-COPY container/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz /packages/TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+COPY container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz /packages/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
 RUN cd /packages \
-    && tar xzvf TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz
+    && tar xzvf TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -43,7 +43,7 @@ COPY 3rdparty/ /workspace/3rdparty/
 
 RUN \
     mkdir /workspace/build && cd /workspace/build && \
-    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-5.0.2.6 && \
+    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-7.0.0.11 && \
     make -j15 && cd ../python && \
     python3 setup.py bdist_wheel
 
