@@ -14,7 +14,7 @@ For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Y
 
 Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
 
-Call Home Feature:
+### Call Home Feature
 By default the feature enabled. Your device information and model load/execution count metric data being sent to a server.
 You can disable this feature by using below configuration steps.                             
   1. Create a config file, ccm_config.json in your application path.                             
