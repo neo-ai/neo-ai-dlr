@@ -4,7 +4,6 @@ from __future__ import absolute_import as _abs
 import abc
 import glob
 import os
-import logging
 from .neologger import create_logger
 
 # Interface
@@ -52,7 +51,7 @@ def _is_module_found(name):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None):
-        self.neo_logger = create_logger(error_log_file)
+        self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
             tf_model_path = _find_model_file(model_path, '.pb')
@@ -68,9 +67,9 @@ class DLRModel(IDLRModel):
             # TFLite Python
             if tflite_model_path is not None and _is_module_found("tensorflow.lite"):
                 if dev_type is not None:
-                    logging.warning("dev_type parameter is not supported")
+                    self.neo_logger.warning("dev_type parameter is not supported")
                 if dev_id is not None:
-                    logging.warning("dev_id parameter is not supported")
+                    self.neo_logger.warning("dev_id parameter is not supported")
                 from .tflite_model import TFLiteModelImpl
                 self._impl = TFLiteModelImpl(tflite_model_path)
                 return

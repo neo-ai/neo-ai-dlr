@@ -1,19 +1,19 @@
 """Logging API"""
 import logging
 
-def create_logger(log_file=None, log_level=logging.DEBUG, verbose=True):
+def create_logger(log_level=logging.DEBUG, log_to_console=True, log_file=None):
     """Create logger.
 
     Parameters
     ----------
-    log_file : str, optional
-        Logging file.
-
     log_level : int, optional
         Logging level.
 
-    verbose : bool, optional
+    log_to_console : bool, optional
         Whether to log to console.
+
+    log_file : str, optional
+        Logging file.
 
     Returns
     -------
@@ -29,7 +29,7 @@ def create_logger(log_file=None, log_level=logging.DEBUG, verbose=True):
         logger.addHandler(file_handler)
         logger.setLevel(log_level)
 
-    if verbose:
+    if log_to_console:
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
