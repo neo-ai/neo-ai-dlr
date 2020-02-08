@@ -1,7 +1,7 @@
 """Logging API"""
 import logging
 
-def create_logger(log_file, log_level=logging.DEBUG, verbose=True):
+def create_logger(log_file=None, log_level=logging.DEBUG, verbose=True):
     """Create logger.
 
     Parameters
