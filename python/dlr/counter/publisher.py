@@ -49,9 +49,6 @@ class MsgPublisher(object):
         logging.info("ccm msg publisher execution stopped")
 
     def stop(self):
-        # ensure all messages from queue process
-        while not self.record_queue.empty():
-            pass
         try:
             self.record_queue.task_done()
         except ValueError as e:
