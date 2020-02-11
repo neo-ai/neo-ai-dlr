@@ -100,16 +100,18 @@ class Linux_x86:public X86
   DeviceInfo* device;
 };
 
+enum supsys { LINUXARM=1, LINUXX86=2, ANDROIDS=3 };
+
 // get system class instance
 class Factory
 {
  public:
-  static System* get_system(int choice) {
-    if (choice == 1) {
+  static System* get_system(supsys choice) {
+    if (choice == LINUXARM) {
       return new Linux_ARM();
-    } else if (choice == 2) {
+    } else if (choice == LINUXX86) {
       return new Linux_x86();
-    } else if (choice == 3) {
+    } else if (choice == ANDROIDS) {
       return new Android();
     } else {
       return nullptr;

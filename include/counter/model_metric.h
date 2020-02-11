@@ -25,7 +25,7 @@ class ModelMetric {
   }
   ~ModelMetric();
   void process_queue();
-  void set_device_id(std::string dev_id) {
+  void set_device_id(std::string& dev_id) {
     device_id.assign(dev_id);
   }
  private:

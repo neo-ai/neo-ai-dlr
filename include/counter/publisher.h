@@ -16,14 +16,13 @@ class MsgPublisher {
   static MsgPublisher* msgpublisher;
   static MsgPublisher* get_instance();
   static void release_instance() {
-    while (!msgpublisher->msg_que.empty());
     msgpublisher->stop_process = true;
     msgpublisher->thrd->join();
     delete msgpublisher; 
     msgpublisher = nullptr;
   }
   ~MsgPublisher();
-  void send(std::string str) {
+  void send(std::string& str) {
     msg_que.push(str);
   }
   void process_queue();

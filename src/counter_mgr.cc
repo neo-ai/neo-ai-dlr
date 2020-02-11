@@ -10,7 +10,7 @@ CounterMgr::CounterMgr()
     msg_publisher = MsgPublisher::get_instance();
     if (!msg_publisher) LOG(FATAL) << "Call Home Message Publisher object null !";
     #if defined(__ANDROID__)
-    system = Factory::get_system(3);
+    system = Factory::get_system(ANDROIDS);
     #endif
     if (!system) { 
       LOG(FATAL) << "Call Home feature not supported!"; 
@@ -45,7 +45,7 @@ CounterMgr* CounterMgr::get_instance()
   return instance;
 };
 
-void CounterMgr::set_data_consent(int val)
+void CounterMgr::set_data_consent(int& val)
 {
   feature_enable = val;
 }
@@ -95,7 +95,7 @@ void CounterMgr::runtime_loaded()
   }
 };
 
-void CounterMgr::model_load_publish(int msg_type, std::string model, int count)
+void CounterMgr::model_load_publish(record msg_type, std::string& model)
 {
   std::string str_pub = "{\"record_type\":";
   str_pub += "\"" +std::to_string(msg_type) + "\", ";
@@ -106,13 +106,13 @@ void CounterMgr::model_load_publish(int msg_type, std::string model, int count)
   push(str_pub);
 };
 
-void CounterMgr::model_loaded(std::string model) {
+void CounterMgr::model_loaded(std::string& model) {
   std::string uid = instance->system->get_device_id();
   instance->model_metric->set_device_id(uid);
   model_load_publish(MODEL_LOAD, model);
 };
 
-void CounterMgr::model_run(std::string model) {
+void CounterMgr::model_run(std::string& model) {
   ModelExecCounter::update_model_run_count(get_hash_string(model).c_str());
 }
 

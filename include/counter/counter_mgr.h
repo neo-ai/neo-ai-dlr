@@ -24,21 +24,21 @@ class CounterMgr {
  public:
   static CounterMgr* get_instance();
   static void release_instance() { 
-    instance->msg_publisher->release_instance();
-    instance->msg_publisher = nullptr;
     instance->model_metric->release_instance();
     instance->model_metric = nullptr;
+    instance->msg_publisher->release_instance();
+    instance->msg_publisher = nullptr;
     delete instance;
     instance = nullptr;
   }
-  static void set_data_consent(int);
+  static void set_data_consent(int&);
   static bool is_feature_enabled();
   bool is_device_info_published();
   void runtime_loaded();
-  void model_loaded(std::string model);
-  void model_run(std::string model);
+  void model_loaded(std::string& model);
+  void model_run(std::string& model);
  protected:
-  void model_load_publish(int msg_type, string model, int count =0);
+  void model_load_publish(record msg_type, std::string& model);
   void push(string& data) { 
     if (msg_publisher) {
       msg_publisher->send(data);
