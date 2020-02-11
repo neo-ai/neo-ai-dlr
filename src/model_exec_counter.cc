@@ -1,8 +1,7 @@
 #include "counter/model_exec_counter.h"
 std::mutex g_dict;
 
-void ModelExecCounter::update_model_run_count(std::string model)
-{
+void ModelExecCounter::update_model_run_count(std::string model) {
   ModelExecCounter::handle_dict(APPEND, model);
 }
 
@@ -16,7 +15,7 @@ void ModelExecCounter::handle_dict(int operation, std::string model) {
     } else {
       model_dict[model] = 1;
     }
-  } else if (operation == GETINTDIC) {
+  } else if (operation == GETINTERIMDIC) {
     inter_dict = model_dict;
     model_dict.clear();
   }

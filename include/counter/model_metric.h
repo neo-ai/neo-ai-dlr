@@ -2,9 +2,6 @@
 #define MODEL_METRIC_H
 
 #include <thread>
-#include <queue>
-#include <fstream>
-#include <ostream>
 
 #include "rest_client.h"
 #include "config.h"
@@ -33,6 +30,8 @@ class ModelMetric {
     publisher = MsgPublisher::get_instance();
     stop_process = false;
   };
+  ModelMetric(const ModelMetric&) {}
+  ModelMetric& operator=(const ModelMetric& obj) { return *this;} 
   MsgPublisher *publisher; 
   std::thread *thrd;
   bool stop_process;

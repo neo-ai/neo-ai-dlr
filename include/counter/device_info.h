@@ -9,27 +9,18 @@ using namespace std;
  */
 class DeviceInfo {
  public:
-  std::string machine = "";
-  std::string arch = "";
-  std::string osname = "";
-  std::string name = "";
-  std::string dist = "";
-  std::string uuid = "";
+  std::string machine;
+  std::string arch;
+  std::string osname;
+  std::string name;
+  std::string dist;
+  std::string uuid;
 
   std::string get_info() const
   {
-    std::string str = " \"os distribution\":";
-    str += " \"" + dist + "\", ";
-    str += "\"uuid\": " ;
-    str += "\"" + uuid + "\", " ;
-    str += "\"machine\": ";
-    str += "\"" + machine + "\", ";
-    str += "\"arch\": ";
-    str += "\"" + arch + "\", ";
-    str += "\"os\": ";
-    str += "\"" + osname + "\", ";
-    str += "\"device\": ";
-    str += "\"" + name + "\"";
+    char buff[256];
+    snprintf(buff, sizeof(buff), " \"os distribution\": \"%s\", \"uuid\": \"%s\", \"machine\": \"%s\", \"arch\": \"%s\", \"os\": \"%s\", \"device\": \"%s\"", dist.c_str(), uuid.c_str(), machine.c_str(), arch.c_str(), osname.c_str(), name.c_str());
+    std::string str = buff;
     return str;
   }
 };

@@ -1,6 +1,5 @@
 #include "counter/system.h"
-Android::Android()
-{
+Android::Android() {
   #if defined(__ANDROID__)
   device = new DeviceInfo();
   char value[PROP_VALUE_MAX+1];

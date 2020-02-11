@@ -23,23 +23,25 @@ extern std::string ext_path;
 class CounterMgr {
  public:
   static CounterMgr* get_instance();
-  static void release_instance() { 
-    instance->model_metric->release_instance();
-    instance->model_metric = nullptr;
-    instance->msg_publisher->release_instance();
-    instance->msg_publisher = nullptr;
-    delete instance;
-    instance = nullptr;
+  static void release_instance() {
+    if (instance) {
+      instance->model_metric->release_instance();
+      instance->model_metric = nullptr;
+      instance->msg_publisher->release_instance();
+      instance->msg_publisher = nullptr;
+      delete instance;
+      instance = nullptr;
+    }
   }
-  static void set_data_consent(int&);
+  static void set_data_consent(int);
   static bool is_feature_enabled();
-  bool is_device_info_published();
+  bool is_device_info_published() const;
   void runtime_loaded();
-  void model_loaded(std::string& model);
-  void model_run(std::string& model);
+  void model_loaded(const std::string& model);
+  void model_ran(const std::string& model);
  protected:
-  void model_load_publish(record msg_type, std::string& model);
-  void push(string& data) { 
+  void model_load_publish(record msg_type, const std::string& model);
+  void push(string& data) const { 
     if (msg_publisher) {
       msg_publisher->send(data);
     }
@@ -50,6 +52,8 @@ class CounterMgr {
     delete system;
     system = nullptr;
   }
+  CounterMgr(const CounterMgr&) {};
+  CounterMgr& operator=(const CounterMgr& obj) {return *this;}; 
   // fields for matric data type
   static int feature_enable;
   System *system;
@@ -87,7 +91,7 @@ inline void CallHome(record type, std::string model= std::string())
       instance->model_loaded(model);
       break;
     case MODEL_RUN:
-      instance->model_run(model);
+      instance->model_ran(model);
       break;
     default:
       instance->release_instance();

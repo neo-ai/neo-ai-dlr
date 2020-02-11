@@ -1,11 +1,8 @@
 #include <mutex>
 #include "counter/publisher.h"
-//std::mutex g_pub_mutex;
 
-MsgPublisher* MsgPublisher::get_instance()
-{
-  if (!msgpublisher)
-  {
+MsgPublisher* MsgPublisher::get_instance() {
+  if (!msgpublisher) {
     msgpublisher = new MsgPublisher();
     if (msgpublisher) {
       msgpublisher->thrd = new std::thread(&MsgPublisher::process_queue, msgpublisher);
@@ -14,14 +11,14 @@ MsgPublisher* MsgPublisher::get_instance()
   return msgpublisher;
 };
 
-MsgPublisher::~MsgPublisher()
-{
+MsgPublisher::~MsgPublisher() {
   delete thrd;
+  thrd = nullptr;
   delete restcon;
+  restcon = nullptr;
 };
 
-void MsgPublisher::process_queue()
-{
+void MsgPublisher::process_queue() {
   while (!stop_process) {
     while(!msg_que.empty()) {
       std::string msg = msg_que.front();

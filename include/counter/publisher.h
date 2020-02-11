@@ -3,8 +3,6 @@
 
 #include <thread>
 #include <queue>
-#include <fstream>
-#include <ostream>
 #include <dmlc/logging.h>
 
 #include "rest_client.h"
@@ -22,17 +20,23 @@ class MsgPublisher {
     msgpublisher = nullptr;
   }
   ~MsgPublisher();
-  void send(std::string& str) {
+  void send(const std::string& str) {
     msg_que.push(str);
   }
   void process_queue();
  private:
   MsgPublisher() {
     restcon = new RestClient();
-    if (!restcon) {stop_process = true; LOG(FATAL) << "Message Publisher object null !";}
+    if (!restcon) { 
+      stop_process = true; 
+      LOG(FATAL) << "Message Publisher object null !";
+      throw std::runtime_error("Message Publisher object null !");
+    }
     stop_process = false;
     retrycnt = 0;
-  };
+  }
+  MsgPublisher(const MsgPublisher&){}
+  MsgPublisher& operator=(const MsgPublisher& obj) {return *this;}
   RestClient *restcon;
   std::thread *thrd;
   std::queue<std::string> msg_que;

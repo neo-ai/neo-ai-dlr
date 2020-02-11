@@ -8,7 +8,7 @@
 
 
 #include "dlr.h"
-
+// using namespace dlr;
 /* DLR C API implementation */
 extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumInputs(
     JNIEnv* env, jobject thiz, jlong jhandle) {

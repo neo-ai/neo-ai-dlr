@@ -2,7 +2,6 @@
 #define RESTCLIENT_H
 
 #include <iostream>
-#include <fstream>
 #include <dmlc/logging.h>
 
 #if defined(__ANDROID__)
@@ -20,11 +19,10 @@ class RestClient {
   ~RestClient() {
   };
 
-  int send(std::string& data) {
+  int send(const std::string& data) {
     #if defined(__ANDROID__)
     CURL *curl;
     CURLcode res;
-    std::string readBuffer;
     char errbuf[CURL_ERROR_SIZE];
     long resp_code;
     curl_global_init(CURL_GLOBAL_ALL);
@@ -36,13 +34,10 @@ class RestClient {
       curl_easy_setopt(curl, CURLOPT_URL, CALL_HOME_URL.c_str());
       curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
       curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
       char *s = curl_easy_escape(curl, data.c_str(), data.length());       
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
-
       errbuf[0] = 0;
       res = curl_easy_perform(curl);
-
       if(res != CURLE_OK) {
         LOG(INFO) << "Rest client perform return code :" << res; 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resp_code);

@@ -211,6 +211,7 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   delete model;
+  CallHome(CM_RELEASE);
   API_END();
 }
 
@@ -263,8 +264,7 @@ extern "C" int SetDLRDataCollectionConsent(int flag) {
 #if defined(__ANDROID__)
 std::string ext_path;
 std::string uuid_;
-void get_external_storage_path(JNIEnv* env, jobject instance)
-{
+void get_external_storage_path(JNIEnv* env, jobject instance) {
   jclass envcls = env->FindClass("android/os/Environment");
   if (envcls == 0) {
     return;
@@ -288,14 +288,12 @@ void get_external_storage_path(JNIEnv* env, jobject instance)
   ext_path.assign(env->GetStringUTFChars(path, 0));
 }
 
-void get_uuid()
-{
+void get_uuid() {
   FILE *fp;
   std::string result;
   fp = popen("/system/bin/ip link", "r");
   if (fp == NULL) {
     LOG(FATAL) << "System command failed to retrieve uuid "; 
-    exit(1);
   }
   size_t len;
   ssize_t read;

@@ -3,8 +3,7 @@
 #include "counter/counter_mgr.h"
 std::mutex g_ccm_mutex;
 
-CounterMgr::CounterMgr()
-{
+CounterMgr::CounterMgr() {
   try {
     // Msg Publisher
     msg_publisher = MsgPublisher::get_instance();
@@ -14,7 +13,7 @@ CounterMgr::CounterMgr()
     #endif
     if (!system) { 
       LOG(FATAL) << "Call Home feature not supported!"; 
-      throw "Non supported system by call home feature C-API";
+      throw std::runtime_error("Non supported system by call home feature C-API");
     } 
     model_metric = ModelMetric::get_instance();
     if (!model_metric) LOG(FATAL) << "Call Home model metric object null !";
@@ -24,8 +23,7 @@ CounterMgr::CounterMgr()
   }
 }
 
-CounterMgr* CounterMgr::get_instance()
-{
+CounterMgr* CounterMgr::get_instance() {
   g_ccm_mutex.lock();
   if (!instance) {
     if (is_feature_enabled()) {
@@ -45,20 +43,17 @@ CounterMgr* CounterMgr::get_instance()
   return instance;
 };
 
-void CounterMgr::set_data_consent(int& val)
-{
+void CounterMgr::set_data_consent(int val) {
   feature_enable = val;
 }
 
-bool CounterMgr::is_feature_enabled()
-{
+bool CounterMgr::is_feature_enabled() {
   if (feature_enable)
     return true;
   else return false;
 };
 
-bool CounterMgr::is_device_info_published()
-{
+bool CounterMgr::is_device_info_published() const {
   #if defined(__ANDROID__)
   std::string file_path(ext_path.c_str());
   file_path += "/";
@@ -83,36 +78,29 @@ bool CounterMgr::is_device_info_published()
   #endif
 }
 
-void CounterMgr::runtime_loaded()
-{
-  if (!is_device_info_published())
-  {
-    std::string pubdata = "{\"record_type\": ";
-    pubdata += "\"" + std::to_string(RUNTIME_LOAD) + "\", ";
-    pubdata += system->get_device_info();
-    pubdata += "}";
-    push(pubdata);
+void CounterMgr::runtime_loaded() {
+  if (!is_device_info_published()) {
+    char buff[256];
+    snprintf(buff, sizeof(buff), "{ \"record_type\": %s, %s }", std::to_string(RUNTIME_LOAD).c_str(), system->get_device_info().c_str()); 
+    std::string str_pub = buff;
+    push(str_pub);
   }
 };
 
-void CounterMgr::model_load_publish(record msg_type, std::string& model)
-{
-  std::string str_pub = "{\"record_type\":";
-  str_pub += "\"" +std::to_string(msg_type) + "\", ";
-  str_pub += "\"model\":\"";
-  str_pub += get_hash_string(model) + "\", ";
-  str_pub += "\"uuid\":";
-  str_pub += "\"" + system->get_device_id() + "\" }";
+void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
+  char buff[128];
+  snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\":\"%s\", \"uuid\": \"%s\" }", std::to_string(msg_type).c_str(), get_hash_string(model).c_str(), system->get_device_id().c_str()); 
+  std::string str_pub = buff;
   push(str_pub);
 };
 
-void CounterMgr::model_loaded(std::string& model) {
+void CounterMgr::model_loaded(const std::string& model) {
   std::string uid = instance->system->get_device_id();
   instance->model_metric->set_device_id(uid);
   model_load_publish(MODEL_LOAD, model);
 };
 
-void CounterMgr::model_run(std::string& model) {
+void CounterMgr::model_ran(const std::string& model) {
   ModelExecCounter::update_model_run_count(get_hash_string(model).c_str());
 }
 
