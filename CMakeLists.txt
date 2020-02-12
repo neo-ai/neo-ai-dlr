@@ -168,22 +168,98 @@ if(USE_CUDNN)
 endif()
 if(USE_TENSORRT)
     message("USING TENSORRT")
-    set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
-    message(STATUS "Custom TensorRT path: " ${TENSORRT_ROOT_DIR})
-    set(TENSORRT_INCLUDE_DIR ${TENSORRT_ROOT_DIR}/include)
-    set(TENSORRT_LIB_DIR ${TENSORRT_ROOT_DIR}/lib)
+    if(IS_DIRECTORY ${USE_TENSORRT})
+        set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
+        message(STATUS "Custom TensorRT path: " ${TENSORRT_ROOT_DIR})
+    endif()
+    find_path(TENSORRT_INCLUDE_DIR NvInfer.h HINTS ${TENSORRT_ROOT_DIR} PATH_SUFFIXES include)
+    find_library(TENSORRT_LIB_DIR nvinfer HINTS ${TENSORRT_ROOT_DIR} PATH_SUFFIXES lib)
+    find_package_handle_standard_args(TENSORRT DEFAULT_MSG TENSORRT_INCLUDE_DIR TENSORRT_LIB_DIR)
+    if(NOT TENSORRT_FOUND)
+        message(ERROR "Could not find TensorRT.")
+    endif()
+    message(STATUS "TENSORRT_LIB_DIR: " ${TENSORRT_LIB_DIR})
     include_directories(${TENSORRT_INCLUDE_DIR})
+    list(APPEND DLR_LINKER_LIBS ${TENSORRT_LIB_DIR})
+
+    # NNVM TRT Integration
     file(GLOB TENSORRT_SRCS ${TVM_SRC}/src/contrib/subgraph/*.cc)
     list(APPEND DLR_SRC ${TENSORRT_SRCS})
-    find_library(TENSORRT_NVINFER_LIBRARY nvinfer
-      PATH ${TENSORRT_LIB_DIR}
-      PATH_SUFFIXES lib lib64)
-    if (TENSORRT_NVINFER_LIBRARY MATCHES "NOTFOUND")
-      set(TENSORRT_NVINFER_LIBRARY ${USE_TENSORRT}/lib/libnvinfer.so)
-    endif()
-    message(STATUS "TENSORRT_NVINFER_LIBRARY: " ${TENSORRT_NVINFER_LIBRARY})
-    list(APPEND DLR_LINKER_LIBS ${TENSORRT_NVINFER_LIBRARY})
     add_definitions(-DTVM_GRAPH_RUNTIME_TENSORRT)
+
+    # TRT Relay sources
+    file(GLOB TENSORRT_RELAY_SRCS ${TVM_SRC}/src/runtime/contrib/tensorrt/*.cc)
+    list(APPEND DLR_SRC ${TENSORRT_RELAY_SRCS})
+    # Additional TVM compiler sources
+    include_directories("${TVM_SRC}/3rdparty/rang/include")
+    include_directories("${TVM_SRC}/3rdparty/compiler-rt")
+    include_directories("${TVM_SRC}/topi/include")
+    list(APPEND DLR_SRC
+         # Ops
+         ${TVM_SRC}/src/relay/op/nn/nn.cc
+         ${TVM_SRC}/src/relay/op/nn/pooling.cc
+         ${TVM_SRC}/src/relay/op/nn/convolution.cc
+         ${TVM_SRC}/src/relay/op/nn/pad.cc
+         ${TVM_SRC}/src/relay/op/tensor/binary.cc
+         ${TVM_SRC}/src/relay/op/tensor/unary.cc
+         ${TVM_SRC}/src/relay/op/tensor/transform.cc
+         ${TVM_SRC}/src/relay/op/tensor/reduce.cc
+         ${TVM_SRC}/src/relay/op/image/resize.cc
+
+         ${TVM_SRC}/src/relay/ir/expr_functor.cc
+         ${TVM_SRC}/src/relay/ir/pattern_functor.cc
+         ${TVM_SRC}/src/relay/pass/util.cc
+         ${TVM_SRC}/src/relay/ir/type_functor.cc
+         ${TVM_SRC}/src/relay/ir/type.cc
+         ${TVM_SRC}/src/lang/ir.cc
+         ${TVM_SRC}/src/lang/expr.cc
+         ${TVM_SRC}/src/relay/ir/expr.cc
+         ${TVM_SRC}/src/relay/ir/adt.cc
+         ${TVM_SRC}/src/relay/ir/module.cc
+         ${TVM_SRC}/src/relay/pass/pass_manager.cc
+         ${TVM_SRC}/src/lang/attrs.cc
+         ${TVM_SRC}/src/lang/tensor.cc
+         ${TVM_SRC}/src/relay/pass/eta_expand.cc
+         ${TVM_SRC}/src/relay/pass/kind_check.cc
+         ${TVM_SRC}/src/lang/expr_operator.cc
+         ${TVM_SRC}/src/arithmetic/int_set.cc
+         ${TVM_SRC}/src/arithmetic/analyzer.cc
+         ${TVM_SRC}/src/arithmetic/modular_set.cc
+         ${TVM_SRC}/src/arithmetic/const_int_bound.cc
+         ${TVM_SRC}/src/arithmetic/canonical_simplify.cc
+         ${TVM_SRC}/src/arithmetic/rewrite_simplify.cc
+         ${TVM_SRC}/src/arithmetic/ir_mutator_with_analyzer.cc
+         ${TVM_SRC}/src/pass/ir_mutator.cc
+         ${TVM_SRC}/src/pass/ir_deep_compare.cc
+         ${TVM_SRC}/src/pass/simple_passes.cc
+         ${TVM_SRC}/src/pass/ir_visitor.cc
+         ${TVM_SRC}/src/relay/ir/pretty_printer.cc
+         ${TVM_SRC}/src/relay/ir/doc.cc
+         ${TVM_SRC}/src/relay/pass/dependency_graph.cc
+         ${TVM_SRC}/src/node/reflection.cc
+         ${TVM_SRC}/src/arithmetic/stmt_simplify.cc
+         ${TVM_SRC}/src/relay/pass/type_infer.cc
+         ${TVM_SRC}/src/relay/pass/type_solver.cc
+         ${TVM_SRC}/src/lang/api_registry.cc
+         ${TVM_SRC}/src/relay/pass/match_exhaustion.cc
+         ${TVM_SRC}/src/node/serialization.cc
+         ${TVM_SRC}/src/relay/ir/alpha_equal.cc
+         ${TVM_SRC}/src/relay/ir/error.cc
+         ${TVM_SRC}/src/relay/pass/de_duplicate.cc
+         ${TVM_SRC}/src/relay/pass/well_formed.cc
+         ${TVM_SRC}/src/relay/ir/op.cc
+         ${TVM_SRC}/src/relay/op/type_relations.cc
+         ${TVM_SRC}/src/op/compute_op.cc
+         ${TVM_SRC}/src/schedule/message_passing.cc
+         ${TVM_SRC}/src/op/op_util.cc
+         ${TVM_SRC}/src/pass/ir_util.cc
+         ${TVM_SRC}/src/op/cross_thread_reduction.cc
+         ${TVM_SRC}/src/lang/data_layout.cc
+         ${TVM_SRC}/src/op/tensorize.cc
+         ${TVM_SRC}/src/pass/arg_binder.cc
+         ${TVM_SRC}/src/relay/ir/base.cc
+         ${TVM_SRC}/src/relay/backend/contrib/tensorrt/common_utils.cc
+         )
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW_LITE_LIB)
@@ -240,6 +316,12 @@ if(WITH_TENSORFLOW_LITE_LIB)
     else() # Regulal Linux Build
         list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
     endif()
+endif()
+if(WITH_TENSORFLOW_LIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW")
+    include_directories("${WITH_TENSORFLOW_LIB}/include")
+    list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
+    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow_framework -ltensorflow)
 endif()
 if(AAR_BUILD)
     list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
@@ -312,6 +394,10 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
     file(GLOB TFLITE_TEST_SRCS tests/cpp/dlr_tflite/*.cc)
     list(APPEND TEST_SRCS ${TFLITE_TEST_SRCS})
   endif()
+  if(WITH_TENSORFLOW_LIB)
+    file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
+    list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
+  endif()
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
@@ -338,6 +424,22 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
         e35e82f3371bed37caa7ecece417f50876414077
       )
   endif() # WITH_TENSORFLOW_LITE_LIB
+  if(WITH_TENSORFLOW_LIB)
+      # Download Test Tensorflow model and input data
+      file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
+        ./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb
+        SHA1
+        4df8525bcf2ec96296098ba7fec0fff1abe32fce
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/cat224-3.txt
+        ./cat224-3.txt
+        SHA1
+        e35e82f3371bed37caa7ecece417f50876414077
+      )
+  endif() # WITH_TENSORFLOW_LIB
 endif()
 
 # Group sources
