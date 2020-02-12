@@ -129,7 +129,9 @@ def CloudInstallAndTest(cloudTarget) {
     sh """
     ls -lh python/dist/*.whl
     pip3 install python/dist/*.whl
+    pip3 install setuptools
     """
+    // setuptools must be installed before absl-py-0.9.0 (tensorflow dependency)
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       sh """
       sudo pip3 install --upgrade --force-reinstall tensorflow_gpu
