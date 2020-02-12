@@ -129,7 +129,7 @@ def CloudInstallAndTest(cloudTarget) {
     sh """
     ls -lh python/dist/*.whl
     pip3 install python/dist/*.whl
-    pip3 install setuptools
+    pip3 install wrapt --upgrade --ignore-installed
     """
     // setuptools must be installed before absl-py-0.9.0 (tensorflow dependency)
     if (cloudTarget == "p2" || cloudTarget == "p3") {
