@@ -8,6 +8,8 @@ import dlr
 from scipy.sparse import csr_matrix
 import csv
 
+SAGEMAKER_ERROR_LOG_FILE = "/opt/ml/errors/errors.log"
+
 def _sparse_to_dense(csr_matrix):
     out = np.full(shape=csr_matrix.shape, fill_value=np.nan, dtype=np.float32)
     rowind = np.repeat(np.arange(csr_matrix.shape[0]), np.diff(csr_matrix.indptr))
@@ -26,7 +28,7 @@ class NeoXGBoostPredictor():
         self._batch_size = context.system_properties.get('batch_size')
         model_dir = context.system_properties.get('model_dir')
         print('Loading the model from directory {}'.format(model_dir))
-        self.model = dlr.DLRModel(model_dir)
+        self.model = dlr.DLRModel(model_dir, error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         self.initialized = True
 
     def preprocess(self, batch_data):

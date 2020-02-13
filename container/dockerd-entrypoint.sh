@@ -6,6 +6,7 @@ source /home/model-server/mms_config.sh
 
 if [[ "$1" = "serve" ]]; then
     shift 1
+    mkdir -p /opt/ml/errors
     touch /opt/ml/errors/errors.log
     chown model-server /opt/ml/errors/errors.log
     su - model-server

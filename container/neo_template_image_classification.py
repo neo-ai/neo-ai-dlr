@@ -9,6 +9,7 @@ import PIL.Image
 import json
 import glob
 
+SAGEMAKER_ERROR_LOG_FILE = "/opt/ml/errors/errors.log"
 SHAPES_FILE = 'model-shapes.json'
 SUPPORTED_CONTENT_TYPE = ['image/jpeg', 'image/png', 'application/x-image']
 
@@ -59,9 +60,9 @@ class NeoImageClassificationPredictor():
         print('Loading the model from directory {}'.format(model_dir))
         USE_GPU = os.getenv('USE_GPU', None)
         if USE_GPU == '1':
-            self.model = dlr.DLRModel(model_dir, dev_type='gpu')
+            self.model = dlr.DLRModel(model_dir, dev_type='gpu', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         else:
-            self.model = dlr.DLRModel(model_dir)
+            self.model = dlr.DLRModel(model_dir, error_log_file=SAGEMAKER_ERROR_LOG_FILE)
 
         # Load shape info
         self.shape_info = None
