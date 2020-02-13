@@ -5,7 +5,6 @@
 #include <ostream>
 #include <iostream>
 #include <dmlc/logging.h>
-#include <android/log.h>
 
 #include "device_info.h"
 #include "system.h"
@@ -25,7 +24,6 @@ class CounterMgr {
  public:
   static CounterMgr* get_instance();
   static void release_instance() {
-    __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "# release instance #");
     if (instance) {
       instance->model_metric->release_instance();
       instance->model_metric = nullptr;
@@ -45,7 +43,6 @@ class CounterMgr {
   void model_load_publish(record msg_type, const std::string& model);
   void push(string& data) const { 
     if (msg_publisher) {
-      __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "ccm push =%s", data.c_str());
       msg_publisher->send(data);
     }
   };
@@ -58,7 +55,7 @@ class CounterMgr {
   CounterMgr(const CounterMgr&) {};
   CounterMgr& operator=(const CounterMgr& obj) {return *this;}; 
   // fields for matric data type
-  static int feature_enable;
+  static bool feature_enable;
   System *system;
   static CounterMgr* instance;
   MsgPublisher* msg_publisher;

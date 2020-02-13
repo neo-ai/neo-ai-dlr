@@ -1,15 +1,13 @@
 #include "counter/model_exec_counter.h"
 std::mutex g_dict;
-#include <android/log.h>
 
 void ModelExecCounter::update_model_run_count(std::string model) {
   ModelExecCounter::handle_dict(APPEND, model);
 }
 
-void ModelExecCounter::handle_dict(int operation, std::string model) {
+void ModelExecCounter::handle_dict(operation opr, std::string model) {
   g_dict.lock();
-  //__android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "# message in model exe metric =#" );
-  if (operation == APPEND) {
+  if (opr == APPEND) {
     std::map<std::string, int>::iterator res =  model_dict.find(model);
     if (res != model_dict.end()) {
       int count = res->second + 1;
@@ -17,7 +15,7 @@ void ModelExecCounter::handle_dict(int operation, std::string model) {
     } else {
       model_dict[model] = 1;
     }
-  } else if (operation == GETINTERIMDIC) {
+  } else if (opr == GETINTERIMDIC) {
     inter_dict = model_dict;
     model_dict.clear();
   }
