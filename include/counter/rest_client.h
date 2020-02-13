@@ -15,10 +15,14 @@
 class RestClient {
  public:
   RestClient() {
+    #if defined(__ANDROID__)
     curl_global_init(CURL_GLOBAL_ALL);
+    #endif
   };
   ~RestClient() {
+    #if defined(__ANDROID__)
     curl_global_cleanup();
+    #endif
   };
 
   int send(const std::string data) {
