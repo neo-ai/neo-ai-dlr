@@ -1,5 +1,5 @@
 #include <mutex>
-
+#include <android/log.h>
 #include "counter/counter_mgr.h"
 std::mutex g_ccm_mutex;
 
@@ -83,6 +83,7 @@ void CounterMgr::runtime_loaded() {
     char buff[256];
     snprintf(buff, sizeof(buff), "{ \"record_type\": %s, %s }", std::to_string(RUNTIME_LOAD).c_str(), system->get_device_info().c_str()); 
     std::string str_pub = buff;
+    __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "runtime loaded=%s", str_pub.c_str());
     push(str_pub);
   }
 };
@@ -91,6 +92,7 @@ void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
   char buff[128];
   snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\":\"%s\", \"uuid\": \"%s\" }", std::to_string(msg_type).c_str(), get_hash_string(model).c_str(), system->get_device_id().c_str()); 
   std::string str_pub = buff;
+    __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "runtime loaded=%s", str_pub.c_str());
   push(str_pub);
 };
 

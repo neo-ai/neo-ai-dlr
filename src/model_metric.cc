@@ -24,7 +24,7 @@ void ModelMetric::process_queue() {
     std::map<std::string, int> dict = ModelExecCounter::get_dict();
     for(auto pair_dict :  dict) {
       char buff[128];
-      snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": \"%s\" }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), device_id.c_str(), std::to_string(pair_dict.second).c_str());
+      snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), device_id.c_str(), std::to_string(pair_dict.second).c_str());
       std::string pub_data = buff;
       publisher->send(pub_data);
     }

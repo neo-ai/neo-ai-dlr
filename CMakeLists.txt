@@ -354,7 +354,7 @@ endif()
 if(ANDROID_BUILD)
   target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 else(ANDROID_BUILD)
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)

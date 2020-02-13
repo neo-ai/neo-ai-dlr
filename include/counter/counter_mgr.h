@@ -5,6 +5,7 @@
 #include <ostream>
 #include <iostream>
 #include <dmlc/logging.h>
+#include <android/log.h>
 
 #include "device_info.h"
 #include "system.h"
@@ -24,6 +25,7 @@ class CounterMgr {
  public:
   static CounterMgr* get_instance();
   static void release_instance() {
+    __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "# release instance #");
     if (instance) {
       instance->model_metric->release_instance();
       instance->model_metric = nullptr;
@@ -43,6 +45,7 @@ class CounterMgr {
   void model_load_publish(record msg_type, const std::string& model);
   void push(string& data) const { 
     if (msg_publisher) {
+      __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "ccm push =%s", data.c_str());
       msg_publisher->send(data);
     }
   };
@@ -95,6 +98,7 @@ inline void CallHome(record type, std::string model= std::string())
       break;
     default:
       instance->release_instance();
+      instance = nullptr;
       break;
   }
 }

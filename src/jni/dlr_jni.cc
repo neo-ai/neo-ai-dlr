@@ -1,10 +1,6 @@
 #include <jni.h>
 
 #include <cstdint>
-#include <stdio.h>
-#include <stdlib.h>
-#include <array>
-#include <algorithm>
 
 
 #include "dlr.h"

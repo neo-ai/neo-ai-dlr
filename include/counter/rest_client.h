@@ -6,6 +6,7 @@
 
 #if defined(__ANDROID__)
 #include <curl/curl.h>
+#include <android/log.h>
 #endif
 
 #include "config.h"
@@ -15,17 +16,17 @@
 class RestClient {
  public:
   RestClient() {
+    curl_global_init(CURL_GLOBAL_ALL);
   };
   ~RestClient() {
+    curl_global_cleanup();
   };
 
-  int send(const std::string& data) {
+  int send(const std::string data) {
     #if defined(__ANDROID__)
     CURL *curl;
     CURLcode res;
-    char errbuf[CURL_ERROR_SIZE];
     long resp_code;
-    curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
     if(curl) {
       struct curl_slist *headers=NULL;
@@ -36,7 +37,6 @@ class RestClient {
       curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
       char *s = curl_easy_escape(curl, data.c_str(), data.length());       
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
-      errbuf[0] = 0;
       res = curl_easy_perform(curl);
       if(res != CURLE_OK) {
         LOG(INFO) << "Rest client perform return code :" << res; 
@@ -50,7 +50,6 @@ class RestClient {
       curl_easy_cleanup(curl);
       curl_slist_free_all(headers);
     }
-    curl_global_cleanup();
     return resp_code;
     #endif
     return 0;

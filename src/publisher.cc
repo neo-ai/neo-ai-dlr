@@ -19,16 +19,20 @@ MsgPublisher::~MsgPublisher() {
 };
 
 void MsgPublisher::process_queue() {
+  __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", " ## Publisher Thread started ##");
   while (!stop_process) {
-    while(!msg_que.empty()) {
+    if (!msg_que.empty()) {
+      __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", " queue is not empty ...");
       std::string msg = msg_que.front();
       if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
+        // __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", " # before sending message = %s", msg.c_str());
         int status = restcon->send(msg);
         if (status != 200) retrycnt++;
       }
       msg_que.pop();
     }
   }
+    __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", " ## publisher thread exiting ! ##");
 }
 
 MsgPublisher* MsgPublisher::msgpublisher = nullptr;
