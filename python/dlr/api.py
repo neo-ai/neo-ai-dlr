@@ -4,15 +4,7 @@ from __future__ import absolute_import as _abs
 import abc
 import glob
 import os
-import logging
 from .neologger import create_logger
-
-neo_logger = None
-try:
-    neo_logger = create_logger()
-except Exception as ex:
-    print(str(ex))
-
 
 # Interface
 class IDLRModel:
@@ -58,7 +50,8 @@ def _is_module_found(name):
 
 # Wrapper class
 class DLRModel(IDLRModel):
-    def __init__(self, model_path, dev_type=None, dev_id=None):
+    def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None):
+        self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
             tf_model_path = _find_model_file(model_path, '.pb')
@@ -74,9 +67,9 @@ class DLRModel(IDLRModel):
             # TFLite Python
             if tflite_model_path is not None and _is_module_found("tensorflow.lite"):
                 if dev_type is not None:
-                    logging.warning("dev_type parameter is not supported")
+                    self.neo_logger.warning("dev_type parameter is not supported")
                 if dev_id is not None:
-                    logging.warning("dev_id parameter is not supported")
+                    self.neo_logger.warning("dev_id parameter is not supported")
                 from .tflite_model import TFLiteModelImpl
                 self._impl = TFLiteModelImpl(tflite_model_path)
                 return
@@ -88,46 +81,40 @@ class DLRModel(IDLRModel):
                 dev_id = 0
             self._impl = DLRModelImpl(model_path, dev_type, dev_id)
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in DLRModel instantiation {}".format(ex))
+            self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
 
     def run(self, input_values):
         try:
             return self._impl.run(input_values)
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in running inference {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in running inference {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
     def get_input_names(self):
         try:
             return self._impl.get_input_names()
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in getting input names {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in getting input names {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
     def get_input(self, name, shape=None):
         try:
             return self._impl.get_input(name, shape)
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in getting inputs {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in getting inputs {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
     def get_output_names(self):
         try:
             return self._impl.get_output_names()
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in getting output names {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in getting output names {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
     def get_version(self):
         try:
             return self._impl.get_version()
         except Exception as ex:
-            if neo_logger is not None:
-                neo_logger.exception("error in getting version {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in getting version {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
