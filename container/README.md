@@ -14,7 +14,7 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f container/Dockerfile.cpu 
   # Run the following command at the root directory of the neo-ai-dlr repository
   docker build --build-arg APP=image_classification -t ic-cpu -f container/Dockerfile.cpu .
   ```
-  - Build for GPU target: First download `TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
+  - Build for GPU target: First download `TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
   ```
   # Run the following command at the root directory of the neo-ai-dlr repository
   docker build --build-arg APP=image_classification -t ic-gpu -f container/Dockerfile.gpu .
@@ -25,7 +25,7 @@ docker build --build-arg APP=xgboost -t xgboost-cpu -f container/Dockerfile.cpu 
   # Run the following command at the root directory of the neo-ai-dlr repository
   docker build --build-arg APP=mxnet_byom -t mxnet-byom-cpu -f container/Dockerfile.cpu .
   ```
-  - Build for GPU target: First download `TensorRT-5.0.2.6.Ubuntu-18.04.1.x86_64-gnu.cuda-10.0.cudnn7.3.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
+  - Build for GPU target: First download `TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
   ```
   # Run the following command at the root directory of the neo-ai-dlr repository
   docker build --build-arg APP=mxnet_byom -t mxnet-byom-gpu -f container/Dockerfile.gpu .
