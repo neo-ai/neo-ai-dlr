@@ -55,7 +55,7 @@ class CallCounterMgr(object):
                         CallCounterMgr._instance = CallCounterMgr()
                     except Exception as e:
                         CallCounterMgr._instance = None
-                        logging.exception("unsupported system for call home feature")
+                        logging.exception("unsupported system for call home feature", exc_info=False)
                     else:
                         atexit.register(CallCounterMgr._instance.stop)
                 else:
@@ -69,7 +69,11 @@ class CallCounterMgr(object):
             os_supt = "{0}_{1}".format(os_name, machine_typ)
             self.system = Factory.get_system(os_supt)
             if self.system is None:
-                raise Exception("unsupported system")
+                #support all kind of linux distributions
+                if os_name.lower() == 'linux':
+                    self.system = Factory.get_system("Linux_ARM")
+                if self.system is None:   
+                    raise Exception("unsupported system")
             self.msg_publisher = MsgPublisher.get_instance()
             if self.msg_publisher is None:
                 raise Exception("ccm publisher not initialize")
@@ -77,7 +81,7 @@ class CallCounterMgr(object):
             if self.model_metric is None:
                 raise Exception("ccm model metric publisher not initialize")
         except Exception as e:
-            logging.exception("while in counter mgr init", exc_info=True)
+            logging.exception("while in counter mgr init", exc_info=False)
             raise e
 
     @staticmethod
@@ -95,7 +99,7 @@ class CallCounterMgr(object):
             else:
                 feature_enb = True
         except Exception as e:
-            logging.exception("while in reading ccm config file")
+            logging.exception("while in reading ccm config file", exc_info=False)
         return feature_enb
 
     def is_device_info_published(self):
@@ -113,9 +117,9 @@ class CallCounterMgr(object):
                 with open(ccm_rec_data_path, "wb") as fp:
                     fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
         except IOError as e:
-            logging.exception("while reading ccm publish data record file")
+            logging.exception("while reading ccm publish data record file", exc_info=False)
         except Exception as e:
-            logging.exception("while reading ccm publish data record file")
+            logging.exception("while reading ccm publish data record file", exc_info=False)
         return flag
 
     def runtime_loaded(self):
@@ -127,7 +131,7 @@ class CallCounterMgr(object):
                     pub_data.update(self.system.get_device_info())
                     self.push(pub_data)
         except Exception as e:
-            logging.exception("while dlr runtime load", exc_info=True)
+            logging.exception("while dlr runtime load", exc_info=False)
 
     def model_loaded(self, model):
         self.model_info_publish(CallCounterMgr.MODEL_LOAD, model)
@@ -149,7 +153,7 @@ class CallCounterMgr(object):
                 pub_data['run_count'] = count
             self.push(pub_data)
         except Exception as e:
-            logging.exception("unable to complete model count", exc_info=True)
+            logging.exception("unable to complete model count", exc_info=False)
 
     def push(self, data):
         """publish information to Server"""

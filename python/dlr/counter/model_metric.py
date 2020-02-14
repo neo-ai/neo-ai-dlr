@@ -31,7 +31,7 @@ class ModelMetric(object):
             self.executor.submit(self.push_model_metric, self.condition)
             logging.info("model metric thread pool execution started")
         except Exception as e:
-            logging.exception("model metric thread pool not started", exc_info=True)
+            logging.exception("model metric thread pool not started", exc_info=False)
 
     def push_model_metric(self, condv):
         """publishing model run metric"""
@@ -49,7 +49,7 @@ class ModelMetric(object):
             pub_data = {'record_type': model_event_type, 'model': model, 'uuid': self.uuid, 'run_count': count}
             self.push(pub_data)
         except Exception as e:
-            logging.exception("unable to complete model count", exc_info=True)
+            logging.exception("unable to complete model count", exc_info=False)
 
     def push(self, data):
         """publish information to Server"""

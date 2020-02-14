@@ -44,7 +44,8 @@ class Linux_ARM(ARM):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logging.exception("linux_arm api exception occurred", exc_info=True)
+            logging.exception("linux_arm api exception occurred", exc_info=False)
+            raise e
 
     def get_device_info(self):
         """Return a list of fields of device information"""
@@ -80,7 +81,8 @@ class Linux_x86(X86):
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
         except Exception as e:
-            logging.exception("linux_x86 api exception occurred", exc_info=True)
+            logging.exception("linux_x86 api exception occurred", exc_info=False)
+            raise e
 
     def get_device_info(self):
         """Return a list of fields of device information"""
