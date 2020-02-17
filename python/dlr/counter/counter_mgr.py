@@ -69,11 +69,7 @@ class CallCounterMgr(object):
             os_supt = "{0}_{1}".format(os_name, machine_typ)
             self.system = Factory.get_system(os_supt)
             if self.system is None:
-                #support all kind of linux distributions
-                if os_name.lower() == 'linux':
-                    self.system = Factory.get_system("Linux_ARM")
-                if self.system is None:   
-                    raise Exception("unsupported system")
+                raise Exception("unsupported system")
             self.msg_publisher = MsgPublisher.get_instance()
             if self.msg_publisher is None:
                 raise Exception("ccm publisher not initialize")
