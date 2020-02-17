@@ -208,7 +208,7 @@ To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https:
 Building for Android Archive (AAR) file
 ---------------------------------------
 
-Install `Android Studio <https://developer.android.com/studio`_.
+Install `Android Studio <https://developer.android.com/studio>`_.
 
 .. code-block:: bash
 
