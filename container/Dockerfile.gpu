@@ -54,7 +54,7 @@ FROM base AS runner_base
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# python3-dev and gcc are required by mxnet-model-server
+# python3-dev and gcc are required by multi-model-server
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     openjdk-8-jdk-headless \
@@ -64,7 +64,7 @@ RUN apt-get update && \
 
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
-RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.0.5b20190521 \
+RUN pip3 install --pre --no-cache-dir mxnet-model-server==1.1.0 \
     && pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet-cu100 tensorflow_gpu \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
