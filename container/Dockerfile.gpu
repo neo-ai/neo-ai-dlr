@@ -10,6 +10,7 @@ RUN mkdir -p /packages
 COPY container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz /packages/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
 RUN cd /packages \
     && tar xzvf TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
+ENV LD_LIBRARY_PATH=/packages/TensorRT-7.0.0.11/lib:$LD_LIBRARY_PATH
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
