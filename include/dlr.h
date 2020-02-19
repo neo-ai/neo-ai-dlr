@@ -65,8 +65,26 @@ int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
 #endif  // DLR_TFLITE
 
 #ifdef DLR_TENSORFLOW
+
 /*!
- \brief Input Tensor Description structure for CreateDLRModelFromTensorflow.
+ \brief Tensorflow GPU Options structure for Tensorflow Config structure.
+ */
+typedef struct DLR_TFGPUOptions {
+  int allow_growth;
+  double per_process_gpu_memory_fraction;
+} DLR_TFGPUOptions;
+
+/*!
+ \brief Tensorflow Config structure for CreateDLRModelFromTensorflow.
+ */
+typedef struct DLR_TFConfig {
+  int intra_op_parallelism_threads;
+  int inter_op_parallelism_threads;
+  DLR_TFGPUOptions gpu_options;
+} DLR_TFConfig;
+
+/*!
+ \brief Tensor Description structure for CreateDLRModelFromTensorflow.
  */
 typedef struct DLR_TFTensorDesc {
   const char* name;
@@ -88,7 +106,7 @@ typedef struct DLR_TFTensorDesc {
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
                                  const DLR_TFTensorDesc* inputs, int input_size,
                                  const char* outputs[], int output_size,
-                                 const int threads);
+                                 const DLR_TFConfig tf_config);
 #endif  // DLR_TENSORFLOW
 
 /*!

@@ -43,7 +43,7 @@ TF_Buffer* dlr::ReadTFFile(const char* file) {
 
   void* data = malloc(fsize);
   if (fread(data, fsize, 1, f) != 1) {
-    printf("File read error....\n");
+    LOG(FATAL) << "ERROR: Unable to read file " << file;
   }
   fclose(f);
 
@@ -52,6 +52,55 @@ TF_Buffer* dlr::ReadTFFile(const char* file) {
   buf->length = fsize;
   buf->data_deallocator = FreeBuffer;
   return buf;
+}
+
+void dlr::PrepareTFConfigProto(const DLR_TFConfig& tf_config,
+                               std::vector<std::uint8_t>& config) {
+  if (tf_config.intra_op_parallelism_threads > 0 &&
+      tf_config.intra_op_parallelism_threads < 256) {
+    // More info https://github.com/tensorflow/tensorflow/issues/13853
+    config.insert(config.end(),
+                  {0x10, (std::uint8_t)tf_config.intra_op_parallelism_threads});
+    LOG(INFO) << "Set intra_op_parallelism_threads to "
+              << tf_config.intra_op_parallelism_threads;
+  }
+  if (tf_config.inter_op_parallelism_threads > 0 &&
+      tf_config.inter_op_parallelism_threads < 256) {
+    // More info https://github.com/tensorflow/tensorflow/issues/13853
+    config.insert(config.end(),
+                  {0x28, (std::uint8_t)tf_config.inter_op_parallelism_threads});
+    LOG(INFO) << "Set inter_op_parallelism_threads to "
+              << tf_config.inter_op_parallelism_threads;
+  }
+
+  // Tensorflow GPUOptions
+  std::vector<std::uint8_t> gpu_options = {0x32, 0x0};
+
+  double gpu_memory_fraction =
+      tf_config.gpu_options.per_process_gpu_memory_fraction;
+  if (gpu_memory_fraction > 0.001 && gpu_memory_fraction < 1.0) {
+    std::uint8_t proto[9] = {0x9,  0xFF, 0xFF, 0xFF, 0xFF,
+                             0xFF, 0xFF, 0xFF, 0xFF};
+    auto bytes = reinterpret_cast<std::uint8_t*>(&gpu_memory_fraction);
+    // Put it to the config byte-array, from 1 to 9:
+    for (std::size_t i = 0; i < sizeof(gpu_memory_fraction); i++) {
+      proto[i + 1] = bytes[i];
+    }
+    gpu_options.insert(gpu_options.end(), proto, proto + 9);
+    LOG(INFO) << "Set gpu_options.per_process_gpu_memory_fraction to "
+              << gpu_memory_fraction;
+  }
+
+  if (tf_config.gpu_options.allow_growth != 0) {
+    gpu_options.insert(gpu_options.end(), {0x20, 0x1});
+    LOG(INFO) << "Set gpu_options.allow_growth to True";
+  }
+  // update gpu_options data length (stored in byte #2)
+  gpu_options[1] = gpu_options.size() - 2;
+
+  if (gpu_options[1] > 0) {
+    config.insert(config.end(), gpu_options.begin(), gpu_options.end());
+  }
 }
 
 void TensorflowModel::LoadFrozenModel(const char* pb_file) {
@@ -243,7 +292,7 @@ TensorflowModel::TensorflowModel(
     const std::string& model_path, const DLContext& ctx,
     const std::vector<std::string>& inputs,
     const std::vector<std::vector<int64_t>>& input_shapes,
-    const std::vector<std::string>& outputs, const int threads)
+    const std::vector<std::string>& outputs, const DLR_TFConfig& tf_config)
     : DLRModel(ctx, DLRBackend::kTENSORFLOW) {
   const std::string pb_file = GetTensorflowFile(model_path);
 
@@ -276,18 +325,15 @@ TensorflowModel::TensorflowModel(
   LOG(INFO) << "Tensorflow Model was created";
 
   TF_SessionOptions* opts = TF_NewSessionOptions();
-  if (threads > 0 && threads < 256) {
-    // More info https://github.com/tensorflow/tensorflow/issues/13853
-    std::array<std::uint8_t, 4> config = {
-        {0x10, (std::uint8_t)threads, 0x28, (std::uint8_t)threads}};
+  std::vector<std::uint8_t> config;
+  PrepareTFConfigProto(tf_config, config);
+  if (!config.empty()) {
     TF_SetConfig(opts, config.data(), config.size(), status_);
-
     if (TF_GetCode(status_) != TF_OK) {
       TF_DeleteSessionOptions(opts);
       LOG(FATAL) << "ERROR: TF_SetConfig failed " << TF_Message(status_);
       return;  // unreachable
     }
-    LOG(INFO) << "Set number of threads to " << threads;
   }
 
   sess_ = TF_NewSession(graph_, opts, status_);
@@ -387,6 +433,12 @@ void TensorflowModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 }
 
 void TensorflowModel::Run() {
+  // Delete previous output Tensors to prevent GPU memory leak
+  for (TF_Tensor* tensor : output_tensors_) {
+    if (tensor != nullptr) {
+      TF_DeleteTensor(tensor);
+    }
+  }
   TF_SessionRun(sess_,
                 NULL,  // Run options.
                 inputs_.data(), input_tensors_.data(), num_inputs_,
