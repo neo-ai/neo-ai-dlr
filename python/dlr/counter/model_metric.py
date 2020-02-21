@@ -26,7 +26,7 @@ class ModelMetric(object):
             self.uuid = uuid
             self.publisher = MsgPublisher.get_instance()
             # start loop
-            self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.CALL_HOME_MAX_WORKERS_THREADS)
+            self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
             self.condition = threading.Condition()
             self.executor.submit(self.push_model_metric, self.condition)
             logging.info("model metric thread pool execution started")

@@ -15,7 +15,7 @@ from .utils.helper import *
 
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
-        call_counter = CallCounterMgr.get_instance()
+        global call_counter
         if call_counter is not None:
             if func.__name__ == "init_call_home":
                 print(config.CALL_HOME_USR_NOTIFICATION)
@@ -164,4 +164,4 @@ class CallCounterMgr(object):
             CallCounterMgr._instance = None
 
 
-CallCounterMgr.get_instance()
+call_counter = CallCounterMgr.get_instance()
