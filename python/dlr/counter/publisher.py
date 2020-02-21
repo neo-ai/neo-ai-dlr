@@ -43,7 +43,7 @@ class MsgPublisher(object):
             while not self.record_queue.empty():
                 try:
                     if MsgPublisher.resp_cnt < config.CALL_HOME_REQ_STOP_MAX_COUNT:
-                        resp_code = self.client.send(self.record_queue.get(block=True, timeout=2))
+                        resp_code = self.client.send(self.record_queue.get(block=False))
                         if resp_code != 200:
                             MsgPublisher.resp_cnt += 1
                     else:

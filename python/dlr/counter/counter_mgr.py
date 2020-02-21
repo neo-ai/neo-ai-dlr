@@ -34,8 +34,6 @@ def call_home(func):
     return wrapped_call_home
 
 
-getinst = threading.Lock()
-relinst = threading.Lock()
 
 
 class CallCounterMgr(object):
@@ -48,19 +46,18 @@ class CallCounterMgr(object):
     @staticmethod
     def get_instance():
         """return single instance of class"""
-        with getinst:
-            if CallCounterMgr._instance is None:
-                if CallCounterMgr.is_feature_enabled():
-                    try:
-                        CallCounterMgr._instance = CallCounterMgr()
-                    except Exception as e:
-                        CallCounterMgr._instance = None
-                        logging.exception("unsupported system for call home feature", exc_info=False)
-                    else:
-                        atexit.register(CallCounterMgr._instance.stop)
+        if CallCounterMgr._instance is None:
+            if CallCounterMgr.is_feature_enabled():
+                try:
+                    CallCounterMgr._instance = CallCounterMgr()
+                except Exception as e:
+                    CallCounterMgr._instance = None
+                    logging.exception("unsupported system for call home feature", exc_info=False)
                 else:
-                    logging.warning("call home feature disabled")
-            return CallCounterMgr._instance
+                    atexit.register(CallCounterMgr._instance.stop)
+            else:
+                logging.warning("call home feature disabled")
+        return CallCounterMgr._instance
 
     def __init__(self):
         try:
@@ -157,12 +154,14 @@ class CallCounterMgr(object):
             self.msg_publisher.send(json.dumps(data))
 
     def stop(self):
-        with relinst:
-            if CallCounterMgr._instance is not None:
-                if self.model_metric:
-                    self.model_metric.stop()
-                    self.model_metric = None
-                if self.msg_publisher:
-                    self.msg_publisher.stop()
-                    self.msg_publisher = None
-                CallCounterMgr._instance = None
+        if CallCounterMgr._instance is not None:
+            if self.model_metric:
+                self.model_metric.stop()
+                self.model_metric = None
+            if self.msg_publisher:
+                self.msg_publisher.stop()
+                self.msg_publisher = None
+            CallCounterMgr._instance = None
+
+
+CallCounterMgr.get_instance()
