@@ -22,15 +22,14 @@ class ModelExecCounter(object):
             try:
                 dict_t = {}
                 dict_t.update(ModelExecCounter.model_queue.get(block=False))
-                key = None
-                for k in dict_t:
-                    key = k
+                key = list(dict_t)[0]
                 cnt = model_dict.get(key)
                 if cnt:
-                    cnt += 1
-                    model_dict[key] = cnt
+                    model_dict[key] += 1
                 else:
                     model_dict[key] = 1
             except queue.Empty as e:
                 logging.exception("Queue is empty!", exc_info=False)
+            except Exception as e:
+                logging.exception("exception while get dictionary", exc_info=False)
         return model_dict
