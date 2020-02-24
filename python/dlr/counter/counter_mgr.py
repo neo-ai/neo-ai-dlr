@@ -16,24 +16,24 @@ from .utils.helper import *
 def call_home(func):
     def wrapped_call_home(*args, **kwargs):
         global call_counter
-        if call_counter is not None:
-            if func.__name__ == "init_call_home":
-                print(config.CALL_HOME_USR_NOTIFICATION)
-                func(*args, **kwargs)
+        if func.__name__ == "init_call_home":
+            print(config.CALL_HOME_USR_NOTIFICATION)
+            func(*args, **kwargs)
+            if call_counter is not None:
                 call_counter.runtime_loaded()
-            elif func.__name__ == "__init__":
-                func(*args, **kwargs)
-                obj = args[0]
+        elif func.__name__ == "__init__":
+            func(*args, **kwargs)
+            obj = args[0]
+            if call_counter is not None:
                 call_counter.model_loaded(obj.get_model_name())
-            else:
-                res = func(*args, **kwargs)
-                obj = args[0]
+        else:
+            res = func(*args, **kwargs)
+            obj = args[0]
+            if call_counter is not None:
                 call_counter.model_run(obj.get_model_name())
-                return res
+            return res
 
     return wrapped_call_home
-
-
 
 
 class CallCounterMgr(object):
