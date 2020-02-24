@@ -1,35 +1,36 @@
-import threading
-import copy
+import queue
+import logging
 
-lock = threading.Lock()
 
 class ModelExecCounter(object):
-    model_dict = {}
-    intr_dict = {}
-    APPEND = 1 
-    GETINTDICT = 2 
-
+    model_queue = queue.Queue()
     @staticmethod
     def update_model_run_count(model):
-        """keep counting model inference in dictionary"""
-        ModelExecCounter.handle_dict(ModelExecCounter.APPEND, model)
+        """keep counting model inference in queue"""
+        try:
+            item = { model: 1}
+            ModelExecCounter.model_queue.put(item, block=False)
+        except queue.Full as e:
+            logging.exception("inference count queue full", exc_info=False)
+        except Exception as e:
+            logging.exception("unable to record inference count in queue", exc_info=False) 
 
-    @staticmethod
-    def handle_dict(op, model=None):
-        with lock:
-            if op == ModelExecCounter.APPEND:
-                cnt = ModelExecCounter.model_dict.get(model)
-                if cnt:
-                    cnt += 1
-                    ModelExecCounter.model_dict[model] = cnt 
-                else:
-                    ModelExecCounter.model_dict[model] = 1
-            elif op == ModelExecCounter.GETINTDICT:
-                ModelExecCounter.intr_dict = copy.deepcopy(ModelExecCounter.model_dict)
-                ModelExecCounter.model_dict.clear()
- 
     @staticmethod
     def get_dict():
-        ModelExecCounter.handle_dict(ModelExecCounter.GETINTDICT)
-        return ModelExecCounter.intr_dict
-
+        model_dict = {}
+        while not ModelExecCounter.model_queue.empty():
+            try:
+                dict_t = {}
+                dict_t.update(ModelExecCounter.model_queue.get(block=False))
+                key = None
+                for k in dict_t:
+                    key = k
+                cnt = model_dict.get(key)
+                if cnt:
+                    cnt += 1
+                    model_dict[key] = cnt
+                else:
+                    model_dict[key] = 1
+            except queue.Empty as e:
+                logging.exception("Queue is empty!", exc_info=False)
+        return model_dict
