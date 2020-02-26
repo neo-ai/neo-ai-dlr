@@ -1,15 +1,17 @@
+"""Model Metric Publisher"""
 import concurrent.futures
 import logging
 import json
 import threading
 
-from .utils import resturlutils
+
 from . import config
 from .model_exec_counter import ModelExecCounter
-from .utils.helper import *
 from .publisher import MsgPublisher
 
+
 class ModelMetric(object):
+    """Model metric publisher class"""
     _pub_model_metric = True
     _instance = None
     MODEL_RUN = 3
@@ -30,7 +32,7 @@ class ModelMetric(object):
             self.condition = threading.Condition()
             self.executor.submit(self.push_model_metric, self.condition)
             logging.info("model metric thread pool execution started")
-        except Exception as e:
+        except Exception:
             logging.exception("model metric thread pool not started", exc_info=False)
 
     def push_model_metric(self, condv):
@@ -48,7 +50,7 @@ class ModelMetric(object):
         try:
             pub_data = {'record_type': model_event_type, 'model': model, 'uuid': self.uuid, 'run_count': count}
             self.push(pub_data)
-        except Exception as e:
+        except Exception:
             logging.exception("unable to complete model count", exc_info=False)
 
     def push(self, data):
@@ -56,6 +58,7 @@ class ModelMetric(object):
         self.publisher.send(json.dumps(data))
 
     def stop(self):
+        """stop  thread execution"""
         with self.condition:
             self.condition.notify_all()
             ModelMetric._pub_model_metric = False

@@ -1,5 +1,8 @@
-# a data structure for device specific information
+""" a data structure for device specific information"""
+
+
 class DeviceInfo(object):
+    """Holding Generic information about Device"""
     def __init__(self):
         self.machine = ""
         self.arch = ""
@@ -11,15 +14,19 @@ class DeviceInfo(object):
     def get_info(self):
         """
         Prepare a dictionary of data member in sequence.
-        1. Machine 
+        1. Machine
         2. Architecture
         3. Operating system
-        4. Machine name 
+        4. Machine name
         5. Operating system distribution
         6. UUID
         Parameters
         ----------
-        self :
+        self
+
+        Returns
+        -------
+        dictionary:
             return a dictionary of data members
         """
 
@@ -35,6 +42,8 @@ class DeviceInfo(object):
 
 
 class ARMDevice(DeviceInfo):
+    """Holding ARM device information"""
+
     def __init__(self):
         DeviceInfo.__init__(self)
         self.processor = ""
@@ -44,9 +53,9 @@ class ARMDevice(DeviceInfo):
     def get_info(self):
         """
         Prepare a dictionary of data member in sequence.
-        1. Processor 
-        2. Speed 
-        3. Arch 
+        1. Processor
+        2. Speed
+        3. Arch
         Parameters
         ----------
         self :

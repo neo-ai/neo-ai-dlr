@@ -1,3 +1,4 @@
+"""call home feature complete test case"""
 from __future__ import print_function
 import platform
 from unittest import mock
@@ -11,6 +12,7 @@ MODEL_HASH = "123456789"
 
 
 def mock_push(data):
+    """test result validator"""
     if data:
         if data['record_type'] == 3:
             assert data['run_count'] == 1
@@ -23,6 +25,7 @@ def mock_push(data):
 
 @mock.patch('dlr.counter.counter_mgr.CallCounterMgr.push', side_effect=mock_push)
 def test_counter_mgr_x86(push):
+    """test on linux x86 system"""
     machine_typ = platform.machine()
     os_name = platform.system()
     os_support = "{0}_{1}".format(os_name, machine_typ)
@@ -43,6 +46,7 @@ def test_counter_mgr_x86(push):
 
 @mock.patch('dlr.counter.counter_mgr.CallCounterMgr.push', side_effect=mock_push)
 def test_counter_mgr_linux_arm(push):
+    """test on linux arm system"""
     machine_typ = platform.machine()
     os_name = platform.system()
     os_support = "{0}_{1}".format(os_name, machine_typ)

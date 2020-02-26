@@ -1,19 +1,21 @@
+"""Call Home Feature Module"""
 import platform
 import atexit
 import json
 import os
 import logging
-import threading
+
 
 from .publisher import MsgPublisher
 from .system import Factory
 from . import config
 from .model_exec_counter import ModelExecCounter
 from .model_metric import ModelMetric
-from .utils.helper import *
+from .utils.helper import get_hash_string
 
 
 def call_home(func):
+    """call home feature handler"""
     def wrapped_call_home(*args, **kwargs):
         global call_counter
         if func.__name__ == "init_call_home":
@@ -37,6 +39,7 @@ def call_home(func):
 
 
 class CallCounterMgr(object):
+    """Call Counter Manager"""
     RUNTIME_LOAD = 1
     MODEL_LOAD = 2
     MODEL_RUN = 3
@@ -50,7 +53,7 @@ class CallCounterMgr(object):
             if CallCounterMgr.is_feature_enabled():
                 try:
                     CallCounterMgr._instance = CallCounterMgr()
-                except Exception as e:
+                except Exception:
                     CallCounterMgr._instance = None
                     logging.exception("unsupported system for call home feature", exc_info=False)
                 else:
@@ -73,9 +76,9 @@ class CallCounterMgr(object):
             self.model_metric = ModelMetric.get_instance(self.system.get_device_uuid())
             if self.model_metric is None:
                 raise Exception("ccm model metric publisher not initialize")
-        except Exception as e:
+        except Exception as ex:
             logging.exception("while in counter mgr init", exc_info=False)
-            raise e
+            raise ex
 
     @staticmethod
     def is_feature_enabled():
@@ -85,13 +88,13 @@ class CallCounterMgr(object):
             if os.path.isfile(config.CALL_HOME_USER_CONFIG_FILE):
                 with open(config.CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
-                    if 'false' == str(data['ccm']).lower():
+                    if str(data['ccm']).lower() == 'false':
                         feature_enb = False
                     else:
                         feature_enb = True
             else:
                 feature_enb = True
-        except Exception as e:
+        except Exception:
             logging.exception("while in reading ccm config file", exc_info=False)
         return feature_enb
 
@@ -109,9 +112,9 @@ class CallCounterMgr(object):
                 # write runtime_load as a flag in a file
                 with open(ccm_rec_data_path, "wb") as fp:
                     fp.write(CallCounterMgr.RUNTIME_LOAD.to_bytes(1, byteorder='big'))
-        except IOError as e:
+        except IOError:
             logging.exception("while reading ccm publish data record file", exc_info=False)
-        except Exception as e:
+        except Exception:
             logging.exception("while reading ccm publish data record file", exc_info=False)
         return flag
 
@@ -123,13 +126,15 @@ class CallCounterMgr(object):
                 if self.system:
                     pub_data.update(self.system.get_device_info())
                     self.push(pub_data)
-        except Exception as e:
+        except Exception:
             logging.exception("while dlr runtime load", exc_info=False)
 
     def model_loaded(self, model):
+        """model load event handler"""
         self.model_info_publish(CallCounterMgr.MODEL_LOAD, model)
 
     def model_run(self, model):
+        """model inference event handler"""
         _md5model = get_hash_string(model.encode())
         _md5model = str(_md5model.hexdigest())
         ModelExecCounter.update_model_run_count(_md5model)
@@ -145,7 +150,7 @@ class CallCounterMgr(object):
             if model_event_type == CallCounterMgr.MODEL_RUN:
                 pub_data['run_count'] = count
             self.push(pub_data)
-        except Exception as e:
+        except Exception:
             logging.exception("unable to complete model count", exc_info=False)
 
     def push(self, data):
@@ -154,6 +159,7 @@ class CallCounterMgr(object):
             self.msg_publisher.send(json.dumps(data))
 
     def stop(self):
+        """stop all threads related message publisher, metric inference publisher"""
         if CallCounterMgr._instance is not None:
             if self.model_metric:
                 self.model_metric.stop()
