@@ -186,8 +186,14 @@ Once done with above steps, invoke cmake with following commands to build Androi
 
 .. code-block:: bash
 
-  cmake .. -DANDROID_BUILD=ON -DNDK_ROOT=/path/to/your/ndk/folder -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake 
+  cmake .. -DANDROID_BUILD=ON \
+    -DNDK_ROOT=/path/to/your/ndk/folder \
+    -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake \
+    -DANDROID_PLATFORM=android-21
+
   make -j4
+
+``ANDROID_PLATFORM`` should correspond to ``minSdkVersion`` of your project. If ``ANDROID_PLATFORM`` is not set it will default to ``android-21``.
 
 For arm64 targets, add 
 
