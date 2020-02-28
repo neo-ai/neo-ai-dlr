@@ -8,9 +8,10 @@ option(AAR_BUILD "Build Android Archive (AAR)" OFF)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
-    set(CMAKE_ANDROID_API 21)
-    set(ANDROID_PLATFORM android-21)
-    set(ANDROID_DEPRECATED_HEADERS ON)
+    if(NOT ANDROID_PLATFORM AND NOT ANDROID_NATIVE_API_LEVEL)
+        set(ANDROID_PLATFORM "android-21")
+        message(STATUS "ANDROID_PLATFORM not set. Defaulting to android-21")
+    endif()
 endif(ANDROID_BUILD)
 
 project(dlr)
