@@ -161,7 +161,7 @@ TEST(TFLite, CreateDLRModelFromTFLite) {
   int threads = 2;
   int use_nn_api = 0;
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTFLite(&handle, model_file, threads, use_nn_api)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
@@ -179,7 +179,7 @@ TEST(TFLite, CreateDLRModel) {
   int dev_type = 1;  // 1 - kDLCPU
   int dev_id = 0;
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModel(&handle, model_dir, dev_type, dev_id)) {
     FAIL() << DLRGetLastError() << std::endl;
   }

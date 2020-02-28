@@ -181,7 +181,7 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
                                    tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
@@ -204,7 +204,7 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
                                    tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
@@ -226,7 +226,7 @@ TEST(Tensorflow, AutodetectInputsAndOutputs) {
   const int dev_type = 1;  // 1 - kDLCPU
   const int dev_id = 0;
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModel(&handle, model_file, dev_type, dev_id)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
@@ -235,6 +235,10 @@ TEST(Tensorflow, AutodetectInputsAndOutputs) {
   CheckAllDLRMethods(handle, batch_size);
 
   // DeleteDLRModel
+  DeleteDLRModel(&handle);
+  ASSERT_EQ(nullptr, handle);
+  // Test that calling DeleteDLRModel again
+  // does not crash the program (no segmentation fault)
   DeleteDLRModel(&handle);
 }
 
