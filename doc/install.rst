@@ -93,7 +93,7 @@ To build, create a subdirectory ``build``:
 
   mkdir build
   cd build
-  
+
 Building for CPU
 """"""""""""""""
 
@@ -135,7 +135,8 @@ Similarly, to enable support for OpenCL devices, run CMake with:
   cmake .. -DUSE_OPENCL=ON 
   make -j4
 
-5. Install Python package
+Install Python package
+""""""""""""""""""""""
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
