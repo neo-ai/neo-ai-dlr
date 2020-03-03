@@ -95,6 +95,7 @@ To build, create a subdirectory ``build``:
   cd build
   
 Building for CPU
+
   Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
   .. code-block:: bash
@@ -103,6 +104,7 @@ Building for CPU
     make -j4         # Use 4 cores to compile sources in parallel
 
 Building for GPU
+
   By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
   If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use `-DUSE_TENSORRT=ON`.
 
@@ -121,6 +123,7 @@ Building for GPU
   You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
 Building for OpenCL Devices
+
   Similarly, to enable support for OpenCL devices, run CMake with:
 
   .. code-block:: bash
@@ -128,14 +131,13 @@ Building for OpenCL Devices
     make -j4
 
 Install Python package
-----------------------
 
-Once the compilation is completed, install the Python package by running ``setup.py``:
+  Once the compilation is completed, install the Python package by running ``setup.py``:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  cd ../python
-  python3 setup.py install --user --force
+    cd ../python
+    python3 setup.py install --user --force
 
 Building on Mac OS X
 --------------------
