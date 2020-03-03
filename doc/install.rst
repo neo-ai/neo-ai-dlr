@@ -80,7 +80,7 @@ Building DLR consists of two steps:
 Building on Linux
 -----------------
 
-Ensure that all necessary software packages are installed: GCC (or Clang), CMake, and Python. For example, in Ubuntu, you can run
+1. Ensure that all necessary software packages are installed: GCC (or Clang), CMake, and Python. For example, in Ubuntu, you can run
 
 .. code-block:: bash
 
@@ -94,7 +94,7 @@ To build, create a subdirectory ``build``:
   mkdir build
   cd build
   
-Building for CPU
+2. Building for CPU
 
   Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
@@ -103,7 +103,7 @@ Building for CPU
     cmake ..
     make -j4         # Use 4 cores to compile sources in parallel
 
-Building for GPU
+3. Building for GPU
 
   By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
   If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use `-DUSE_TENSORRT=ON`.
@@ -122,15 +122,16 @@ Building for GPU
 
   You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
-Building for OpenCL Devices
+4. Building for OpenCL Devices
 
   Similarly, to enable support for OpenCL devices, run CMake with:
 
   .. code-block:: bash
+
     cmake .. -DUSE_OPENCL=ON 
     make -j4
 
-Install Python package
+5. Install Python package
 
   Once the compilation is completed, install the Python package by running ``setup.py``:
 
