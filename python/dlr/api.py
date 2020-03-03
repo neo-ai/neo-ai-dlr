@@ -12,7 +12,7 @@ try:
 except Exception as ex:
     print(str(ex))
 
-from .counter.counter_mgr import call_home
+from .counter.counter_mgr_lite import call_home_lite
 
 
 # Interface
@@ -59,7 +59,7 @@ def _is_module_found(name):
 
 # Wrapper class
 class DLRModel(IDLRModel):
-    @call_home
+    @call_home_lite
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None):
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
@@ -95,7 +95,7 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
 
-    @call_home
+    @call_home_lite
     def run(self, input_values):
         try:
             return self._impl.run(input_values)
