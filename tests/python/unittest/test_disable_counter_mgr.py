@@ -22,7 +22,7 @@ def resource_a_setup(request):
 
 def test_disable_counter_mgr(resource_a_setup):
     """import dlr module, imported here for test purpose"""
-    from dlr.counter.counter_mgr import CallCounterMgr
+    from dlr.counter.counter_mgr_lite import CounterMgrLite
     # runtime loaded check
-    ccm = CallCounterMgr.get_instance()
+    ccm = CounterMgrLite.get_instances()
     assert ccm is None
