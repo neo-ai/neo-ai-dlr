@@ -28,7 +28,7 @@ class RestUrlUtils(object):
             resp = req.request('POST', config.CALL_HOME_URL,
                                headers=hrd, body=data)
             resp_code = resp.status
-            logging.info("Response Data:{}, Response Status:{}".format(resp.data, resp.status))
+            logging.info("Response Status:", resp.status)
         except urllib3.exceptions.HTTPError:
             logging.exception("rest api error!", exc_info=False)
             resp_code = -1
