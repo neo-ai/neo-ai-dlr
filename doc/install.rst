@@ -109,14 +109,14 @@ Building for GPU
 
 By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
 
-If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use `-DUSE_TENSORRT=ON`.
+If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use :bash:`-DUSE_TENSORRT=ON`.
 
 .. code-block:: bash
 
   cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=ON
   make -j4
 
-If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory via `-DUSE_TENSORRT=/path/to/TensorRT/`.
+If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory via :bash:`-DUSE_TENSORRT=/path/to/TensorRT/`.
 
 .. code-block:: bash
 
