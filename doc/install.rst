@@ -78,7 +78,7 @@ Building DLR consists of two steps:
     cd neo-ai-dlr
 
 Building on Linux
-=================
+-----------------
 
 Ensure that all necessary software packages are installed: GCC (or Clang), CMake, and Python. For example, in Ubuntu, you can run
 
@@ -142,7 +142,7 @@ Once the compilation is completed, install the Python package by running ``setup
   python3 setup.py install --user --force
 
 Building on Mac OS X
-====================
+--------------------
 
 Install GCC and CMake from `Homebrew <https://brew.sh/>`_:
 
@@ -170,7 +170,7 @@ Once the compilation is completed, install the Python package by running ``setup
   python3 setup.py install --user --prefix=''
 
 Building on Windows
-===================
+-------------------
 
 DLR requires `Visual Studio 2017 <https://visualstudio.microsoft.com/downloads/>`_ as well as `CMake <https://cmake.org/>`_.
 
@@ -194,7 +194,7 @@ Once the compilation is completed, install the Python package by running ``setup
   python3 setup.py install --user
 
 Building for Android on ARM
-===========================
+---------------------------
 
 Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
 
@@ -230,7 +230,7 @@ You can include whole ``libtensorflow-lite.a`` library into ``libdlr.so`` shared
 To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
 
 Building for Android Archive (AAR) file
-=======================================
+---------------------------------------
 
 Install `Android Studio <https://developer.android.com/studio>`_.
 
