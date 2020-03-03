@@ -75,6 +75,7 @@ Building DLR consists of two steps:
   .. code-block:: bash
 
     git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+    cd neo-ai-dlr
 
 Building on Linux
 -----------------
@@ -86,42 +87,55 @@ Ensure that all necessary software packages are installed: GCC (or Clang), CMake
   sudo apt-get update
   sudo apt-get install -y python3 python3-pip gcc build-essential cmake
   
-To build, create a subdirectory ``build`` and invoke CMake:
+To build, create a subdirectory ``build``:
 
 .. code-block:: bash
 
   mkdir build
   cd build
-  cmake ..
+  
+## Building for CPU
 
-Once CMake is done generating a Makefile, run GNU Make to compile:
+Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
 .. code-block:: bash
-
+  cmake ..
   make -j4         # Use 4 cores to compile sources in parallel
 
-By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with extra options:
+## Building for GPU
+
+By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
+
+If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use `-DUSE_TENSORRT=ON`.
 
 .. code-block:: bash
+  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=ON
+  make -j4
 
+If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory via `-DUSE_TENSORRT=/path/to/TensorRT/`.
+
+.. code-block:: bash
   cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
   make -j4
 
 You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
+## Building for OpenCL Devices
+
 Similarly, to enable support for OpenCL devices, run CMake with:
 
 .. code-block:: bash
-
   cmake .. -DUSE_OPENCL=ON 
   make -j4
+
+## After compiling, install Python package
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
 .. code-block:: bash
 
   cd ../python
-  python3 setup.py install --user
+  python3 setup.py install --user --force
 
 Building on Mac OS X
 --------------------
