@@ -95,13 +95,12 @@ To build, create a subdirectory ``build``:
   cd build
   
 Building for CPU
+  Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
-Invoke CMake to generate a Makefile and then run GNU Make to compile:
+  .. code-block:: bash
 
-.. code-block:: bash
-
-  cmake ..
-  make -j4         # Use 4 cores to compile sources in parallel
+    cmake ..
+    make -j4         # Use 4 cores to compile sources in parallel
 
 Building for GPU
   By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
@@ -112,23 +111,21 @@ Building for GPU
     cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=ON
     make -j4
 
-If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory via `-DUSE_TENSORRT=/path/to/TensorRT/`.
+  If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory via `-DUSE_TENSORRT=/path/to/TensorRT/`.
 
-.. code-block:: bash
+  .. code-block:: bash
 
-  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
-  make -j4
+    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
+    make -j4
 
-You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
+  You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
 Building for OpenCL Devices
----------------------------
+  Similarly, to enable support for OpenCL devices, run CMake with:
 
-Similarly, to enable support for OpenCL devices, run CMake with:
-
-.. code-block:: bash
-  cmake .. -DUSE_OPENCL=ON 
-  make -j4
+  .. code-block:: bash
+    cmake .. -DUSE_OPENCL=ON 
+    make -j4
 
 Install Python package
 ----------------------
