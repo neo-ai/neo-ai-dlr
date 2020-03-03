@@ -132,7 +132,7 @@ Similarly, to enable support for OpenCL devices, run CMake with:
   make -j4
 
 Install Python package
----------------------------------------
+----------------------
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
