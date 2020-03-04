@@ -1,0 +1,166 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+##########################################
+### Linux jobs first
+##########################################
+
+jobs:
+  - job: vanilla_ubuntu
+    displayName: unbuntu default
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: ./buildconf && ./configure --enable-debug --enable-werror
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: disable_ipv6
+    displayName: ubuntu w/o IPv6
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: ./buildconf && ./configure --disable-ipv6
+      displayName: 'Run configure --disable-ipv6'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: disable_http_smtp_imap
+    displayName: ubuntu w/o HTTP/SMTP/IMAP
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: ./buildconf && ./configure --disable-http --disable-smtp --disable-imap
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: disable_thredres
+    displayName: ubuntu sync resolver
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: ./buildconf && ./configure --disable-threaded-resolver
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: http_only
+    displayName: ubuntu HTTP only
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: ./buildconf && ./configure --disable-dict --disable-file --disable-ftp --disable-gopher --disable-imap --disable-ldap --disable-pop3 --disable-rtmp --disable-rtsp --disable-scp --disable-sftp --disable-smb --disable-smtp --disable-telnet --disable-tftp
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: torture
+    displayName: ubuntu torture tests
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: sudo apt install libnghttp2-dev
+      displayName: 'apt install'
+
+    - script: ./buildconf && ./configure --enable-debug --disable-shared --disable-threaded-resolver --enable-alt-svc
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make "TFLAGS=-n -t --shallow=40 '!FTP'" test-nonflaky
+      displayName: 'torture test'
+
+##########################################
+### macOS jobs below
+##########################################
+
+  - job: macos_plain
+    displayName: macos default
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - script: brew update && brew install libtool autoconf automake nghttp2 pkg-config
+      displayName: Install packages
+
+    - script: ./buildconf && ./configure --enable-debug --enable-werror --without-brotli
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: macos_libssh2
+    displayName: macos libssh2
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - script: brew update && brew install libtool autoconf automake nghttp2 pkg-config libssh2
+      displayName: Install packages
+
+    - script: ./buildconf && ./configure --with-libssh2 --enable-debug
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make test-nonflaky
+      displayName: 'test'
+
+  - job: macos_cmake
+    displayName: macos cmake openssl
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - script: brew update && brew install libtool autoconf automake nghttp2 pkg-config openssl
+      displayName: Install packages
+
+    - script: cmake -H. -Bbuild -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCURL_DISABLE_LDAP=ON -DCURL_DISABLE_LDAPS=ON && cmake --build build
+      displayName: 'Run cmake'
+
+  - job: macos_torture
+    displayName: macos torture
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - script: brew update && brew install libtool autoconf automake nghttp2 pkg-config
+      displayName: Install packages
+
+    - script: ./buildconf && ./configure --enable-debug --disable-shared --disable-threaded-resolver --enable-alt-svc
+      displayName: 'Run configure'
+
+    - script: make
+      displayName: 'make'
+
+    - script: make "TFLAGS=-n -t --shallow=25 '!FTP'" test-nonflaky
+      displayName: 'torture test'
+
