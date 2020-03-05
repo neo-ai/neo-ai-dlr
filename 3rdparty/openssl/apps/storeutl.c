@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -31,12 +31,16 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS storeutl_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] uri\nValid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] uri\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"text", OPT_TEXT, '-', "Print a text form of the objects"},
-    {"noout", OPT_NOOUT, '-', "No PEM output, just status"},
+    {"", OPT_MD, '-', "Any supported digest"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+
+    OPT_SECTION("Search"),
     {"certs", OPT_SEARCHFOR_CERTS, '-', "Search for certificates only"},
     {"keys", OPT_SEARCHFOR_KEYS, '-', "Search for keys only"},
     {"crls", OPT_SEARCHFOR_CRLS, '-', "Search for CRLs only"},
@@ -45,11 +49,18 @@ const OPTIONS storeutl_options[] = {
     {"serial", OPT_CRITERION_SERIAL, 's', "Search by issuer and serial, serial number"},
     {"fingerprint", OPT_CRITERION_FINGERPRINT, 's', "Search by public key fingerprint, given in hex"},
     {"alias", OPT_CRITERION_ALIAS, 's', "Search by alias"},
-    {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"r", OPT_RECURSIVE, '-', "Recurse through names"},
+
+    OPT_SECTION("Input"),
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"text", OPT_TEXT, '-', "Print a text form of the objects"},
+    {"noout", OPT_NOOUT, '-', "No PEM output, just status"},
+
+    OPT_PARAMETERS(),
+    {"uri", 0, 0, "URI of the store object"},
     {NULL}
 };
 

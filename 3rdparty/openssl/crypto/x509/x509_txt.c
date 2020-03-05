@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -111,9 +111,9 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_NO_EXPLICIT_POLICY:
         return "no explicit policy";
     case X509_V_ERR_DIFFERENT_CRL_SCOPE:
-        return "Different CRL scope";
+        return "different CRL scope";
     case X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE:
-        return "Unsupported extension feature";
+        return "unsupported extension feature";
     case X509_V_ERR_UNNESTED_RESOURCE:
         return "RFC 3779 resource not subset of parent's resources";
     case X509_V_ERR_PERMITTED_VIOLATION:
@@ -133,7 +133,7 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_CRL_PATH_VALIDATION_ERROR:
         return "CRL path validation error";
     case X509_V_ERR_PATH_LOOP:
-        return "Path Loop";
+        return "path loop";
     case X509_V_ERR_SUITE_B_INVALID_VERSION:
         return "Suite B: certificate version invalid";
     case X509_V_ERR_SUITE_B_INVALID_ALGORITHM:
@@ -147,13 +147,13 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256:
         return "Suite B: cannot sign P-384 with P-256";
     case X509_V_ERR_HOSTNAME_MISMATCH:
-        return "Hostname mismatch";
+        return "hostname mismatch";
     case X509_V_ERR_EMAIL_MISMATCH:
-        return "Email address mismatch";
+        return "email address mismatch";
     case X509_V_ERR_IP_ADDRESS_MISMATCH:
         return "IP address mismatch";
     case X509_V_ERR_DANE_NO_MATCH:
-        return "No matching DANE TLSA records";
+        return "no matching DANE TLSA records";
     case X509_V_ERR_EE_KEY_TOO_SMALL:
         return "EE certificate key too weak";
     case X509_V_ERR_CA_KEY_TOO_SMALL:
@@ -161,9 +161,9 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_CA_MD_TOO_WEAK:
         return "CA signature digest algorithm too weak";
     case X509_V_ERR_INVALID_CALL:
-        return "Invalid certificate verification context";
+        return "invalid certificate verification context";
     case X509_V_ERR_STORE_LOOKUP:
-        return "Issuer certificate lookup error";
+        return "issuer certificate lookup error";
     case X509_V_ERR_NO_VALID_SCTS:
         return "Certificate Transparency required, but no valid SCTs found";
     case X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION:
@@ -174,7 +174,10 @@ const char *X509_verify_cert_error_string(long n)
         return "OCSP verification failed";
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
-
+    case X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH:
+        return "subject signature algorithm and issuer public key algorithm mismatch";
+    case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
+        return "issuer certificate doesn't have a public key";
     default:
         /* Printing an error number into a static buffer is not thread-safe */
         return "unknown certificate verification error";

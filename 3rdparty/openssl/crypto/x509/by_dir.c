@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,8 +19,8 @@
 #endif
 
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
 struct lookup_dir_hashes_st {
     unsigned long hash;
@@ -156,7 +156,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     size_t len;
     const char *s, *ss, *p;
 
-    if (dir == NULL || !*dir) {
+    if (dir == NULL || *dir == '\0') {
         X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
         return 0;
     }

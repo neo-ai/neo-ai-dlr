@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -125,7 +125,23 @@ static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
                                struct io_event *events,
                                struct timespec *timeout)
 {
+#if defined(__NR_io_getevents)
     return syscall(__NR_io_getevents, ctx, min, max, events, timeout);
+#elif defined(__NR_io_pgetevents_time64)
+    /* Let's only support the 64 suffix syscalls for 64-bit time_t.
+     * This simplifies the code for us as we don't need to use a 64-bit
+     * version of timespec with a 32-bit time_t and handle converting
+     * between 64-bit and 32-bit times and check for overflows.
+     */
+    if (sizeof(timeout->tv_sec) == 8)
+        return syscall(__NR_io_pgetevents_time64, ctx, min, max, events, timeout, NULL);
+    else {
+        errno = ENOSYS;
+        return -1;
+    }
+#else
+# error "We require either the io_getevents syscall or __NR_io_pgetevents_time64."
+#endif
 }
 
 static void afalg_waitfd_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
@@ -407,7 +423,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
                                  size_t inl, const unsigned char *iv,
                                  unsigned int enc)
 {
-    struct msghdr msg = { 0 };
+    struct msghdr msg;
     struct cmsghdr *cmsg;
     struct iovec iov;
     ssize_t sbytes;
@@ -416,6 +432,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 # endif
     char cbuf[CMSG_SPACE(ALG_IV_LEN(ALG_AES_IV_LEN)) + CMSG_SPACE(ALG_OP_LEN)];
 
+    memset(&msg, 0, sizeof(msg));
     memset(cbuf, 0, sizeof(cbuf));
     msg.msg_control = cbuf;
     msg.msg_controllen = sizeof(cbuf);
@@ -456,7 +473,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 
     /*
      * vmsplice and splice are used to pin the user space input buffer for
-     * kernel space processing avoiding copys from user to kernel space
+     * kernel space processing avoiding copies from user to kernel space
      */
     ret = vmsplice(actx->zc_pipe[1], &iov, 1, SPLICE_F_GIFT);
     if (ret < 0) {

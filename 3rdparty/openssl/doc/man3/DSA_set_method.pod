@@ -49,7 +49,7 @@ be released during the change. It is possible to have DSA keys that only
 work with certain DSA_METHOD implementations (eg. from an ENGINE module
 that supports embedded hardware-protected keys), and in such cases
 attempting to change the DSA_METHOD for the key can have unexpected
-results. See L<DSA_meth_new> for information on constructing custom DSA_METHOD
+results. See L<DSA_meth_new(3)> for information on constructing custom DSA_METHOD
 objects;
 
 DSA_new_method() allocates and initializes a DSA structure so that B<engine>
@@ -64,7 +64,7 @@ B<DSA_METHOD>s.
 
 DSA_set_default_method() returns no value.
 
-DSA_set_method() returns non-zero if the provided B<meth> was successfully set as
+DSA_set_method() returns nonzero if the provided B<meth> was successfully set as
 the method for B<dsa> (including unloading the ENGINE handle if the previous
 method was supplied by an ENGINE).
 
@@ -80,7 +80,7 @@ L<DSA_new(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

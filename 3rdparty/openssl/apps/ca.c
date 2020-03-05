@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -96,7 +96,8 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    const char *enddate,
                    long days, int batch, const char *ext_sect, CONF *conf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign);
+                   int default_op, int ext_copy, int selfsign,
+                   unsigned char *sm2_id, size_t sm2idlen);
 static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                         const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -147,16 +148,38 @@ typedef enum OPTION_choice {
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
     OPT_RAND_SERIAL,
-    OPT_R_ENUM,
+    OPT_R_ENUM, OPT_SM2ID, OPT_SM2HEXID,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
 } OPTION_CHOICE;
 
 const OPTIONS ca_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [certreq...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output during processing"},
+    {"outdir", OPT_OUTDIR, '/', "Where to put output cert"},
+    {"in", OPT_IN, '<', "The input PEM encoded cert request(s)"},
+    {"infiles", OPT_INFILES, '-', "The last argument, requests to process"},
+    {"out", OPT_OUT, '>', "Where to put the output file(s)"},
+    {"notext", OPT_NOTEXT, '-', "Do not print the generated certificate"},
+    {"batch", OPT_BATCH, '-', "Don't ask questions"},
+    {"msie_hack", OPT_MSIE_HACK, '-',
+     "msie modifications to handle all Universal Strings"},
+    {"ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign"},
+    {"spkac", OPT_SPKAC, '<',
+     "File contains DN and signed public key and challenge"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+
+    OPT_SECTION("Configuration"),
     {"config", OPT_CONFIG, 's', "A config file"},
     {"name", OPT_NAME, 's', "The particular CA definition to use"},
+    {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
+
+    OPT_SECTION("Certificate"),
     {"subj", OPT_SUBJ, 's', "Use arg instead of request's subject"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"create_serial", OPT_CREATE_SERIAL, '-',
@@ -169,8 +192,21 @@ const OPTIONS ca_options[] = {
     {"enddate", OPT_ENDDATE, 's',
      "YYMMDDHHMMSSZ cert notAfter (overrides -days)"},
     {"days", OPT_DAYS, 'p', "Number of days to certify the cert for"},
+    {"extensions", OPT_EXTENSIONS, 's',
+     "Extension section (override value in config file)"},
+    {"extfile", OPT_EXTFILE, '<',
+     "Configuration file with X509v3 extensions to add"},
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate request"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate request"},
+#endif
+    {"preserveDN", OPT_PRESERVEDN, '-', "Don't re-order the DN"},
+    {"noemailDN", OPT_NOEMAILDN, '-', "Don't add the EMAIL field to the DN"},
+
+    OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
-    {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
     {"keyfile", OPT_KEYFILE, 's', "Private key"},
     {"keyform", OPT_KEYFORM, 'f', "Private key file format (PEM or ENGINE)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -178,31 +214,12 @@ const OPTIONS ca_options[] = {
     {"cert", OPT_CERT, '<', "The CA cert"},
     {"selfsign", OPT_SELFSIGN, '-',
      "Sign a cert with the key associated with it"},
-    {"in", OPT_IN, '<', "The input PEM encoded cert request(s)"},
-    {"out", OPT_OUT, '>', "Where to put the output file(s)"},
-    {"outdir", OPT_OUTDIR, '/', "Where to put output cert"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"notext", OPT_NOTEXT, '-', "Do not print the generated certificate"},
-    {"batch", OPT_BATCH, '-', "Don't ask questions"},
-    {"preserveDN", OPT_PRESERVEDN, '-', "Don't re-order the DN"},
-    {"noemailDN", OPT_NOEMAILDN, '-', "Don't add the EMAIL field to the DN"},
+
+    OPT_SECTION("Revocation"),
     {"gencrl", OPT_GENCRL, '-', "Generate a new CRL"},
-    {"msie_hack", OPT_MSIE_HACK, '-',
-     "msie modifications to handle all those universal strings"},
-    {"crldays", OPT_CRLDAYS, 'p', "Days until the next CRL is due"},
-    {"crlhours", OPT_CRLHOURS, 'p', "Hours until the next CRL is due"},
-    {"crlsec", OPT_CRLSEC, 'p', "Seconds until the next CRL is due"},
-    {"infiles", OPT_INFILES, '-', "The last argument, requests to process"},
-    {"ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign"},
-    {"spkac", OPT_SPKAC, '<',
-     "File contains DN and signed public key and challenge"},
-    {"revoke", OPT_REVOKE, '<', "Revoke a cert (given in file)"},
     {"valid", OPT_VALID, 's',
      "Add a Valid(not-revoked) DB entry about a cert (given in file)"},
-    {"extensions", OPT_EXTENSIONS, 's',
-     "Extension section (override value in config file)"},
-    {"extfile", OPT_EXTFILE, '<',
-     "Configuration file with X509v3 extensions to add"},
     {"status", OPT_STATUS, 's', "Shows cert status given the serial number"},
     {"updatedb", OPT_UPDATEDB, '-', "Updates db for expired cert"},
     {"crlexts", OPT_CRLEXTS, 's',
@@ -214,10 +231,15 @@ const OPTIONS ca_options[] = {
      "sets compromise time to val and the revocation reason to keyCompromise"},
     {"crl_CA_compromise", OPT_CRL_CA_COMPROMISE, 's',
      "sets compromise time to val and the revocation reason to CACompromise"},
+    {"crldays", OPT_CRLDAYS, 'p', "Days until the next CRL is due"},
+    {"crlhours", OPT_CRLHOURS, 'p', "Hours until the next CRL is due"},
+    {"crlsec", OPT_CRLSEC, 'p', "Seconds until the next CRL is due"},
+    {"revoke", OPT_REVOKE, '<', "Revoke a cert (given in file)"},
+
     OPT_R_OPTIONS,
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
+
+    OPT_PARAMETERS(),
+    {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
     {NULL}
 };
 
@@ -262,6 +284,9 @@ int ca_main(int argc, char **argv)
     REVINFO_TYPE rev_type = REV_NONE;
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -424,6 +449,30 @@ opthelp:
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_SM2ID:
+            /* we assume the input is not a hex string */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            /* try to parse the input as hex string first */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
             break;
         }
     }
@@ -913,7 +962,8 @@ end_of_options:
             j = certify(&x, infile, pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign,
+                        sm2_id, sm2_idlen);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -932,7 +982,8 @@ end_of_options:
             j = certify(&x, argv[i], pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign,
+                        sm2_id, sm2_idlen);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -1230,6 +1281,8 @@ end_of_options:
     ret = 0;
 
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     if (ret)
         ERR_print_errors(bio_err);
     BIO_free_all(Sout);
@@ -1268,7 +1321,8 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    const char *enddate,
                    long days, int batch, const char *ext_sect, CONF *lconf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign)
+                   int default_op, int ext_copy, int selfsign,
+                   unsigned char *sm2id, size_t sm2idlen)
 {
     X509_REQ *req = NULL;
     BIO *in = NULL;
@@ -1299,6 +1353,25 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
     if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
+    }
+    if (sm2id != NULL) {
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING *v;
+
+        v = ASN1_OCTET_STRING_new();
+        if (v == NULL) {
+            BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
+            goto end;
+        }
+
+        if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
+            BIO_printf(bio_err, "error: setting SM2 ID failed\n");
+            ASN1_OCTET_STRING_free(v);
+            goto end;
+        }
+
+        X509_REQ_set0_sm2_id(req, v);
+#endif
     }
     i = X509_REQ_verify(req, pktmp);
     pktmp = NULL;

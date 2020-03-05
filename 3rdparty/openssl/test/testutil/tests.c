@@ -1,7 +1,7 @@
 /*
  * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -157,6 +157,29 @@ void test_note(const char *fmt, ...)
     test_flush_stderr();
 }
 
+
+int test_skip(const char *file, int line, const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message_va("SKIP", file, line, NULL, NULL, NULL, NULL, desc, ap);
+    va_end(ap);
+    return TEST_SKIP_CODE;
+}
+
+int test_skip_c90(const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message_va("SKIP", NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
+    va_end(ap);
+    test_printf_stderr("\n");
+    return TEST_SKIP_CODE;
+}
+
+
 void test_openssl_errors(void)
 {
     ERR_print_errors_cb(openssl_error_cb, NULL);
@@ -213,6 +236,7 @@ DEFINE_COMPARISONS(unsigned char, uchar, "%u")
 DEFINE_COMPARISONS(long, long, "%ld")
 DEFINE_COMPARISONS(unsigned long, ulong, "%lu")
 DEFINE_COMPARISONS(size_t, size_t, "%zu")
+DEFINE_COMPARISONS(double, double, "%g")
 
 DEFINE_COMPARISON(void *, ptr, eq, ==, "%p")
 DEFINE_COMPARISON(void *, ptr, ne, !=, "%p")
@@ -420,7 +444,7 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
 
 static const char *print_time(const ASN1_TIME *t)
 {
-    return t == NULL ? "<null>" : (char *)ASN1_STRING_get0_data(t);
+    return t == NULL ? "<null>" : (const char *)ASN1_STRING_get0_data(t);
 }
 
 #define DEFINE_TIME_T_COMPARISON(opname, op)                            \

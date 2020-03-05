@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -217,7 +217,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     uint64_t p, r, N;
     size_t saltlen;
     size_t keylen = 0;
-    int rv = 0;
+    int t, rv = 0;
     SCRYPT_PARAMS *sparam = NULL;
 
     if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
@@ -234,7 +234,12 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
 
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    t = EVP_CIPHER_CTX_key_length(ctx);
+    if (t < 0) {
+        EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        goto err;
+    }
+    keylen = t;
 
     /* Now check the parameters of sparam */
 

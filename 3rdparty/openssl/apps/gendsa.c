@@ -1,11 +1,14 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_DSA
@@ -27,21 +30,28 @@ NON_EMPTY_TRANSLATION_UNIT
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER,
+    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS gendsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] dsaparam-file\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to the specified file"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     OPT_R_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PARAMETERS(),
+    {"dsaparam-file", 0, 0, "File containing DSA parameters"},
     {NULL}
 };
 
@@ -54,7 +64,7 @@ int gendsa_main(int argc, char **argv)
     char *dsaparams = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
-    int ret = 1, private = 0;
+    int ret = 1, private = 0, verbose = 0;
     const BIGNUM *p = NULL;
 
     prog = opt_init(argc, argv, gendsa_options);
@@ -85,6 +95,9 @@ int gendsa_main(int argc, char **argv)
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
                 goto end;
+            break;
+        case OPT_VERBOSE:
+            verbose = 1;
             break;
         }
     }
@@ -124,7 +137,8 @@ int gendsa_main(int argc, char **argv)
                    "         Your key size is %d! Larger key size may behave not as expected.\n",
                    OPENSSL_DSA_MAX_MODULUS_BITS, BN_num_bits(p));
 
-    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
+    if (verbose)
+        BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
     if (!DSA_generate_key(dsa))
         goto end;
 

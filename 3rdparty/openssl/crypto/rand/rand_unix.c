@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,10 +15,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "rand_lcl.h"
-#include "internal/rand_int.h"
+#include "rand_local.h"
+#include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"
+
 #ifdef __linux
 # include <sys/syscall.h>
 # ifdef DEVRANDOM_WAIT
@@ -35,7 +36,8 @@
 # include <sys/param.h>
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -80,7 +82,8 @@ static uint64_t get_timer_bits(void);
 #   define OSSL_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */
 
 #if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none. this simplifies the following logic */
@@ -93,30 +96,8 @@ static uint64_t get_timer_bits(void);
 # undef OPENSSL_RAND_SEED_EGD
 #endif
 
-#if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
-        !defined(OPENSSL_RAND_SEED_NONE)
-# error "UEFI and VXWorks only support seeding NONE"
-#endif
-
-#if defined(OPENSSL_SYS_VXWORKS)
-/* empty implementation */
-int rand_pool_init(void)
-{
-    return 1;
-}
-
-void rand_pool_cleanup(void)
-{
-}
-
-void rand_pool_keep_random_devices_open(int keep)
-{
-}
-
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
-{
-    return rand_pool_entropy_available(pool);
-}
+#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
+# error "UEFI only supports seeding NONE"
 #endif
 
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
@@ -282,12 +263,58 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #  if defined(OPENSSL_RAND_SEED_GETRANDOM)
 
 #   if defined(__linux) && !defined(__NR_getrandom)
-#    if defined(__arm__) && defined(__NR_SYSCALL_BASE)
+#    if defined(__arm__)
 #     define __NR_getrandom    (__NR_SYSCALL_BASE+384)
 #    elif defined(__i386__)
 #     define __NR_getrandom    355
-#    elif defined(__x86_64__) && !defined(__ILP32__)
-#     define __NR_getrandom    318
+#    elif defined(__x86_64__)
+#     if defined(__ILP32__)
+#      define __NR_getrandom   (__X32_SYSCALL_BIT + 318)
+#     else
+#      define __NR_getrandom   318
+#     endif
+#    elif defined(__xtensa__)
+#     define __NR_getrandom    338
+#    elif defined(__s390__) || defined(__s390x__)
+#     define __NR_getrandom    349
+#    elif defined(__bfin__)
+#     define __NR_getrandom    389
+#    elif defined(__powerpc__)
+#     define __NR_getrandom    359
+#    elif defined(__mips__) || defined(__mips64)
+#     if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define __NR_getrandom   (__NR_Linux + 353)
+#     elif _MIPS_SIM == _MIPS_SIM_ABI64
+#      define __NR_getrandom   (__NR_Linux + 313)
+#     elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define __NR_getrandom   (__NR_Linux + 317)
+#     endif
+#    elif defined(__hppa__)
+#     define __NR_getrandom    (__NR_Linux + 339)
+#    elif defined(__sparc__)
+#     define __NR_getrandom    347
+#    elif defined(__ia64__)
+#     define __NR_getrandom    1339
+#    elif defined(__alpha__)
+#     define __NR_getrandom    511
+#    elif defined(__sh__)
+#     if defined(__SH5__)
+#      define __NR_getrandom   373
+#     else
+#      define __NR_getrandom   384
+#     endif
+#    elif defined(__avr32__)
+#     define __NR_getrandom    317
+#    elif defined(__microblaze__)
+#     define __NR_getrandom    385
+#    elif defined(__m68k__)
+#     define __NR_getrandom    352
+#    elif defined(__cris__)
+#     define __NR_getrandom    356
+#    elif defined(__aarch64__)
+#     define __NR_getrandom    278
+#    else /* generic */
+#     define __NR_getrandom    278
 #    endif
 #   endif
 
@@ -322,7 +349,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 
     if (getentropy != NULL)
         return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  else
+#  elif !defined(FIPS_MODE)
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -365,10 +392,12 @@ static int keep_random_devices_open = 1;
 #   if defined(__linux) && defined(DEVRANDOM_WAIT)
 static void *shm_addr;
 
+#    if !defined(FIPS_MODE)
 static void cleanup_shm(void)
 {
     shmdt(shm_addr);
 }
+#    endif
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
@@ -434,8 +463,11 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
+#    ifndef FIPS_MODE
+            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);
+#    endif
         }
     }
     return seeded;
@@ -692,14 +724,18 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
@@ -719,7 +755,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
         int fork_id;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -814,4 +853,5 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */

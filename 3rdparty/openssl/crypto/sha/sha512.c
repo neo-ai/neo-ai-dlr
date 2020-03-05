@@ -1,12 +1,19 @@
 /*
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA512 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+#include <stdio.h>
 #include <openssl/opensslconf.h>
 /*-
  * IMPLEMENTATION NOTES.
@@ -50,7 +57,7 @@
 #include <openssl/opensslv.h>
 
 #include "internal/cryptlib.h"
-#include "internal/sha.h"
+#include "crypto/sha.h"
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || \
@@ -58,6 +65,14 @@
     defined(__aarch64__) || \
     defined(SHA512_ASM)
 # define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+#endif
+
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+# define U64(C)     C##UI64
+#elif defined(__arch64__)
+# define U64(C)     C##UL
+#else
+# define U64(C)     C##ULL
 #endif
 
 int sha512_224_init(SHA512_CTX *c)

@@ -1,13 +1,13 @@
 /*
  * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#include "dso_locl.h"
+#include "dso_local.h"
 #include "internal/refcount.h"
 
 static DSO_METHOD *default_DSO_meth = NULL;
@@ -111,7 +111,7 @@ int DSO_up_ref(DSO *dso)
     if (CRYPTO_UP_REF(&dso->references, &i, dso->lock) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("DSO", r);
+    REF_PRINT_COUNT("DSO", dso);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }

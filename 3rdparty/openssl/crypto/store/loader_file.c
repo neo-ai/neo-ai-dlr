@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -24,12 +24,12 @@
 #include <openssl/store.h>
 #include <openssl/ui.h>
 #include <openssl/x509.h>        /* For the PKCS8 stuff o.O */
-#include "internal/asn1_int.h"
-#include "internal/ctype.h"
+#include "crypto/asn1.h"
+#include "crypto/ctype.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
-#include "internal/store_int.h"
-#include "store_locl.h"
+#include "crypto/store.h"
+#include "store_local.h"
 
 #ifdef _WIN32
 # define stat    _stat
@@ -824,8 +824,9 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         }
 
         if (stat(path_data[i].path, &st) < 0) {
-            SYSerr(SYS_F_STAT, errno);
-            ERR_add_error_data(1, path_data[i].path);
+            ERR_raise_data(ERR_LIB_SYS, errno,
+                           "calling stat(%s)",
+                           path_data[i].path);
         } else {
             path = path_data[i].path;
         }
@@ -929,7 +930,8 @@ static int file_expect(OSSL_STORE_LOADER_CTX *ctx, int expected)
     return 1;
 }
 
-static int file_find(OSSL_STORE_LOADER_CTX *ctx, OSSL_STORE_SEARCH *search)
+static int file_find(OSSL_STORE_LOADER_CTX *ctx,
+                     const OSSL_STORE_SEARCH *search)
 {
     /*
      * If ctx == NULL, the library is looking to know if this loader supports

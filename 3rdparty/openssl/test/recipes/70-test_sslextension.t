@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -201,7 +201,7 @@ $proxy->start();
 ok($fatal_alert, "Duplicate ServerHello extension");
 
 SKIP: {
-    skip "TLS <= 1.2 disabled", 3 if $no_below_tls13;
+    skip "TLS <= 1.2 disabled", 2 if $no_below_tls13;
 
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
@@ -217,7 +217,10 @@ SKIP: {
     $proxy->clientflags("-no_tls1_3 -noservername");
     $proxy->start();
     ok($fatal_alert, "Unsolicited server name extension");
-
+}
+SKIP: {
+    skip "TLS <= 1.2 disabled or EC disabled", 1
+        if $no_below_tls13 || disabled("ec");
     #Test 5: Inject a noncompliant supported_groups extension (<= TLSv1.2)
     $proxy->clear();
     $proxy->filter(\&inject_unsolicited_extension);

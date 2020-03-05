@@ -1,14 +1,14 @@
 /*
  * Copyright 1998-2001 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_HEADER_BASE_H
-#define OPENSSL_HEADER_BASE_H
+#ifndef OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
+#define OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 
 /* Needed for BORINGSSL_MAKE_DELETER */
 # include <openssl/bio.h>
@@ -108,4 +108,4 @@ BORINGSSL_MAKE_DELETER(SSL_SESSION, SSL_SESSION_free)
 }  /* extern C++ */
 
 
-#endif  /* OPENSSL_HEADER_BASE_H */
+#endif  /* OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H */

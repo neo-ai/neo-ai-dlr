@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -10,17 +10,7 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
-#include "../ssl/ssl_locl.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
-
+#include "../ssl/ssl_local.h"
 #include "testutil.h"
 
 #define IVLEN   12
@@ -175,9 +165,10 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 {
 }
 
-int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
-                       const EVP_MD **md, int *mac_pkey_type,
-                       size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
+int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
+                       const EVP_CIPHER **enc, const EVP_MD **md,
+                       int *mac_pkey_type, size_t *mac_secret_size,
+                       SSL_COMP **comp, int use_etm)
 
 {
     return 0;
@@ -196,7 +187,7 @@ int ssl_log_secret(SSL *ssl,
     return 1;
 }
 
-const EVP_MD *ssl_md(int idx)
+const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
 {
     return EVP_sha256();
 }
@@ -214,6 +205,14 @@ int ossl_statem_export_allowed(SSL *s)
 int ossl_statem_export_early_allowed(SSL *s)
 {
     return 1;
+}
+
+void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
+{
+}
+
+void ssl_evp_md_free(const EVP_MD *md)
+{
 }
 
 /* End of mocked out code */

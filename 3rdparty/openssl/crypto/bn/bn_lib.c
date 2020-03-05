@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -10,12 +10,12 @@
 #include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include <openssl/opensslconf.h>
-#include "internal/constant_time_locl.h"
+#include "internal/constant_time.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
-#if OPENSSL_API_COMPAT < 0x00908000L
+#ifndef OPENSSL_NO_DEPRECATED_0_9_8
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -322,15 +322,19 @@ BIGNUM *BN_dup(const BIGNUM *a)
 
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 {
+    int bn_words;
+
     bn_check_top(b);
+
+    bn_words = BN_get_flags(b, BN_FLG_CONSTTIME) ? b->dmax : b->top;
 
     if (a == b)
         return a;
-    if (bn_wexpand(a, b->top) == NULL)
+    if (bn_wexpand(a, bn_words) == NULL)
         return NULL;
 
     if (b->top > 0)
-        memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
+        memcpy(a->d, b->d, sizeof(b->d[0]) * bn_words);
 
     a->neg = b->neg;
     a->top = b->top;
@@ -575,6 +579,24 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
     if (tolen < 0)
         return -1;
     return bn2binpad(a, to, tolen, little);
+}
+
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+#ifdef B_ENDIAN
+    return BN_bin2bn(s, len, ret);
+#else
+    return BN_lebin2bn(s, len, ret);
+#endif
+}
+
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+#ifdef B_ENDIAN
+    return BN_bn2binpad(a, to, tolen);
+#else
+    return BN_bn2lebinpad(a, to, tolen);
+#endif
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)

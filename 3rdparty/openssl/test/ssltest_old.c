@@ -1,13 +1,19 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include "e_os.h"
 
@@ -71,7 +77,7 @@
 #ifdef OPENSSL_SYS_WINDOWS
 # include <winsock.h>
 #else
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 static SSL_CTX *s_ctx = NULL;
@@ -884,7 +890,6 @@ int main(int argc, char *argv[])
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
         { APP_CALLBACK_STRING, 0 };
-    char *p;
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
@@ -922,12 +927,6 @@ int main(int argc, char *argv[])
     debug = 0;
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
     bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     s_cctx = SSL_CONF_CTX_new();
@@ -1331,8 +1330,8 @@ int main(int argc, char *argv[])
         min_version = TLS1_2_VERSION;
         max_version = TLS1_2_VERSION;
     } else {
-        min_version = SSL3_VERSION;
-        max_version = TLS_MAX_VERSION;
+        min_version = 0;
+        max_version = 0;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS
@@ -1345,8 +1344,8 @@ int main(int argc, char *argv[])
             min_version = DTLS1_2_VERSION;
             max_version = DTLS1_2_VERSION;
         } else {
-            min_version = DTLS_MIN_VERSION;
-            max_version = DTLS_MAX_VERSION;
+            min_version = 0;
+            max_version = 0;
         }
     }
 #endif
@@ -1492,12 +1491,15 @@ int main(int argc, char *argv[])
     (void)no_dhe;
 #endif
 
-    if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
-        (!SSL_CTX_load_verify_locations(s_ctx2, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx2)) ||
-        (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(c_ctx))) {
+    if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
+          || SSL_CTX_load_verify_dir(s_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx)
+        || !(SSL_CTX_load_verify_file(s_ctx2, CAfile)
+             || SSL_CTX_load_verify_dir(s_ctx2, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx2)
+        || !(SSL_CTX_load_verify_file(c_ctx, CAfile)
+             || SSL_CTX_load_verify_dir(c_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(c_ctx)) {
         ERR_print_errors(bio_err);
     }
 
@@ -1857,10 +1859,6 @@ int main(int argc, char *argv[])
     SSL_SESSION_free(server_sess);
     SSL_SESSION_free(client_sess);
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = EXIT_FAILURE;
-#endif
     BIO_free(bio_err);
     EXIT(ret);
 }

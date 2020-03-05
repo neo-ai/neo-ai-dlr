@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,7 +15,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-#include "../crypto/rand/rand_lcl.h"
+#include "../crypto/rand/rand_local.h"
 
 #include "testutil.h"
 #include "drbg_cavs_data.h"
@@ -71,8 +71,10 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -130,8 +132,10 @@ static int single_kat_pr_false(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -194,8 +198,10 @@ static int single_kat_pr_true(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -243,11 +249,17 @@ err:
     return failures == 0;
 }
 
-static int test_cavs_kats(int i)
+static int test_cavs_kats(const struct drbg_kat *test[], int i)
 {
-    const struct drbg_kat *td = drbg_test[i];
+    const struct drbg_kat *td = test[i];
     int rv = 0;
 
+#ifdef FIPS_MODE
+    /* FIPS mode doesn't support instantiating without a derivation function */
+    if ((td->flags & USE_DF) == 0)
+        return TEST_skip("instantiating without derivation function "
+                         "is not supported in FIPS mode");
+#endif
     switch (td->type) {
     case NO_RESEED:
         if (!single_kat_no_reseed(td))
@@ -261,7 +273,7 @@ static int test_cavs_kats(int i)
         if (!single_kat_pr_true(td))
             goto err;
         break;
-    default:	/* cant happen */
+    default:    /* cant happen */
         goto err;
     }
     rv = 1;
@@ -269,10 +281,28 @@ err:
     return rv;
 }
 
+static int test_cavs_ctr(int i)
+{
+    return test_cavs_kats(drbg_ctr_test, i);
+}
+
+static int test_cavs_hmac(int i)
+{
+    return test_cavs_kats(drbg_hmac_test, i);
+}
+
+static int test_cavs_hash(int i)
+{
+    return test_cavs_kats(drbg_hash_test, i);
+}
+
 int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
 
-    ADD_ALL_TESTS(test_cavs_kats, drbg_test_nelem);
+    ADD_ALL_TESTS(test_cavs_ctr,  drbg_ctr_nelem);
+    ADD_ALL_TESTS(test_cavs_hmac, drbg_hmac_nelem);
+    ADD_ALL_TESTS(test_cavs_hash, drbg_hash_nelem);
+
     return 1;
 }

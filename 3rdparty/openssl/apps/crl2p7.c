@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -27,14 +27,19 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS crl2pkcs7_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"nocrl", OPT_NOCRL, '-', "No crl to load, just certs from '-certfile'"},
     {"certfile", OPT_CERTFILE, '<',
      "File of chain of certs to a trusted CA; can be repeated"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {NULL}
 };
 

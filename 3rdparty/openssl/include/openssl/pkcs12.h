@@ -1,14 +1,20 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PKCS12_H
-# define HEADER_PKCS12_H
+#ifndef OPENSSL_PKCS12_H
+# define OPENSSL_PKCS12_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_PKCS12_H
+# endif
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>
@@ -55,7 +61,7 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 /* Compatibility macros */
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 
 # define M_PKCS12_bag_type PKCS12_bag_type
 # define M_PKCS12_cert_bag_type PKCS12_cert_bag_type
@@ -207,9 +213,9 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
                     int safe_nid, int iter, const char *pass);
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
 
-int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
+int i2d_PKCS12_bio(BIO *bp, const PKCS12 *p12);
 # ifndef OPENSSL_NO_STDIO
-int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12);
+int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12);
 # endif
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
 # ifndef OPENSSL_NO_STDIO

@@ -83,6 +83,16 @@
  is, of course, to choose a different set of directories by using
  --prefix and --openssldir when configuring.
 
+
+ Special notes for Universal Windows Platform builds, a.k.a. VC-*-UWP
+ --------------------------------------------------------------------
+
+ - UWP targets only support building the static and dynamic libraries.
+
+ - You should define the platform type to "uwp" and the target arch via
+   "vcvarsall.bat" before you compile. For example, if you want to build
+   "arm64" builds, you should type "vcvarsall.bat x86_arm64 uwp".
+
  mingw and mingw64
  =================
 
@@ -108,21 +118,6 @@
 
    This naturally implies that you've installed corresponding add-on
    packages.
-
- Independently of the method chosen to build for mingw, the installation
- paths are similar to those used when building with VC-* targets, except
- that in case the fallbacks mentioned there aren't possible (typically
- when cross compiling on Linux), the paths will be the following:
-
- For mingw:
-
-     PREFIX:      C:/Program Files (x86)/OpenSSL
-     OPENSSLDIR   C:/Program Files (x86)/Common Files/SSL
-
- For mingw64:
-
-     PREFIX:      C:/Program Files/OpenSSL
-     OPENSSLDIR   C:/Program Files/Common Files/SSL
 
  Linking your application
  ========================

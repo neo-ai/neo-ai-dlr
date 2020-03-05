@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -219,13 +219,6 @@ static int test_bio_nonclear_rst(void)
 finish:
     BIO_free(bio);
     return ok;
-}
-
-int global_init(void)
-{
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    return 1;
 }
 
 int setup_tests(void)

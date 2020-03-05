@@ -1,17 +1,22 @@
 /*
- * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * CMAC low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/cmac.h>
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 
 /*
  * CMAC "ASN1" method. This is just here to indicate the maximum CMAC output
@@ -25,8 +30,11 @@ static int cmac_size(const EVP_PKEY *pkey)
 
 static void cmac_key_free(EVP_PKEY *pkey)
 {
-    CMAC_CTX *cmctx = EVP_PKEY_get0(pkey);
-    CMAC_CTX_free(cmctx);
+    EVP_MAC_CTX *cmctx = EVP_PKEY_get0(pkey);
+    EVP_MAC *mac = cmctx == NULL ? NULL : EVP_MAC_CTX_mac(cmctx);
+
+    EVP_MAC_CTX_free(cmctx);
+    EVP_MAC_free(mac);
 }
 
 const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {

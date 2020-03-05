@@ -1,8 +1,8 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,12 +15,13 @@
 #include "internal/o_dir.h"
 #include <openssl/bio.h>
 #include <openssl/pem.h>
+#include <openssl/store.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
 
@@ -513,13 +514,13 @@ void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
 {
-    return s->s3 != NULL ? s->s3->tmp.peer_ca_names : NULL;
+    return s->s3.tmp.peer_ca_names;
 }
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server)
-        return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
+        return s->s3.tmp.peer_ca_names;
     return s->client_ca_names != NULL ?  s->client_ca_names
                                       : s->ctx->client_ca_names;
 }
@@ -601,14 +602,6 @@ static unsigned long xname_hash(const X509_NAME *a)
     return X509_NAME_hash((X509_NAME *)a);
 }
 
-/**
- * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
- * it doesn't really have anything to do with clients (except that a common use
- * for a stack of CAs is to send it to the client). Actually, it doesn't have
- * much to do with CAs, either, since it will load any old cert.
- * \param file the file containing one or more certs.
- * \return a ::STACK containing the certs.
- */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 {
     BIO *in = BIO_new(BIO_s_file());
@@ -666,15 +659,6 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     return ret;
 }
 
-/**
- * Add a file of certs to a stack.
- * \param stack the stack to add to.
- * \param file the file to add from. All certs in this file that are not
- * already in the stack will be added.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                         const char *file)
 {
@@ -725,17 +709,6 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/**
- * Add a directory of certs to a stack.
- * \param stack the stack to append to.
- * \param dir the directory to append from. All files in this directory will be
- * examined as potential certs. Any that are acceptable to
- * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will be
- * included.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                        const char *dir)
 {
@@ -766,8 +739,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     }
 
     if (errno) {
-        SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-        ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
+        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                       "calling OPENSSL_dir_read(%s)",
+                       dir);
         SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
         goto err;
     }
@@ -778,6 +752,71 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     if (d)
         OPENSSL_DIR_end(&d);
 
+    return ret;
+}
+
+static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
+                              const char *uri, int depth)
+{
+    int ok = 1;
+    OSSL_STORE_CTX *ctx = NULL;
+    X509 *x = NULL;
+    X509_NAME *xn = NULL;
+
+    if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
+        goto err;
+
+    while (!OSSL_STORE_eof(ctx) && !OSSL_STORE_error(ctx)) {
+        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
+        int infotype = info == 0 ? 0 : OSSL_STORE_INFO_get_type(info);
+
+        if (info == NULL)
+            continue;
+
+        if (infotype == OSSL_STORE_INFO_NAME) {
+            /*
+             * This is an entry in the "directory" represented by the current
+             * uri.  if |depth| allows, dive into it.
+             */
+            if (depth > 0)
+                ok = add_uris_recursive(stack, OSSL_STORE_INFO_get0_NAME(info),
+                                        depth - 1);
+        } else if (infotype == OSSL_STORE_INFO_CERT) {
+            if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
+                || (xn = X509_get_subject_name(x)) == NULL
+                || (xn = X509_NAME_dup(xn)) == NULL)
+                goto err;
+            if (sk_X509_NAME_find(stack, xn) >= 0) {
+                /* Duplicate. */
+                X509_NAME_free(xn);
+            } else if (!sk_X509_NAME_push(stack, xn)) {
+                X509_NAME_free(xn);
+                goto err;
+            }
+        }
+
+        OSSL_STORE_INFO_free(info);
+    }
+
+    ERR_clear_error();
+    goto done;
+
+ err:
+    ok = 0;
+ done:
+    OSSL_STORE_close(ctx);
+
+    return ok;
+}
+
+int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                         const char *store)
+{
+    int (*oldcmp) (const X509_NAME *const *a, const X509_NAME *const *b)
+        = sk_X509_NAME_set_cmp_func(stack, xname_sk_cmp);
+    int ret = add_uris_recursive(stack, store, 1);
+
+    (void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
     return ret;
 }
 

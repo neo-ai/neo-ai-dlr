@@ -1,7 +1,7 @@
 /*
- * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,6 +14,7 @@
 #include "internal/conf.h"
 #include "internal/dso.h"
 #include <openssl/x509.h>
+#include <openssl/trace.h>
 
 #define DSO_mod_init_name "OPENSSL_init"
 #define DSO_mod_finish_name "OPENSSL_finish"
@@ -92,6 +93,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
         return 1;
     }
 
+    OSSL_TRACE1(CONF, "Configuration in section %s\n", vsection);
     values = NCONF_get_section(cnf, vsection);
 
     if (!values)
@@ -100,6 +102,8 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
         ret = module_run(cnf, vl->name, vl->value, flags);
+        OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
+                    vl->name, vl->value, ret);
         if (ret <= 0)
             if (!(flags & CONF_MFLAGS_IGNORE_ERRORS))
                 return ret;
@@ -194,19 +198,20 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
     const char *path = NULL;
     int errcode = 0;
     CONF_MODULE *md;
+
     /* Look for alternative path in module section */
     path = NCONF_get_string(cnf, value, "path");
-    if (!path) {
+    if (path == NULL) {
         ERR_clear_error();
         path = name;
     }
     dso = DSO_load(NULL, path, NULL, 0);
-    if (!dso) {
+    if (dso == NULL) {
         errcode = CONF_R_ERROR_LOADING_DSO;
         goto err;
     }
     ifunc = (conf_init_func *)DSO_bind_func(dso, DSO_mod_init_name);
-    if (!ifunc) {
+    if (ifunc == NULL) {
         errcode = CONF_R_MISSING_INIT_FUNCTION;
         goto err;
     }
@@ -214,7 +219,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
     /* All OK, add module */
     md = module_add(dso, name, ifunc, ffunc);
 
-    if (!md)
+    if (md == NULL)
         goto err;
 
     return md;
@@ -529,7 +534,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
                 lstart++;
         }
         p = strchr(lstart, sep);
-        if (p == lstart || !*lstart)
+        if (p == lstart || *lstart == '\0')
             ret = list_cb(NULL, 0, arg);
         else {
             if (p)

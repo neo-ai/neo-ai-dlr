@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -136,10 +136,10 @@ void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
                        int line);
 # define SSL_AD_NO_ALERT    -1
 # ifndef OPENSSL_NO_ERR
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (f), (r), \
+#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), \
                                                    OPENSSL_FILE, OPENSSL_LINE)
 # else
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (f), (r), NULL, 0)
+#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), NULL, 0)
 # endif
 
 int ossl_statem_in_error(const SSL *s);

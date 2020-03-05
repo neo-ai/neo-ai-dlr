@@ -1,19 +1,25 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/err.h>
 
 #include "internal/cryptlib.h"
-#include "internal/bn_int.h"
-#include "ec_lcl.h"
+#include "crypto/bn.h"
+#include "ec_local.h"
 #include "internal/refcount.h"
 
 /*
@@ -815,12 +821,14 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     const EC_POINT *generator;
     EC_POINT *tmp_point = NULL, *base = NULL, **var;
-    BN_CTX *new_ctx = NULL;
     const BIGNUM *order;
     size_t i, bits, w, pre_points_per_block, blocksize, numblocks, num;
     EC_POINT **points = NULL;
     EC_PRE_COMP *pre_comp;
     int ret = 0;
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     /* if there is an old EC_PRE_COMP object, throw it away */
     EC_pre_comp_free(group);
@@ -833,11 +841,12 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         goto err;
     }
 
-    if (ctx == NULL) {
+#ifndef FIPS_MODE
+    if (ctx == NULL)
         ctx = new_ctx = BN_CTX_new();
-        if (ctx == NULL)
-            goto err;
-    }
+#endif
+    if (ctx == NULL)
+        goto err;
 
     BN_CTX_start(ctx);
 
@@ -949,7 +958,9 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     EC_ec_pre_comp_free(pre_comp);
     if (points) {
         EC_POINT **p;

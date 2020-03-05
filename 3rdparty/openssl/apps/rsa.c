@@ -1,11 +1,14 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use the deprecated RSA low level calls */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_RSA
@@ -37,29 +40,36 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rsa_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'f', "Input format, one of DER PEM"},
-    {"outform", OPT_OUTFORM, 'f', "Output format, one of DER PEM PVK"},
+    {"check", OPT_CHECK, '-', "Verify key consistency"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
+    {"inform", OPT_INFORM, 'f', "Input format, one of DER PEM"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
-    {"pubout", OPT_PUBOUT, '-', "Output a public key"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKey"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, one of DER PEM PVK"},
+    {"pubout", OPT_PUBOUT, '-', "Output a public key"},
     {"RSAPublicKey_out", OPT_RSAPUBKEY_OUT, '-', "Output is an RSAPublicKey"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
-    {"check", OPT_CHECK, '-', "Verify key consistency"},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
+
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+    OPT_SECTION("PVK"),
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
-# endif
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
     {NULL}
 };
@@ -227,7 +237,6 @@ int rsa_main(int argc, char **argv)
 
             while ((err = ERR_peek_error()) != 0 &&
                    ERR_GET_LIB(err) == ERR_LIB_RSA &&
-                   ERR_GET_FUNC(err) == RSA_F_RSA_CHECK_KEY_EX &&
                    ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE) {
                 BIO_printf(out, "RSA key error: %s\n",
                            ERR_reason_error_string(err));

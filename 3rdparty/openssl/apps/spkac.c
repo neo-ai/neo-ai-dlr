@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -28,22 +28,27 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
-    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
-    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
-    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
-    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
     {"spksect", OPT_SPKSECT, 's',
      "Specify the name of an SPKAC-dedicated section of configuration"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
+    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
+    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
+    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
     {NULL}
 };
 

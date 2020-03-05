@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "bio_lcl.h"
+#include "bio_local.h"
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -226,10 +226,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                              BIO_ADDRINFO_socktype(c->addr_iter),
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
-                SYSerr(SYS_F_SOCKET, get_last_socket_error());
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_addr,
-                                   " service=", c->param_serv);
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling socket(%s, %s)",
+                                c->param_addr, c->param_serv);
                 BIOerr(BIO_F_ACPT_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
@@ -433,7 +432,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
                 b->init = 1;
             } else if (num == 1) {
                 OPENSSL_free(data->param_serv);
-                data->param_serv = BUF_strdup(ptr);
+                data->param_serv = OPENSSL_strdup(ptr);
                 b->init = 1;
             } else if (num == 2) {
                 data->bind_mode |= BIO_SOCK_NONBLOCK;
@@ -527,7 +526,12 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
         break;
-
+    case BIO_CTRL_EOF:
+        if (b->next_bio == NULL)
+            ret = 0;
+        else
+            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        break;
     default:
         ret = 0;
         break;

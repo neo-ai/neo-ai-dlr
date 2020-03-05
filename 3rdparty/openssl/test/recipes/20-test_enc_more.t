@@ -2,7 +2,7 @@
 # Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -30,14 +30,14 @@ my $ciphersstatus = undef;
 my @ciphers =
     grep(! /wrap|^$|^[^-]/,
          (map { split /\s+/ }
-          run(app([$cmd, "enc", "-ciphers"]),
+          run(app([$cmd, "enc", "-list"]),
               capture => 1, statusvar => \$ciphersstatus)));
 
 plan tests => 2 + scalar @ciphers;
 
 SKIP: {
     skip "Problems getting ciphers...", 1 + scalar(@ciphers)
-        unless ok($ciphersstatus, "Running 'openssl enc -ciphers'");
+        unless ok($ciphersstatus, "Running 'openssl enc -list'");
     unless (ok(copy($testsrc, $plaintext), "Copying $testsrc to $plaintext")) {
         diag($!);
         skip "Not initialized, skipping...", scalar(@ciphers);
@@ -54,8 +54,5 @@ SKIP: {
            && run(app([@common, "-d", "-in", $cipherfile, "-out", $clearfile]))
            && compare_text($plaintext, $clearfile) == 0
            , $ciphername);
-        unlink $cipherfile, $clearfile;
     }
 }
-
-unlink $plaintext;

@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -30,20 +30,25 @@ typedef enum OPTION_choice {
 
 const OPTIONS engine_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] engine...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  engine... Engines to load\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"t", OPT_T, '-', "Check that specified engine is available"},
+    {"pre", OPT_PRE, 's', "Run command against the ENGINE before loading it"},
+    {"post", OPT_POST, 's', "Run command against the ENGINE after loading it"},
+
+    OPT_SECTION("Output"),
     {"v", OPT_V, '-', "List 'control commands' For each specified engine"},
     {"vv", OPT_VV, '-', "Also display each command's description"},
     {"vvv", OPT_VVV, '-', "Also add the input flags for each command"},
     {"vvvv", OPT_VVVV, '-', "Also show internal input flags"},
     {"c", OPT_C, '-', "List the capabilities of specified engine"},
-    {"t", OPT_T, '-', "Check that specified engine is available"},
     {"tt", OPT_TT, '-', "Display error trace for unavailable engines"},
-    {"pre", OPT_PRE, 's', "Run command against the ENGINE before loading it"},
-    {"post", OPT_POST, 's', "Run command against the ENGINE after loading it"},
     {OPT_MORE_STR, OPT_EOF, 1,
      "Commands are like \"SO_PATH:/lib/libdriver.so\""},
+
+    OPT_PARAMETERS(),
+    {"engine", 0, 0, "ID of engine(s) to load"},
     {NULL}
 };
 

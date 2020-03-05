@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -23,7 +23,7 @@ my $std_openssl_cnf =
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 5;
+plan tests => 6;
  SKIP: {
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "CAss.cnf").'"';
      skip "failed creating CA structure", 4
@@ -51,10 +51,22 @@ plan tests => 5;
         'creating new pre-certificate');
 }
 
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+	      if disabled("sm2");
 
-rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem", "newkey.pem";
-
+    is(yes(cmdstr(app(["openssl", "ca", "-config",
+                       srctop_file("test", "CAss.cnf"),
+                       "-in", srctop_file("test", "certs", "sm2-csr.pem"),
+                       "-out", "sm2-test.crt",
+                       "-sigopt", "sm2_id:1234567812345678",
+                       "-sm2-id", "1234567812345678",
+                       "-md", "sm3",
+                       "-cert", srctop_file("test", "certs", "sm2-root.crt"),
+                       "-keyfile", srctop_file("test", "certs", "sm2-root.key")]))),
+       0,
+       "Signing SM2 certificate request");
+}
 
 sub yes {
     my $cntr = 10;

@@ -1,7 +1,7 @@
 /*
  * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -25,16 +25,23 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rand_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] num\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] num\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"out", OPT_OUT, '>', "Output file"},
-    OPT_R_OPTIONS,
-    {"base64", OPT_BASE64, '-', "Base64 encode output"},
-    {"hex", OPT_HEX, '-', "Hex encode output"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"base64", OPT_BASE64, '-', "Base64 encode output"},
+    {"hex", OPT_HEX, '-', "Hex encode output"},
+
+    OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"num", 0, 0, "Number of bytes to generate"},
     {NULL}
 };
 

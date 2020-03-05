@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -10,7 +10,7 @@
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# forms are granted according to the License.
 # ====================================================================
 #
 # whirlpool_block_mmx implementation.
@@ -56,8 +56,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0]);
 
@@ -69,19 +68,19 @@ sub LL()
 					unshift(@_,pop(@_));
 				  }
 				}
-	else			{ die "unvalid SCALE value"; }
+	else			{ die "invalid SCALE value"; }
 }
 
 sub scale()
 {	if	($SCALE==2)	{ &lea(@_[0],&DWP(0,@_[1],@_[1])); }
 	elsif	($SCALE==8)	{ &lea(@_[0],&DWP(0,"",@_[1],8));  }
-	else			{ die "unvalid SCALE value";       }
+	else			{ die "invalid SCALE value";       }
 }
 
 sub row()
 {	if	($SCALE==2)	{ ((8-shift)&7); }
 	elsif	($SCALE==8)	{ (8*shift);     }
-	else			{ die "unvalid SCALE value"; }
+	else			{ die "invalid SCALE value"; }
 }
 
 $tbl="ebp";
@@ -504,4 +503,4 @@ for($i=0;$i<8;$i++) {
 &function_end_B("whirlpool_block_mmx");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

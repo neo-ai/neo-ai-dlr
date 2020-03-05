@@ -1,16 +1,16 @@
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 #include "e_os.h"
-#include "eng_int.h"
+#include "eng_local.h"
 #include <openssl/evp.h>
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 
 /*
  * If this symbol is defined then ENGINE_get_pkey_asn1_meth_engine(), the
@@ -147,7 +147,8 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
     nidcount = e->pkey_asn1_meths(e, NULL, &nids, 0);
     for (i = 0; i < nidcount; i++) {
         e->pkey_asn1_meths(e, &ameth, NULL, nids[i]);
-        if (((int)strlen(ameth->pem_str) == len)
+        if (ameth != NULL
+            && ((int)strlen(ameth->pem_str) == len)
             && strncasecmp(ameth->pem_str, str, len) == 0)
             return ameth;
     }

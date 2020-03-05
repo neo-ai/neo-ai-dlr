@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -214,7 +214,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     BIO *p7bio = NULL;
     BIO *tmpin = NULL, *tmpout = NULL;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_INVALID_NULL_POINTER);
         return 0;
     }
@@ -379,7 +379,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
     X509 *signer;
     int i;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS, PKCS7_R_INVALID_NULL_POINTER);
         return NULL;
     }
@@ -480,7 +480,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
     int ret = 0, i;
     char *buf = NULL;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DECRYPT, PKCS7_R_INVALID_NULL_POINTER);
         return 0;
     }

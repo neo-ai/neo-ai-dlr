@@ -1,7 +1,7 @@
 /*
- * Copyright 2005-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,7 +36,14 @@
  *
  */
 
-#include "wp_locl.h"
+/*
+ * Whirlpool low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+#include "internal/cryptlib.h"
+#include "wp_local.h"
 #include <string.h>
 
 typedef unsigned char u8;
@@ -75,7 +82,6 @@ typedef unsigned long long u64;
 #   define OPENSSL_SMALL_FOOTPRINT
 #  endif
 #  define GO_FOR_MMX(ctx,inp,num)     do {                    \
-        extern unsigned long OPENSSL_ia32cap_P[];               \
         void whirlpool_block_mmx(void *,const void *,size_t);   \
         if (!(OPENSSL_ia32cap_P[0] & (1<<23)))  break;          \
         whirlpool_block_mmx(ctx->H.c,inp,num);  return;         \

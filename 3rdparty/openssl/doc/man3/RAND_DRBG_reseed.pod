@@ -38,10 +38,10 @@ and mixing in the specified additional data provided in the buffer B<adin>
 of length B<adinlen>.
 The additional data can be omitted by setting B<adin> to NULL and B<adinlen>
 to 0.
-An immediate reseeding from a live entropy source can be requested by setting
-the B<prediction_resistance> flag to 1.
-This feature is not implemented yet, so reseeding with prediction resistance
-requested will always fail.
+An immediate reseeding can be requested by setting the
+B<prediction_resistance> flag to 1.
+Requesting prediction resistance is a relative expensive operation.
+See NOTES section for more details.
 
 RAND_DRBG_set_reseed_interval()
 sets the reseed interval of the B<drbg>, which is the maximum allowed number
@@ -104,11 +104,13 @@ L<RAND_DRBG(7)>
 
 The RAND_DRBG functions were added in OpenSSL 1.1.1.
 
+Prediction resistance is supported from OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

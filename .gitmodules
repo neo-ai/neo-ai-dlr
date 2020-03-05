@@ -5,3 +5,9 @@
 [submodule "3rdparty/treelite"]
 	path = 3rdparty/treelite
 	url = https://github.com/neo-ai/treelite
+[submodule "3rdparty/curl"]
+	path = 3rdparty/curl
+	url = https://github.com/curl/curl.git
+[submodule "3rdparty/openssl"]
+	path = 3rdparty/openssl
+	url = https://github.com/openssl/openssl.git 

@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,29 +21,41 @@
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, int show_chain);
+                 STACK_OF(X509_CRL) *crls, int show_chain,
+                 unsigned char *sm2id, size_t sm2idlen);
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE,
+    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
+    OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM, OPT_NAMEOPT,
-    OPT_VERBOSE
+    OPT_VERBOSE, OPT_SM2ID, OPT_SM2HEXID
 } OPTION_CHOICE;
 
 const OPTIONS verify_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
     {"verbose", OPT_VERBOSE, '-',
         "Print extra information about the operations being performed."},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+
+    OPT_SECTION("Certificate chain"),
     {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
     {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
+    {"CAstore", OPT_CASTORE, ':', "URI to a store of trusted certificates"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates store"},
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
     {"trusted", OPT_TRUSTED, '<', "A file of trusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
@@ -52,11 +64,17 @@ const OPTIONS verify_options[] = {
         "Attempt to download CRL information for this certificate"},
     {"show_chain", OPT_SHOW_CHAIN, '-',
         "Display information about the certificate chain"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+
     OPT_V_OPTIONS,
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate"},
 #endif
+
+    OPT_PARAMETERS(),
+    {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
     {NULL}
 };
 
@@ -67,10 +85,13 @@ int verify_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    const char *prog, *CApath = NULL, *CAfile = NULL;
-    int noCApath = 0, noCAfile = 0;
+    const char *prog, *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
@@ -84,20 +105,20 @@ int verify_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(verify_options);
-            BIO_printf(bio_err, "Recognized usages:\n");
+            BIO_printf(bio_err, "\nRecognized certificate chain purposes:\n");
             for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-                X509_PURPOSE *ptmp;
-                ptmp = X509_PURPOSE_get0(i);
-                BIO_printf(bio_err, "\t%-10s\t%s\n",
+                X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
+
+                BIO_printf(bio_err, "  %-15s  %s\n",
                         X509_PURPOSE_get0_sname(ptmp),
                         X509_PURPOSE_get0_name(ptmp));
             }
 
-            BIO_printf(bio_err, "Recognized verify names:\n");
+            BIO_printf(bio_err, "Recognized certificate policy names:\n");
             for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
-                const X509_VERIFY_PARAM *vptmp;
-                vptmp = X509_VERIFY_PARAM_get0(i);
-                BIO_printf(bio_err, "\t%-10s\n",
+                const X509_VERIFY_PARAM *vptmp = X509_VERIFY_PARAM_get0(i);
+
+                BIO_printf(bio_err, "  %s\n",
                         X509_VERIFY_PARAM_get0_name(vptmp));
             }
             ret = 0;
@@ -113,11 +134,17 @@ int verify_main(int argc, char **argv)
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_NOCAPATH:
             noCApath = 1;
             break;
         case OPT_NOCAFILE:
             noCAfile = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
@@ -129,6 +156,7 @@ int verify_main(int argc, char **argv)
             /* Zero or more times */
             noCAfile = 1;
             noCApath = 1;
+            noCAstore = 1;
             if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL,
                             "trusted certificates"))
                 goto end;
@@ -158,18 +186,43 @@ int verify_main(int argc, char **argv)
         case OPT_VERBOSE:
             v_verbose = 1;
             break;
+        case OPT_SM2ID:
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
+                goto end;
+            }
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
+                goto end;
+            }
+            /* try to parse the input as hex string first */
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
+            break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
-    if (trusted != NULL && (CAfile || CApath)) {
+    if (trusted != NULL
+        && (CAfile != NULL || CApath != NULL || CAstore != NULL)) {
         BIO_printf(bio_err,
-                   "%s: Cannot use -trusted with -CAfile or -CApath\n",
+                   "%s: Cannot use -trusted with -CAfile, -CApath or -CAstore\n",
                    prog);
         goto end;
     }
 
-    if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
+    if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                              CAstore, noCAstore)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
 
@@ -183,16 +236,19 @@ int verify_main(int argc, char **argv)
 
     ret = 0;
     if (argc < 1) {
-        if (check(store, NULL, untrusted, trusted, crls, show_chain) != 1)
+        if (check(store, NULL, untrusted, trusted, crls, show_chain,
+                  sm2_id, sm2_idlen) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
             if (check(store, argv[i], untrusted, trusted, crls,
-                      show_chain) != 1)
+                      show_chain, sm2_id, sm2_idlen) != 1)
                 ret = -1;
     }
 
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
@@ -204,7 +260,8 @@ int verify_main(int argc, char **argv)
 
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, int show_chain)
+                 STACK_OF(X509_CRL) *crls, int show_chain,
+                 unsigned char *sm2id, size_t sm2idlen)
 {
     X509 *x = NULL;
     int i = 0, ret = 0;
@@ -216,18 +273,39 @@ static int check(X509_STORE *ctx, const char *file,
     if (x == NULL)
         goto end;
 
+    if (sm2id != NULL) {
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING *v;
+
+        v = ASN1_OCTET_STRING_new();
+        if (v == NULL) {
+            BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
+            goto end;
+        }
+
+        if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
+            BIO_printf(bio_err, "error: setting SM2 ID failed\n");
+            ASN1_OCTET_STRING_free(v);
+            goto end;
+        }
+
+        X509_set0_sm2_id(x, v);
+#endif
+    }
+
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
-        printf("error %s: X.509 store context allocation failed\n",
-               (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err, "error %s: X.509 store context allocation failed\n",
+                   (file == NULL) ? "stdin" : file);
         goto end;
     }
 
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
         X509_STORE_CTX_free(csc);
-        printf("error %s: X.509 store context initialization failed\n",
-               (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err,
+                   "error %s: X.509 store context initialization failed\n",
+                   (file == NULL) ? "stdin" : file);
         goto end;
     }
     if (tchain != NULL)
@@ -236,28 +314,30 @@ static int check(X509_STORE *ctx, const char *file,
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
     if (i > 0 && X509_STORE_CTX_get_error(csc) == X509_V_OK) {
-        printf("%s: OK\n", (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_out, "%s: OK\n", (file == NULL) ? "stdin" : file);
         ret = 1;
         if (show_chain) {
             int j;
 
             chain = X509_STORE_CTX_get1_chain(csc);
             num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
-            printf("Chain:\n");
+            BIO_printf(bio_out, "Chain:\n");
             for (j = 0; j < sk_X509_num(chain); j++) {
                 X509 *cert = sk_X509_value(chain, j);
-                printf("depth=%d: ", j);
+                BIO_printf(bio_out, "depth=%d: ", j);
                 X509_NAME_print_ex_fp(stdout,
                                       X509_get_subject_name(cert),
                                       0, get_nameopt());
                 if (j < num_untrusted)
-                    printf(" (untrusted)");
-                printf("\n");
+                    BIO_printf(bio_out, " (untrusted)");
+                BIO_printf(bio_out, "\n");
             }
             sk_X509_pop_free(chain, X509_free);
         }
     } else {
-        printf("error %s: verification failed\n", (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err,
+                   "error %s: verification failed\n",
+                   (file == NULL) ? "stdin" : file);
     }
     X509_STORE_CTX_free(csc);
 

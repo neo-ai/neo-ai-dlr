@@ -1,7 +1,7 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,7 +13,7 @@
 #include <openssl/buffer.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
-#include "ui_locl.h"
+#include "ui_local.h"
 
 UI *UI_new(void)
 {
@@ -874,13 +874,6 @@ int UI_get_result_maxsize(UI_STRING *uis)
 
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 {
-#if 0
-    /*
-     * This is placed here solely to preserve UI_F_UI_SET_RESULT
-     * To be removed for OpenSSL 1.2.0
-     */
-    UIerr(UI_F_UI_SET_RESULT, ERR_R_DISABLED);
-#endif
     return UI_set_result_ex(ui, uis, result, strlen(result));
 }
 

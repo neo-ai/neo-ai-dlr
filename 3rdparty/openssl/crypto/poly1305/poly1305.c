@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,8 +11,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 
-#include "internal/poly1305.h"
-#include "poly1305_local.h"
+#include "crypto/poly1305.h"
 
 size_t Poly1305_ctx_size(void)
 {
@@ -89,7 +88,7 @@ static void
 poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit);
 
 /*
- * Type-agnostic "rip-off" from constant_time_locl.h
+ * Type-agnostic "rip-off" from constant_time.h
  */
 # define CONSTANT_TIME_CARRY(a,b) ( \
          (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(a) * 8 - 1) \

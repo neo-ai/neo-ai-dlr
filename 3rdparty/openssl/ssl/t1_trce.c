@@ -1,13 +1,13 @@
 /*
  * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_SSL_TRACE
 
@@ -468,7 +468,6 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_heartbeat, "tls_heartbeat"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
@@ -783,9 +782,6 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         }
         break;
 
-    case TLSEXT_TYPE_heartbeat:
-        return 0;
-
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
@@ -1034,7 +1030,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
 
 static int ssl_get_keyex(const char **pname, const SSL *ssl)
 {
-    unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_k = ssl->s3.tmp.new_cipher->algorithm_mkey;
 
     if (alg_k & SSL_kRSA) {
         *pname = "rsa";
@@ -1113,6 +1109,10 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
     case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
             return 0;
+        break;
+    case SSL_kGOST:
+        ssl_print_hex(bio, indent + 2, "GostKeyTransportBlob", msg, msglen);
+        msglen = 0;
         break;
 
     }
@@ -1246,8 +1246,9 @@ static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
     while (clen > 0) {
         if (!ssl_print_certificate(bio, indent + 2, &msg, &clen))
             return 0;
-        if (!ssl_print_extensions(bio, indent + 2, server, SSL3_MT_CERTIFICATE,
-                                  &msg, &clen))
+        if (SSL_IS_TLS13(ssl)
+            && !ssl_print_extensions(bio, indent + 2, server,
+                                     SSL3_MT_CERTIFICATE, &msg, &clen))
             return 0;
 
     }

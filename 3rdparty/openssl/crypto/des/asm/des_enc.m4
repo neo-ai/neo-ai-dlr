@@ -1,6 +1,6 @@
-! Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+! Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 !
-! Licensed under the OpenSSL license (the "License").  You may not use
+! Licensed under the Apache License 2.0 (the "License").  You may not use
 ! this file except in compliance with the License.  You can obtain a copy
 ! in the file LICENSE in the source distribution or at
 ! https://www.openssl.org/source/license.html
@@ -28,8 +28,6 @@
 
 .ident "des_enc.m4 2.1"
 .file  "des_enc-sparc.S"
-
-#include <openssl/opensslconf.h>
 
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
@@ -106,15 +104,15 @@ changequote({,})
 ! technique.
 !
 ! The macro also loads address sbox 1 to 5 to global 1 to 5, address
-! sbox 6 to local6, and addres sbox 8 to out3.
+! sbox 6 to local6, and address sbox 8 to out3.
 !
-! Rotates the halfs 3 left to bring the sbox bits in convenient positions.
+! Rotates the halves 3 left to bring the sbox bits in convenient positions.
 !
 ! Loads key first round from address in parameter 5 to out0, out1.
 !
 ! After the original LibDES initial permutation, the resulting left
 ! is in the variable initially used for right and vice versa. The macro
-! implements the possibility to keep the halfs in the original registers.
+! implements the possibility to keep the halves in the original registers.
 !
 ! parameter 1  left
 ! parameter 2  right
@@ -1184,7 +1182,7 @@ DES_encrypt2:
 	add	%o7,global1,global1
 	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
-	! Set sbox address 1 to 6 and rotate halfs 3 left
+	! Set sbox address 1 to 6 and rotate halves 3 left
 	! Errors caught by destest? Yes. Still? *NO*
 
 	!sethi	%hi(DES_SPtrans), global1 ! address sbox 1

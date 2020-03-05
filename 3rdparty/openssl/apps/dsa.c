@@ -1,11 +1,14 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use the deprecated DSA_print */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_DSA
@@ -36,18 +39,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsa_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
-    {"in", OPT_IN, 's', "Input key"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"noout", OPT_NOOUT, '-', "Don't print key out"},
-    {"text", OPT_TEXT, '-', "Print the key in text"},
-    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
-    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_RC4
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
@@ -57,6 +50,22 @@ const OPTIONS dsa_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, 's', "Input key"},
+    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
+    {"noout", OPT_NOOUT, '-', "Don't print key out"},
+    {"text", OPT_TEXT, '-', "Print the key in text"},
+    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+
     {NULL}
 };
 
@@ -167,6 +176,7 @@ int dsa_main(int argc, char **argv)
             EVP_PKEY_free(pkey);
         }
     }
+
     if (dsa == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
         ERR_print_errors(bio_err);

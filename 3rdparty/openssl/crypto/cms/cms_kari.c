@@ -1,7 +1,7 @@
 /*
- * Copyright 2013-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,8 +14,8 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/aes.h>
-#include "cms_lcl.h"
-#include "internal/asn1_int.h"
+#include "cms_local.h"
+#include "crypto/asn1.h"
 
 /* Key Agreement Recipient Info (KARI) routines */
 
@@ -152,23 +152,37 @@ int CMS_RecipientEncryptedKey_cert_cmp(CMS_RecipientEncryptedKey *rek,
         return -1;
 }
 
-int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
+int CMS_RecipientInfo_kari_set0_pkey_and_peer(CMS_RecipientInfo *ri, EVP_PKEY *pk, X509 *peer)
 {
     EVP_PKEY_CTX *pctx;
     CMS_KeyAgreeRecipientInfo *kari = ri->d.kari;
 
     EVP_PKEY_CTX_free(kari->pctx);
     kari->pctx = NULL;
-    if (!pk)
+    if (pk == NULL)
         return 1;
+
     pctx = EVP_PKEY_CTX_new(pk, NULL);
-    if (!pctx || !EVP_PKEY_derive_init(pctx))
+    if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0)
         goto err;
+
+    if (peer != NULL) {
+        EVP_PKEY *pub_pkey = X509_get0_pubkey(peer);
+
+        if (EVP_PKEY_derive_set_peer(pctx, pub_pkey) <= 0)
+            goto err;
+    }
+
     kari->pctx = pctx;
     return 1;
  err:
     EVP_PKEY_CTX_free(pctx);
     return 0;
+}
+
+int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
+{
+    return CMS_RecipientInfo_kari_set0_pkey_and_peer(ri, pk, NULL);
 }
 
 EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri)
@@ -260,8 +274,9 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *ekey = NULL;
     int rv = 0;
+
     pctx = EVP_PKEY_CTX_new(pk, NULL);
-    if (!pctx)
+    if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
         goto err;
@@ -269,7 +284,7 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
         goto err;
     EVP_PKEY_CTX_free(pctx);
     pctx = EVP_PKEY_CTX_new(ekey, NULL);
-    if (!pctx)
+    if (pctx == NULL)
         goto err;
     if (EVP_PKEY_derive_init(pctx) <= 0)
         goto err;
@@ -282,10 +297,29 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     return rv;
 }
 
+/* Set originator private key and initialise context based on it */
+static int cms_kari_set_originator_private_key(CMS_KeyAgreeRecipientInfo *kari, EVP_PKEY *originatorPrivKey )
+{
+    EVP_PKEY_CTX *pctx = NULL;
+    int rv = 0;
+
+    pctx = EVP_PKEY_CTX_new(originatorPrivKey, NULL);
+    if (pctx == NULL)
+        goto err;
+    if (EVP_PKEY_derive_init(pctx) <= 0)
+         goto err;
+
+    kari->pctx = pctx;
+    rv = 1;
+ err:
+    if (rv == 0)
+        EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+
 /* Initialise a kari based on passed certificate and key */
 
-int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
-                                EVP_PKEY *pk, unsigned int flags)
+int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri,  X509 *recip, EVP_PKEY *recipPubKey, X509 * originator, EVP_PKEY *originatorPrivKey, unsigned int flags)
 {
     CMS_KeyAgreeRecipientInfo *kari;
     CMS_RecipientEncryptedKey *rek = NULL;
@@ -320,12 +354,36 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
             return 0;
     }
 
-    /* Create ephemeral key */
-    if (!cms_kari_create_ephemeral_key(kari, pk))
-        return 0;
+    if (originatorPrivKey == NULL && originator == NULL) {
+        /* Create ephemeral key */
+        if (!cms_kari_create_ephemeral_key(kari, recipPubKey))
+            return 0;
+    } else {
+         /* Use originator key */
+         CMS_OriginatorIdentifierOrKey *oik = ri->d.kari->originator;
 
-    EVP_PKEY_up_ref(pk);
-    rek->pkey = pk;
+         if (originatorPrivKey == NULL && originator == NULL)
+            return 0;
+
+         if (flags & CMS_USE_ORIGINATOR_KEYID) {
+              oik->type = CMS_OIK_KEYIDENTIFIER;
+              oik->d.subjectKeyIdentifier = ASN1_OCTET_STRING_new();
+              if (oik->d.subjectKeyIdentifier == NULL)
+                   return 0;
+              if (!cms_set1_keyid(&oik->d.subjectKeyIdentifier, originator))
+                   return 0;
+         } else {
+              oik->type = CMS_REK_ISSUER_SERIAL;
+              if (!cms_set1_ias(&oik->d.issuerAndSerialNumber, originator))
+                   return 0;
+         }
+
+         if (!cms_kari_set_originator_private_key(kari, originatorPrivKey))
+             return 0;
+    }
+
+    EVP_PKEY_up_ref(recipPubKey);
+    rek->pkey = recipPubKey;
     return 1;
 }
 
@@ -335,14 +393,30 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
     EVP_CIPHER_CTX *ctx = kari->ctx;
     const EVP_CIPHER *kekcipher;
     int keylen = EVP_CIPHER_key_length(cipher);
+    int ret;
+
     /* If a suitable wrap algorithm is already set nothing to do */
     kekcipher = EVP_CIPHER_CTX_cipher(ctx);
-
-    if (kekcipher) {
+    if (kekcipher != NULL) {
         if (EVP_CIPHER_CTX_mode(ctx) != EVP_CIPH_WRAP_MODE)
             return 0;
         return 1;
     }
+    else if (cipher != NULL
+         && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER)) {
+        ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
+                                               0, &kekcipher);
+        if (ret <= 0)
+             return 0;
+
+        if (kekcipher != NULL) {
+             if (EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+                 return 0;
+
+             return EVP_EncryptInit_ex(ctx, kekcipher, NULL, NULL, NULL);
+        }
+    }
+
     /*
      * Pick a cipher based on content encryption cipher. If it is DES3 use
      * DES3 wrap otherwise use AES wrap similar to key size.
@@ -363,7 +437,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 
 /* Encrypt content key in key agreement recipient info */
 
-int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
+int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri)
 {
     CMS_KeyAgreeRecipientInfo *kari;

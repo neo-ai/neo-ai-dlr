@@ -2,7 +2,7 @@
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -197,24 +197,34 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [user...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
     {"name", OPT_NAME, 's', "The particular srp definition to use"},
-    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Action"),
     {"add", OPT_ADD, '-', "Add a user and srp verifier"},
-    {"modify", OPT_MODIFY, '-',
-     "Modify the srp verifier of an existing user"},
+    {"modify", OPT_MODIFY, '-', "Modify the srp verifier of an existing user"},
     {"delete", OPT_DELETE, '-', "Delete user from verifier file"},
     {"list", OPT_LIST, '-', "List users"},
+
+    OPT_SECTION("Configuration"),
+    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
     {"gn", OPT_GN, 's', "Set g and N values to be used for new verifier"},
     {"userinfo", OPT_USERINFO, 's', "Additional info to be set for user"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+
+    OPT_PARAMETERS(),
+    {"user", 0, 0, "Username(s) to process (optional)"},
     {NULL}
 };
 

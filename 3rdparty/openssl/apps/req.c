@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -90,42 +90,31 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
-    OPT_REQEXTS, OPT_PRECERT, OPT_MD,
+    OPT_REQEXTS, OPT_PRECERT, OPT_MD, OPT_SM2ID, OPT_SM2HEXID,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
+     "Specify engine to be used for key generation operations"},
+#endif
     {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"key", OPT_KEY, 's', "Private key to use"},
-    {"keyform", OPT_KEYFORM, 'f', "Key file format"},
-    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
+
+    OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
-    {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
-    {"passin", OPT_PASSIN, 's', "Private key password source"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    OPT_R_OPTIONS,
-    {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
-    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
-    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"batch", OPT_BATCH, '-',
-     "Do not ask anything during request generation"},
-    {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
-    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
-    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
-    {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
-    {"noout", OPT_NOOUT, '-', "Do not output REQ"},
-    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
     {"text", OPT_TEXT, '-', "Text form of request"},
     {"x509", OPT_X509, '-',
-     "Output a x509 structure instead of a cert request"},
+     "Output an x509 structure instead of a cert request"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
     {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
@@ -140,12 +129,37 @@ const OPTIONS req_options[] = {
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
     {"precert", OPT_PRECERT, '-', "Add a poison extension (implies -new)"},
+
+    OPT_SECTION("Keys and Signing"),
+    {"key", OPT_KEY, 's', "Private key to use"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format"},
+    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
+    {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
+    {"passin", OPT_PASSIN, 's', "Private key password source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
-     "Specify engine to be used for key generation operations"},
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate request"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate request"},
 #endif
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+    {"batch", OPT_BATCH, '-',
+     "Do not ask anything during request generation"},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
+    {"noout", OPT_NOOUT, '-', "Do not output REQ"},
+    {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
+    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 
@@ -200,9 +214,12 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     *p = '\0';
 
     /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
-    if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
-        != NULL || lh_OPENSSL_STRING_error(addexts)) {
-        OPENSSL_free(p != NULL ? p : kv);
+    p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv);
+    if (p != NULL) {
+        OPENSSL_free(p);
+        return 1;
+    } else if (lh_OPENSSL_STRING_error(addexts)) {
+        OPENSSL_free(kv);
         return -1;
     }
 
@@ -239,6 +256,9 @@ int req_main(int argc, char **argv)
     int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
 #ifndef OPENSSL_NO_DES
     cipher = EVP_des_ede3_cbc();
@@ -316,9 +336,10 @@ int req_main(int argc, char **argv)
             newreq = 1;
             break;
         case OPT_PKEYOPT:
-            if (!pkeyopts)
+            if (pkeyopts == NULL)
                 pkeyopts = sk_OPENSSL_STRING_new_null();
-            if (!pkeyopts || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
+            if (pkeyopts == NULL
+                    || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_SIGOPT:
@@ -414,6 +435,29 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             digest = md_alg;
             break;
+        case OPT_SM2ID:
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            /* try to parse the input as hex string first */
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
+            break;
         }
     }
     argc = opt_num_rest();
@@ -435,12 +479,14 @@ int req_main(int argc, char **argv)
 
     if (verbose)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
-    req_conf = app_load_config(template);
+    if ((req_conf = app_load_config(template)) == NULL)
+        goto end;
     if (addext_bio) {
         if (verbose)
             BIO_printf(bio_err,
                        "Using additional configuration from command line\n");
-        addext_conf = app_load_config_bio(addext_bio, NULL);
+        if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
+            goto end;
     }
     if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
@@ -844,6 +890,26 @@ int req_main(int argc, char **argv)
                 goto end;
         }
 
+        if (sm2_id != NULL) {
+#ifndef OPENSSL_NO_SM2
+            ASN1_OCTET_STRING *v;
+
+            v = ASN1_OCTET_STRING_new();
+            if (v == NULL) {
+                BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
+                goto end;
+            }
+
+            if (!ASN1_OCTET_STRING_set(v, sm2_id, sm2_idlen)) {
+                BIO_printf(bio_err, "error: setting SM2 ID failed\n");
+                ASN1_OCTET_STRING_free(v);
+                goto end;
+            }
+
+            X509_REQ_set0_sm2_id(req, v);
+#endif
+        }
+
         i = X509_REQ_verify(req, tpubkey);
 
         if (i < 0) {
@@ -952,6 +1018,8 @@ int req_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     if (ret) {
         ERR_print_errors(bio_err);
     }
@@ -1610,10 +1678,28 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-    int i, def_nid;
+    EVP_PKEY_CTX *pctx = NULL;
+    int i, def_nid, ret = 0;
 
     if (ctx == NULL)
-        return 0;
+        goto err;
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
+        pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (pctx == NULL) {
+            BIO_printf(bio_err, "memory allocation failure.\n");
+            goto err;
+        }
+        /* set SM2 ID from sig options before calling the real init routine */
+        for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
+            char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+            if (pkey_ctrl_string(pctx, sigopt) <= 0) {
+                BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
+                ERR_print_errors(bio_err);
+                goto err;
+            }
+        }
+        EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+    }
     /*
      * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
      * for this algorithm.
@@ -1624,51 +1710,75 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         md = NULL;
     }
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
-        return 0;
+        goto err;
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
         char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
         if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
             BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
             ERR_print_errors(bio_err);
-            return 0;
+            goto err;
         }
     }
-    return 1;
+
+    ret = 1;
+ err:
+    if (!ret)
+        EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
+static void do_sign_cleanup(EVP_MD_CTX *ctx, EVP_PKEY *pkey)
+{
+    /*
+     * With SM2, do_sign_init() attached an EVP_PKEY_CTX to the EVP_MD_CTX,
+     * and we have to free it explicitly.
+     */
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
+        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+
+        EVP_MD_CTX_set_pkey_ctx(ctx, NULL);
+        EVP_PKEY_CTX_free(pctx);
+    }
 }
 
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv;
+    int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    rv = do_sign_init(mctx, pkey, md, sigopts);
-    if (rv > 0)
-        rv = X509_sign_ctx(x, mctx);
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
-    return rv > 0 ? 1 : 0;
+    return rv;
 }
 
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv;
+    int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    rv = do_sign_init(mctx, pkey, md, sigopts);
-    if (rv > 0)
-        rv = X509_REQ_sign_ctx(x, mctx);
+
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_REQ_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
-    return rv > 0 ? 1 : 0;
+    return rv;
 }
 
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv;
+    int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    rv = do_sign_init(mctx, pkey, md, sigopts);
-    if (rv > 0)
-        rv = X509_CRL_sign_ctx(x, mctx);
+
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_CRL_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
-    return rv > 0 ? 1 : 0;
+    return rv;
 }

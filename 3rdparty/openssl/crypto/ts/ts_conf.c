@@ -1,7 +1,7 @@
 /*
  * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -283,9 +283,10 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
 {
     int ret = 0;
     ASN1_OBJECT *policy_obj = NULL;
-    if (!policy)
+
+    if (policy == NULL)
         policy = NCONF_get_string(conf, section, ENV_DEFAULT_POLICY);
-    if (!policy) {
+    if (policy == NULL) {
         ts_CONF_lookup_fail(section, ENV_DEFAULT_POLICY);
         goto err;
     }

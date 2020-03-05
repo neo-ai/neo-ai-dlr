@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 
-#ifndef HEADER_INTERNAL_SOCKETS
-# define HEADER_INTERNAL_SOCKETS
+#ifndef OSSL_INTERNAL_SOCKETS_H
+# define OSSL_INTERNAL_SOCKETS_H
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
@@ -150,6 +150,13 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       read((s),(b),(n))
 #  define writesocket(s,b,n)      write((s),(b),(n))
+# endif
+
+/* also in apps/include/apps.h */
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
+# else
+#  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
 #endif

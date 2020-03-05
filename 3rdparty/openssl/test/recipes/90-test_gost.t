@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -20,6 +20,10 @@ plan skip_all => "GOST support is disabled in this OpenSSL build"
 
 plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
     if disabled("tls1_3") || disabled("tls1_2");
+
+plan skip_all => "EC is disabled in this OpenSSL build"
+    if disabled("ec");
+
 
 plan skip_all => "No test GOST engine found"
     if !$ENV{OPENSSL_GOST_ENGINE_SO};

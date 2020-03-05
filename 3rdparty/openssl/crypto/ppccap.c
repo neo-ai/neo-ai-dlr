@@ -1,7 +1,7 @@
 /*
- * Copyright 2009-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -29,14 +29,15 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <internal/cryptlib.h>
-#include <internal/chacha.h>
-#include "bn/bn_lcl.h"
+#include <crypto/chacha.h>
+#include "bn/bn_local.h"
 
 #include "ppc_arch.h"
 
 unsigned int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
+
 
 #ifdef OPENSSL_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
@@ -64,7 +65,6 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
 #endif
-
 void sha256_block_p8(void *ctx, const void *inp, size_t len);
 void sha256_block_ppc(void *ctx, const void *inp, size_t len);
 void sha256_block_data_order(void *ctx, const void *inp, size_t len);
@@ -83,7 +83,12 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
-#ifndef OPENSSL_NO_CHACHA
+/*
+ * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
+ * the FIPS module yet.
+ */
+#ifndef FIPS_MODE
+# ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
                         const unsigned int counter[4]);
@@ -103,9 +108,9 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
             ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
             : ChaCha20_ctr32_int(out, inp, len, key, counter);
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_POLY1305
+# ifndef OPENSSL_NO_POLY1305
 void poly1305_init_int(void *ctx, const unsigned char key[16]);
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
@@ -116,10 +121,19 @@ void poly1305_blocks_fpu(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
 void poly1305_emit_fpu(void *ctx, unsigned char mac[16],
                        const unsigned int nonce[4]);
+void poly1305_init_vsx(void *ctx, const unsigned char key[16]);
+void poly1305_blocks_vsx(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+void poly1305_emit_vsx(void *ctx, unsigned char mac[16],
+                       const unsigned int nonce[4]);
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2]);
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
 {
-    if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        poly1305_init_int(ctx, key);
+        func[0] = (void*)(uintptr_t)poly1305_blocks_vsx;
+        func[1] = (void*)(uintptr_t)poly1305_emit;
+    } else if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
         poly1305_init_fpu(ctx, key);
         func[0] = (void*)(uintptr_t)poly1305_blocks_fpu;
         func[1] = (void*)(uintptr_t)poly1305_emit_fpu;
@@ -130,7 +144,8 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     }
     return 1;
 }
-#endif
+# endif
+#endif /* FIPS_MODE */
 
 #ifdef ECP_NISTZ256_ASM
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],

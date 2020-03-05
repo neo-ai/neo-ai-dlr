@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,8 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 {
@@ -40,7 +40,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
         break;
     case PKCS7_OP_GET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
-            if (!p7->d.sign || !p7->d.sign->contents->d.ptr)
+            if (p7->d.sign == NULL || p7->d.sign->contents->d.ptr == NULL)
                 ret = 1;
             else
                 ret = 0;
@@ -544,6 +544,7 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     return 1;
 }
 
+/* unfortunately cannot constify BIO_new_NDEF() due to this and CMS_stream() */
 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 {
     ASN1_OCTET_STRING *os = NULL;

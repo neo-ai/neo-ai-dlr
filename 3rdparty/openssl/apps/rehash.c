@@ -1,8 +1,8 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@gmail.com>
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -451,14 +451,20 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rehash_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [directory...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"h", OPT_HELP, '-', "Display this summary"},
     {"compat", OPT_COMPAT, '-', "Create both new- and old-style hash links"},
     {"old", OPT_OLD, '-', "Use old-style hash to generate links"},
     {"n", OPT_N, '-', "Do not remove existing links"},
+
+    OPT_SECTION("Output"),
     {"v", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PARAMETERS(),
+    {"directory", 0, 0, "One or more directories to process (optional)"},
     {NULL}
 };
 

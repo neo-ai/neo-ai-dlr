@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -66,7 +66,11 @@ ok(TLSProxy::Message->fail(), "PSK not last");
 #        ciphersuite. Should see PSK on second ClientHello
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
-$proxy->serverflags("-curves P-256");
+if (disabled("ec")) {
+    $proxy->serverflags("-curves ffdhe3072");
+} else {
+    $proxy->serverflags("-curves P-256");
+}
 $proxy->filter(undef);
 $proxy->start();
 #Check if the PSK is present in the second ClientHello
@@ -81,7 +85,11 @@ ok($pskseen, "PSK hash matches");
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->filter(\&modify_psk_filter);
-$proxy->serverflags("-curves P-256");
+if (disabled("ec")) {
+    $proxy->serverflags("-curves ffdhe3072");
+} else {
+    $proxy->serverflags("-curves P-256");
+}
 $proxy->ciphersuitesc("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
 $proxy->ciphersuitess("TLS_AES_256_GCM_SHA384");
 #We force an early failure because TLS Proxy doesn't actually support

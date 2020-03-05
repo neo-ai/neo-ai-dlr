@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,9 +12,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
-#include "internal/x509_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include "crypto/x509.h"
 
 /* Extract a private key from a PKCS8 structure */
 
@@ -58,7 +58,7 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
 
 /* Turn a private key into a PKCS8 structure */
 
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
 {
     PKCS8_PRIV_KEY_INFO *p8 = PKCS8_PRIV_KEY_INFO_new();
     if (p8  == NULL) {
