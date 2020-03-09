@@ -1,12 +1,7 @@
-#include <mutex>
 #include "counter/counter_mgr.h"
-std::mutex g_ccm_mutex;
 
 CounterMgr::CounterMgr() {
   try {
-    // Msg Publisher
-    msg_publisher = MsgPublisher::get_instance();
-    if (!msg_publisher) LOG(FATAL) << "Call Home Message Publisher object null !";
     #if defined(__ANDROID__)
     system = Factory::get_system(ANDROIDS);
     #endif
@@ -14,8 +9,15 @@ CounterMgr::CounterMgr() {
       LOG(FATAL) << "Call Home feature not supported!"; 
       throw std::runtime_error("Non supported system by call home feature C-API");
     } 
-    model_metric = ModelMetric::get_instance();
-    if (!model_metric) LOG(FATAL) << "Call Home model metric object null !";
+    restcon = new RestClient();
+    if (!restcon) {
+      stop_process = true;
+      LOG(FATAL) << "Message Publisher object null !";
+      throw std::runtime_error("Message Publisher object null !");
+    }
+    stop_process = false;
+    thrd = nullptr;
+    retrycnt = 0;
   } catch (std::exception& e) {
     LOG(FATAL) << "Exception in Counter Manger constructor";
     throw e; 
@@ -23,12 +25,14 @@ CounterMgr::CounterMgr() {
 }
 
 CounterMgr* CounterMgr::get_instance() {
-  g_ccm_mutex.lock();
   if (!instance) {
     if (is_feature_enabled()) {
       LOG(INFO) << CALL_HOME_USR_NOTIFICATION  << std::endl;
       try {
         instance = new CounterMgr();
+        if (instance) {
+           instance->thrd = new std::thread(&CounterMgr::process_queue, instance);
+        }
       } catch (std::exception& e) {
         instance = nullptr;
       }
@@ -38,7 +42,6 @@ CounterMgr* CounterMgr::get_instance() {
     } else LOG(INFO) << "call home feature disabled" << std::endl;
            
   }
-  g_ccm_mutex.unlock();
   return instance;
 };
 
@@ -93,12 +96,37 @@ void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
 
 void CounterMgr::model_loaded(const std::string& model) {
   std::string uid = instance->system->get_device_id();
-  instance->model_metric->set_device_id(uid);
   model_load_publish(MODEL_LOAD, model);
 };
 
 void CounterMgr::model_ran(const std::string& model) {
-  ModelExecCounter::update_model_run_count(get_hash_string(model).c_str());
+  std::map<std::string, int>::iterator res =  model_dict.find(model);
+  if (res != model_dict.end()) {
+    int count = res->second + 1;
+    model_dict[model] = count;
+  } else {
+    model_dict[model] = 1;
+  }
+}
+
+void CounterMgr::process_queue() {
+  while (!stop_process) {
+    std::this_thread::sleep_for(std::chrono::seconds(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS));
+    for(auto pair_dict : model_dict) {
+      char buff[128];
+      snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), system->get_device_id().c_str(), std::to_string(pair_dict.second).c_str());
+      std::string pub_data = buff;
+      push(pub_data);
+    }
+    if (!msg_que.empty()) {
+      std::string msg = msg_que.front();
+      if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
+        int status = restcon->send(msg);
+        if (status != 200) retrycnt++;
+      }
+      msg_que.pop_front();
+    }
+  }
 }
 
 CounterMgr * CounterMgr::instance = nullptr;

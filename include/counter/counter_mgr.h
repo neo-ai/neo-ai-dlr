@@ -5,18 +5,25 @@
 #include <ostream>
 #include <iostream>
 #include <dmlc/logging.h>
+#include <thread>
+#include <deque>
+#include <map>
 
 #include "device_info.h"
 #include "system.h"
-#include "publisher.h"
 #include "config.h"
-#include "model_exec_counter.h"
-#include "model_metric.h"
 #include "helper.h"
+#include "rest_client.h"
+
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 
 using namespace std;
 
 extern std::string ext_path;
+
+enum record { RUNTIME_LOAD=1, MODEL_LOAD=2, MODEL_RUN=3, CM_RELEASE=9};
 
 /*! \brief class CounterMgr
  */
@@ -25,10 +32,8 @@ class CounterMgr {
   static CounterMgr* get_instance();
   static void release_instance() {
     if (instance) {
-      instance->model_metric->release_instance();
-      instance->model_metric = nullptr;
-      instance->msg_publisher->release_instance();
-      instance->msg_publisher = nullptr;
+      instance->stop_process = true;
+      instance->thrd->join();
       delete instance;
       instance = nullptr;
     }
@@ -39,27 +44,33 @@ class CounterMgr {
   void runtime_loaded();
   void model_loaded(const std::string& model);
   void model_ran(const std::string& model);
+  void process_queue();
  protected:
   void model_load_publish(record msg_type, const std::string& model);
-  void push(string& data) const { 
-    if (msg_publisher) {
-      msg_publisher->send(data);
-    }
+  void push(string data) { 
+    msg_que.push_back(data); 
   };
  private:
   CounterMgr();
   ~CounterMgr() {
+    delete thrd;
+    thrd = nullptr;
+    delete restcon;
+    restcon = nullptr;
     delete system;
     system = nullptr;
   }
   CounterMgr(const CounterMgr&) {};
   CounterMgr& operator=(const CounterMgr& obj) {return *this;}; 
-  // fields for matric data type
   static bool feature_enable;
   System *system;
   static CounterMgr* instance;
-  MsgPublisher* msg_publisher;
-  ModelMetric* model_metric;
+  std::map<std::string, int > model_dict;
+  RestClient *restcon;
+  std::thread *thrd;
+  std::deque<std::string> msg_que;
+  bool stop_process;
+  int retrycnt;
 };
 
 /*! \brief Hook for Call Home Feature.
@@ -68,6 +79,10 @@ extern CounterMgr *instance;
 inline void CallHome(record type, std::string model= std::string())
 {
   CounterMgr* instance;
+  #if defined(__ANDROID__)
+  __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "call entry ");
+  #endif
+
   if (!instance) {
     #if defined(__ANDROID__)
     try {

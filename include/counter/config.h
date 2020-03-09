@@ -3,8 +3,6 @@
 
 const std::string CALL_HOME_URL = "https://beta-neo-dlr.us-west-2.amazonaws.com";
 const std::string CALL_HOME_RECORD_FILE = "ccm_record.txt";
-const int CALL_HOME_PUBLISH_MESSAGE_MAX_QUEUE_SIZE = 100;
-const int CALL_HOME_MAX_WORKERS_THREADS = 5;
 const int CALL_HOME_MODEL_RUN_COUNT_TIME_SECS = 300;
 const int CALL_HOME_REQ_STOP_MAX_COUNT = 3;
 const std::string CALL_HOME_USR_NOTIFICATION = "\n CALL HOME FEATURE ENABLED" \
