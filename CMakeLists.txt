@@ -21,6 +21,7 @@ msvc_use_static_runtime()
 message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
 set(CURL_DISTRIBUTION_DIR "${PROJECT_SOURCE_DIR}/3rdparty/curl")
+set(OPENSSL_DISTRIBUTION_DIR "${PROJECT_SOURCE_DIR}/3rdparty/openssl")
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
@@ -91,7 +92,6 @@ include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${CURL_DISTRIBUTION_DIR}/include")
 
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
@@ -345,6 +345,8 @@ set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
 
 if(ANDROID_BUILD OR AAR_BUILD)
+  include_directories("${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include")
+  include_directories("${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include")
   if(ANDROID_ABI STREQUAL "armeabi-v7a")
     add_library(lib_curl STATIC IMPORTED)
     set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
@@ -354,9 +356,14 @@ if(ANDROID_BUILD OR AAR_BUILD)
     add_library(lib_curl SHARED IMPORTED)
     set_target_properties(lib_curl PROPERTIES
         IMPORTED_LOCATION ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so)
-    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z log lib_curl)
+    add_library(lib_ssl SHARED IMPORTED)
+    set_target_properties(lib_ssl PROPERTIES
+        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so)
+    add_library(lib_crypto SHARED IMPORTED)
+    set_target_properties(lib_crypto PROPERTIES
+        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so)
+    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl lib_ssl lib_crypto log)
   endif()
-
 endif()
 
 if(ANDROID_BUILD)

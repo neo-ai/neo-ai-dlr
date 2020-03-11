@@ -1,7 +1,10 @@
 #ifndef HELPER_H
 #define HELPER_H
 
-#include <curl/md5.h>
+#if defined(__ANDROID__)
+#include <openssl/md5.h>
+#include <android/log.h>
+#endif
 
 inline std::string get_hash_string(const std::string& str)
 {

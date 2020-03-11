@@ -88,7 +88,7 @@ void CounterMgr::runtime_loaded() {
 };
 
 void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
-  char buff[128];
+  char buff[256];
   snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\":\"%s\", \"uuid\": \"%s\" }", std::to_string(msg_type).c_str(), get_hash_string(model).c_str(), system->get_device_id().c_str()); 
   std::string str_pub = buff;
   push(str_pub);
@@ -100,12 +100,13 @@ void CounterMgr::model_loaded(const std::string& model) {
 };
 
 void CounterMgr::model_ran(const std::string& model) {
-  std::map<std::string, int>::iterator res =  model_dict.find(model);
+  std::string modelx = get_hash_string(model).c_str();
+  std::map<std::string, int>::iterator res =  model_dict.find(modelx);
   if (res != model_dict.end()) {
     int count = res->second + 1;
-    model_dict[model] = count;
+    model_dict[modelx] = count;
   } else {
-    model_dict[model] = 1;
+    model_dict[modelx] = 1;
   }
 }
 
@@ -113,7 +114,7 @@ void CounterMgr::process_queue() {
   while (!stop_process) {
     std::this_thread::sleep_for(std::chrono::seconds(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS));
     for(auto pair_dict : model_dict) {
-      char buff[128];
+      char buff[256];
       snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), system->get_device_id().c_str(), std::to_string(pair_dict.second).c_str());
       std::string pub_data = buff;
       push(pub_data);
