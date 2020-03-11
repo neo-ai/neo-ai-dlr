@@ -20,7 +20,7 @@ set_default_configuration_release()
 msvc_use_static_runtime()
 message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
-set(DISTRIBUTION_DIR "${PROJECT_SOURCE_DIR}/3rdparty/curl")
+set(CURL_DISTRIBUTION_DIR "${PROJECT_SOURCE_DIR}/3rdparty/curl")
 
 # CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
 if(ANDROID_BUILD)
@@ -33,13 +33,13 @@ if(ANDROID_BUILD)
     endif()
   # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
     if (ANDROID_ABI STREQUAL "x86_64")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android ${DISTRIBUTION_DIR}/include)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include)
     elseif (ANDROID_ABI STREQUAL "x86")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android ${DISTRIBUTION_DIR}/include)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include)
     elseif (ANDROID_ABI STREQUAL "arm64-v8a")
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android ${DISTRIBUTION_DIR}/include)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include)
     else() # Default to armv7a which matches NDK toolchain.cmake behavior
-        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi ${DISTRIBUTION_DIR}/include)
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include)
     endif()
     message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
     message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
@@ -91,7 +91,7 @@ include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${DISTRIBUTION_DIR}/include")
+include_directories("${CURL_DISTRIBUTION_DIR}/include")
 
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
@@ -345,10 +345,18 @@ set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
 
 if(ANDROID_BUILD OR AAR_BUILD)
-  add_library(lib_curl STATIC IMPORTED)
-  set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
-        ${DISTRIBUTION_DIR}/lib/${ANDROID_ABI}/libcurl.a)
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl log)
+  if(ANDROID_ABI STREQUAL "armeabi-v7a")
+    add_library(lib_curl STATIC IMPORTED)
+    set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
+        ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.a)
+    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl log)
+  else()
+    add_library(lib_curl SHARED IMPORTED)
+    set_target_properties(lib_curl PROPERTIES
+        IMPORTED_LOCATION ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so)
+    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z log lib_curl)
+  endif()
+
 endif()
 
 if(ANDROID_BUILD)
