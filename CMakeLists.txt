@@ -353,15 +353,23 @@ if(ANDROID_BUILD OR AAR_BUILD)
         ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.a)
     target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl log)
   else()
+    add_custom_command(OUTPUT ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3
+        COMMAND ${OPENSSL_DISTRIBUTION_DIR}/build.sh ${OPENSSL_DISTRIBUTION_DIR}  ${CMAKE_BINARY_DIR}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    add_custom_target(
+        BuildDocs ALL
+        DEPENDS ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3
+        )
     add_library(lib_curl SHARED IMPORTED)
     set_target_properties(lib_curl PROPERTIES
         IMPORTED_LOCATION ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so)
     add_library(lib_ssl SHARED IMPORTED)
     set_target_properties(lib_ssl PROPERTIES
-        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so)
+        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3)
     add_library(lib_crypto SHARED IMPORTED)
     set_target_properties(lib_crypto PROPERTIES
-        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so)
+        IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so.3)
     target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl lib_ssl lib_crypto log)
   endif()
 endif()
