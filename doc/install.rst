@@ -44,7 +44,7 @@ Table 1: List of Supported Devices
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Nvidia       | Jetson_Xavier|  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.0/jetsonxavier-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl|
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Raspberry    | Rasp2b       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl            |
+| Raspberry    | Rasp3b       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl            |
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 If your device is not listed in the table, use table2. You will identify your device by the processor architecture, operating system, and versions of GLIBC and LIBSTDC++. Of note, DLR installation may depend on other configuration differences or even location of dependency libraries; if the provided wheel URL does not work, please consider compiling DLR from source (see `Building DLR from source`_ section).
