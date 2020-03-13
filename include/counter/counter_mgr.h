@@ -15,10 +15,6 @@
 #include "helper.h"
 #include "rest_client.h"
 
-#if defined(__ANDROID__)
-#include <android/log.h>
-#endif
-
 using namespace std;
 
 extern std::string ext_path;
@@ -45,6 +41,7 @@ class CounterMgr {
   void model_loaded(const std::string& model);
   void model_ran(const std::string& model);
   void process_queue();
+  void publish_msg();
  protected:
   void model_load_publish(record msg_type, const std::string& model);
   void push(string data) { 
@@ -53,6 +50,7 @@ class CounterMgr {
  private:
   CounterMgr();
   ~CounterMgr() {
+    publish_msg();
     delete thrd;
     thrd = nullptr;
     delete restcon;
@@ -79,9 +77,6 @@ extern CounterMgr *instance;
 inline void CallHome(record type, std::string model= std::string())
 {
   CounterMgr* instance;
-  #if defined(__ANDROID__)
-  __android_log_print(ANDROID_LOG_DEBUG, "DLR Call Home Feature", "call entry ");
-  #endif
 
   if (!instance) {
     #if defined(__ANDROID__)

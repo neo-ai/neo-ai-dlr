@@ -113,20 +113,25 @@ void CounterMgr::model_ran(const std::string& model) {
 void CounterMgr::process_queue() {
   while (!stop_process) {
     std::this_thread::sleep_for(std::chrono::seconds(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS));
-    for(auto pair_dict : model_dict) {
-      char buff[256];
-      snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), system->get_device_id().c_str(), std::to_string(pair_dict.second).c_str());
-      std::string pub_data = buff;
-      push(pub_data);
+    publish_msg();
+  }
+}
+
+void CounterMgr::publish_msg() {
+  for(auto pair_dict : model_dict) {
+    char buff[256];
+    snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), system->get_device_id().c_str(), std::to_string(pair_dict.second).c_str());
+    std::string pub_data = buff;
+    model_dict[pair_dict.first] = 0;
+    push(pub_data);
+  }
+  if (!msg_que.empty()) {
+    std::string msg = msg_que.front();
+    if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
+      int status = restcon->send(msg);
+      if (status != 200) retrycnt++;
     }
-    if (!msg_que.empty()) {
-      std::string msg = msg_que.front();
-      if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
-        int status = restcon->send(msg);
-        if (status != 200) retrycnt++;
-      }
-      msg_que.pop_front();
-    }
+    msg_que.pop_front();
   }
 }
 

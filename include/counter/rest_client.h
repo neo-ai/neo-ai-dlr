@@ -10,6 +10,7 @@
 
 #include "config.h"
 
+extern std::string ext_path;
 /*! \brief class RestClient 
  */
 class RestClient {
@@ -17,6 +18,9 @@ class RestClient {
   RestClient() {
     #if defined(__ANDROID__)
     curl_global_init(CURL_GLOBAL_ALL);
+    file_path = ext_path.c_str();
+    file_path += "/";
+    file_path += "cacert.pem";
     #endif
   };
   ~RestClient() {
@@ -36,8 +40,9 @@ class RestClient {
       headers=curl_slist_append(headers, "Content-Type: application/x-amz-json-1.1; charset=UTF-8");
       curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
       curl_easy_setopt(curl, CURLOPT_URL, CALL_HOME_URL.c_str());
-      curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-      curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+      curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+      curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+      curl_easy_setopt(curl, CURLOPT_CAINFO, (char*) file_path.c_str());
       char *s = curl_easy_escape(curl, data.c_str(), data.length());       
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
       res = curl_easy_perform(curl);
@@ -58,6 +63,7 @@ class RestClient {
     return 0;
   };
  private:
+  std::string file_path;
 };
 
 #endif //RESTCLIENT_H
