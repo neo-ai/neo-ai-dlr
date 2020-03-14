@@ -197,13 +197,31 @@ For arm64 targets, add
   
 to cmake flags.
 
-You can include whole ``libtensorflow-lite.a`` library into ``libdlr.so`` shared library. Use ``WITH_TENSORFLOW_LITE_LIB=<path_to_libtensorflow-lite.a>`` cmake flag.
+Building DLR with TFLite
+------------------------
+DLR build can include ``libtensorflow-lite.a`` library into ``libdlr.so`` shared library.
+
+Currently DLR supports TFLite 1.15.2 (branch r1.15).
+Build ``libtensorflow-lite.a`` as explained `here <https://www.tensorflow.org/lite/guide/build_arm64>`_
+
+To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
+
+Attention! You need to apply the following patches to tensorflow r1.15 branch:
+https://github.com/tensorflow/tensorflow/pull/36689
+
+To build DLR with TFLite use cmake flag ``WITH_TENSORFLOW_LITE_LIB``, e.g.
 
 .. code-block:: bash
 
-  -DWITH_TENSORFLOW_LITE_LIB=/opt/tensorflow/tensorflow/lite/tools/make/gen/arm-linux-android/lib/libtensorflow-lite.a
+  cmake .. \
+  -DWITH_TENSORFLOW_LITE_LIB=/opt/tensorflow-1.15/tensorflow/lite/tools/make/gen/linux_x86_64/lib/libtensorflow-lite.a
 
-To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
+To test DLR with TFLite use ``dlr_tflite_test``
+
+.. code-block:: bash
+
+  ./dlr_tflite_test
+
 
 Building for Android Archive (AAR) file
 ---------------------------------------
