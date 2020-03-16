@@ -271,8 +271,8 @@ if(WITH_TENSORFLOW_LITE_LIB)
     message("Adding libtensorflow-lite.a to DLR shared library")
 
     # Download Tensorflow and FlatBuffers source code
-    set(TENSORFLOW_VER "1.13.2")
-    set(TENSORFLOW_SHA1 "78bb81d1e78ac9c3b092dee65f6b6b3cee23b9ae")
+    set(TENSORFLOW_VER "1.15.2")
+    set(TENSORFLOW_SHA1 "b9e71bf287a186ceb9d859588671d890c45e51a7")
     set(FLATBUFFERS_VER "1.11.0")
     set(FLATBUFFERS_SHA1 "2b2633902c57c6980b3a41b44d8ad933f214d71d")
     set(TENSORFLOW_URL "https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VER}.tar.gz")
