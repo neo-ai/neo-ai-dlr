@@ -1,11 +1,10 @@
 #!/bin/bash
 
 if [ -z "$ANDROID_NDK_HOME" ]; then
-  echo "ANDROID_NDK_HOME variable empty"
+  echo "ANDROID_NDK_HOME variable not set"
   local_prop=$2/../../../../../local.properties
 
   if [ -f $local_prop ]; then
-    echo "file exist"
     ndk_val=`cut -d '=' -f 2 $local_prop`
     export ANDROID_NDK_HOME="$ndk_val/ndk/20.1.5948944"
     echo $ANDROID_NDK_HOME
