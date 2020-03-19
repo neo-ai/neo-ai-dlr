@@ -6,6 +6,7 @@
 #include <iostream>
 #include <dmlc/logging.h>
 #include <thread>
+#include <condition_variable>
 #include <deque>
 #include <map>
 
@@ -27,6 +28,7 @@ class CounterMgr {
   static void release_instance() {
     if (instance) {
       instance->stop_process = true;
+      instance->condv.notify_all();
       instance->thrd->join();
       delete instance;
       instance = nullptr;
@@ -41,14 +43,12 @@ class CounterMgr {
   void process_queue();
   void publish_msg();
  protected:
-  void model_load_publish(record msg_type, const std::string& model);
   void push(std::string data) {
     msg_que.push_back(data); 
   };
  private:
   CounterMgr();
   ~CounterMgr() {
-    publish_msg();
     delete thrd;
     thrd = nullptr;
     delete restcon;
@@ -61,17 +61,20 @@ class CounterMgr {
   static bool feature_enable;
   System *system;
   static CounterMgr* instance;
-  std::map<std::string, int > model_dict;
   RestClient *restcon;
   std::thread *thrd;
   std::deque<std::string> msg_que;
+  std::deque<std::string> run_deq;
   bool stop_process;
   int retrycnt;
+  std::mutex condv_m;
+  std::condition_variable condv;
 };
 
 /*! \brief Hook for Call Home Feature.
  */
 extern CounterMgr *instance;
+
 inline void CallHome(record type, std::string model= std::string())
 {
   CounterMgr* instance;
@@ -82,10 +85,12 @@ inline void CallHome(record type, std::string model= std::string())
       instance = CounterMgr::get_instance();
       if (!instance)  {
         LOG(FATAL) << "Call Home Feature not initialize!";
+        return;
       }
     } catch (std::exception& e) {
       instance = nullptr;
       LOG(FATAL) << "Exception in Counter Manger Module initialization";
+      return;
     }
     #else
     return;

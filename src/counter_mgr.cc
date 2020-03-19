@@ -87,45 +87,42 @@ void CounterMgr::runtime_loaded() {
   }
 };
 
-void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
+void CounterMgr::model_loaded(const std::string& model) {
   char buff[128];
-  snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\":\"%s\", \"uuid\": \"%s\" }", msg_type, get_hash_string(model).c_str(), system->get_device_id().c_str());
-  std::string str_pub = buff;
+  snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\": \"%s\", \"uuid\": \"%s\" }", MODEL_LOAD, get_hash_string(model).c_str(), system->get_device_id().c_str());
+  std::string str_pub(buff);
   push(str_pub);
 };
 
-void CounterMgr::model_loaded(const std::string& model) {
-  std::string uid = instance->system->get_device_id();
-  model_load_publish(MODEL_LOAD, model);
-};
-
 void CounterMgr::model_ran(const std::string& model) {
-  std::string modelx = get_hash_string(model).c_str();
-  std::map<std::string, int>::iterator res =  model_dict.find(modelx);
-  if (res != model_dict.end()) {
-    int count = res->second + 1;
-    model_dict[modelx] = count;
-  } else {
-    model_dict[modelx] = 1;
-  }
-}
+  run_deq.push_back(model);
+};
 
 void CounterMgr::process_queue() {
   while (!stop_process) {
-    std::this_thread::sleep_for(std::chrono::seconds(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS));
+    std::unique_lock<std::mutex> lk(condv_m);
+    condv.wait_for(lk, std::chrono::seconds(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS));
     publish_msg();
   }
-}
+};
 
 void CounterMgr::publish_msg() {
-  for(auto pair_dict : model_dict) {
-    char buff[128];
-    snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %d }", MODEL_RUN, pair_dict.first.c_str(), system->get_device_id().c_str(), pair_dict.second);
-    std::string pub_data = buff;
-    model_dict[pair_dict.first] = 0;
+  std::map<std::string, int> model_dict;
+  std::string uuid(system->get_device_id());
+
+  while (!run_deq.empty()) {
+    model_dict[run_deq.front()] += 1;
+    run_deq.pop_front();
+  }
+
+  for (auto pair_dict : model_dict) {
+    char buff[135];
+    snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %d }", MODEL_RUN, get_hash_string(pair_dict.first).c_str(), uuid.c_str(), pair_dict.second);
+    std::string pub_data(buff);
     push(pub_data);
   }
-  if (!msg_que.empty()) {
+
+  while (!msg_que.empty()) {
     std::string msg = msg_que.front();
     if (retrycnt < CALL_HOME_REQ_STOP_MAX_COUNT) {
       int status = restcon->send(msg);
@@ -133,7 +130,7 @@ void CounterMgr::publish_msg() {
     }
     msg_que.pop_front();
   }
-}
+};
 
 CounterMgr * CounterMgr::instance = nullptr;
 bool CounterMgr::feature_enable = true;
