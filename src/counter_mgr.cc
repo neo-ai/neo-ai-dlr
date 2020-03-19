@@ -58,16 +58,16 @@ bool CounterMgr::is_device_info_published() const {
   std::string file_path(ext_path.c_str());
   file_path += "/";
   file_path += CALL_HOME_RECORD_FILE;
-  ifstream fin;
+  std::ifstream fin;
   fin.open(file_path);
   if (fin.is_open()) {
     fin.close();
     return true; 
   } else {
-    ofstream fout;
+    std::ofstream fout;
     fout.open(file_path);
     if (fout.is_open()) {
-      string id = system->get_device_id();
+      std::string id = system->get_device_id();
       fout << id << std::endl;
     }
     fout.close();
@@ -81,15 +81,15 @@ bool CounterMgr::is_device_info_published() const {
 void CounterMgr::runtime_loaded() {
   if (!is_device_info_published()) {
     char buff[256];
-    snprintf(buff, sizeof(buff), "{ \"record_type\": %s, %s }", std::to_string(RUNTIME_LOAD).c_str(), system->get_device_info().c_str()); 
+    snprintf(buff, sizeof(buff), "{ \"record_type\": %d, %s }", RUNTIME_LOAD, system->get_device_info().c_str());
     std::string str_pub = buff;
     push(str_pub);
   }
 };
 
 void CounterMgr::model_load_publish(record msg_type, const std::string& model) {
-  char buff[256];
-  snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\":\"%s\", \"uuid\": \"%s\" }", std::to_string(msg_type).c_str(), get_hash_string(model).c_str(), system->get_device_id().c_str()); 
+  char buff[128];
+  snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\":\"%s\", \"uuid\": \"%s\" }", msg_type, get_hash_string(model).c_str(), system->get_device_id().c_str());
   std::string str_pub = buff;
   push(str_pub);
 };
@@ -119,8 +119,8 @@ void CounterMgr::process_queue() {
 
 void CounterMgr::publish_msg() {
   for(auto pair_dict : model_dict) {
-    char buff[256];
-    snprintf(buff, sizeof(buff), "{ \"record_type\": %s, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %s }", std::to_string(MODEL_RUN).c_str(), pair_dict.first.c_str(), system->get_device_id().c_str(), std::to_string(pair_dict.second).c_str());
+    char buff[128];
+    snprintf(buff, sizeof(buff), "{ \"record_type\": %d, \"model\": \"%s\", \"uuid\": \"%s\", \"run_count\": %d }", MODEL_RUN, pair_dict.first.c_str(), system->get_device_id().c_str(), pair_dict.second);
     std::string pub_data = buff;
     model_dict[pair_dict.first] = 0;
     push(pub_data);

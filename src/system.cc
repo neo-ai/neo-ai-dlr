@@ -5,7 +5,7 @@ Android::Android() {
   char value[PROP_VALUE_MAX+1];
   int osVersionLength = __system_property_get("ro.build.version.release", value);
   device->dist.assign(value);
-  string os_name ("Android ");
+  std::string os_name ("Android ");
   os_name += value;
   device->osname.assign(os_name);
   __system_property_get("ro.product.cpu.abi", value);

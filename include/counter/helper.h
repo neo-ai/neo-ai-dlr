@@ -3,7 +3,6 @@
 
 #if defined(__ANDROID__)
 #include <openssl/md5.h>
-#include <android/log.h>
 #endif
 
 inline std::string get_hash_string(const std::string& str)

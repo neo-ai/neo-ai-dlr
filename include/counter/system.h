@@ -11,7 +11,6 @@
 
 #include "device_info.h"
 extern std::string uuid_;
-using namespace std;
 
 /*! \brief class System (Abstract Class) 
  */

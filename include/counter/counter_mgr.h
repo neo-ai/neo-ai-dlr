@@ -15,8 +15,6 @@
 #include "helper.h"
 #include "rest_client.h"
 
-using namespace std;
-
 extern std::string ext_path;
 
 enum record { RUNTIME_LOAD=1, MODEL_LOAD=2, MODEL_RUN=3, CM_RELEASE=9};
@@ -44,7 +42,7 @@ class CounterMgr {
   void publish_msg();
  protected:
   void model_load_publish(record msg_type, const std::string& model);
-  void push(string data) { 
+  void push(std::string data) {
     msg_que.push_back(data); 
   };
  private:

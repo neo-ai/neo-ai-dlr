@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 /*! \brief class DeviceInfo, holds device specific information
  */
 class DeviceInfo {
