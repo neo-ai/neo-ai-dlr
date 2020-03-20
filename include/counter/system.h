@@ -16,8 +16,8 @@ extern std::string uuid_;
  */
 class System {
  public:
-  virtual std::string get_device_info() const =0;
-  virtual std::string get_device_id() const =0;
+  virtual std::string GetDeviceInfo() const =0;
+  virtual std::string GetDeviceId() const =0;
   virtual ~System() {};
 };
 
@@ -28,24 +28,24 @@ class Linux_ARM: public ARM {
  public:
   Linux_ARM()
   {
-    device = new DeviceInfo();
+    device_ = new DeviceInfo();
     #if defined(__LINUX__) ||  defined(__linux__)
     #endif
   }
   ~Linux_ARM()
   {
-    delete device;
+    delete device_;
   }
-  std::string get_device_info() const
+  std::string GetDeviceInfo() const
   {
-    return device->get_info();
+    return device_->GetInfo();
   }
-  std::string get_device_id() const
+  std::string GetDeviceId() const
   {
-    return device->uuid;
+    return device_->uuid;
   }
  private:
-  DeviceInfo* device;
+  DeviceInfo* device_;
 };
 
 /*! \brief class Android
@@ -56,18 +56,18 @@ class Android : public ARM
   Android();
   ~Android()
   {
-     delete device;
+     delete device_;
   }
-  std::string get_device_info() const
+  std::string GetDeviceInfo() const
   {
-    return device->get_info();
+    return device_->GetInfo();
   };
-  std::string get_device_id() const
+  std::string GetDeviceId() const
   {
-    return device->uuid;
+    return device_->uuid;
   };
  private:
-  DeviceInfo* device;
+  DeviceInfo* device_;
 };
 
 class X86: public System
@@ -78,24 +78,24 @@ class Linux_x86:public X86
  public:
   Linux_x86()
   {
-     device = new DeviceInfo();
+     device_ = new DeviceInfo();
      #if defined(__LINUX__)
      #endif
   }
   ~Linux_x86()
   {
-     delete device;
+     delete device_;
   }
-  std::string get_device_info() const
+  std::string GetDeviceInfo() const
   {
-    return device->get_info();
+    return device_->GetInfo();
   }
-  std::string get_device_id() const
+  std::string GetDeviceId() const
   {
-    return device->uuid;
+    return device_->uuid;
   }
  private:
-  DeviceInfo* device;
+  DeviceInfo* device_;
 };
 
 enum supsys { LINUXARM=1, LINUXX86=2, ANDROIDS=3 };
@@ -104,7 +104,7 @@ enum supsys { LINUXARM=1, LINUXX86=2, ANDROIDS=3 };
 class Factory
 {
  public:
-  static System* get_system(supsys choice) {
+  static System* GetSystem(supsys choice) {
     if (choice == LINUXARM) {
       return new Linux_ARM();
     } else if (choice == LINUXX86) {

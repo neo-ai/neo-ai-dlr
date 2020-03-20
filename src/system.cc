@@ -1,20 +1,20 @@
 #include "counter/system.h"
 Android::Android() {
   #if defined(__ANDROID__)
-  device = new DeviceInfo();
+  device_ = new DeviceInfo();
   char value[PROP_VALUE_MAX+1];
   int osVersionLength = __system_property_get("ro.build.version.release", value);
-  device->dist.assign(value);
+  device_->dist.assign(value);
   std::string os_name ("Android ");
   os_name += value;
-  device->osname.assign(os_name);
+  device_->osname.assign(os_name);
   __system_property_get("ro.product.cpu.abi", value);
-  device->arch.assign(value);
+  device_->arch.assign(value);
   __system_property_get("ro.build.host", value);
-  device->machine.assign(value);
+  device_->machine.assign(value);
   __system_property_get("ro.product.name", value);
-  device->name.assign(value);
-  device->uuid.assign(uuid_.c_str());
+  device_->name.assign(value);
+  device_->uuid.assign(uuid_.c_str());
   #endif
 };
 

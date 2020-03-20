@@ -280,8 +280,8 @@ DLR_DLL
 int SetDLRDataCollectionConsent(int flag);
 
 #if defined(__ANDROID__)
-void get_external_storage_path(JNIEnv* env, jobject instance);
-void get_uuid();
+void GetExternalStoragePath(JNIEnv* env, jobject instance);
+void GetUuid();
 #endif
 /*! \} */
 

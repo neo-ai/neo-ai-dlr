@@ -150,8 +150,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_CreateDLRModel(
     JNIEnv* env, jobject thiz, jstring jmodel_path, jint dev_type,
     jint dev_id) {
   jboolean isCopy = JNI_FALSE;
-  get_uuid();
-  get_external_storage_path(env, thiz);
+  GetUuid();
+  GetExternalStoragePath(env, thiz);
   const char* model_path = env->GetStringUTFChars(jmodel_path, &isCopy);
   DLRModelHandle* handle = new DLRModelHandle();
   if (CreateDLRModel(handle, model_path, dev_type, dev_id)) {

@@ -14,7 +14,7 @@ class DeviceInfo {
   std::string dist;
   std::string uuid;
 
-  std::string get_info() const
+  std::string GetInfo() const
   {
     char buff[256];
     snprintf(buff, sizeof(buff), " \"os distribution\": \"%s\", \"uuid\": \"%s\", \"machine\": \"%s\", \"arch\": \"%s\", \"os\": \"%s\", \"device\": \"%s\"", dist.c_str(), uuid.c_str(), machine.c_str(), arch.c_str(), osname.c_str(), name.c_str());

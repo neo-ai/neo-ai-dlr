@@ -5,7 +5,7 @@
 #include <openssl/md5.h>
 #endif
 
-inline std::string get_hash_string(const std::string& str)
+inline std::string GetHashString(const std::string& str)
 {
   #if defined(__ANDROID__)
   unsigned char digest[16];

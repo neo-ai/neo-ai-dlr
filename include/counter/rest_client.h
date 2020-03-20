@@ -18,9 +18,9 @@ class RestClient {
   RestClient() {
     #if defined(__ANDROID__)
     curl_global_init(CURL_GLOBAL_ALL);
-    file_path = ext_path.c_str();
-    file_path += "/";
-    file_path += "cacert.pem";
+    file_path_ = ext_path.c_str();
+    file_path_ += "/";
+    file_path_ += "cacert.pem";
     #endif
   };
   ~RestClient() {
@@ -29,7 +29,7 @@ class RestClient {
     #endif
   };
 
-  int send(const std::string data) {
+  int Send(const std::string data) {
     #if defined(__ANDROID__)
     CURL *curl;
     CURLcode res;
@@ -42,7 +42,7 @@ class RestClient {
       curl_easy_setopt(curl, CURLOPT_URL, CALL_HOME_URL.c_str());
       curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
       curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-      curl_easy_setopt(curl, CURLOPT_CAINFO, (char*) file_path.c_str());
+      curl_easy_setopt(curl, CURLOPT_CAINFO, (char*) file_path_.c_str());
       char *s = curl_easy_escape(curl, data.c_str(), data.length());       
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
       res = curl_easy_perform(curl);
@@ -63,7 +63,7 @@ class RestClient {
     return 0;
   };
  private:
-  std::string file_path;
+  std::string file_path_;
 };
 
 #endif //RESTCLIENT_H

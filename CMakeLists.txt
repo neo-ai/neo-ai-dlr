@@ -94,10 +94,10 @@ include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 if(ANDROID_BUILD OR AAR_BUILD)
-    execute_process(COMMAND ${OPENSSL_DISTRIBUTION_DIR}/build.sh ${OPENSSL_DISTRIBUTION_DIR} ${CMAKE_BINARY_DIR}
+    execute_process(COMMAND ${PROJECT_SOURCE_DIR}/3rdparty/scripts/build_openssl.sh ${OPENSSL_DISTRIBUTION_DIR} ${CMAKE_BINARY_DIR} ${ANDROID_ABI}
                     RESULT_VARIABLE result
                    )
-    execute_process(COMMAND ${CURL_DISTRIBUTION_DIR}/build.sh ${CURL_DISTRIBUTION_DIR} ${CMAKE_BINARY_DIR}
+    execute_process(COMMAND ${PROJECT_SOURCE_DIR}/3rdparty/scripts/build_curl.sh ${CURL_DISTRIBUTION_DIR} ${CMAKE_BINARY_DIR} ${ANDROID_ABI}
                     RESULT_VARIABLE result1
                    )
 endif()

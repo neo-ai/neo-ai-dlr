@@ -257,14 +257,14 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
 
 extern "C" int SetDLRDataCollectionConsent(int flag) {
   API_BEGIN();
-  CounterMgr::set_data_consent(flag); 
+  CounterMgr::SetDataConsent(flag); 
   API_END();
 }
 
 #if defined(__ANDROID__)
 std::string ext_path;
 std::string uuid_;
-void get_external_storage_path(JNIEnv* env, jobject instance) {
+void GetExternalStoragePath(JNIEnv* env, jobject instance) {
   jclass envcls = env->FindClass("android/os/Environment");
   if (envcls == 0) {
     return;
@@ -288,7 +288,7 @@ void get_external_storage_path(JNIEnv* env, jobject instance) {
   ext_path.assign(env->GetStringUTFChars(path, 0));
 }
 
-void get_uuid() {
+void GetUuid() {
   FILE *fp;
   std::string result;
   fp = popen("/system/bin/ip link", "r");
@@ -308,7 +308,7 @@ void get_uuid() {
       std::string::size_type sz=0;
       unsigned long long dev_id = stoull(sub_str, &sz, 0);
       if (dev_id > 0) {
-        uuid_.assign(get_hash_string(sub_str).c_str());
+        uuid_.assign(GetHashString(sub_str).c_str());
         break;
       }
     }
