@@ -64,7 +64,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
     && rm -rf ../multi-model-server \
     && rm -rf /root/.cache/pip
 
-RUN pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests tensorflow \
+RUN pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests tensorflow memory-profiler \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 
