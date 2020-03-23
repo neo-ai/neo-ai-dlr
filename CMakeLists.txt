@@ -2,29 +2,51 @@ cmake_minimum_required (VERSION 3.6)
 include(cmake/Utils.cmake)
 include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
 
-set_default_configuration_release()
-msvc_use_static_runtime()
-
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
+option(AAR_BUILD "Build Android Archive (AAR)" OFF)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
-    set(CMAKE_ANDROID_API 21)
-    set(ANDROID_PLATFORM android-21)
-    set(ANDROID_DEPRECATED_HEADERS ON)
-    if (${ANDROID_ABI} STREQUAL "x86_64")
-        include_directories(${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
-    elseif (${ANDROID_ABI} STREQUAL "x86")
-        include_directories(${ANDROID_SYSROOT}/usr/include/i686-linux-android)
-    elseif (${ANDROID_ABI} STREQUAL "arm64-v8a")
-        include_directories(${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
-    else() # Default to armv7a which matches NDK toolchain.cmake behavior
-        include_directories(${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+    if(NOT ANDROID_PLATFORM AND NOT ANDROID_NATIVE_API_LEVEL)
+        set(ANDROID_PLATFORM "android-21")
+        message(STATUS "ANDROID_PLATFORM not set. Defaulting to android-21")
     endif()
 endif(ANDROID_BUILD)
 
 project(dlr)
+
+# The following lines should be after project()
+set_default_configuration_release()
+msvc_use_static_runtime()
+message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
+set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
+
+# CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES stuff should go after project() function
+if(ANDROID_BUILD)
+    # Disable debugging info for Release build by setting -g level to 0. It will reduce libdlr.so size by a factor of 3.
+    # NDK Issue https://github.com/android/ndk/issues/243
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        string(REPLACE "-g " "-g0 " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+        string(REPLACE "-g " "-g0 " CMAKE_ASM_FLAGS ${CMAKE_ASM_FLAGS})
+    endif()
+  # Add ARCH specific header folder to CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+    if (ANDROID_ABI STREQUAL "x86_64")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/x86_64-linux-android)
+    elseif (ANDROID_ABI STREQUAL "x86")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/i686-linux-android)
+    elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/aarch64-linux-android)
+    else() # Default to armv7a which matches NDK toolchain.cmake behavior
+        list(APPEND CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${ANDROID_SYSROOT}/usr/include/arm-linux-androideabi)
+    endif()
+    message(STATUS "CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES: ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}")
+    message(STATUS "Android CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
+    message(STATUS "Android CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
+    message(STATUS "Android CMAKE_ASM_FLAGS: " ${CMAKE_ASM_FLAGS})
+endif(ANDROID_BUILD)
+
 # Options
 option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
@@ -53,34 +75,29 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 if(TEST_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage")
 endif()
-set(TVM_RUNTIME_LINKER_LIBS "")
+set(DLR_LINKER_LIBS "")
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
+set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
 
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
+include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-FILE(GLOB_RECURSE DLR_SRC
+# Add only top level *.cc files (non-RECURSE)
+FILE(GLOB DLR_SRC
     "src/*.cc"
-    ${TVM_SRC}/src/runtime/dso_module.cc
+    ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/contrib/sort/sort.cc
-)
-FILE(GLOB_RECURSE DLR_INC 
-    "src/*.h"
-    "include/*.h"
-    "${TVM_SRC}/src/*.h" 
-    "${TVM_SRC}/include/*.h"
-    "${TREELITE_SRC}/src/*.h" 
-    "${TREELITE_SRC}/include/*.h"
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
 if(USE_OPENCL)
@@ -97,7 +114,7 @@ if(USE_OPENCL)
       set(OpenCL_LIBRARIES ${USE_OPENCL}/lib/libOpenCL.so)
     endif(USE_OPENCL STREQUAL "ON")
     include_directories(${OpenCL_INCLUDE_DIRS})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${OpenCL_LIBRARIES})
+    list(APPEND DLR_LINKER_LIBS ${OpenCL_LIBRARIES})
     file(GLOB RUNTIME_OPENCL_SRCS ${TVM_SRC}/src/runtime/opencl/*.cc)
     list(APPEND DLR_SRC ${RUNTIME_OPENCL_SRCS})
     set(USE_OPENCL OFF)
@@ -126,9 +143,9 @@ if(USE_CUDA)
       PATHS ${CUDA_TOOLKIT_ROOT_DIR}
       PATH_SUFFIXES lib lib64)
     message(STATUS "CUDA_CUDART_LIBRARY: " ${CUDA_CUDART_LIBRARY})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUDART_LIBRARY})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUDA_LIBRARY})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_NVRTC_LIBRARY})
+    list(APPEND DLR_LINKER_LIBS ${CUDA_CUDART_LIBRARY})
+    list(APPEND DLR_LINKER_LIBS ${CUDA_CUDA_LIBRARY})
+    list(APPEND DLR_LINKER_LIBS ${CUDA_NVRTC_LIBRARY})
     file(GLOB RUNTIME_CUDA_SRCS ${TVM_SRC}/src/runtime/cuda/*.cc)
     list(APPEND DLR_SRC ${RUNTIME_CUDA_SRCS})
     set(USE_CUDA OFF)
@@ -145,34 +162,171 @@ if(USE_CUDNN)
       set(CUDA_CUDNN_LIBRARY ${USE_CUDNN}/lib64/libcudnn.so)
     endif()
     message(STATUS "CUDA_CUDNN_LIBRARY: " ${CUDA_CUDNN_LIBRARY})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUDNN_LIBRARY})
+    list(APPEND DLR_LINKER_LIBS ${CUDA_CUDNN_LIBRARY})
     file(GLOB CONTRIB_CUDNN_SRCS ${TVM_SRC}/src/contrib/cudnn/*.cc)
     list(APPEND RUNTIME_SRCS ${CONTRIB_CUDNN_SRCS})
     set(USE_CUDNN_OFF)
 endif()
 if(USE_TENSORRT)
     message("USING TENSORRT")
-    set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
-    message(STATUS "Custom TensorRT path: " ${TENSORRT_ROOT_DIR})
-    set(TENSORRT_INCLUDE_DIR ${TENSORRT_ROOT_DIR}/include)
-    set(TENSORRT_LIB_DIR ${TENSORRT_ROOT_DIR}/lib)
+    if(IS_DIRECTORY ${USE_TENSORRT})
+        set(TENSORRT_ROOT_DIR ${USE_TENSORRT})
+        message(STATUS "Custom TensorRT path: " ${TENSORRT_ROOT_DIR})
+    endif()
+    find_path(TENSORRT_INCLUDE_DIR NvInfer.h HINTS ${TENSORRT_ROOT_DIR} PATH_SUFFIXES include)
+    find_library(TENSORRT_LIB_DIR nvinfer HINTS ${TENSORRT_ROOT_DIR} PATH_SUFFIXES lib)
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(TENSORRT DEFAULT_MSG TENSORRT_INCLUDE_DIR TENSORRT_LIB_DIR)
+    if(NOT TENSORRT_FOUND)
+        message(ERROR "Could not find TensorRT.")
+    endif()
+    message(STATUS "TENSORRT_LIB_DIR: " ${TENSORRT_LIB_DIR})
     include_directories(${TENSORRT_INCLUDE_DIR})
+    list(APPEND DLR_LINKER_LIBS ${TENSORRT_LIB_DIR})
+
+    # NNVM TRT Integration
     file(GLOB TENSORRT_SRCS ${TVM_SRC}/src/contrib/subgraph/*.cc)
     list(APPEND DLR_SRC ${TENSORRT_SRCS})
-    find_library(TENSORRT_NVINFER_LIBRARY nvinfer
-      PATH ${TENSORRT_LIB_DIR}
-      PATH_SUFFIXES lib lib64)
-    if (TENSORRT_NVINFER_LIBRARY MATCHES "NOTFOUND")
-      set(TENSORRT_NVINFER_LIBRARY ${USE_TENSORRT}/lib/libnvinfer.so)
-    endif()
-    message(STATUS "TENSORRT_NVINFER_LIBRARY: " ${TENSORRT_NVINFER_LIBRARY})
-    list(APPEND TVM_RUNTIME_LINKER_LIBS ${TENSORRT_NVINFER_LIBRARY})
     add_definitions(-DTVM_GRAPH_RUNTIME_TENSORRT)
+
+    # TRT Relay sources
+    file(GLOB TENSORRT_RELAY_SRCS ${TVM_SRC}/src/runtime/contrib/tensorrt/*.cc)
+    list(APPEND DLR_SRC ${TENSORRT_RELAY_SRCS})
+    # Additional TVM compiler sources
+    include_directories("${TVM_SRC}/3rdparty/rang/include")
+    include_directories("${TVM_SRC}/3rdparty/compiler-rt")
+    include_directories("${TVM_SRC}/topi/include")
+    list(APPEND DLR_SRC
+         # Ops
+         ${TVM_SRC}/src/relay/op/nn/nn.cc
+         ${TVM_SRC}/src/relay/op/nn/pooling.cc
+         ${TVM_SRC}/src/relay/op/nn/convolution.cc
+         ${TVM_SRC}/src/relay/op/nn/pad.cc
+         ${TVM_SRC}/src/relay/op/tensor/binary.cc
+         ${TVM_SRC}/src/relay/op/tensor/unary.cc
+         ${TVM_SRC}/src/relay/op/tensor/transform.cc
+         ${TVM_SRC}/src/relay/op/tensor/reduce.cc
+         ${TVM_SRC}/src/relay/op/image/resize.cc
+
+         ${TVM_SRC}/src/relay/ir/expr_functor.cc
+         ${TVM_SRC}/src/relay/ir/pattern_functor.cc
+         ${TVM_SRC}/src/relay/pass/util.cc
+         ${TVM_SRC}/src/relay/ir/type_functor.cc
+         ${TVM_SRC}/src/relay/ir/type.cc
+         ${TVM_SRC}/src/lang/ir.cc
+         ${TVM_SRC}/src/lang/expr.cc
+         ${TVM_SRC}/src/relay/ir/expr.cc
+         ${TVM_SRC}/src/relay/ir/adt.cc
+         ${TVM_SRC}/src/relay/ir/module.cc
+         ${TVM_SRC}/src/relay/pass/pass_manager.cc
+         ${TVM_SRC}/src/lang/attrs.cc
+         ${TVM_SRC}/src/lang/tensor.cc
+         ${TVM_SRC}/src/relay/pass/eta_expand.cc
+         ${TVM_SRC}/src/relay/pass/kind_check.cc
+         ${TVM_SRC}/src/lang/expr_operator.cc
+         ${TVM_SRC}/src/arithmetic/int_set.cc
+         ${TVM_SRC}/src/arithmetic/analyzer.cc
+         ${TVM_SRC}/src/arithmetic/modular_set.cc
+         ${TVM_SRC}/src/arithmetic/const_int_bound.cc
+         ${TVM_SRC}/src/arithmetic/canonical_simplify.cc
+         ${TVM_SRC}/src/arithmetic/rewrite_simplify.cc
+         ${TVM_SRC}/src/arithmetic/ir_mutator_with_analyzer.cc
+         ${TVM_SRC}/src/pass/ir_mutator.cc
+         ${TVM_SRC}/src/pass/ir_deep_compare.cc
+         ${TVM_SRC}/src/pass/simple_passes.cc
+         ${TVM_SRC}/src/pass/ir_visitor.cc
+         ${TVM_SRC}/src/relay/ir/pretty_printer.cc
+         ${TVM_SRC}/src/relay/ir/doc.cc
+         ${TVM_SRC}/src/relay/pass/dependency_graph.cc
+         ${TVM_SRC}/src/node/reflection.cc
+         ${TVM_SRC}/src/arithmetic/stmt_simplify.cc
+         ${TVM_SRC}/src/relay/pass/type_infer.cc
+         ${TVM_SRC}/src/relay/pass/type_solver.cc
+         ${TVM_SRC}/src/lang/api_registry.cc
+         ${TVM_SRC}/src/relay/pass/match_exhaustion.cc
+         ${TVM_SRC}/src/node/serialization.cc
+         ${TVM_SRC}/src/relay/ir/alpha_equal.cc
+         ${TVM_SRC}/src/relay/ir/error.cc
+         ${TVM_SRC}/src/relay/pass/de_duplicate.cc
+         ${TVM_SRC}/src/relay/pass/well_formed.cc
+         ${TVM_SRC}/src/relay/ir/op.cc
+         ${TVM_SRC}/src/relay/op/type_relations.cc
+         ${TVM_SRC}/src/op/compute_op.cc
+         ${TVM_SRC}/src/schedule/message_passing.cc
+         ${TVM_SRC}/src/op/op_util.cc
+         ${TVM_SRC}/src/pass/ir_util.cc
+         ${TVM_SRC}/src/op/cross_thread_reduction.cc
+         ${TVM_SRC}/src/lang/data_layout.cc
+         ${TVM_SRC}/src/op/tensorize.cc
+         ${TVM_SRC}/src/pass/arg_binder.cc
+         ${TVM_SRC}/src/relay/ir/base.cc
+         ${TVM_SRC}/src/relay/backend/contrib/tensorrt/common_utils.cc
+         )
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW_LITE_LIB)
-    message("Adding TENSORFLOW_LITE_LIB to DLR shared library")
-    list(APPEND TVM_RUNTIME_LINKER_LIBS -llog -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive)
+    if(NOT WITH_TENSORFLOW_LITE_LIB MATCHES ".*libtensorflow-lite\.a$")
+        message(FATAL_ERROR "WITH_TENSORFLOW_LITE_LIB should point to static library libtensorflow-lite.a")
+    endif()
+    message("Adding libtensorflow-lite.a to DLR shared library")
+
+    # Download Tensorflow and FlatBuffers source code
+    set(TENSORFLOW_VER "1.15.2")
+    set(TENSORFLOW_SHA1 "b9e71bf287a186ceb9d859588671d890c45e51a7")
+    set(FLATBUFFERS_VER "1.11.0")
+    set(FLATBUFFERS_SHA1 "2b2633902c57c6980b3a41b44d8ad933f214d71d")
+    set(TENSORFLOW_URL "https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VER}.tar.gz")
+    set(TENSORFLOW_TGZ "/tmp/tensorflow-${TENSORFLOW_VER}.tar.gz")
+    set(TENSORFLOW_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tensorflow-${TENSORFLOW_VER}")
+    set(FLATBUFFERS_URL "https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VER}.tar.gz")
+    set(FLATBUFFERS_TGZ "/tmp/flatbuffers-${FLATBUFFERS_VER}.tar.gz")
+    set(FLATBUFFERS_SRC "${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers-${FLATBUFFERS_VER}")
+
+    download_file(${TENSORFLOW_URL} ${TENSORFLOW_TGZ} SHA1 ${TENSORFLOW_SHA1})
+    download_file(${FLATBUFFERS_URL} ${FLATBUFFERS_TGZ} SHA1 ${FLATBUFFERS_SHA1})
+
+    # Extract Tensorflow and FlatBuffers source code
+    message(STATUS "Extracting " ${TENSORFLOW_TGZ} " ...")
+    execute_process(
+        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/tensorflow*
+        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${TENSORFLOW_TGZ}
+        RESULT_VARIABLE tf_ret
+    )
+    if(NOT tf_ret EQUAL "0")
+        message(FATAL_ERROR "Failed to extract " ${TENSORFLOW_TGZ})
+    endif()
+    message(STATUS "Extracting " ${FLATBUFFERS_TGZ} " ...")
+    execute_process(
+        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers*
+        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${FLATBUFFERS_TGZ}
+        RESULT_VARIABLE fb_ret
+    )
+    if(NOT fb_ret EQUAL "0")
+        message(FATAL_ERROR "Failed to extract " ${FLATBUFFERS_TGZ})
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DDLR_TFLITE")
+    include_directories("${TENSORFLOW_SRC}")
+    include_directories("${FLATBUFFERS_SRC}/include")
+    list(APPEND DLR_SRC "src/dlr_tflite/dlr_tflite.cc")
+
+    if(ANDROID_BUILD) # Android build needs additional library liblog
+        list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -llog)
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Mac OS linker is different from Linux.
+        # Use -force_load instead of --whole-archive
+        list(APPEND DLR_LINKER_LIBS -Wl,-force_load,${WITH_TENSORFLOW_LITE_LIB})
+    else() # Regulal Linux Build
+        list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
+    endif()
+endif()
+if(WITH_TENSORFLOW_LIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW")
+    include_directories("${WITH_TENSORFLOW_LIB}/include")
+    list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
+    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow_framework -ltensorflow)
+endif()
+if(AAR_BUILD)
+    list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
 endif()
 
 set(MAIN_EXEC "")
@@ -186,15 +340,17 @@ add_library(objdlr OBJECT ${DLR_SRC})
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
-set_output_directory(dlr ${PROJECT_SOURCE_DIR}/lib)
+set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
-message(STATUS "TVM_RUNTIME_LINKER_LIBS: " ${TVM_RUNTIME_LINKER_LIBS})
-target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
+message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
+if(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+else(ANDROID_BUILD)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
-set_output_directory(dlr_static ${PROJECT_SOURCE_DIR}/lib)
-set_target_properties(dlr_static PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(dlr_static treelite_runtime_static tvm_runtime_static ${TVM_RUNTIME_LINKER_LIBS})
+set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)
 
 set(OPREFIX object_)
 add_custom_target(combined_lib
@@ -205,23 +361,87 @@ add_custom_target(combined_lib
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
-# Tests
-set(TEST_EXECS "")
-file(GLOB TEST_SRCS test/cpp/*.cc)
-find_library(GTEST_LIB NAMES libgtest.a gtest)
+# Demos
+set(DEMO_EXECS "")
+file(GLOB DEMO_SRCS demo/cpp/*.cc)
 
-if(GTEST_LIB)
+foreach(__srcpath ${DEMO_SRCS})
+  get_filename_component(__srcname ${__srcpath} NAME)
+  string(REPLACE ".cc" "" __execname ${__srcname})
+  list(APPEND DEMO_EXECS ${__execname})
+  add_executable(${__execname} ${__srcpath} $<TARGET_OBJECTS:objdlr>)
+  if (ANDROID_BUILD)
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -fuse-ld=gold)
+  else (ANDROID_BUILD)
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
+  endif ()
+  set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
+  set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
+  set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+endforeach()
+add_custom_target(demo DEPENDS ${DEMO_EXECS})
+
+# Tests
+if(NOT(ANDROID_BUILD OR AAR_BUILD))
+  include(cmake/googletest.cmake)
+  fetch_googletest(
+    ${PROJECT_SOURCE_DIR}/cmake
+    ${PROJECT_BINARY_DIR}/googletest
+    )
+
+  enable_testing()
+
+  file(GLOB TEST_SRCS tests/cpp/*.cc)
+  if(WITH_TENSORFLOW_LITE_LIB)
+    file(GLOB TFLITE_TEST_SRCS tests/cpp/dlr_tflite/*.cc)
+    list(APPEND TEST_SRCS ${TFLITE_TEST_SRCS})
+  endif()
+  if(WITH_TENSORFLOW_LIB)
+    file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
+    list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
+  endif()
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
-    list(APPEND TEST_EXECS ${__execname})
-    target_link_libraries(${__execname}
-      dlr ${GTEST_LIB} pthread)
-    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
-    set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    target_link_libraries(${__execname} dlr gtest_main)
+    set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
+    add_test(NAME ${__execname} COMMAND ${__execname})
+    message(STATUS "Added Test: " ${__execname})
   endforeach()
-  add_custom_target(dlrtest DEPENDS ${TEST_EXECS})
+
+  if(WITH_TENSORFLOW_LITE_LIB)
+      # Download Test TFLite model and input data
+      file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v2_0.75_224.tflite
+        ./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite
+        SHA1
+        c653a09facaf2dfb5e3910030b3f74ad04259e30
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
+        ./cat224-3.txt
+        SHA1
+        e35e82f3371bed37caa7ecece417f50876414077
+      )
+  endif() # WITH_TENSORFLOW_LITE_LIB
+  if(WITH_TENSORFLOW_LIB)
+      # Download Test Tensorflow model and input data
+      file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
+        ./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb
+        SHA1
+        4df8525bcf2ec96296098ba7fec0fff1abe32fce
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/cat224-3.txt
+        ./cat224-3.txt
+        SHA1
+        e35e82f3371bed37caa7ecece417f50876414077
+      )
+  endif() # WITH_TENSORFLOW_LIB
 endif()
 
 # Group sources

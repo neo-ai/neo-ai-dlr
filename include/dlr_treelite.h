@@ -2,8 +2,8 @@
 #define DLR_TREELITE_H_
 
 #include <treelite/c_api_runtime.h>
-#include "dlr_common.h"
 
+#include "dlr_common.h"
 
 namespace dlr {
 
@@ -20,11 +20,11 @@ struct TreeliteInput {
 
 /*! \brief Get the paths of the Treelite model files.
  */
-ModelPath GetTreelitePaths(const std::string& dirname);
+ModelPath GetTreelitePaths(std::vector<std::string> dirname);
 
 /*! \brief class TreeliteModel
  */
-class TreeliteModel: public DLRModel {
+class TreeliteModel : public DLRModel {
  private:
   // fields for Treelite model
   PredictorHandle treelite_model_;
@@ -35,11 +35,14 @@ class TreeliteModel: public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float> treelite_output_;
-  void SetupTreeliteModule(const std::string& model_path);
+  void SetupTreeliteModule(std::vector<std::string> model_path);
+
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(const std::string& model_path, const DLContext& ctx): DLRModel(ctx, DLRBackend::kTREELITE) {
+  explicit TreeliteModel(std::vector<std::string> model_path,
+                         const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTREELITE) {
     SetupTreeliteModule(model_path);
   }
 
@@ -47,15 +50,17 @@ class TreeliteModel: public DLRModel {
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
   virtual void GetInput(const char* name, float* input) override;
-  virtual void SetInput(const char* name, const int64_t* shape, float* input, int dim) override;
+  virtual void SetInput(const char* name, const int64_t* shape, float* input,
+                        int dim) override;
   virtual void Run() override;
   virtual void GetOutput(int index, float* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetBackend() const override;
+  virtual void SetNumThreads(int threads) override;
+  virtual void UseCPUAffinity(bool use) override;
 };
 
-} // namespace dlr
-
+}  // namespace dlr
 
 #endif  // DLR_TREELITE_H_

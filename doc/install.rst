@@ -42,7 +42,9 @@ Table 1: List of Supported Devices
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Nvidia       | Jetson_Nano  |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/jetsonnano-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl  |
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Raspberry    | Rasp2b       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl            |
+| Nvidia       | Jetson_Xavier|  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.0/jetsonxavier-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl|
++--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Raspberry    | Rasp3b       |  https://s3-us-west-2.amazonaws.com/neo-ai-dlr-release/v1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.0-py2.py3-none-any.whl            |
 +--------------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 If your device is not listed in the table, use table2. You will identify your device by the processor architecture, operating system, and versions of GLIBC and LIBSTDC++. Of note, DLR installation may depend on other configuration differences or even location of dependency libraries; if the provided wheel URL does not work, please consider compiling DLR from source (see `Building DLR from source`_ section).
@@ -75,6 +77,7 @@ Building DLR consists of two steps:
   .. code-block:: bash
 
     git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+    cd neo-ai-dlr
 
 Building on Linux
 -----------------
@@ -86,21 +89,36 @@ Ensure that all necessary software packages are installed: GCC (or Clang), CMake
   sudo apt-get update
   sudo apt-get install -y python3 python3-pip gcc build-essential cmake
   
-To build, create a subdirectory ``build`` and invoke CMake:
+To build, create a subdirectory ``build``:
 
 .. code-block:: bash
 
   mkdir build
   cd build
-  cmake ..
 
-Once CMake is done generating a Makefile, run GNU Make to compile:
+Building for CPU
+""""""""""""""""
+
+Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
 .. code-block:: bash
 
+  cmake ..
   make -j4         # Use 4 cores to compile sources in parallel
 
-By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with extra options:
+Building for GPU
+""""""""""""""""
+
+By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
+
+If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use the following configuration:
+
+.. code-block:: bash
+
+  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=ON
+  make -j4
+
+If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory with:
 
 .. code-block:: bash
 
@@ -109,6 +127,9 @@ By default, DLR will be built with CPU support only. To enable support for NVIDI
 
 You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
+Building for OpenCL Devices
+"""""""""""""""""""""""""""
+
 Similarly, to enable support for OpenCL devices, run CMake with:
 
 .. code-block:: bash
@@ -116,12 +137,15 @@ Similarly, to enable support for OpenCL devices, run CMake with:
   cmake .. -DUSE_OPENCL=ON 
   make -j4
 
+Install Python package
+""""""""""""""""""""""
+
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
 .. code-block:: bash
 
-  cd python
-  python3 setup.py install --user
+  cd ../python
+  python3 setup.py install --user --force
 
 Building on Mac OS X
 --------------------
@@ -137,7 +161,7 @@ To ensure that Homebrew GCC is used (instead of default Apple compiler), specify
 
 .. code-block:: bash
 
-  mkbir build
+  mkdir build
   cd build
   CC=gcc-8 CXX=g++-8 cmake ..
   make -j4
@@ -148,7 +172,7 @@ Once the compilation is completed, install the Python package by running ``setup
 
 .. code-block:: bash
 
-  cd python
+  cd ../python
   python3 setup.py install --user --prefix=''
 
 Building on Windows
@@ -172,7 +196,7 @@ Once the compilation is completed, install the Python package by running ``setup
 
 .. code-block:: cmd
 
-  cd python
+  cd ../python
   python3 setup.py install --user
 
 Building for Android on ARM
@@ -186,8 +210,14 @@ Once done with above steps, invoke cmake with following commands to build Androi
 
 .. code-block:: bash
 
-  cmake .. -DANDROID_BUILD=ON -DNDK_ROOT=/path/to/your/ndk/folder -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake 
+  cmake .. -DANDROID_BUILD=ON \
+    -DNDK_ROOT=/path/to/your/ndk/folder \
+    -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake \
+    -DANDROID_PLATFORM=android-21
+
   make -j4
+
+``ANDROID_PLATFORM`` should correspond to ``minSdkVersion`` of your project. If ``ANDROID_PLATFORM`` is not set it will default to ``android-21``.
 
 For arm64 targets, add 
 
@@ -197,13 +227,52 @@ For arm64 targets, add
   
 to cmake flags.
 
-You can include whole ``libtensorflow-lite.a`` library into ``libdlr.so`` shared library. Use ``WITH_TENSORFLOW_LITE_LIB=<path_to_libtensorflow-lite.a>`` cmake flag.
+Building DLR with TFLite
+------------------------
+DLR build can include ``libtensorflow-lite.a`` library into ``libdlr.so`` shared library.
+
+Currently DLR supports TFLite 1.15.2 (branch r1.15).
+Build ``libtensorflow-lite.a`` as explained `here <https://www.tensorflow.org/lite/guide/build_arm64>`_
+
+To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
+
+Attention! You need to apply the following patches to tensorflow r1.15 branch:
+https://github.com/tensorflow/tensorflow/pull/36689
+
+To build DLR with TFLite use cmake flag ``WITH_TENSORFLOW_LITE_LIB``, e.g.
 
 .. code-block:: bash
 
-  -DWITH_TENSORFLOW_LITE_LIB=/opt/tensorflow/tensorflow/lite/tools/make/gen/arm-linux-android/lib/libtensorflow-lite.a
+  cmake .. \
+  -DWITH_TENSORFLOW_LITE_LIB=/opt/tensorflow-1.15/tensorflow/lite/tools/make/gen/linux_x86_64/lib/libtensorflow-lite.a
 
-To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
+To test DLR with TFLite use ``dlr_tflite_test``
+
+.. code-block:: bash
+
+  ./dlr_tflite_test
+
+
+Building for Android Archive (AAR) file
+---------------------------------------
+
+Install `Android Studio <https://developer.android.com/studio>`_.
+
+.. code-block:: bash
+
+  cd aar
+  # create file local.properties
+  # put line containing path to Android/sdk
+  # sdk.dir=/Users/root/Library/Android/sdk
+
+  # Run gradle build
+  ./gradlew assembleRelease
+
+  # dlr-release.aar file will be under dlr/build/outputs/aar/ folder
+  ls -lah dlr/build/outputs/aar/dlr-release.aar
+
+
+
 
 ***********************************
 Validation After Build (Linux Only)

@@ -40,3 +40,15 @@ function(set_output_directory target dir)
     ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${dir}
   )
 endfunction(set_output_directory)
+
+# downloading and optionally verifying the checksum of files
+function(download_file url filename hash_type hash)
+  if(NOT EXISTS ${filename})
+    message(STATUS "Downloading: " ${url} " to " ${filename})
+    file(DOWNLOAD ${url} ${filename}
+         TIMEOUT 60  # seconds
+         EXPECTED_HASH ${hash_type}=${hash}
+         TLS_VERIFY ON
+    )
+  endif()
+endfunction(download_file)
