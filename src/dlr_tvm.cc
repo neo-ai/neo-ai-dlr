@@ -1,24 +1,31 @@
 #include "dlr_tvm.h"
-#include <fstream>
-#include <numeric>
 
+#include <stdlib.h>
+
+#include <fstream>
+#include <iterator>
+#include <numeric>
 
 using namespace dlr;
 
-ModelPath dlr::GetTvmPaths(const std::string& dirname) {
+ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   ModelPath paths;
   std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
+  for (auto dir : dirname) {
+    ListDir(dir, paths_vec);
+  }
   for (auto filename : paths_vec) {
     std::string basename = GetBasename(filename);
-    if (EndsWith(filename, ".json")
-        && std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
-                       std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
-                       [basename](const std::string& s)
-                                 { return (s != basename); })
-        && filename != "version.json") {
+    if (EndsWith(filename, ".json") &&
+        std::all_of(
+            std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
+            std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
+            [basename](const std::string& s) { return (s != basename); }) &&
+        filename != "version.json") {
       paths.model_json = filename;
     } else if (EndsWith(filename, LIBEXT)) {
+      paths.model_lib = filename;
+    } else if (EndsWith(filename, ".tensorrt")) {
       paths.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
       paths.params = filename;
@@ -26,32 +33,36 @@ ModelPath dlr::GetTvmPaths(const std::string& dirname) {
       paths.ver_json = filename;
     }
   }
-  if ( paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty() ){
-    LOG(FATAL) << "No valid TVM model files found under folder:" << dirname;
+  if (paths.model_json.empty() || paths.model_lib.empty() ||
+      paths.params.empty()) {
+    LOG(INFO) << "No valid TVM model files found under folder:";
+    for (auto dir : dirname) {
+      LOG(INFO) << dir;
+    }
+    LOG(FATAL);
   }
   return paths;
 }
 
-bool IsFileEmpty(const std::string &filePath){
+bool IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
   return pFile.peek() == std::ifstream::traits_type::eof();
 }
 
-void TVMModel::SetupTVMModule(const std::string& model_path) {
+void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTvmPaths(model_path);
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(paths.params);
+  std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
   tvm::runtime::Module module;
-  if (!IsFileEmpty(paths.model_lib)){
+  if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
-  tvm_graph_runtime_ =
-    std::make_shared<tvm::runtime::GraphRuntime>();
+  tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
@@ -61,7 +72,7 @@ void TVMModel::SetupTVMModule(const std::string& model_path) {
   // This is the combined count of inputs and weights
   const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
   std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_weights; i++)  {
+  for (int i = 0; i < num_inputs_weights; i++) {
     input_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
   // Get list of weights
@@ -103,21 +114,20 @@ const char* TVMModel::GetWeightName(int index) const {
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
                         int dim) {
-    std::string str(name);
-    int index = tvm_graph_runtime_->GetInputIndex(str);
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-    DLTensor input_tensor = *(arr.operator->());
-    input_tensor.ctx = DLContext{kDLCPU, 0};
-    input_tensor.data = input;
-    int64_t read_size =
-        std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
-    int64_t expected_size = std::accumulate(
-        input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
-        std::multiplies<int64_t>());
-    CHECK_SHAPE("Mismatch found in input data size", read_size,
-                expected_size);
-    tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
-    set_input(str, &input_tensor);
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  DLTensor input_tensor = *(arr.operator->());
+  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.data = input;
+  int64_t read_size =
+      std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
+  int64_t expected_size = std::accumulate(
+      input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
+      std::multiplies<int64_t>());
+  CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
+  tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
+  set_input(str, &input_tensor);
 }
 
 void TVMModel::GetInput(const char* name, float* input) {
@@ -162,6 +172,29 @@ void TVMModel::Run() {
   run();
 }
 
-const char* TVMModel::GetBackend() const {
-  return "tvm";
+const char* TVMModel::GetBackend() const { return "tvm"; }
+
+static inline int SetEnv(const char* key, const char* value) {
+#ifdef _WIN32
+  return static_cast<int>(_putenv_s(key, value));
+#else
+  return setenv(key, value, 1);
+#endif  // _WIN32
+}
+
+void TVMModel::SetNumThreads(int threads) {
+  if (threads > 0) {
+    SetEnv("TVM_NUM_THREADS", std::to_string(threads).c_str());
+    LOG(INFO) << "Set Num Threads: " << threads;
+  }
+}
+
+void TVMModel::UseCPUAffinity(bool use) {
+  if (use) {
+    SetEnv("TVM_BIND_THREADS", "1");
+    LOG(INFO) << "CPU Affinity is enabled";
+  } else {
+    SetEnv("TVM_BIND_THREADS", "0");
+    LOG(INFO) << "CPU Affinity is disabled";
+  }
 }
