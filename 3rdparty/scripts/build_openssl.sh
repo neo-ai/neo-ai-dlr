@@ -35,6 +35,9 @@ elif [ "$3" = "x86" ]; then
 elif [ "$3" = "arm64-v8a" ]; then 
   export TARGET_HOST=aarch64-linux-android
   export BARCH=arm64
+else 
+  export TARGET_HOST=armv7a-linux-androideabi
+  export BARCH=arm
 fi
 mkdir -p $1/build
 

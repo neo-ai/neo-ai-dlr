@@ -358,26 +358,19 @@ message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
 if(ANDROID_BUILD OR AAR_BUILD)
   include_directories("${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include")
   include_directories("${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/include")
-  if(ANDROID_ABI STREQUAL "armeabi-v7a")
-    add_library(lib_curl STATIC IMPORTED)
-    set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
-        ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.a)
-    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_curl log)
-  else()
-    add_library(lib_ssl SHARED IMPORTED)
-    set_target_properties(lib_ssl PROPERTIES
+  add_library(lib_ssl SHARED IMPORTED)
+  set_target_properties(lib_ssl PROPERTIES
         IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3)
-    add_library(lib_crypto SHARED IMPORTED)
-    set_target_properties(lib_crypto PROPERTIES
+  add_library(lib_crypto SHARED IMPORTED)
+  set_target_properties(lib_crypto PROPERTIES
         IMPORTED_LOCATION ${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so.3)
-    add_library(lib_curl SHARED IMPORTED)
-    set_target_properties(lib_curl PROPERTIES
+  add_library(lib_curl SHARED IMPORTED)
+  set_target_properties(lib_curl PROPERTIES
         IMPORTED_LOCATION ${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so)
-    install(FILES "${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3" DESTINATION ${CMAKE_BINARY_DIR}/lib)
-    install(FILES "${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so.3" DESTINATION ${CMAKE_BINARY_DIR}/lib)
-    install(FILES "${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so" DESTINATION ${CMAKE_BINARY_DIR}/lib)
-    target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_ssl lib_crypto lib_curl log)
-  endif()
+  install(FILES "${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libssl.so.3" DESTINATION ${CMAKE_BINARY_DIR}/lib)
+  install(FILES "${OPENSSL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcrypto.so.3" DESTINATION ${CMAKE_BINARY_DIR}/lib)
+  install(FILES "${CURL_DISTRIBUTION_DIR}/build/${ANDROID_ABI}/lib/libcurl.so" DESTINATION ${CMAKE_BINARY_DIR}/lib)
+  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} z lib_ssl lib_crypto lib_curl log)
 endif()
 
 if(ANDROID_BUILD)

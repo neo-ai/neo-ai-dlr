@@ -26,6 +26,8 @@ elif [ "$3" = "x86" ]; then
   export TARGET_HOST=i686-linux-android
 elif [ "$3" = "arm64-v8a" ]; then
   export TARGET_HOST=aarch64-linux-android
+else
+  export TARGET_HOST=armv7a-linux-androideabi
 fi
 export TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/$HOST_TAG
 PATH=$TOOLCHAIN/bin:$PATH
@@ -38,6 +40,14 @@ export RANLIB=$TOOLCHAIN/bin/$TARGET_HOST-ranlib
 export STRIP=$TOOLCHAIN/bin/$TARGET_HOST-strip
 export SSL_DIR=$1/../openssl/build/$3
 export LDFLAGS="-L$SSL_DIR/lib"
+
+if [ "$3" = "armeabi-v7a" ]; then 
+  export AR=$TOOLCHAIN/bin/aarch64-linux-android-ar
+  export AS=$TOOLCHAIN/bin/aarch64-linux-android-as
+  export LD=$TOOLCHAIN/bin/aarch64-linux-android-ld
+  export RANLIB=$TOOLCHAIN/bin/aarch64-linux-android-ranlib
+  export STRIP=$TOOLCHAIN/bin/aarch64-linux-android-strip
+fi
 
 mkdir -p $1/build
 $1/configure --host=$TARGET_HOST \
