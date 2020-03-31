@@ -48,3 +48,4 @@ def test_notification(capsys):
     probabilities = model.run(input_data)  # need to be a list of input arrays matching input names
 
     assert probabilities[0].argmax() == 151
+
