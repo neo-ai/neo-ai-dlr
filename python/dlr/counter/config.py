@@ -1,5 +1,5 @@
 """configuration keys related to Call Home Feature"""
-CALL_HOME_URL = 'https://beta-neo-dlr.us-west-2.amazonaws.com'
+CALL_HOME_URL = 'https://api.neo-dlr.amazonaws.com'
 CALL_HOME_RECORD_FILE = 'ccm_record.txt'
 CALL_HOME_USER_CONFIG_FILE = 'ccm_config.json'
 CALL_HOME_MODEL_RUN_COUNT_TIME_SECS = 300
