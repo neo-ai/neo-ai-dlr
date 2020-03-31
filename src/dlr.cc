@@ -9,6 +9,9 @@
 #ifdef DLR_TENSORFLOW
 #include "dlr_tensorflow/dlr_tensorflow.h"
 #endif  // DLR_TENSORFLOW
+#ifdef DLR_HEXAGON
+#include "dlr_hexagon/dlr_hexagon.h"
+#endif  // DLR_HEXAGON
 
 #include <locale>
 
@@ -153,6 +156,24 @@ int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
 }
 #endif  // DLR_TENSORFLOW
 
+#ifdef DLR_HEXAGON
+/*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
+ * ctor.
+ */
+int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
+                              int debug_level) {
+  API_BEGIN();
+  const std::string model_path_string(model_path);
+  // HexagonModel class does not use DLContext internally
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
+  ctx.device_id = 0;
+  DLRModel* model = new HexagonModel(model_path_string, ctx, debug_level);
+  *handle = model;
+  API_END();
+}
+#endif  // DLR_HEXAGON
+
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
 extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
@@ -194,8 +215,8 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
     // input and output tensor names will be detected automatically.
     // use undefined number of threads - threads=0
     // GPUOptions.allow_growth is True
-    // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively share GPU memory.
-    // No Performance degradation was detected.
+    // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
+    // share GPU memory. No Performance degradation was detected.
     DLRModelHandle tf_handle;
     DLR_TFConfig tf_config = {};
     tf_config.inter_op_parallelism_threads = 0;
@@ -207,6 +228,14 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
     if (errC != 0) return errC;
     model = static_cast<DLRModel*>(tf_handle);
 #endif  // DLR_TENSORFLOW
+#ifdef DLR_HEXAGON
+  } else if (backend == DLRBackend::kHEXAGON) {
+    DLRModelHandle hexagon_handle;
+    int errC = CreateDLRModelFromHexagon(&hexagon_handle, model_path,
+                                         1 /*debug_level*/);
+    if (errC != 0) return errC;
+    model = static_cast<DLRModel*>(hexagon_handle);
+#endif  // DLR_HEXAGON
   } else {
     LOG(FATAL) << "Unsupported backend!";
     return -1;  // unreachable

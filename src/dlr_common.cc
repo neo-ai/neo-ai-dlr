@@ -4,6 +4,14 @@
 
 using namespace dlr;
 
+std::string dlr::GetParentFolder(const std::string& path) {
+  size_t found = path.find_last_of("/\\");
+  if (found >= 0) {
+    return path.substr(0, found);
+  }
+  return "";
+}
+
 std::string dlr::GetBasename(const std::string& path) {
 #ifdef _WIN32
   /* remove any trailing backward or forward slashes
@@ -53,6 +61,9 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   if (EndsWith(dir_paths[0], ".pb")) {
     return DLRBackend::kTENSORFLOW;
   }
+  if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
+    return DLRBackend::kHEXAGON;
+  }
   // Scan Directory content to guess the backend.
   std::vector<std::string> paths;
   for (auto dir : dir_paths) {
@@ -65,6 +76,8 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
       return DLRBackend::kTFLITE;
     } else if (EndsWith(filename, ".pb")) {
       return DLRBackend::kTENSORFLOW;
+    } else if (EndsWith(filename, "_hexagon_model.so")) {
+      return DLRBackend::kHEXAGON;
     }
   }
   return DLRBackend::kTREELITE;

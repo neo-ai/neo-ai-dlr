@@ -141,7 +141,7 @@ Once the compilation is completed, install the Python package by running ``setup
 .. code-block:: bash
 
   cd ../python
-  python3 setup.py install --user --force
+  python3 setup.py install --user
 
 Building on Mac OS X
 --------------------
@@ -178,7 +178,7 @@ DLR requires `Visual Studio 2017 <https://visualstudio.microsoft.com/downloads/>
 
 In the DLR directory, first run CMake to generate a Visual Studio project:
 
-.. code-block:: cmd
+.. code-block:: bash
 
   mkdir build
   cd build
@@ -190,7 +190,7 @@ NVIDIA GPUs are not yet supported for Windows target.
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
-.. code-block:: cmd
+.. code-block:: bash
 
   cd ../python
   python3 setup.py install --user
@@ -268,13 +268,25 @@ Install `Android Studio <https://developer.android.com/studio>`_.
   ls -lah dlr/build/outputs/aar/dlr-release.aar
 
 
+Building DLR with Hexagon support
+---------------------------------
+
+To build DLR with Hexagon compiled models support use flag ``-DWITH_HEXAGON=1``
+
+.. code-block:: bash
+
+  cmake .. -DWITH_HEXAGON=1
+
+.. code-block:: bash
+
+  ./dlr_hexagon_test
 
 
 ***********************************
 Validation After Build (Linux Only)
 ***********************************
 
-.. code-block:: cmd
+.. code-block:: bash
 
   cd tests/python/integration/
   python load_and_run_tvm_model.py
