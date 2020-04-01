@@ -6,12 +6,13 @@ source /home/model-server/mms_config.sh
 
 if [[ "$1" = "serve" ]]; then
     shift 1
+    mkdir -p /opt/ml/errors
     touch /opt/ml/errors/errors.log
     chown model-server /opt/ml/errors/errors.log
     su - model-server
     cp -v -r /opt/ml/model/* /home/model-server/model
     cp -v -r /home/model-server/neo_template.py /home/model-server/model
-    model-archiver --handler neo_template:predict --model-name neomodel --model-path /home/model-server/model -f --export-path /home/model-server
+    model-archiver --handler neo_template:handle --model-name neomodel --model-path /home/model-server/model -f --export-path /home/model-server --runtime python3
     mv /home/model-server/neomodel.mar /home/model-server/model
 
     if [ ! -z "${MMS_NUM_WORKER}" ]; then

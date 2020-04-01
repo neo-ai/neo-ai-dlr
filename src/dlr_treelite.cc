@@ -113,7 +113,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   // NOTE: If number of columns is less than num_feature, missing columns
   //       will be automatically padded with missing values
   CHECK_LE(static_cast<size_t>(shape[1]), treelite_num_feature_)
-      << "Mismatch found in input shape at dimension 1. Value read: "
+      << "ClientError: Mismatch found in input shape at dimension 1. Value read: "
       << shape[1] << ", Expected: " << treelite_num_feature_ << " or less";
 
   const size_t batch_size = static_cast<size_t>(shape[0]);
