@@ -212,6 +212,7 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
   DLRModel* model = static_cast<DLRModel*>(*handle);
   delete model;
   CallHome(CM_RELEASE);
+  *handle = NULL; 
   API_END();
 }
 
