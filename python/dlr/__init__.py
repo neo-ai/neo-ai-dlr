@@ -8,3 +8,5 @@ from __future__ import absolute_import as _abs
 from .api import DLRModel
 
 __all__ = ['DLRModel']
+
+__version__ = "1.1.0"
