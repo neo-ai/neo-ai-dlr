@@ -128,7 +128,7 @@ int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
                                  const DLR_TFTensorDesc* inputs, int input_size,
                                  const char* outputs[], int output_size,
-                                 const int threads) {
+                                 const DLR_TFConfig tf_config) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   // TensorflowModel class does not use DLContext internally
@@ -147,7 +147,7 @@ int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
     v_outputs[i] = outputs[i];
   }
   DLRModel* model = new TensorflowModel(model_path_string, ctx, v_inputs,
-                                        v_input_shapes, v_outputs, threads);
+                                        v_input_shapes, v_outputs, tf_config);
   *handle = model;
   API_END();
 }
@@ -193,9 +193,17 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
   } else if (backend == DLRBackend::kTENSORFLOW) {
     // input and output tensor names will be detected automatically.
     // use undefined number of threads - threads=0
+    // GPUOptions.allow_growth is True
+    // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively share GPU memory.
+    // No Performance degradation was detected.
     DLRModelHandle tf_handle;
+    DLR_TFConfig tf_config = {};
+    tf_config.inter_op_parallelism_threads = 0;
+    tf_config.intra_op_parallelism_threads = 0;
+    tf_config.gpu_options.allow_growth = 1;
+    tf_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
     int errC = CreateDLRModelFromTensorflow(&tf_handle, model_path, NULL, 0,
-                                            NULL, 0, 0);
+                                            NULL, 0, tf_config);
     if (errC != 0) return errC;
     model = static_cast<DLRModel*>(tf_handle);
 #endif  // DLR_TENSORFLOW
@@ -211,6 +219,7 @@ extern "C" int DeleteDLRModel(DLRModelHandle* handle) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   delete model;
+  *handle = NULL;
   API_END();
 }
 
