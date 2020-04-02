@@ -16,12 +16,15 @@ from .system import Factory
 
 def call_home_lite(func):
     """function wrapper"""
+
     def wrapper(*args, **kwargs):
         global MGR
+
         if func.__name__ == "init_call_home":
             print(CALL_HOME_USR_NOTIFICATION)
-            if MGR:
-                MGR.add_runtime_loaded()
+            if not MGR:
+                MGR = CounterMgrLite.get_instances()
+            MGR.add_runtime_loaded()
 
         resp = func(*args, **kwargs)
         if func.__name__ == '__init__':
@@ -197,6 +200,7 @@ class CounterMgrLite:
 
 class Worker(Thread):
     """Worker thread class"""
+
     def __init__(self, func, event: Event):
         Thread.__init__(self, daemon=True)
         self.func = func
@@ -205,6 +209,3 @@ class Worker(Thread):
     def run(self):
         while not self.stop_evt.wait(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS):
             self.func()
-
-
-MGR = CounterMgrLite.get_instances()
