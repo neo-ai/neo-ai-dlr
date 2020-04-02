@@ -22,9 +22,8 @@ def call_home_lite(func):
 
         if func.__name__ == "init_call_home":
             print(CALL_HOME_USR_NOTIFICATION)
-            if not MGR:
-                MGR = CounterMgrLite.get_instances()
-            MGR.add_runtime_loaded()
+            if MGR:
+                MGR.add_runtime_loaded()
 
         resp = func(*args, **kwargs)
         if func.__name__ == '__init__':
@@ -209,3 +208,6 @@ class Worker(Thread):
     def run(self):
         while not self.stop_evt.wait(CALL_HOME_MODEL_RUN_COUNT_TIME_SECS):
             self.func()
+
+
+MGR = CounterMgrLite.get_instances()
