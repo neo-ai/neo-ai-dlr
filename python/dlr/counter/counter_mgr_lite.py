@@ -109,8 +109,10 @@ class CounterMgrLite:
     def add_runtime_loaded(self):
         """push device information on DLR library load"""
         try:
+            print("self pub?", self.is_device_info_published())
             if not self.is_device_info_published():
                 data = {'record_type': self.RUNTIME_LOAD}
+                print("self system", self.system)
                 if self.system:
                     data.update(self.system.get_device_info())
                     self.msgs.append(json.dumps(data))
@@ -196,6 +198,7 @@ def call_home_lite(func):
         if func.__name__ == "init_call_home":
             print(CALL_HOME_USR_NOTIFICATION)
             if MGR:
+                print("MGR found")
                 MGR.add_runtime_loaded()
 
         resp = func(*args, **kwargs)
