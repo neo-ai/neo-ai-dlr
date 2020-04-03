@@ -15,7 +15,9 @@ CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
                             \n machine: <string, retuns the machine type, eg. x86_64 or i386>, \
                             \n model: <string, one-way non-identifable hashed model name, eg. 36f613e00f707dbe53a64b1d9625ae7d> \
                             \n\n If you wish to opt-out of this data collection feature, please follow the steps below: \
-                            \n\t1. Create a config file, ccm_config.json in your application path. \
+                            \n\t1. Create a config file, ccm_config.json inside your DLR target directory path, i.e. python3.6/site-packages/dlr/counter/ccm_config.json \
                             \n\t2. Added below format content in it, \
                             \n\t\t{\n\t\t\t"ccm" : "false"\n\t\t} \
-                            \n\t3. Restart DLR application."""
+                            \n\t3. Restart DLR application. \
+                            \n\t4. Validate that you don't see this call feature message again."""
+CALL_HOME_USR_DISABLE_NOTIFICATION = "CALL HOME FEATURE DISABLED"

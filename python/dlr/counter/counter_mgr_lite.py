@@ -8,7 +8,8 @@ import logging
 import os
 
 from .config import CALL_HOME_USR_NOTIFICATION, CALL_HOME_USER_CONFIG_FILE, \
-    CALL_HOME_REQ_STOP_MAX_COUNT, CALL_HOME_RECORD_FILE, CALL_HOME_MODEL_RUN_COUNT_TIME_SECS
+    CALL_HOME_REQ_STOP_MAX_COUNT, CALL_HOME_RECORD_FILE, CALL_HOME_MODEL_RUN_COUNT_TIME_SECS, \
+    CALL_HOME_USR_DISABLE_NOTIFICATION
 from .utils.helper import get_hash_string
 from .utils import resturlutils
 from .system import Factory
@@ -55,7 +56,7 @@ class CounterMgrLite:
                 print("file exist")
                 with open(user_file_path, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
-                    if str(data['ccm']).lower() == 'false':
+                    if 'ccm' in data and str(data['ccm']).lower() == 'false':
                         feature_enb = False
                     else:
                         feature_enb = True
@@ -201,10 +202,13 @@ def call_home_lite(func):
         global MGR
 
         if func.__name__ == "init_call_home":
-            print(CALL_HOME_USR_NOTIFICATION)
-            if MGR:
-                print("MGR found")
-                MGR.add_runtime_loaded()
+            if CounterMgrLite.is_feature_enabled():
+                print(CALL_HOME_USR_NOTIFICATION)
+                if MGR:
+                    print("MGR found")
+                    MGR.add_runtime_loaded()
+            else:
+                print(CALL_HOME_USR_DISABLE_NOTIFICATION)
 
         resp = func(*args, **kwargs)
         if func.__name__ == '__init__':
