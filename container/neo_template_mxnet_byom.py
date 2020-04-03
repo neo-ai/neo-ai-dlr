@@ -58,7 +58,9 @@ def parse_s3_url(url):
 
 def download_s3_resource(source, target):
     print('Downloading {} to {}'.format(source, target))
-    s3 = boto3.resource('s3')
+
+    region = os.environ.get("AWS_REGION", os.environ.get("SAGEMAKER_REGION"))
+    s3 = boto3.resource('s3', region_name=region)
 
     script_bucket_name, script_key_name = parse_s3_url(source)
     script_bucket = s3.Bucket(script_bucket_name)

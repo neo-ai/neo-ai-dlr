@@ -8,9 +8,10 @@ option(AAR_BUILD "Build Android Archive (AAR)" OFF)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
-    set(CMAKE_ANDROID_API 21)
-    set(ANDROID_PLATFORM android-21)
-    set(ANDROID_DEPRECATED_HEADERS ON)
+    if(NOT ANDROID_PLATFORM AND NOT ANDROID_NATIVE_API_LEVEL)
+        set(ANDROID_PLATFORM "android-21")
+        message(STATUS "ANDROID_PLATFORM not set. Defaulting to android-21")
+    endif()
 endif(ANDROID_BUILD)
 
 project(dlr)
@@ -270,8 +271,8 @@ if(WITH_TENSORFLOW_LITE_LIB)
     message("Adding libtensorflow-lite.a to DLR shared library")
 
     # Download Tensorflow and FlatBuffers source code
-    set(TENSORFLOW_VER "1.13.2")
-    set(TENSORFLOW_SHA1 "78bb81d1e78ac9c3b092dee65f6b6b3cee23b9ae")
+    set(TENSORFLOW_VER "1.15.2")
+    set(TENSORFLOW_SHA1 "b9e71bf287a186ceb9d859588671d890c45e51a7")
     set(FLATBUFFERS_VER "1.11.0")
     set(FLATBUFFERS_SHA1 "2b2633902c57c6980b3a41b44d8ad933f214d71d")
     set(TENSORFLOW_URL "https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VER}.tar.gz")
@@ -323,6 +324,10 @@ if(WITH_TENSORFLOW_LIB)
     include_directories("${WITH_TENSORFLOW_LIB}/include")
     list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
     list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow_framework -ltensorflow)
+endif()
+if(WITH_HEXAGON)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
+    list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
 endif()
 if(AAR_BUILD)
     list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
@@ -381,7 +386,7 @@ endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
 # Tests
-if(NOT(ANDROID_BUILD OR AAR_BUILD))
+if(NOT(AAR_BUILD))
   include(cmake/googletest.cmake)
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake
@@ -399,6 +404,10 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
     file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
     list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
   endif()
+  if(WITH_HEXAGON)
+    file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
+    list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
+  endif()
   foreach(__srcpath ${TEST_SRCS})
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
@@ -410,7 +419,7 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
   endforeach()
 
   if(WITH_TENSORFLOW_LITE_LIB)
-      # Download Test TFLite model and input data
+      # Download Test TFLite model
       file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
       download_file(
         https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v2_0.75_224.tflite
@@ -418,15 +427,9 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
         SHA1
         c653a09facaf2dfb5e3910030b3f74ad04259e30
       )
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
-        ./cat224-3.txt
-        SHA1
-        e35e82f3371bed37caa7ecece417f50876414077
-      )
   endif() # WITH_TENSORFLOW_LITE_LIB
   if(WITH_TENSORFLOW_LIB)
-      # Download Test Tensorflow model and input data
+      # Download Test Tensorflow model
       file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
       download_file(
         https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
@@ -434,14 +437,32 @@ if(NOT(ANDROID_BUILD OR AAR_BUILD))
         SHA1
         4df8525bcf2ec96296098ba7fec0fff1abe32fce
       )
+  endif() # WITH_TENSORFLOW_LIB
+  if(WITH_HEXAGON)
+      # Download Test Hexagon model for Android 64 aarch64
+      file(MAKE_DIRECTORY dlr_hexagon_model)
       download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/cat224-3.txt
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/hexagon-models/android_ReleaseG_aarch64/mobilenet_v1_0.75_224_quant_hexagon_model.so
+        ./dlr_hexagon_model/mobilenet_v1_0.75_224_quant_hexagon_model.so
+        SHA1
+        989d6f1613e948e432a31d5b5741bff7f9a9bacb
+      )
+      # Download Hexagon NNLib for Hexagon V65
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/hexagon-models/hexagon_ReleaseG_dynamic_toolv83_v65/libhexagon_nn_skel.so
+        ./dlr_hexagon_model/libhexagon_nn_skel.so
+        SHA1
+        6746c34f54aad3df24d9fc5f632ebd9dfc64ed69
+      )
+  endif() # WITH_HEXAGON
+  if(WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
         ./cat224-3.txt
         SHA1
         e35e82f3371bed37caa7ecece417f50876414077
       )
-  endif() # WITH_TENSORFLOW_LIB
+  endif() # WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON
 endif()
-
 # Group sources
 #auto_source_group("${SOURCES}")

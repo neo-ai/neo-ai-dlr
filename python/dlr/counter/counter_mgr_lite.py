@@ -119,7 +119,7 @@ class CounterMgrLite:
         except Exception:
             logging.exception("while dlr runtime load", exc_info=False)
 
-    def add_model_loaded(self, model: str):
+    def add_model_loaded(self, model):
         """record model load event"""
         model_name = self.get_model_hash(model)
         data = {'record_type': self.MODEL_LOAD, 'model': model_name}
@@ -127,7 +127,7 @@ class CounterMgrLite:
             data['uuid'] = self.system.get_device_uuid()
         self.msgs.append(json.dumps(data))
 
-    def add_model_run(self, model: str):
+    def add_model_run(self, model):
         """record and count model run event"""
         model_name = self.get_model_hash(model)
         if self.metrics.get(model_name) is not None:
@@ -175,8 +175,7 @@ class CounterMgrLite:
 
 class Worker(Thread):
     """Worker thread class"""
-
-    def __init__(self, func, event: Event):
+    def __init__(self, func, event):
         Thread.__init__(self, daemon=True)
         self.func = func
         self.stop_evt = event

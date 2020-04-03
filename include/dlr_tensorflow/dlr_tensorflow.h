@@ -1,6 +1,7 @@
 #ifndef DLR_TENSORFLOW_H_
 #define DLR_TENSORFLOW_H_
 
+#include "dlr.h"
 #include "dlr_common.h"
 #include "tensorflow/c/c_api.h"
 
@@ -17,6 +18,11 @@ void FreeBuffer(void* data, size_t length);
 /*! \brief read tensorflow model file.
  */
 TF_Buffer* ReadTFFile(const char* file);
+
+/*! \brief convert DLR_TFConfig to protobuf vector of bytes
+ */
+void PrepareTFConfigProto(const DLR_TFConfig& tf_config,
+                          std::vector<std::uint8_t>& config);
 
 /*! \brief class TensorflowModel
  */
@@ -48,7 +54,7 @@ class TensorflowModel : public DLRModel {
       const std::string& model_path, const DLContext& ctx,
       const std::vector<std::string>& inputs,
       const std::vector<std::vector<int64_t>>& input_shapes,
-      const std::vector<std::string>& outputs, const int threads);
+      const std::vector<std::string>& outputs, const DLR_TFConfig& tf_config);
   ~TensorflowModel();
 
   virtual const char* GetInputName(int index) const override;

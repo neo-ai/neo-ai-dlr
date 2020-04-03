@@ -3,7 +3,6 @@ import platform
 import uuid
 import logging
 import abc
-from abc import ABC
 
 from .deviceinfo import DeviceInfo
 from .utils.helper import get_hash_string
@@ -26,7 +25,7 @@ class System:
 
 
 # Wrapper class
-class ARM(System, ABC):
+class ARM(System):
     """ARM systems interface"""
     @abc.abstractmethod
     def get_device_info(self):
@@ -69,7 +68,7 @@ class Linux_ARM(ARM):
         return self._device.uuid
 
 
-class Android(ARM, ABC):
+class Android(ARM):
     """Android system interface"""
     @abc.abstractmethod
     def get_device_info(self):
@@ -82,7 +81,7 @@ class Android(ARM, ABC):
         raise NotImplementedError
 
 
-class X86(System, ABC):
+class X86(System):
     """X86 architecture system interface"""
     @abc.abstractmethod
     def get_device_info(self):
@@ -125,7 +124,7 @@ class Linux_x86(X86):
         return self._device.uuid
 
 
-class X64(System, ABC):
+class X64(System):
     """X64 architecture system"""
     @abc.abstractmethod
     def get_device_info(self):
