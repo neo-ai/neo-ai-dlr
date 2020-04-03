@@ -53,7 +53,6 @@ class CounterMgrLite:
             user_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                           CALL_HOME_USER_CONFIG_FILE)
             if os.path.isfile(user_file_path):
-                print("file exist")
                 with open(user_file_path, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if 'ccm' in data and str(data['ccm']).lower() == 'false':
@@ -63,7 +62,6 @@ class CounterMgrLite:
             else:
                 feature_enb = True
         except Exception:
-            print("hit exception")
             logging.exception("while in reading ccm config file", exc_info=False)
 
         CounterMgrLite._enable_feature = feature_enb
@@ -99,7 +97,6 @@ class CounterMgrLite:
         try:
             ccm_rec_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                              CALL_HOME_RECORD_FILE)
-            print(ccm_rec_data_path)
             if os.path.exists(ccm_rec_data_path):
                 flag = True
             else:
@@ -115,10 +112,8 @@ class CounterMgrLite:
     def add_runtime_loaded(self):
         """push device information on DLR library load"""
         try:
-            print("self pub?", self.is_device_info_published())
             if not self.is_device_info_published():
                 data = {'record_type': self.RUNTIME_LOAD}
-                print("self system", self.system)
                 if self.system:
                     data.update(self.system.get_device_info())
                     self.msgs.append(json.dumps(data))
@@ -205,10 +200,7 @@ def call_home_lite(func):
             if CounterMgrLite.is_feature_enabled():
                 print(CALL_HOME_USR_NOTIFICATION)
                 if MGR:
-                    print("MGR found")
                     MGR.add_runtime_loaded()
-            else:
-                print(CALL_HOME_USR_DISABLE_NOTIFICATION)
 
         resp = func(*args, **kwargs)
         if func.__name__ == '__init__':
