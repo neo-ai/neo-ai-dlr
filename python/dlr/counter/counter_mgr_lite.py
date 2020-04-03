@@ -197,7 +197,7 @@ class CounterMgrLite:
 
 class Worker(Thread):
     """Worker thread class"""
-    def __init__(self, func, event: Event):
+    def __init__(self, func, event):
         Thread.__init__(self, daemon=True)
         self.func = func
         self.stop_evt = event
