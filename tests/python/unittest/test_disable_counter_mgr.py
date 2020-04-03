@@ -11,7 +11,7 @@ def get_dlr_path():
     """ get dlr module path """
     pkg = pkgutil.get_loader('dlr')
     pkg_path = pkg.get_filename().split("/")[:-1]
-    return os.path.join(*pkg_path)
+    return os.path.join("/", *pkg_path)
 
 
 @pytest.fixture(scope='module')
