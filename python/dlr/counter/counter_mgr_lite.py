@@ -53,7 +53,7 @@ class CounterMgrLite:
                                           CALL_HOME_USER_CONFIG_FILE)
             if os.path.isfile(user_file_path):
                 print("file exist")
-                with open(CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
+                with open(user_file_path, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if str(data['ccm']).lower() == 'false':
                         feature_enb = False
