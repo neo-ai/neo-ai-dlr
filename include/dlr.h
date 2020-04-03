@@ -103,11 +103,25 @@ typedef struct DLR_TFTensorDesc {
  size \param threads Number of threads to use (ignored if zero of less) \return
  0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
+DLR_DLL
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
                                  const DLR_TFTensorDesc* inputs, int input_size,
                                  const char* outputs[], int output_size,
                                  const DLR_TFConfig tf_config);
 #endif  // DLR_TENSORFLOW
+
+#ifdef DLR_HEXAGON
+/*!
+ \brief Creates a DLR model from Hexagon
+ \param handle The pointer to save the model handle.
+ \param model_path Path to _hexagon_model.so file or to the top-level directory containing the file
+ \param debug_level 0 - no debug, 100 - max debug.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
+                              int debug_level);
+#endif  // DLR_HEXAGON
 
 /*!
  \brief Deletes a DLR model.
