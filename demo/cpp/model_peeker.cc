@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  DLRModelHandle model;
+  DLRModelHandle model = NULL;
   if (CreateDLRModel(&model, argv[1], device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");

@@ -173,15 +173,17 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   // CreateDLRModelFromTensorflow (use .pb file)
   const char* model_file =
       "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
-  int threads = 2;
+  DLR_TFConfig tf_config = {};
+  tf_config.inter_op_parallelism_threads = 2;
+  tf_config.intra_op_parallelism_threads = 2;
   int batch_size = 1;
   const int64_t dims[4] = {batch_size, 224, 224, 3};
   const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
-                                   threads)) {
+                                   tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
@@ -195,15 +197,16 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
 TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   // CreateDLRModelFromTensorflow (use folder containing .pb file)
   const char* model_dir = "./mobilenet_v1_1.0_224";
-  int threads = 0;  // undefined
+  // Use undefined number of threads
+  DLR_TFConfig tf_config = {};
   int batch_size = 8;
   const int64_t dims[4] = {batch_size, 224, 224, 3};
   const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
   const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
-                                   threads)) {
+                                   tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
@@ -223,7 +226,7 @@ TEST(Tensorflow, AutodetectInputsAndOutputs) {
   const int dev_type = 1;  // 1 - kDLCPU
   const int dev_id = 0;
 
-  DLRModelHandle handle;
+  DLRModelHandle handle = NULL;
   if (CreateDLRModel(&handle, model_file, dev_type, dev_id)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
@@ -232,6 +235,10 @@ TEST(Tensorflow, AutodetectInputsAndOutputs) {
   CheckAllDLRMethods(handle, batch_size);
 
   // DeleteDLRModel
+  DeleteDLRModel(&handle);
+  ASSERT_EQ(nullptr, handle);
+  // Test that calling DeleteDLRModel again
+  // does not crash the program (no segmentation fault)
   DeleteDLRModel(&handle);
 }
 
