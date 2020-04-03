@@ -49,9 +49,10 @@ class CounterMgrLite:
 
         feature_enb = False
         try:
-            print("test enable")
-            if os.path.isfile(CALL_HOME_USER_CONFIG_FILE):
-                prin("file exist")
+            user_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          CALL_HOME_USER_CONFIG_FILE)
+            if os.path.isfile(user_file_path):
+                print("file exist")
                 with open(CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if str(data['ccm']).lower() == 'false':
