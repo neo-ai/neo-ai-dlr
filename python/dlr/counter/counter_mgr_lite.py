@@ -14,32 +14,6 @@ from .utils import resturlutils
 from .system import Factory
 
 
-def call_home_lite(func):
-    """function wrapper"""
-
-    def wrapper(*args, **kwargs):
-        global MGR
-
-        if func.__name__ == "init_call_home":
-            print(CALL_HOME_USR_NOTIFICATION)
-            if MGR:
-                MGR.add_runtime_loaded()
-
-        resp = func(*args, **kwargs)
-        if func.__name__ == '__init__':
-            model = args[0]
-            if MGR:
-                MGR.add_model_loaded(model.get_model_name())
-        elif func.__name__ == 'run':
-            model = args[0]
-            if MGR:
-                MGR.add_model_run(model.get_model_name())
-
-        return resp
-
-    return wrapper
-
-
 class CounterMgrLite:
     """Lighter call home manager class"""
     _instance = None
@@ -211,3 +185,29 @@ class Worker(Thread):
 
 
 MGR = CounterMgrLite.get_instances()
+
+
+def call_home_lite(func):
+    """function wrapper"""
+
+    def wrapper(*args, **kwargs):
+        global MGR
+
+        if func.__name__ == "init_call_home":
+            print(CALL_HOME_USR_NOTIFICATION)
+            if MGR:
+                MGR.add_runtime_loaded()
+
+        resp = func(*args, **kwargs)
+        if func.__name__ == '__init__':
+            model = args[0]
+            if MGR:
+                MGR.add_model_loaded(model.get_model_name())
+        elif func.__name__ == 'run':
+            model = args[0]
+            if MGR:
+                MGR.add_model_run(model.get_model_name())
+
+        return resp
+
+    return wrapper
