@@ -21,6 +21,6 @@ CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
                             \n\t3. Restart DLR application. \
                             \n\t4. Validate this feature is disabled by verifying this notification is no longer displayed, or programmatically with following command: \
                             \n\t\tfrom dlr.counter.counter_mgr_lite import CounterMgrLite \
-                            \n\t\tCounterMgrLite.is_feature_enabled() """
+                            \n\t\tCounterMgrLite.is_feature_enabled() # false as disabled """
 
 

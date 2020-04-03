@@ -8,14 +8,16 @@ CCM_CONFIG_FILE = 'ccm_config.json'
 
 @pytest.fixture(scope='module')
 def resource_a_setup(request):
+    usr_config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), CCM_CONFIG_FILE)
+
     """create a config file, feature disabled configuration"""
-    with open(CCM_CONFIG_FILE, 'w') as fp:
+    with open(usr_config_path, 'w') as fp:
         fp.write('{\n    "ccm" : "false"\n}')
 
     def resource_a_teardown():
         """remove the config file if present"""
-        if os.path.exists(CCM_CONFIG_FILE):
-            os.remove(CCM_CONFIG_FILE)
+        if os.path.exists(usr_config_path):
+            os.remove(usr_config_path)
 
     request.addfinalizer(resource_a_teardown)
 
