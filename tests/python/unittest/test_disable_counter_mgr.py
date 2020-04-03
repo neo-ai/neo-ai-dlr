@@ -2,13 +2,22 @@
 from __future__ import print_function
 import os
 import pytest
+import pkgutil
 
-CCM_CONFIG_FILE = 'ccm_config.json'
+CCM_CONFIG_FILE = 'counter/ccm_config.json'
+
+
+def get_dlr_path():
+    """ get dlr module path """
+    pkg = pkgutil.get_loader('dlr')
+    pkg_path = pkg.get_filename().split("/")[:-1]
+    return os.path.join(*pkg_path)
 
 
 @pytest.fixture(scope='module')
 def resource_a_setup(request):
-    usr_config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), CCM_CONFIG_FILE)
+    dlr_path = get_dlr_path()
+    usr_config_path = os.path.join(dlr_path, CCM_CONFIG_FILE)
 
     """create a config file, feature disabled configuration"""
     with open(usr_config_path, 'w') as fp:
