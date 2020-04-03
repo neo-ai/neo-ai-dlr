@@ -49,7 +49,9 @@ class CounterMgrLite:
 
         feature_enb = False
         try:
+            print("test enable")
             if os.path.isfile(CALL_HOME_USER_CONFIG_FILE):
+                prin("file exist")
                 with open(CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
                     if str(data['ccm']).lower() == 'false':
@@ -59,6 +61,7 @@ class CounterMgrLite:
             else:
                 feature_enb = True
         except Exception:
+            print("hit exception")
             logging.exception("while in reading ccm config file", exc_info=False)
 
         CounterMgrLite._enable_feature = feature_enb
@@ -94,6 +97,7 @@ class CounterMgrLite:
         try:
             ccm_rec_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                              CALL_HOME_RECORD_FILE)
+            print(ccm_rec_data_path)
             if os.path.exists(ccm_rec_data_path):
                 flag = True
             else:
