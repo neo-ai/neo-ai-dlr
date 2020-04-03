@@ -20,4 +20,3 @@ CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
                             \n\t\t{\n\t\t\t"ccm" : "false"\n\t\t} \
                             \n\t3. Restart DLR application. \
                             \n\t4. Validate that you don't see this call feature message again."""
-CALL_HOME_USR_DISABLE_NOTIFICATION = "CALL HOME FEATURE DISABLED"

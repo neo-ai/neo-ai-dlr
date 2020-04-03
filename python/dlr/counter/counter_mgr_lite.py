@@ -8,8 +8,7 @@ import logging
 import os
 
 from .config import CALL_HOME_USR_NOTIFICATION, CALL_HOME_USER_CONFIG_FILE, \
-    CALL_HOME_REQ_STOP_MAX_COUNT, CALL_HOME_RECORD_FILE, CALL_HOME_MODEL_RUN_COUNT_TIME_SECS, \
-    CALL_HOME_USR_DISABLE_NOTIFICATION
+    CALL_HOME_REQ_STOP_MAX_COUNT, CALL_HOME_RECORD_FILE, CALL_HOME_MODEL_RUN_COUNT_TIME_SECS
 from .utils.helper import get_hash_string
 from .utils import resturlutils
 from .system import Factory
