@@ -2,20 +2,31 @@
 from __future__ import print_function
 import os
 import pytest
+import pkgutil
 
-CCM_CONFIG_FILE = 'ccm_config.json'
+CCM_CONFIG_FILE = 'counter/ccm_config.json'
+
+
+def get_dlr_path():
+    """ get dlr module path """
+    pkg = pkgutil.get_loader('dlr')
+    pkg_path = pkg.get_filename().split("/")[:-1]
+    return os.path.join("/", *pkg_path)
 
 
 @pytest.fixture(scope='module')
 def resource_a_setup(request):
+    dlr_path = get_dlr_path()
+    usr_config_path = os.path.join(dlr_path, CCM_CONFIG_FILE)
+
     """create a config file, feature disabled configuration"""
-    with open(CCM_CONFIG_FILE, 'w') as fp:
+    with open(usr_config_path, 'w') as fp:
         fp.write('{\n    "ccm" : "false"\n}')
 
     def resource_a_teardown():
         """remove the config file if present"""
-        if os.path.exists(CCM_CONFIG_FILE):
-            os.remove(CCM_CONFIG_FILE)
+        if os.path.exists(usr_config_path):
+            os.remove(usr_config_path)
 
     request.addfinalizer(resource_a_teardown)
 

@@ -3,6 +3,7 @@
 
 class DeviceInfo(object):
     """Holding Generic information about Device"""
+
     def __init__(self):
         self.machine = ""
         self.arch = ""
@@ -35,7 +36,6 @@ class DeviceInfo(object):
             "machine": self.machine,
             "arch": self.arch,
             "os": self.osname,
-            "device": self.name,
             "os distribution": self.dist
         }
         return dict_device

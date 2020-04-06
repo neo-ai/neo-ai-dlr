@@ -15,14 +15,28 @@ For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Y
 Also check out the [API documentation](https://neo-ai-dlr.readthedocs.io/en/latest/)
 
 ### Call Home Feature
-By default the feature enabled. Your device information and model load/execution count metric data being sent to a server.
-You can disable this feature by using below configuration steps.                             
-  1. Create a config file, ccm_config.json in your application path.                             
-  2. Added below format content in it,                             
-	{
-		"ccm" : "false"
-	}                             
-  3. Restart DLR application
+
+You acknowledge and agree that DLR collects the following metrics to help improve its performance. 
+By default, Amazon will collect and store the following information from your device: 
+
+    record_type: <enum, internal record status, such as model_loaded, model_>, 
+    arch: <string, platform architecture, eg 64bit>, 
+    osname: <string, platform os name, eg. Linux>, 
+    uuid: <string, one-way non-identifable hashed mac address, eg. 8fb35b79f7c7aa2f86afbcb231b1ba6e>, 
+    dist: <string, distribution of os, eg. Ubuntu 16.04 xenial>, 
+    machine: <string, retuns the machine type, eg. x86_64 or i386>, 
+    model: <string, one-way non-identifable hashed model name, eg. 36f613e00f707dbe53a64b1d9625ae7d> 
+
+If you wish to opt-out of this data collection feature, please follow the steps below: 
+    
+    1. Create a config file, ccm_config.json inside your DLR target directory path, i.e. python3.6/site-packages/dlr/counter/ccm_config.json 
+    2. Added below format content in it, 
+      {       "ccm" : "false"      } 
+    3. Restart DLR application. 
+    4. Validate this feature is disabled by verifying this notification is no longer displayed, or programmatically with following command: 
+        
+        from dlr.counter.counter_mgr_lite import CounterMgrLite 
+        CounterMgrLite.is_feature_enabled() # false if disabled 
 
 ## Examples
 We prepared several examples demonstrating how to use DLR API on different platforms

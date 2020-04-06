@@ -14,30 +14,6 @@ from .utils import resturlutils
 from .system import Factory
 
 
-def call_home_lite(func):
-    """function wrapper"""
-    def wrapper(*args, **kwargs):
-        global MGR
-        if func.__name__ == "init_call_home":
-            print(CALL_HOME_USR_NOTIFICATION)
-            if MGR:
-                MGR.add_runtime_loaded()
-
-        resp = func(*args, **kwargs)
-        if func.__name__ == '__init__':
-            model = args[0]
-            if MGR:
-                MGR.add_model_loaded(model.get_model_name())
-        elif func.__name__ == 'run':
-            model = args[0]
-            if MGR:
-                MGR.add_model_run(model.get_model_name())
-
-        return resp
-
-    return wrapper
-
-
 class CounterMgrLite:
     """Lighter call home manager class"""
     _instance = None
@@ -73,10 +49,12 @@ class CounterMgrLite:
 
         feature_enb = False
         try:
-            if os.path.isfile(CALL_HOME_USER_CONFIG_FILE):
-                with open(CALL_HOME_USER_CONFIG_FILE, "r") as ccm_json_file:
+            user_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          CALL_HOME_USER_CONFIG_FILE)
+            if os.path.isfile(user_file_path):
+                with open(user_file_path, "r") as ccm_json_file:
                     data = json.load(ccm_json_file)
-                    if str(data['ccm']).lower() == 'false':
+                    if 'ccm' in data and str(data['ccm']).lower() == 'false':
                         feature_enb = False
                     else:
                         feature_enb = True
@@ -208,3 +186,30 @@ class Worker(Thread):
 
 
 MGR = CounterMgrLite.get_instances()
+
+
+def call_home_lite(func):
+    """function wrapper"""
+
+    def wrapper(*args, **kwargs):
+        global MGR
+
+        if func.__name__ == "init_call_home":
+            if CounterMgrLite.is_feature_enabled():
+                print(CALL_HOME_USR_NOTIFICATION)
+                if MGR:
+                    MGR.add_runtime_loaded()
+
+        resp = func(*args, **kwargs)
+        if func.__name__ == '__init__':
+            model = args[0]
+            if MGR:
+                MGR.add_model_loaded(model.get_model_name())
+        elif func.__name__ == 'run':
+            model = args[0]
+            if MGR:
+                MGR.add_model_run(model.get_model_name())
+
+        return resp
+
+    return wrapper
