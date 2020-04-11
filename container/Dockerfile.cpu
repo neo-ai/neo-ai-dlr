@@ -53,6 +53,7 @@ RUN apt-get update && \
     openjdk-8-jdk-headless \
     python3-dev \
     gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
