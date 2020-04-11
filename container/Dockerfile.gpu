@@ -17,7 +17,6 @@ RUN apt-get update && \
     python3 \
     python3-pip \
     python3-setuptools \
-    git \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install wheel \
     && rm -rf /root/.cache/pip
@@ -32,6 +31,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY CMakeLists.txt /workspace/
@@ -65,14 +65,8 @@ RUN apt-get update && \
 
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
-    && pip3 install --no-cache-dir mxnet-cu100 psutil Pillow future \
-    && git clone https://github.com/awslabs/multi-model-server.git && cd multi-model-server \
-    && pip3 install --pre --no-cache-dir . \
-    && rm -rf ../multi-model-server \
-    && rm -rf /root/.cache/pip
-
-RUN pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests tensorflow_gpu \
+RUN pip3 install --pre --no-cache-dir multi-model-server \
+    && pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet-cu100 tensorflow_gpu \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 
