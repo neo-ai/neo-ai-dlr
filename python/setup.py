@@ -33,13 +33,13 @@ if not LIB_PATH:
 
 setup(
     name="dlr",
-    version=__version__,
 
     zip_safe=False,
     install_requires=['numpy', 'urllib3', 'certifi'],
 
     # declare your packages
     packages=find_packages(),
+    version=__version__,
 
     # include data files
     include_package_data=True,
