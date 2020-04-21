@@ -81,8 +81,11 @@ class NeoBYOMPredictor():
         model_dir = context.system_properties.get('model_dir')
         print('Loading the model from directory {}'.format(model_dir))
         USE_GPU = os.getenv('USE_GPU', None)
+        USE_INF = os.getenv('USE_INF', None)
         if USE_GPU == '1':
             self.model = dlr.DLRModel(model_dir, dev_type='gpu', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
+        elif USE_INF == '1':
+            self.model = dlr.DLRModel(model_dir, dev_type='inf', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         else:
             self.model = dlr.DLRModel(model_dir, error_log_file=SAGEMAKER_ERROR_LOG_FILE)
 

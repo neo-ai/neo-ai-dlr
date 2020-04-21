@@ -10,10 +10,9 @@ if [[ "$1" = "serve" ]]; then
     touch /opt/ml/errors/errors.log
     chown model-server /opt/ml/errors/errors.log
     su - model-server
-    cp -v -r /opt/ml/model/* /home/model-server/model
-    cp -v -r /home/model-server/neo_template.py /home/model-server/model
-    model-archiver --handler neo_template:handle --model-name neomodel --model-path /home/model-server/model -f --export-path /home/model-server --runtime python3
-    mv /home/model-server/neomodel.mar /home/model-server/model
+    model-archiver --handler neo_template:handle --archive-format no-archive  --model-name neomodel --model-path /opt/ml/model -f --export-path /home/model-server/model --runtime python3
+    cp -v -r /home/model-server/neo_template.py /home/model-server/model/neomodel/
+    (cd /opt/ml/model; find .  -type d -exec mkdir -p /home/model-server/model/neomodel/{} \;)
 
     if [ ! -z "${MMS_NUM_WORKER}" ]; then
       sed -e "s/#default_workers_per_model=35/default_workers_per_model=${MMS_NUM_WORKER}/" \

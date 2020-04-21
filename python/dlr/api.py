@@ -55,6 +55,7 @@ class DLRModel(IDLRModel):
         try:
             # Find correct runtime implementation for the model
             tf_model_path = _find_model_file(model_path, '.pb')
+            mxnet_model_path = _find_model_file(model_path, '-symbol.json')
             tflite_model_path = _find_model_file(model_path, '.tflite')
             # Check if found both Tensorflow and TFLite files
             if tf_model_path is not None and tflite_model_path is not None:
@@ -63,6 +64,10 @@ class DLRModel(IDLRModel):
             if tf_model_path is not None and _is_module_found("tensorflow"):
                 from .tf_model import TFModelImpl
                 self._impl = TFModelImpl(tf_model_path, dev_type, dev_id)
+                return
+            if mxnet_model_path is not None:
+                from .mxnet_model import MXNetModelImpl
+                self._impl = MXNetModelImpl(model_path, dev_type, dev_id)
                 return
             # TFLite Python
             if tflite_model_path is not None and _is_module_found("tensorflow.lite"):
