@@ -22,7 +22,6 @@ WORKDIR /workspace
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
-    apt-
     apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
