@@ -7,6 +7,8 @@ from .api import IDLRModel
 # A prefix that will be prepended to the names in graph_def
 PREFIX = "import"
 UNLIKELY_OUTPUT_TYPES = {"Const", "Assign", "NoOp", "Placeholder"}
+SAVED_MODEL = "SavedModel"
+FROZEN_PB = "FrozenPB"
 
 
 def _load_frozen_graph(frozen_graph_file, device):
@@ -33,10 +35,27 @@ def _load_frozen_graph(frozen_graph_file, device):
             tf.import_graph_def(graph_def, name=PREFIX)
         return graph
 
+def _load_saved_model(model_dir):
+    """
+    Load saved model
+
+    Parameters
+    ----------
+    model_dir: str
+        Full path to saved_model directory
+        (contains a .pb file and a variables folder)
+
+    Returns
+    -------
+    out : Predictor :py:class:`tf.contrib.predictor`
+    """
+    saved_model = tf.contrib.predictor.from_saved_model(model_dir)
+    return saved_model
+
 
 def _get_input_and_output_names(graph):
     """
-    Get input and output tensor names
+    Get input and output tensor names from frozen pb
 
     Parameters
     ----------
@@ -78,37 +97,50 @@ class TFModelImpl(IDLRModel):
 
     Parameters
     ----------
-    frozen_graph_file : str
-        Full path to frozen graph (.pb file)
+    model_path : str
+        Full path to model(saved_model or frozen pb file)
     dev_type : str
         Optional. Device type ('cpu' or 'gpu')
     dev_id : int
         Optional. Device ID
     """
-    def __init__(self, frozen_graph_file, dev_type=None, dev_id=None):
-        if not frozen_graph_file.endswith(".pb"):
-            raise ValueError("Not a frozen graph file: {}".format(frozen_graph_file))
-        if not os.path.exists(frozen_graph_file):
-            raise ValueError("Frozen graph file {} doesn't exist".format(frozen_graph_file))
-        self.frozen_graph_file = frozen_graph_file
+    def __init__(self, model_path, dev_type=None, dev_id=None):
+        model_type = None
+        if not os.path.exists(model_path):
+            raise ValueError("Model path {} doesn't exist".format(model_path))
+        if os.path.isdir(model_path) and os.path.isdir(os.path.join(model_path, "variables")):
+            model_type = SAVED_MODEL
+        elif model_path.endswith(".pb"):
+            model_type = FROZEN_PB
+        if model_type == None:
+            raise ValueError("Not a frozen graph file or saved model: {}".format(model_path))
 
         device = None
+        self._sess = None
         if dev_type is not None:
-            devices = ["cpu", "gpu"]
+            devices = ["cpu", "gpu", "inf"]
             if dev_type not in devices:
                 raise ValueError("Invalid device type {}. Valid devices: {}".format(dev_type, devices))
-            dev_id = 0 if dev_id is None else dev_id
-            device = "/{}:{}".format(dev_type, dev_id)
-
-        self._graph = _load_frozen_graph(frozen_graph_file, device)
-        self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self._graph)
-        self.input_values = {}
-        # Turn on XLA JIT compilation
-        # Turning on JIT at the session level will not result in operations being compiled for the CPU.
-        # Currently JIT at the session level only supports GPU.
-        config = tf.ConfigProto()
-        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-        self._sess = tf.Session(graph=self._graph, config=config)
+            if dev_type != "inf":
+                dev_id = 0 if dev_id is None else dev_id
+                device = "/{}:{}".format(dev_type, dev_id)
+        if model_type == FROZEN_PB:
+            self._graph = _load_frozen_graph(model_path, device)
+            self.input_tensor_names, self.output_tensor_names = _get_input_and_output_names(self._graph)
+            self.input_values = {}
+            # Turn on XLA JIT compilation
+            # Turning on JIT at the session level will not result in operations being compiled for the CPU.
+            # Currently JIT at the session level only supports GPU.
+            config = tf.ConfigProto()
+            config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+            self._sess = tf.Session(graph=self._graph, config=config)
+            self.run_func = self.run_frozen
+        elif model_type == SAVED_MODEL:
+            self.predictor = _load_saved_model(model_path)
+            self.input_tensor_names = [name for name in self.predictor.feed_tensors.keys()]
+            self.output_tensor_names = [name for name in self.predictor.fetch_tensors.keys()]
+            self._sess = self.predictor.session
+            self.run_func = self.run_saved_model
 
     def __enter__(self):
         return self
@@ -170,7 +202,7 @@ class TFModelImpl(IDLRModel):
             out = out.reshape(shape)
         return out
 
-    def run(self, input_values):
+    def run_frozen(self, input_values):
         """
         Run inference with given input(s)
 
@@ -185,7 +217,6 @@ class TFModelImpl(IDLRModel):
         out : :py:class:`numpy.ndarray`
             Prediction result. Multiple outputs are possible.
         """
-        self._validate_input(input_values)
         feed_dict = {}
         for k, v in input_values.items():
             tensor = self._graph.get_tensor_by_name(k)
@@ -194,13 +225,25 @@ class TFModelImpl(IDLRModel):
         for k in self.output_tensor_names:
             tensor = self._graph.get_tensor_by_name(k)
             output_tensors.append(tensor)
-        self.input_values = input_values
         out = self._sess.run(output_tensors, feed_dict=feed_dict)
         return out
+
+    def run_saved_model(self, input_values):
+        out = self.predictor(input_values)
+        outputs = [ out[name] for name in  self.output_tensor_names ]
+        return outputs
+
+    def run(self, input_values):
+        if type(input_values) != dict and len(self.input_tensor_names) == 1:
+            input_values = {self.input_tensor_names[0]: input_values}
+        self._validate_input(input_values)
+        self.input_values = input_values
+        return self.run_func(input_values)
 
     def close(self):
         """
         Closes this Tensorflow session
 
         """
-        self._sess.close()
+        if self._sess:
+            self._sess.close()

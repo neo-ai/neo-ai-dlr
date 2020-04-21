@@ -1,0 +1,98 @@
+### Multi-stage Docker image. See https://docs.docker.com/develop/develop-images/multistage-build/
+### Run "docker build" at the root directory of neo-ai-dlr
+
+### Stage 0: Base image
+FROM ubuntu:18.04 AS base
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install wheel \
+    && rm -rf /root/.cache/pip
+
+### Stage 1: Build
+FROM base AS builder
+WORKDIR /workspace
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY CMakeLists.txt /workspace/
+COPY README.md /workspace/
+COPY include/ /workspace/include/
+COPY src/ /workspace/src/
+COPY python/ /workspace/python/
+COPY cmake/ /workspace/cmake/
+COPY 3rdparty/ /workspace/3rdparty/
+
+RUN \
+    mkdir /workspace/build && cd /workspace/build && \
+    cmake .. && make -j15 && cd ../python && \
+    python3 setup.py bdist_wheel
+
+### Stage 2: Run
+### Stage 2-1: Runner base (everything except the APP-specific handler)
+FROM base AS runner_base
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# python3-dev and gcc are required by multi-model-server
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-8-jdk-headless \
+    python3-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
+
+RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
+    && pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests \
+    && pip3 install /home/model-server/dlr-*.whl \
+    && rm -rf /root/.cache/pip
+
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir tensorflow-neuron \
+    && pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir neuron-cc
+
+### Stage 2-2: Runner (APP-specific handler)
+FROM runner_base AS runner
+
+ENV PYTHONUNBUFFERED TRUE
+
+# Disable thread pinning in TVM and Treelite
+ENV TVM_BIND_THREADS 0
+ENV TREELITE_BIND_THREADS 0
+
+RUN useradd -m model-server \
+    && mkdir -p /home/model-server/tmp \
+    && mkdir -p /home/model-server/model
+
+COPY container/dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+COPY container/config.properties /home/model-server/config.properties
+
+ARG APP=mxnet_byom
+COPY container/neo_template_$APP.py /home/model-server/neo_template.py
+COPY container/mms_config_$APP.sh /home/model-server/mms_config.sh
+
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
+    && chown -R model-server /home/model-server
+
+EXPOSE 8080 8081
+
+WORKDIR /home/model-server
+ENV TEMP=/home/model-server/tmp
+ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
+CMD ["serve"]
+
+LABEL maintainer="guas@amazon.com, chyunsu@amazon.com"

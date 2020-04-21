@@ -72,6 +72,18 @@ class NeoBYOMPredictor():
     def postprocess(self, preds):
         if len(preds) == 1:
             return_data, content_type = self.user_module.neo_postprocess(preds[0])
+
+    def initialize(self, context):
+        self._context = context
+        self._batch_size = context.system_properties.get('batch_size')
+        model_dir = context.system_properties.get('model_dir')
+        print('Loading the model from directory {}'.format(model_dir))
+        USE_GPU = os.getenv('USE_GPU', None)
+        USE_INF = os.getenv('USE_INF', None)
+        if USE_GPU == '1':
+            self.model = dlr.DLRModel(model_dir, dev_type='gpu', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
+        elif USE_INF == '1':
+            self.model = dlr.DLRModel(model_dir, dev_type='inf', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         else:
             return_data, content_type = self.user_module.neo_postprocess(preds)
         return [return_data], content_type
@@ -108,8 +120,11 @@ class NeoBYOMPredictor():
         self.user_module = import_user_module(cur_dir, script_path)
 
         USE_GPU = os.getenv('USE_GPU', None)
+        USE_INF = os.getenv('USE_INF', None)
         if USE_GPU == '1':
-            self.model = dlr.DLRModel(model_dir, dev_type='gpu')
+            self.model = dlr.DLRModel(model_dir, dev_type='gpu', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
+        elif USE_INF == '1':
+            self.model = dlr.DLRModel(model_dir, dev_type='inf', error_log_file=SAGEMAKER_ERROR_LOG_FILE)
         else:
             self.model = dlr.DLRModel(model_dir)
         self.input_names = self.model.get_input_names()
