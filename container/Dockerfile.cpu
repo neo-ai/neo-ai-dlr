@@ -9,10 +9,11 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
-    python3-pip \
     python3-setuptools \
+    curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install wheel \
+    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
 
 ### Stage 1: Build
@@ -59,8 +60,8 @@ RUN apt-get update && \
 
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
-RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
-    && pip3 install --no-cache-dir numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow \
+RUN pip3 install --pre --no-cache-dir multi-model-server \
+    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 

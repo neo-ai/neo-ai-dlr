@@ -8,7 +8,6 @@ def test_resnet():
     # Load the model
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
             'resnet18_v1')
-    classes = 1000
     device = 'cpu'
     model = DLRModel(model_path, device)
 
