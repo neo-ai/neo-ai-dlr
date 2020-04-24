@@ -15,17 +15,13 @@
 #include "dmlc/logging.h"
 #include "npy.hpp"
 
-struct NDArray {
-  std::vector<float> data;
-  std::vector<int64_t> shape;
-  int64_t ndim;
-  int64_t size;
-};
-
 bool is_big_endian();
-std::vector<std::vector<float>> RunInference(DLRModelHandle model,
-                                             const char* data_path,
-                                             const std::string& input_name);
+template <typename T>
+void argmax(int& argmax, T& max_pred);
+template <typename T>
+void RunInference(DLRModelHandle model, const char* data_path,
+                  const std::string& input_name,
+                  std::vector<std::vector<T>>& outputs);
 
 bool is_big_endian() {
   int32_t n = 1;
@@ -33,39 +29,44 @@ bool is_big_endian() {
   return (*(char*)&n == 0);
 }
 
+template <typename T>
+void argmax(std::vector<T>& data, int& max_id, T& max_pred) {
+  max_id = 0;
+  max_pred = 0;
+  for (int i = 0; i < data.size(); i++) {
+    if (data[i] > max_pred) {
+      max_pred = data[i];
+      max_id = i;
+    }
+  }
+}
+
 /*! \brief A generic inference function using C-API.
  */
-std::vector<std::vector<float>> RunInference(DLRModelHandle model,
-                                             const char* data_path,
-                                             const std::string& input_name) {
+template <typename T>
+void RunInference(DLRModelHandle model, const char* data_path,
+                  const std::string& input_name,
+                  std::vector<std::vector<T>>& outputs) {
   int num_outputs;
   GetDLRNumOutputs(&model, &num_outputs);
-  std::vector<int64_t> output_sizes;
-
   for (int i = 0; i < num_outputs; i++) {
     int64_t cur_size = 0;
     int cur_dim = 0;
     GetDLROutputSizeDim(&model, i, &cur_size, &cur_dim);
-    output_sizes.push_back(cur_size);
+    std::vector<T> output(cur_size, 0);
+    outputs.push_back(output);
   }
 
-  std::vector<std::vector<float>> outputs;
-  for (auto i : output_sizes) {
-    outputs.push_back(std::vector<float>(i, 0));
-  }
+  std::vector<unsigned long> in_shape_ul;
+  std::vector<T> in_data;
+  npy::LoadArrayFromNumpy(data_path, in_shape_ul, in_data);
 
-  std::vector<unsigned long> shape;
-  std::vector<double> data;
-  npy::LoadArrayFromNumpy(data_path, shape, data);
+  std::vector<int64_t> in_shape =
+      std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
+  int64_t in_ndim = in_shape.size();
 
-  NDArray input;
-  input.data = std::vector<float>(data.begin(), data.end());
-  input.shape = std::vector<int64_t>(shape.begin(), shape.end());
-  input.ndim = shape.size();
-  input.size = data.size();
-
-  if (SetDLRInput(&model, input_name.c_str(), input.shape.data(),
-                  input.data.data(), static_cast<int>(input.ndim)) != 0) {
+  if (SetDLRInput(&model, input_name.c_str(), in_shape.data(),
+                  (float*)in_data.data(), static_cast<int>(in_ndim)) != 0) {
     throw std::runtime_error("Could not set input '" + input_name + "'");
   }
   if (RunDLRModel(&model) != 0) {
@@ -73,12 +74,10 @@ std::vector<std::vector<float>> RunInference(DLRModelHandle model,
     throw std::runtime_error("Could not run");
   }
   for (int i = 0; i < num_outputs; i++) {
-    if (GetDLROutput(&model, i, outputs[i].data()) != 0) {
+    if (GetDLROutput(&model, i, (float*)outputs[i].data()) != 0) {
       throw std::runtime_error("Could not get output" + std::to_string(i));
     }
   }
-
-  return outputs;
 }
 
 int main(int argc, char** argv) {
@@ -88,10 +87,12 @@ int main(int argc, char** argv) {
   }
   int device_type = 1;
   std::string input_name = "data";
+  std::string input_type = "float32";
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0]
-              << " <model dir> <ndarray file> [device] [input name]"
-              << std::endl;
+    std::cerr
+        << "Usage: " << argv[0]
+        << " <model dir> <ndarray file> [device] [input name] [input type]"
+        << std::endl;
     return 1;
   }
   if (argc >= 4) {
@@ -110,6 +111,13 @@ int main(int argc, char** argv) {
   if (argc >= 5) {
     input_name = argv[4];
   }
+  if (argc >= 6) {
+    input_type = argv[5];
+    if (input_type != "float32" && input_type != "uint8") {
+      std::cerr << "Unsupported input type. Use float32 or uint8" << std::endl;
+      return 1;
+    }
+  }
 
   std::cout << "Loading model... " << std::endl;
   DLRModelHandle model = NULL;
@@ -119,20 +127,20 @@ int main(int argc, char** argv) {
   }
 
   std::cout << "Running inference... " << std::endl;
-  std::vector<std::vector<float>> outputs =
-      RunInference(model, argv[2], input_name);
-
-  int argmax = -1;
+  int max_id = -1;
   float max_pred = 0.0f;
-  for (int i = 0; i < outputs[0].size(); i++) {
-    if (outputs[0][i] > max_pred) {
-      max_pred = outputs[0][i];
-      argmax = i;
-    }
+  if (input_type == "float32") {
+    std::vector<std::vector<float>> outputs;
+    RunInference(model, argv[2], input_name, outputs);
+    argmax(outputs[0], max_id, max_pred);
+  } else if (input_type == "uint8") {
+    std::vector<std::vector<uint8_t>> outputs;
+    RunInference(model, argv[2], input_name, outputs);
+    uint8_t max_pred_uint8 = 0;
+    argmax(outputs[0], max_id, max_pred_uint8);
+    max_pred = max_pred_uint8;
   }
-
-  std::cout << "Max probability at " << argmax << " with probability "
-            << max_pred << std::endl;
-
+  std::cout << "Max probability is " << max_pred << " at index " << max_id
+            << std::endl;
   return 0;
 }
