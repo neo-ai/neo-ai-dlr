@@ -132,11 +132,11 @@ def CloudInstallAndTest(cloudTarget) {
     """
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       sh """
-      sudo pip3 install --upgrade --force-reinstall tensorflow_gpu
+      sudo pip3 install --upgrade tensorflow_gpu
       """
     } else {
       sh """
-      sudo pip3 install --upgrade --force-reinstall tensorflow
+      sudo pip3 install --upgrade tensorflow
       """
     }
     sh """
