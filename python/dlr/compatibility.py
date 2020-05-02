@@ -84,11 +84,20 @@ def create_updater_06_to_07():
         del item["global_key"]
         return item
 
+    def _update_op(item, _):
+        item["repr_str"] = item["global_key"]
+        del item["global_key"]
+        if item["repr_str"] == "contrib.adaptive_avg_pool2d":
+            item["repr_str"] = "nn.adaptive_avg_pool2d"
+        elif item["repr_str"] == "contrib.adaptive_max_pool2d":
+            item["repr_str"] = "nn.adaptive_max_pool2d"
+        return item
+
     node_map = {
         # Base IR
         "SourceName": _update_global_key,
         "EnvFunc": _update_global_key,
-        "relay.Op": _update_global_key,
+        "relay.Op": _update_op,
         "relay.TypeVar": _ftype_var,
         "relay.GlobalTypeVar": _ftype_var,
         "relay.Type": _rename("Type"),
