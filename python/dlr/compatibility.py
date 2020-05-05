@@ -93,6 +93,15 @@ def create_updater_06_to_07():
             item["repr_str"] = "nn.adaptive_max_pool2d"
         return item
 
+    def _update_resize_attrs(item, _):
+        if "align_corners" in item["attrs"]:
+            if item["attrs"]["align_corners"] == "1":
+                item["attrs"]["coordinate_transformation_mode"] = "align_corners"
+            else:
+                item["attrs"]["coordinate_transformation_mode"] = "half_pixel"
+            del item["attrs"]["align_corners"]
+        return item
+
     node_map = {
         # Base IR
         "SourceName": _update_global_key,
@@ -116,6 +125,7 @@ def create_updater_06_to_07():
         "relay.PassContext": _rename("transform.PassContext"),
         "relay.ModulePass": _rename("transform.ModulePass"),
         "relay.Sequential": _rename("transform.Sequential"),
+        "relay.attrs.ResizeAttrs": _update_resize_attrs,
         # TIR
         "Variable": _update_tir_var("tir.Var"),
         "SizeVar": _update_tir_var("tir.SizeVar"),
