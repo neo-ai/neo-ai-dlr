@@ -5,3 +5,7 @@
 [submodule "3rdparty/treelite"]
 	path = 3rdparty/treelite
 	url = https://github.com/neo-ai/treelite
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
+	url = https://github.com/nlohmann/json.git
+	tag = develop

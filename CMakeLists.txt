@@ -78,6 +78,7 @@ endif()
 set(DLR_LINKER_LIBS "")
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
+set(JSON_SRC "${PROJECT_SOURCE_DIR}/3rdparty/json")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
@@ -91,6 +92,7 @@ include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${JSON_SRC}/single_include")
 
 # Add only top level *.cc files (non-RECURSE)
 FILE(GLOB DLR_SRC
