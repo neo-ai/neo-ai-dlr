@@ -149,22 +149,36 @@ const char* TFLiteModel::GetWeightName(int index) const {
 void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input,
                            int dim) {
   int index = GetInputId(name);
-
+  TensorSpec input_tensors_spec = input_tensors_spec_[index];
   // Check Size and Dim
-  CHECK_EQ(dim, input_tensors_spec_[index].dim) << "Incorrect input dim";
+  CHECK_EQ(dim, input_tensors_spec.dim) << "Incorrect input dim";
   for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
+    CHECK_EQ(shape[i], input_tensors_spec.shape[i])
         << "Incorrect input shape";
   }
-
-  float* in_t_data = interpreter_->typed_input_tensor<float>(index);
+  void* in_t_data;
+  if (input_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    in_t_data = interpreter_->typed_input_tensor<float>(index);
+  } else if (input_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    in_t_data = interpreter_->typed_input_tensor<uint8_t>(index);
+  } else {
+      LOG(FATAL) << "Input tensor type is not supported by TFLite backend";
+  }
   std::memcpy(in_t_data, input, input_tensors_spec_[index].bytes);
 }
 
 void TFLiteModel::GetInput(const char* name, float* input) {
   int index = GetInputId(name);
-  const float* in_t_data = interpreter_->typed_input_tensor<float>(index);
-  std::memcpy(input, in_t_data, input_tensors_spec_[index].bytes);
+  TensorSpec input_tensors_spec = input_tensors_spec_[index];
+  void* in_t_data;
+  if (input_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    in_t_data = interpreter_->typed_input_tensor<float>(index);
+  } else if (input_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    in_t_data = interpreter_->typed_input_tensor<uint8_t>(index);
+  } else {
+      LOG(FATAL) << "Input tensor type is not supported by TFLite backend";
+  }
+  std::memcpy(input, in_t_data, input_tensors_spec.bytes);
 }
 
 void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
@@ -176,7 +190,15 @@ void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
 
 void TFLiteModel::GetOutput(int index, float* out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  const float* out_t_data = interpreter_->typed_output_tensor<float>(index);
+  TensorSpec output_tensors_spec = output_tensors_spec_[index];
+  void* out_t_data;
+  if (output_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    out_t_data = interpreter_->typed_output_tensor<float>(index);
+  } else if (output_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    out_t_data = interpreter_->typed_output_tensor<uint8_t>(index);
+  } else {
+      LOG(FATAL) << "Output tensor type is not supported by TFLite backend";
+  }
   std::memcpy(out, out_t_data, output_tensors_spec_[index].bytes);
 }
 

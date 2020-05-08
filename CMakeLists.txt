@@ -427,6 +427,12 @@ if(NOT(AAR_BUILD))
         SHA1
         c653a09facaf2dfb5e3910030b3f74ad04259e30
       )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v1_0.75_224_quant.tflite
+        ./mobilenet_v1_0.75_224_quant/mobilenet_v1_0.75_224_quant.tflite
+        SHA1
+        0f5e9dae3a41c5b198595bcb5ba50b936ee61527
+      )
   endif() # WITH_TENSORFLOW_LITE_LIB
   if(WITH_TENSORFLOW_LIB)
       # Download Test Tensorflow model
