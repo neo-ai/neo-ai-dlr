@@ -16,3 +16,7 @@ sudo make && make install
 ### Install JSON parser
 
 * install through https://github.com/nlohmann/json#package-managers
+
+## Documentation
+
+* AWS C++ SDK - http://sdk.amazonaws.com/cpp/api/LATEST/index.html

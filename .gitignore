@@ -5,3 +5,5 @@ lib
 3rdparty/tensorflow*
 3rdparty/flatbuffers*
 .DS_Store
+.idea
+.vscode

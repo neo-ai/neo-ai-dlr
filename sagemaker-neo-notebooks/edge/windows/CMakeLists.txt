@@ -11,7 +11,7 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS s3 iam sagemaker)
 
 
-add_executable(tutorial windows.cpp)
+add_executable(tutorial windows.cc)
 target_compile_features(tutorial PRIVATE cxx_std_11)
 
 
