@@ -62,11 +62,11 @@ if [ "$#" -lt 1 ] || [ ! -e "${SCRIPT_DIR}/Dockerfile.${CONTAINER_TYPE}" ]; then
 fi
 
 # Use nvidia-docker if the container is GPU.
-if [[ "${CONTAINER_TYPE}" == *"gpu"* ]]; then
-    DOCKER_BINARY="nvidia-docker"
-else
-    DOCKER_BINARY="docker"
-fi
+#if [[ "${CONTAINER_TYPE}" == *"gpu"* ]]; then
+#    DOCKER_BINARY="nvidia-docker"
+#else
+DOCKER_BINARY="docker"
+#fi
 
 # Helper function to traverse directories up until given file is found.
 function upsearch () {
