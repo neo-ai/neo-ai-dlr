@@ -14,7 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tool to upgrade json from historical versions."""
+
+"""Tool to upgrade TensorRT serialized Relay json artifacts (.tensorrt)
+from older versions."""
+
 import json
 
 def create_updater(node_map, from_ver, to_ver):
