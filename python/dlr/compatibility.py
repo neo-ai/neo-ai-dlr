@@ -40,7 +40,6 @@ def create_updater(node_map, from_ver, to_ver):
         The updater function
     """
     def _updater(data):
-        # assert data["attrs"]["tvm_version"].startswith(from_ver)
         nodes = data["nodes"]
         for idx, item in enumerate(nodes):
             f = node_map.get(item["type_key"], None)
