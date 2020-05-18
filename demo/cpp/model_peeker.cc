@@ -43,6 +43,14 @@ void peek_model(DLRModelHandle model) {
   }
   std::cout << std::endl;
 
+  std::cout << "input_types: ";
+  for (int i = 0; i < num_inputs; i++) {
+    const char* input_type;
+    GetDLRInputType(&model, i, &input_type);
+    std::cout << input_type << ", ";
+  }
+  std::cout << std::endl;
+
   // weight_names.resize(num_weights);
   // std::cout << "weight_names: ";
   // for (int i = 0; i < num_weights; i++) {
@@ -66,6 +74,13 @@ void peek_model(DLRModelHandle model) {
     }
     std::cout << "]" << std::endl;
   }
+  std::cout << "output_types: ";
+  for (int i = 0; i < num_outputs; i++) {
+    const char* output_type;
+    GetDLROutputType(&model, i, &output_type);
+    std::cout << output_type << ", ";
+  }
+  std::cout << std::endl;
 }
 
 int main(int argc, char** argv) {

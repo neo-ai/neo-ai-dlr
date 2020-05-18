@@ -382,6 +382,11 @@ const char* TensorflowModel::GetInputName(int index) const {
   return input_names_[index].c_str();
 }
 
+const char* TensorflowModel::GetInputType(int index) const {
+  LOG(FATAL) << "GetInputType is not supported by Tensorflow backend";
+  return "";  // unreachable
+}
+
 const char* TensorflowModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Tensorflow backend";
   return "";  // unreachable
@@ -430,6 +435,11 @@ void TensorflowModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   TF_Tensor* tensor = output_tensors_[index];
   *size = TF_TensorElementCount(tensor);
   *dim = TF_NumDims(tensor);
+}
+
+const char* TensorflowModel::GetOutputType(int index) const {
+  LOG(FATAL) << "GetOutputType is not supported by Tensorflow backend";
+  return "";  // unreachable
 }
 
 void TensorflowModel::Run() {
