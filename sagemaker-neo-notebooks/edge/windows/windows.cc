@@ -18,6 +18,7 @@
 #include <aws/iam/IAMClient.h>
 #include <aws/iam/model/CreateRoleRequest.h>
 #include <aws/iam/model/AttachRolePolicyRequest.h>
+#include <aws/iam/model/ListRolesRequest.h>
 #include <aws/sagemaker/SageMakerClient.h>
 #include <aws/sagemaker/model/CreateCompilationJobRequest.h>
 #include <aws/sagemaker/model/InputConfig.h>
@@ -32,7 +33,7 @@ const string model = model_name + ".tar.gz";
 const string model_zoo = "gluon_imagenet_classifier";
 const string filename = "./" + model;
 
-const Aws::String role_name = "pi-demo-test-role";
+const string role_name = "windows-demo-test-role";
 
 Aws::S3::S3Client getS3Client()
 {
@@ -45,6 +46,13 @@ Aws::S3::S3Client getS3Client()
     client_config.region = region_aws_s;
     Aws::S3::S3Client s3_client(client_config);
     return s3_client;
+}
+
+Aws::IAM::IAMClient getIamClient()
+{
+    // create IAM role, note that IAM only support global region.
+    Aws::IAM::IAMClient iam_client;
+    return iam_client;
 }
 
 void getPretrainedModel()
@@ -197,7 +205,7 @@ json getIamPolicy()
     json statement;
     statement["Action"] = "sts:AssumeRole";
     statement["Effect"] = "Allow";
-    statement["Principal"] = {"Service", "sagemaker.amazonaws.com"};
+    statement["Principal"]["Service"] = "sagemaker.amazonaws.com";
 
     json policy;
     policy["Statement"] = json::array();
@@ -206,40 +214,70 @@ json getIamPolicy()
     return policy;
 }
 
-void createIamRole()
+bool checkIamRole(string iam_role)
+{
+    Aws::IAM::IAMClient iam_client = getIamClient();
+    Aws::String aws_iam_role(iam_role.c_str(), iam_role.size());
+    Aws::IAM::Model::ListRolesRequest list_roles_request;
+
+    auto list_roles_resp = iam_client.ListRoles(list_roles_request);
+    if (list_roles_resp.IsSuccess())
+    {
+        Aws::Vector<Aws::IAM::Model::Role> iam_roles = list_roles_resp.GetResult().GetRoles();
+        for (auto &role : iam_roles)
+        {
+            if (role.GetRoleName().compare(aws_iam_role) == 0)
+            {
+                return true;
+            }
+        }
+    }
+    else
+    {
+        auto error = list_roles_resp.GetError();
+        cout << "ListIamRole error: " << error.GetExceptionName()
+             << ":" << error.GetMessage() << endl;
+        throw 0;
+    }
+    return false;
+}
+
+void createIamRole(string iam_role)
 {
     json policy = getIamPolicy();
     const string policy_s = policy.dump();
-    const Aws::String policy_aws_s(policy_s.c_str(), policy_s.size());
+    const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
+    const Aws::String aws_policy_name(policy_s.c_str(), policy_s.size());
 
-    Aws::IAM::IAMClient iam_client;
+    Aws::IAM::IAMClient iam_client = getIamClient();
     Aws::IAM::Model::CreateRoleRequest create_role_request;
-    create_role_request.SetRoleName(role_name);
+    create_role_request.SetRoleName(aws_role_name);
     create_role_request.SetPath("/");
-    create_role_request.SetAssumeRolePolicyDocument(policy_aws_s);
+    create_role_request.SetAssumeRolePolicyDocument(aws_policy_name);
 
     auto create_role_outcome = iam_client.CreateRole(create_role_request);
     if (!create_role_outcome.IsSuccess())
     {
         auto error = create_role_outcome.GetError();
-        cout << "ERROR: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
+        cout << "CreateIam error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
         throw 0;
     }
 }
 
-void attachIamPolicy()
+void attachIamPolicy(string iam_role)
 {
     const vector<Aws::String> policies = {
         "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
         "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
+    const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
 
-    Aws::IAM::IAMClient iam_client;
+    Aws::IAM::IAMClient iam_client = getIamClient();
     for (int i = 0; i < policies.size(); i++)
     {
-        Aws::String policy_arn = policies[i];
+        Aws::String aws_policy_arn = policies[i];
         Aws::IAM::Model::AttachRolePolicyRequest attach_policy_request;
-        attach_policy_request.SetPolicyArn(policy_arn);
-        attach_policy_request.SetRoleName(role_name);
+        attach_policy_request.SetPolicyArn(aws_policy_arn);
+        attach_policy_request.SetRoleName(aws_role_name);
         auto attach_policy_outcome = iam_client.AttachRolePolicy(attach_policy_request);
         if (!attach_policy_outcome.IsSuccess())
         {
@@ -247,6 +285,15 @@ void attachIamPolicy()
             cout << "ERROR: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
             throw 0;
         }
+    }
+}
+
+void createIamStep()
+{
+    if (!checkIamRole(role_name))
+    {
+        createIamRole(role_name);
+        attachIamPolicy(role_name);
     }
 }
 
@@ -289,6 +336,7 @@ void compileNeoModel()
     const Aws::SageMaker::Model::Framework framework = Aws::SageMaker::Model::Framework::MXNET;
     const Aws::String s3_loc_aws_s(s3_location.c_str(), s3_location.size());
     const Aws::String data_shape = "{\"data\":[1,3,224,224]}";
+    const Aws::String aws_role_name(role_name.c_str(), role_name.size());
 
     const string job_name = getJobName();
     const Aws::String job_name_aws_s(job_name.c_str(), job_name.size());
@@ -318,7 +366,7 @@ void compileNeoModel()
     // create Neo compilation job
     Aws::SageMaker::Model::CreateCompilationJobRequest create_job_request;
     create_job_request.SetCompilationJobName(job_name_aws_s);
-    create_job_request.SetRoleArn(role_name);
+    create_job_request.SetRoleArn(aws_role_name);
     create_job_request.SetInputConfig(input_config);
     create_job_request.SetOutputConfig(output_config);
     create_job_request.SetStoppingCondition(stopping_condition);
@@ -376,7 +424,7 @@ int main(int argc, char **argv)
         // make your SDK calls here.
         getPretrainedModel();
         uploadModelToS3();
-        // createIamRole()
+        createIamStep();
     }
     Aws::ShutdownAPI(options);
 
