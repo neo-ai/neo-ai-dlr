@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -19,6 +20,7 @@
 #include <aws/iam/model/CreateRoleRequest.h>
 #include <aws/iam/model/AttachRolePolicyRequest.h>
 #include <aws/iam/model/ListRolesRequest.h>
+#include <aws/iam/model/GetRoleRequest.h>
 #include <aws/sagemaker/SageMakerClient.h>
 #include <aws/sagemaker/model/CreateCompilationJobRequest.h>
 #include <aws/sagemaker/model/InputConfig.h>
@@ -59,21 +61,30 @@ void getPretrainedModel()
 {
     const string object = "neo-ai-notebook/" + model_zoo + "/" + model;
     const Aws::String bucket_name = "neo-ai-dlr-test-artifacts";
-    const Aws::String object_name(object.c_str(), object.size());
+    const Aws::String aws_object_name(object.c_str(), object.size());
 
     // download s3 object
     Aws::S3::S3Client s3_client = getS3Client();
 
     Aws::S3::Model::GetObjectRequest object_request;
     object_request.SetBucket(bucket_name);
-    object_request.SetKey(object_name);
+    object_request.SetKey(aws_object_name);
 
     auto get_object_outcome = s3_client.GetObject(object_request);
     if (!get_object_outcome.IsSuccess())
     {
         auto error = get_object_outcome.GetError();
-        cout << "ERROR: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
+        cout << "GetModel error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
         throw 0;
+    }
+    else
+    {
+        auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
+
+        // download the sample file
+        const char *output_filename = filename.c_str();
+        std::ofstream output_file(output_filename, std::ios::binary);
+        output_file << model_file.rdbuf();
     }
 }
 
@@ -104,24 +115,28 @@ void createBucket(string bucket_name)
 void uploadModel(string bucket_name, string model_name)
 {
     Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
-    Aws::String s3_object_name(model_name.c_str(), model_name.size());
+    Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
     Aws::S3::S3Client s3_client = getS3Client();
 
     // upload model to s3 bucket
     Aws::S3::Model::PutObjectRequest object_request;
     object_request.SetBucket(s3_bucket_name);
-    object_request.SetKey(s3_object_name);
+    object_request.SetKey(s3_aws_object_name);
+
     // TODO verify this
-    // const shared_ptr<Aws::IOStream> input_data =
-    //     Aws::MakeShared<Aws::FStream>("SampleAllocationTag", filename.c_str(), ios_base::in | ios_base::binary);
-    // object_request.SetBody(input_data);
+    const shared_ptr<Aws::IOStream> input_data =
+        Aws::MakeShared<Aws::FStream>(
+            "SampleAllocationTag",
+            filename.c_str(), ios_base::in | ios_base::binary);
+    object_request.SetBody(input_data);
 
     // put model to the s3 bucket
     auto put_object_outcome = s3_client.PutObject(object_request);
     if (!put_object_outcome.IsSuccess())
     {
         auto error = put_object_outcome.GetError();
-        cout << "ERROR: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
+        cout << "UploadModel error: " << error.GetExceptionName() << ": "
+             << error.GetMessage() << endl;
         throw 0;
     }
 }
@@ -218,26 +233,28 @@ bool checkIamRole(string iam_role)
 {
     Aws::IAM::IAMClient iam_client = getIamClient();
     Aws::String aws_iam_role(iam_role.c_str(), iam_role.size());
-    Aws::IAM::Model::ListRolesRequest list_roles_request;
+    Aws::IAM::Model::GetRoleRequest get_role_request;
+    get_role_request.SetRoleName(aws_iam_role);
 
-    auto list_roles_resp = iam_client.ListRoles(list_roles_request);
-    if (list_roles_resp.IsSuccess())
+    auto get_role_response = iam_client.GetRole(get_role_request);
+    if (get_role_response.IsSuccess())
     {
-        Aws::Vector<Aws::IAM::Model::Role> iam_roles = list_roles_resp.GetResult().GetRoles();
-        for (auto &role : iam_roles)
-        {
-            if (role.GetRoleName().compare(aws_iam_role) == 0)
-            {
-                return true;
-            }
-        }
+        return true;
     }
     else
     {
-        auto error = list_roles_resp.GetError();
-        cout << "ListIamRole error: " << error.GetExceptionName()
-             << ":" << error.GetMessage() << endl;
-        throw 0;
+        auto error = get_role_response.GetError();
+        auto errorType = error.GetErrorType();
+        if (errorType == Aws::IAM::IAMErrors::NO_SUCH_ENTITY)
+        {
+            cout << "Role doesn't exist and will create one" << endl;
+        }
+        else
+        {
+            cout << "GetIamRole error: " << error.GetExceptionName()
+                 << ":" << error.GetMessage() << endl;
+            throw 0;
+        }
     }
     return false;
 }
