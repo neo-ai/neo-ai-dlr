@@ -5,7 +5,7 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 #include <sys/types.h>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 #include <string>
 #include <vector>

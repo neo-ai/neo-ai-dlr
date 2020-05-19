@@ -3,7 +3,7 @@
 
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 #include "dlr_common.h"
 
