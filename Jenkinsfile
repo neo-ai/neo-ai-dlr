@@ -105,12 +105,18 @@ def AMD64BuildCPU() {
 // Build for AMD64 + CUDA target
 def AMD64BuildGPU() {
   def nodeReq = "ubuntu && amd64 && gpu-build"
+  def dockerTarget = "gpu_bare"
+  def dockerArgs = ""
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Building artifact for AMD64 with GPU capability. Using CUDA 8.0, CuDNN 7, TensorRT 4"
+    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.0, CuDNN 7, TensorRT 7"
+    s3Download(file: 'tests/ci_build/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+               bucket: 'neo-ai-dlr-jenkins-artifacts',
+               path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+               force:true)
     sh """
-    tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
-    PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda10_cudnn7_tensorrt7_x86_64
     """
     stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
   }

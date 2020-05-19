@@ -39,9 +39,15 @@ def get_models(model_name, arch, kind):
         s3_path = s3_bucket + '/' + model_name + '/' + arch + extension
         local_path = os.path.join(model_path, model_name + '_' + arch + extension)
         if not os.path.exists(local_path):
-            try:
-                urlretrieve(s3_path, local_path) 
-            except urllib.error.URLError or urllib.error.HTTPError:
-                raise ValueError('Downloading of model artifacts from %s failed' % s3_path)
-                
+            tries = 10
+            while tries > 0:
+                try:
+                    urlretrieve(s3_path, local_path)
+                except urllib.error.URLError or urllib.error.HTTPError:
+                    print('Error downloading', s3_path, 'on try', tries)
+                    tries -= 1
+                    if tries == 0:
+                        raise ValueError('Downloading of model artifacts from %s failed' % s3_path)
+                else:
+                    break
     return model_path
