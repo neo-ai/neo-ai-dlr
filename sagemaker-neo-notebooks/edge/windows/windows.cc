@@ -35,7 +35,7 @@ const string model = model_name + ".tar.gz";
 const string model_zoo = "gluon_imagenet_classifier";
 const string filename = "./" + model;
 
-const string role_name = "windows-demo-test-role";
+const string ROLE_NAME = "windows-demo-test-role";
 
 Aws::S3::S3Client getS3Client()
 {
@@ -55,6 +55,19 @@ Aws::IAM::IAMClient getIamClient()
     // create IAM role, note that IAM only support global region.
     Aws::IAM::IAMClient iam_client;
     return iam_client;
+}
+
+Aws::SageMaker::SageMakerClient getSageMakerClient()
+{
+    // for tutorial, we set region to us-west-2
+    const string region = "us-west-2";
+    Aws::String region_aws_s(region.c_str(), region.size());
+
+    // init client
+    Aws::Client::ClientConfiguration client_config;
+    client_config.region = region_aws_s;
+    Aws::SageMaker::SageMakerClient sm_client(client_config);
+    return sm_client;
 }
 
 void getPretrainedModel()
@@ -307,10 +320,10 @@ void attachIamPolicy(string iam_role)
 
 void createIamStep()
 {
-    if (!checkIamRole(role_name))
+    if (!checkIamRole(ROLE_NAME))
     {
-        createIamRole(role_name);
-        attachIamPolicy(role_name);
+        createIamRole(ROLE_NAME);
+        attachIamPolicy(ROLE_NAME);
     }
 }
 
@@ -320,17 +333,17 @@ string getJobName()
         chrono::system_clock::now().time_since_epoch());
 
     std::stringstream ss;
-    ss << "pi-demo-" << std::to_string(ms.count()) << endl;
+    ss << "pi-demo-" << std::to_string(ms.count());
     return ss.str();
 }
 
 Aws::SageMaker::Model::CompilationJobStatus poll_job_status(string job_name)
 {
-    Aws::SageMaker::SageMakerClient sm_client;
+    Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
     Aws::SageMaker::Model::DescribeCompilationJobRequest describe_job_request;
 
-    Aws::String job_name_aws_s(job_name.c_str(), job_name.size());
-    describe_job_request.SetCompilationJobName(job_name_aws_s);
+    Aws::String aws_job_name(job_name.c_str(), job_name.size());
+    describe_job_request.SetCompilationJobName(aws_job_name);
     auto describe_job_resp = sm_client.DescribeCompilationJob(describe_job_request);
 
     if (!describe_job_resp.IsSuccess())
@@ -344,35 +357,64 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(string job_name)
     return result.GetCompilationJobStatus();
 }
 
-void compileNeoModel()
+void getIamRole(string role_name, Aws::IAM::Model::Role &role)
+{
+    Aws::IAM::IAMClient iam_client = getIamClient();
+    Aws::String aws_iam_role(role_name.c_str(), role_name.size());
+    Aws::IAM::Model::GetRoleRequest get_role_request;
+    get_role_request.SetRoleName(aws_iam_role);
+
+    auto get_role_response = iam_client.GetRole(get_role_request);
+    if (get_role_response.IsSuccess())
+    {
+        role = get_role_response.GetResult().GetRole();
+    }
+    else
+    {
+        auto error = get_role_response.GetError();
+        auto errorType = error.GetErrorType();
+        if (errorType == Aws::IAM::IAMErrors::NO_SUCH_ENTITY)
+        {
+            cout << "Role doesn't exist and will create one" << endl;
+            throw 0;
+        }
+        else
+        {
+            cout << "GetIamRole error: " << error.GetExceptionName()
+                 << ":" << error.GetMessage() << endl;
+            throw 0;
+        }
+    }
+}
+
+void compileNeoModel(string bucket_name, string model_name)
 {
     // set input parameters
-    const string bucket = "";
-    const string s3_location = "s3://" + bucket + "/output";
+    const string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
     const Aws::SageMaker::Model::Framework framework = Aws::SageMaker::Model::Framework::MXNET;
-    const Aws::String s3_loc_aws_s(s3_location.c_str(), s3_location.size());
+    const Aws::String aws_s3_uri(input_s3.c_str(), input_s3.size());
     const Aws::String data_shape = "{\"data\":[1,3,224,224]}";
-    const Aws::String aws_role_name(role_name.c_str(), role_name.size());
+    const Aws::String aws_role_name(ROLE_NAME.c_str(), ROLE_NAME.size());
 
     const string job_name = getJobName();
-    const Aws::String job_name_aws_s(job_name.c_str(), job_name.size());
+    const Aws::String aws_job_name(job_name.c_str(), job_name.size());
 
     // set input config
-    Aws::SageMaker::SageMakerClient sm_client;
+    Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
     Aws::SageMaker::Model::InputConfig input_config;
-    input_config.SetS3Uri(s3_loc_aws_s);
+    input_config.SetS3Uri(aws_s3_uri);
     input_config.SetFramework(framework);
     input_config.SetDataInputConfig(data_shape);
 
     // set output config parameters
-    const string s3_output_location = "s3://" + bucket + "";
-    Aws::String s3_output_location_aws_s(s3_output_location.c_str(), s3_output_location.size());
+    const string output_s3 = "s3://" + bucket_name + "/output";
+    Aws::String aws_output_s3(output_s3.c_str(), output_s3.size());
     Aws::SageMaker::Model::TargetDevice target_device = Aws::SageMaker::Model::TargetDevice::ml_c4;
 
     // set output config
     Aws::SageMaker::Model::OutputConfig output_config;
-    output_config.SetS3OutputLocation(s3_output_location_aws_s);
+    output_config.SetS3OutputLocation(aws_output_s3);
     output_config.SetTargetDevice(target_device);
 
     // set stopping condition
@@ -380,10 +422,19 @@ void compileNeoModel()
     Aws::SageMaker::Model::StoppingCondition stopping_condition;
     stopping_condition.SetMaxRuntimeInSeconds(max_runtime_in_sec);
 
+    // get iam role
+    Aws::IAM::Model::Role role;
+    getIamRole(ROLE_NAME, role);
+    if (role.GetArn().empty())
+    {
+        cout << "role doesn't exist" << endl;
+        throw 0;
+    }
+
     // create Neo compilation job
     Aws::SageMaker::Model::CreateCompilationJobRequest create_job_request;
-    create_job_request.SetCompilationJobName(job_name_aws_s);
-    create_job_request.SetRoleArn(aws_role_name);
+    create_job_request.SetCompilationJobName(aws_job_name);
+    create_job_request.SetRoleArn(role.GetArn());
     create_job_request.SetInputConfig(input_config);
     create_job_request.SetOutputConfig(output_config);
     create_job_request.SetStoppingCondition(stopping_condition);
@@ -401,16 +452,17 @@ void compileNeoModel()
     int attempt = 0;
     while (attempt < 10)
     {
+        cout << "Waiting for compilation..." << endl;
         auto status = poll_job_status(job_name);
         if (status == Aws::SageMaker::Model::CompilationJobStatus::COMPLETED)
         {
-            std::cout << "Compile successfully!";
+            cout << "Compile successfully" << endl;
             isSuccess = true;
             break;
         }
         else if (status == Aws::SageMaker::Model::CompilationJobStatus::FAILED)
         {
-            std::cout << "Compile fail!";
+            cout << "Compile fail" << endl;
             throw 0;
         }
         std::this_thread::sleep_for(std::chrono::seconds(30));
@@ -419,10 +471,10 @@ void compileNeoModel()
 
     if (isSuccess == false)
     {
-        std::cout << "Compilation timeout";
+        cout << "Compilation timeout" << endl;
         throw 0;
     }
-    std::cout << "Done!";
+    cout << "Done!" << endl;
 }
 
 void getModelFromS3()
@@ -435,6 +487,8 @@ void inferenceModel()
 
 int main(int argc, char **argv)
 {
+    const string s3_bucket_name = "windows-demo";
+
     Aws::SDKOptions options;
     Aws::InitAPI(options);
     {
@@ -442,6 +496,7 @@ int main(int argc, char **argv)
         getPretrainedModel();
         uploadModelToS3();
         createIamStep();
+        compileNeoModel(s3_bucket_name, model_name);
     }
     Aws::ShutdownAPI(options);
 
