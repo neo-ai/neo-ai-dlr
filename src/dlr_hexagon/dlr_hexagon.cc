@@ -208,6 +208,11 @@ const char* HexagonModel::GetInputName(int index) const {
   return input_names_[index].c_str();
 }
 
+const char* HexagonModel::GetInputType(int index) const {
+  LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
+  return "";  // unreachable
+}
+
 const char* HexagonModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";
   return "";  // unreachable
@@ -247,6 +252,11 @@ void HexagonModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   *size = output_tensors_spec_[index].size;
   *dim = output_tensors_spec_[index].dim;
+}
+
+const char* HexagonModel::GetOutputType(int index) const {
+  LOG(FATAL) << "GetOutputType is not supported by Hexagon backend";
+  return "";  // unreachable
 }
 
 void HexagonModel::Run() {

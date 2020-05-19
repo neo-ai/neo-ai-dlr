@@ -87,14 +87,20 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
                       std::inserter(input_names_, input_names_.begin()));
   // Save the number of inputs
   num_inputs_ = input_names_.size();
+  input_types_.resize(num_inputs_);
+  for (int i = 0; i < num_inputs_; i++) {
+    input_types_[i] = tvm_graph_runtime_->GetInputType(i);
+  }
 
   // Get the number of output and reserve space to save output tensor
   // pointers.
   num_outputs_ = tvm_graph_runtime_->NumOutputs();
   outputs_.resize(num_outputs_);
+  output_types_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
     tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(i);
     outputs_[i] = output.operator->();
+    output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
   }
 }
 
@@ -105,6 +111,11 @@ std::vector<std::string> TVMModel::GetWeightNames() const {
 const char* TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index].c_str();
+}
+
+const char* TVMModel::GetInputType(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_types_[index].c_str();
 }
 
 const char* TVMModel::GetWeightName(int index) const {
@@ -165,6 +176,11 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     *size *= tensor->shape[i];
   }
   *dim = tensor->ndim;
+}
+
+const char* TVMModel::GetOutputType(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_types_[index].c_str();
 }
 
 void TVMModel::Run() {

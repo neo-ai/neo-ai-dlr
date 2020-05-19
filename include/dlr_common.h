@@ -81,6 +81,7 @@ class DLRModel {
   size_t num_outputs_ = 1;
   DLContext ctx_;
   std::vector<std::string> input_names_;
+  std::vector<std::string> input_types_;
 
  public:
   DLRModel(const DLContext& ctx, const DLRBackend& backend)
@@ -96,6 +97,7 @@ class DLRModel {
     *num_weights = num_weights_;
   }
   virtual const char* GetInputName(int index) const = 0;
+  virtual const char* GetInputType(int index) const = 0;
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
   virtual void GetInput(const char* name, float* input) = 0;
@@ -105,6 +107,7 @@ class DLRModel {
   virtual void GetOutput(int index, float* out) = 0;
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
+  virtual const char* GetOutputType(int index) const = 0;
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual void UseCPUAffinity(bool use) = 0;

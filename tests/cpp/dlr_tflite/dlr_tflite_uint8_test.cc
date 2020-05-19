@@ -79,6 +79,14 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << "DLRInputName: " << input_name;
   EXPECT_STREQ("input", input_name);
 
+  // GetDLRInputType
+  const char* input_type;
+  if (GetDLRInputType(&handle, 0, &input_type)) {
+    FAIL() << "GetDLRInputType failed";
+  }
+  LOG(INFO) << "DLRInputType: " << input_type;
+  EXPECT_STREQ("uint8", input_type);
+
   // GetDLROutputSizeDim
   int64_t out_size;
   int out_dim;
@@ -104,6 +112,14 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << ss.str();
   const int64_t exp_shape[2] = {1, 1001};
   EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
+
+  // GetDLROutputType
+  const char* output_type;
+  if (GetDLROutputType(&handle, 0, &output_type)) {
+    FAIL() << "GetDLROutputType failed";
+  }
+  LOG(INFO) << "DLROutputType: " << output_type;
+  EXPECT_STREQ("uint8", output_type);
 
   // Load image
   size_t img_size = 224 * 224 * 3;
@@ -142,9 +158,9 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   // TFLite class range is 1-1000 (output size 1001)
   // Imagenet1000 class range is 0-999
   // https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
-  EXPECT_EQ(282, max_id); // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
+  EXPECT_EQ(282, max_id);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
   EXPECT_GE(output[max_id], 150);
-  EXPECT_GE(output[283], 80); // TFLite 283 maps to Imagenet 282 - tiger cat
+  EXPECT_GE(output[283], 80);  // TFLite 283 maps to Imagenet 282 - tiger cat
 
   // clean up
   delete[] img;

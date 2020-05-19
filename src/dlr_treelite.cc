@@ -60,6 +60,7 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   num_outputs_ = 1;
   // Give a dummy input name to Treelite model.
   input_names_.push_back("data");
+  input_types_.push_back("float32");
   CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads,
                                  &treelite_model_),
            0)
@@ -101,6 +102,11 @@ const char* TreeliteModel::GetInputName(int index) const {
   return "data";
 }
 
+const char* TreeliteModel::GetInputType(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return "float32";
+}
+
 const char* TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
   return "";  // unreachable
@@ -113,7 +119,8 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   // NOTE: If number of columns is less than num_feature, missing columns
   //       will be automatically padded with missing values
   CHECK_LE(static_cast<size_t>(shape[1]), treelite_num_feature_)
-      << "ClientError: Mismatch found in input shape at dimension 1. Value read: "
+      << "ClientError: Mismatch found in input shape at dimension 1. Value "
+         "read: "
       << shape[1] << ", Expected: " << treelite_num_feature_ << " or less";
 
   const size_t batch_size = static_cast<size_t>(shape[0]);
@@ -177,6 +184,11 @@ void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     *size = treelite_output_size_;
   }
   *dim = 2;
+}
+
+const char* TreeliteModel::GetOutputType(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return "float32";
 }
 
 void TreeliteModel::Run() {
