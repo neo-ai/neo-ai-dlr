@@ -1,3 +1,7 @@
+# export CC=/usr/bin/gcc
+# export CXX=/usr/bin/g++
+
+
 # CMakeLists.txt
 cmake_minimum_required(VERSION 3.2)
 
@@ -5,6 +9,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 project(tutorial)
 
+set(CMAKE_CXX_FLAGS "-g")
 
 # build json 
 find_package(nlohmann_json 3.2.0 REQUIRED)
