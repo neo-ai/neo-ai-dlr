@@ -78,6 +78,9 @@ Building DLR consists of two steps:
 Building on Linux
 -----------------
 
+Requirements
+""""""""""""
+
 Ensure that all necessary software packages are installed: GCC (or Clang), CMake, and Python. For example, in Ubuntu, you can run
 
 .. code-block:: bash
@@ -88,16 +91,23 @@ Ensure that all necessary software packages are installed: GCC (or Clang), CMake
   sudo python3 /tmp/get-pip.py
   rm /tmp/get-pip.py
 
-  
-To build, create a subdirectory ``build``:
+
+Building for CPU
+""""""""""""""""
+
+First, clone the repository.
+
+.. code-block:: bash
+
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
+
+Create a subdirectory ``build``:
 
 .. code-block:: bash
 
   mkdir build
   cd build
-
-Building for CPU
-""""""""""""""""
 
 Invoke CMake to generate a Makefile and then run GNU Make to compile:
 
@@ -106,44 +116,60 @@ Invoke CMake to generate a Makefile and then run GNU Make to compile:
   cmake ..
   make -j4         # Use 4 cores to compile sources in parallel
 
+Once the compilation is completed, install the Python package by running ``setup.py``:
+
+.. code-block:: bash
+
+  cd ../python
+  python3 setup.py install --user
+
 Building for GPU
 """"""""""""""""
 
 By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
 
-If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use the following configuration:
+If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use the following steps:
 
 .. code-block:: bash
-
+ 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
+  mkdir build
+  cd build
   cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=ON
   make -j4
+  cd ../python
+  python3 setup.py install --user
 
-If you do not have a system install of TensorRT and have downloaded it via tar file or zip, provide the path to the extracted TensorRT directory with:
+If you do not have a system install of TensorRT, first download the relevant .tar.gz file from https://developer.nvidia.com/nvidia-tensorrt-download
+Please follow instructions from https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html#installing-tar to install TensorRT.
+Now, provide the extracted .tar.gz folder path to ``-DUSE_TENSORRT`` when configuring cmake.
 
 .. code-block:: bash
 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
+  mkdir build
+  cd build
   cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
   make -j4
+  cd ../python
+  python3 setup.py install --user
 
-You will need to install NVIDIA CUDA and TensorRT toolkits and drivers beforehand.
 
 Building for OpenCL Devices
 """""""""""""""""""""""""""
 
-Similarly, to enable support for OpenCL devices, run CMake with:
+Similarly, to enable support for OpenCL devices, run CMake with ``-DUSE_OPENCL=ON``:
 
 .. code-block:: bash
 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
+  mkdir build
+  cd build
   cmake .. -DUSE_OPENCL=ON 
   make -j4
-
-Install Python package
-""""""""""""""""""""""
-
-Once the compilation is completed, install the Python package by running ``setup.py``:
-
-.. code-block:: bash
-
   cd ../python
   python3 setup.py install --user
 
@@ -161,6 +187,8 @@ To ensure that Homebrew GCC is used (instead of default Apple compiler), specify
 
 .. code-block:: bash
 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
   mkdir build
   cd build
   CC=gcc-8 CXX=g++-8 cmake ..
@@ -184,6 +212,8 @@ In the DLR directory, first run CMake to generate a Visual Studio project:
 
 .. code-block:: bash
 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
   mkdir build
   cd build
   cmake .. -G"Visual Studio 15 2017 Win64"
@@ -210,12 +240,18 @@ Once done with above steps, invoke cmake with following commands to build Androi
 
 .. code-block:: bash
 
+  git clone --recursive https://github.com/neo-ai/neo-ai-dlr
+  cd neo-ai-dlr
+  mkdir build
+  cd build
   cmake .. -DANDROID_BUILD=ON \
     -DNDK_ROOT=/path/to/your/ndk/folder \
     -DCMAKE_TOOLCHAIN_FILE=/path/to/your/ndk/folder/build/cmake/android.toolchain.cmake \
     -DANDROID_PLATFORM=android-21
 
   make -j4
+  cd ../python
+  python3 setup.py install --user
 
 ``ANDROID_PLATFORM`` should correspond to ``minSdkVersion`` of your project. If ``ANDROID_PLATFORM`` is not set it will default to ``android-21``.
 
