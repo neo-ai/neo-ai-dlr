@@ -232,6 +232,26 @@ class DLRModelImpl(IDLRModel):
             raise NotImplementedError
         return self.output_dtypes
 
+    def get_input_name(self, index):
+        if index < 0 or index >= self.num_inputs:
+            raise Exception(f"Index cannot be greater than {self.num_inputs - 1}")
+        return self.get_input_names()[index]
+
+    def get_output_name(self, index):
+        if index < 0 or index >= self.num_outputs:
+            raise Exception(f"Index cannot be greater than {self.num_outputs - 1}")
+        return self.get_ouput_names()[index]
+
+    def get_input_dtype(self, index):
+        if index < 0 or index >= self.num_inputs:
+            raise Exception(f"Index cannot be greater than {self.num_inputs - 1}")
+        return self.get_input_dtypes()[index]
+
+    def get_output_dtype(self, index):
+        if index < 0 or index >= self.num_outputs:
+            raise Exception(f"Index cannot be greater than {self.num_outputs - 1}")
+        return self.get_output_dtypes()[index]
+
     def get_version(self):
         """
         Get DLR version

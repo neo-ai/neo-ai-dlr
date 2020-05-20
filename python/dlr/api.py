@@ -126,9 +126,21 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in checking for metadata file {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
+    def get_input_dtypes(self):
+        return self._impl.get_input_dtypes()
+
     def get_output_dtypes(self):
         return self._impl.get_output_dtypes()
 
-    def get_input_dtypes(self):
-        return self._impl.get_input_dtypes()
+    def get_input_name(self, index):
+        return self._impl.get_input_name(index)
+
+    def get_output_name(self, index):
+        return self._impl.get_output_name(index)
+
+    def get_input_dtype(self, index):
+        return self._impl.get_input_dtype(index)
+
+    def get_output_dtype(self, index):
+        return self._impl.get_ouput_dtype(index)
 
