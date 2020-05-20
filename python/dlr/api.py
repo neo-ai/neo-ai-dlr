@@ -127,8 +127,8 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_output_dtypes(self):
-        return self._impl.output_dtypes
+        return self._impl.get_output_dtypes()
 
     def get_input_dtypes(self):
-        return self._impl.input_dtypes
+        return self._impl.get_input_dtypes()
 

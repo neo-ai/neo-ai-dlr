@@ -173,11 +173,17 @@ class DLRModelImpl(IDLRModel):
     
     def _fetch_output_names(self):
         self.output_names = []
-        if self.has_metadata():
+        try:
             for i in range(self.num_outputs):
                 name = c_char_p()
                 _check_call(_LIB.GetDLROutputName(byref(self.handle), i, byref(name)))
                 self.output_names.append(name.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_output_names method
+            """
+            pass
 
     def _fetch_input_names(self):
         for i in range(self.num_inputs):
@@ -185,22 +191,46 @@ class DLRModelImpl(IDLRModel):
         
     def _fetch_input_dtypes(self):
         self.input_dtypes = []
-        for i in range(self.num_inputs):
-            dtype = c_char_p()
-            _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
-            self.input_dtypes.append(dtype.value.decode('utf-8'))
+        try:
+            for i in range(self.num_inputs):
+                dtype = c_char_p()
+                _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
+                self.input_dtypes.append(dtype.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_input_dtypes method
+            """
+            pass
         
     def _fetch_output_dtypes(self):
         self.output_dtypes = []
-        for i in range(self.num_outputs):
-            dtype = c_char_p()
-            _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
-            self.output_dtypes.append(dtype.value.decode('utf-8'))
+        try:
+            for i in range(self.num_outputs):
+                dtype = c_char_p()
+                _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
+                self.output_dtypes.append(dtype.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_output_dtypes method
+            """
+            pass
 
     def get_output_names(self):
-        if not self.has_metadata():
-            raise DLRError("Model has no metadata!")
+        if not self.output_names:
+            raise NotImplementedError
         return self.output_names
+
+    def get_input_dtypes(self):
+        if not self.input_dtypes:
+            raise NotImplementedError
+        return self.input_dtypes
+
+    def get_output_dtypes(self):
+        if not self.output_dtypes:
+            raise NotImplementedError
+        return self.output_dtypes
 
     def get_version(self):
         """

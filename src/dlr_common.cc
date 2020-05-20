@@ -1,7 +1,6 @@
-#include <dmlc/filesystem.h>
-#include <iostream>
-#include <fstream>
 #include "dlr_common.h"
+#include <dmlc/filesystem.h>
+#include <fstream>
 using namespace dlr;
 
 std::string dlr::GetParentFolder(const std::string& path) {

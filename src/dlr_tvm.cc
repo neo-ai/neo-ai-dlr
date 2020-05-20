@@ -229,14 +229,13 @@ bool TVMModel::HasMetadata() const {
 }
 
 const char* TVMModel::GetOutputName(const int index) const {
-  std::string name_str = this->metadata["Model"]["Outputs"][index]["name"];
-  return name_str.c_str();
+  return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
 }
 
 int TVMModel::GetOutputIndex(const char* name) const {
   for (int i = 0; i < this->num_outputs_; i++) {
     std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
-    if (strcmp(name, name_str.c_str()) == 0) {
+    if (name == name_str) {
       return i;
     }
   } 
