@@ -7,30 +7,29 @@
 
 #include "dlr.h"
 
-float* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
+uint8_t* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
   std::string line;
   std::ifstream fp(img_path);
-  float* img = new float[size];
+  uint8_t* img = new uint8_t[size];
   size_t i = 0;
   if (fp.is_open()) {
     while (getline(fp, line) && i < size) {
       int v = std::stoi(line);
-      float fv = 2.0f / 255.0f * v - 1.0f;
-      img[i++] = fv;
+      img[i++] = v;
     }
     fp.close();
   }
 
   EXPECT_EQ(size, i);
-  LOG(INFO) << "Image read - OK, float[" << i << "]";
+  LOG(INFO) << "Image read - OK, uint8_t[" << i << "]";
   return img;
 }
 
-int ArgMax(float* data, int size) {
+int ArgMax(uint8_t* data, int size) {
   int idx = 0;
-  float v = 0.0f;
+  uint8_t v = 0;
   for (int i = 0; i < size; i++) {
-    float vi = data[i];
+    uint8_t vi = data[i];
     if (vi > v) {
       idx = i;
       v = vi;
@@ -86,7 +85,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
     FAIL() << "GetDLRInputType failed";
   }
   LOG(INFO) << "DLRInputType: " << input_type;
-  EXPECT_STREQ("float32", input_type);
+  EXPECT_STREQ("uint8", input_type);
 
   // GetDLROutputSizeDim
   int64_t out_size;
@@ -120,24 +119,24 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
     FAIL() << "GetDLROutputType failed";
   }
   LOG(INFO) << "DLROutputType: " << output_type;
-  EXPECT_STREQ("float32", output_type);
+  EXPECT_STREQ("uint8", output_type);
 
   // Load image
   size_t img_size = 224 * 224 * 3;
-  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size);
-  LOG(INFO) << "Input sample: " << img[0] << "," << img[1] << " ... "
-            << img[img_size - 1];
+  uint8_t* img = LoadImageAndPreprocess("cat224-3.txt", img_size);
+  LOG(INFO) << "Input sample: " << +img[0] << "," << +img[1] << " ... "
+            << +img[img_size - 1];
 
   // SetDLRInput
   const int64_t in_shape[4] = {1, 224, 224, 3};
-  if (SetDLRInput(&handle, input_name, in_shape, img, 4)) {
+  if (SetDLRInput(&handle, input_name, in_shape, (float*)img, 4)) {
     FAIL() << "SetDLRInput failed";
   }
   LOG(INFO) << "SetDLRInput - OK";
 
   // GetDLRInput
-  float* input2 = new float[img_size];
-  if (GetDLRInput(&handle, input_name, input2)) {
+  uint8_t* input2 = new uint8_t[img_size];
+  if (GetDLRInput(&handle, input_name, (float*)input2)) {
     FAIL() << "GetDLRInput failed";
   }
   EXPECT_TRUE(std::equal(img, img + img_size, input2));
@@ -150,19 +149,18 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << "RunDLRModel - OK";
 
   // GetDLROutput
-  float* output = new float[out_size];
-  if (GetDLROutput(&handle, 0, output)) {
+  uint8_t* output = new uint8_t[out_size];
+  if (GetDLROutput(&handle, 0, (float*)output)) {
     FAIL() << "GetDLROutput failed";
   }
   size_t max_id = ArgMax(output, out_size);
-  LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << output[max_id];
+  LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << +output[max_id];
   // TFLite class range is 1-1000 (output size 1001)
   // Imagenet1000 class range is 0-999
   // https://gist.github.com/yrevar/942d3a0ac09ec9e5eb3a
-  EXPECT_EQ(283, max_id);  // TFLite 283 maps to Imagenet 282 - tiger cat
-  EXPECT_GE(output[max_id], 0.5f);
-  EXPECT_GE(output[282],
-            0.3f);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
+  EXPECT_EQ(282, max_id);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
+  EXPECT_GE(output[max_id], 150);
+  EXPECT_GE(output[283], 80);  // TFLite 283 maps to Imagenet 282 - tiger cat
 
   // clean up
   delete[] img;
@@ -170,10 +168,10 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   delete[] output;
 }
 
-TEST(TFLite, CreateDLRModelFromTFLite) {
-  // CreateDLRModelFromTFLite (use tflite file)
+TEST(TFLite, CreateDLRModelFromTFLiteQuant) {
+  // CreateDLRModelFromTFLite (use quant tflite file)
   const char* model_file =
-      "./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite";
+      "./mobilenet_v1_0.75_224_quant/mobilenet_v1_0.75_224_quant.tflite";
   int threads = 2;
   int use_nn_api = 0;
 
@@ -189,9 +187,9 @@ TEST(TFLite, CreateDLRModelFromTFLite) {
   DeleteDLRModel(&handle);
 }
 
-TEST(TFLite, CreateDLRModel) {
-  // CreateDLRModel (use folder containing tflite file)
-  const char* model_dir = "./mobilenet_v2_0.75_224";
+TEST(TFLite, CreateDLRModelQuant) {
+  // CreateDLRModel (use folder containing quant tflite file)
+  const char* model_dir = "./mobilenet_v1_0.75_224_quant";
   int dev_type = 1;  // 1 - kDLCPU
   int dev_id = 0;
 

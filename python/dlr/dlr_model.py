@@ -4,6 +4,7 @@ from ctypes import cdll, c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_l
 import numpy as np
 import os
 from .api import IDLRModel
+from .compatibility import check_tensorrt_compatibility
 
 from .libpath import find_lib_path
 
@@ -98,7 +99,10 @@ class DLRModelImpl(IDLRModel):
     def __init__(self, model_path, dev_type='cpu', dev_id=0):
         if not os.path.exists(model_path):
             raise ValueError("model_path %s doesn't exist" % model_path)
-
+        # Backwards compatibility for .tensorrt artifacts.
+        for file_name in os.listdir(model_path):
+            if file_name.endswith(".tensorrt"):
+                check_tensorrt_compatibility(os.path.join(model_path, file_name))
         self.handle = c_void_p()
         device_table = {
             'cpu': 1,

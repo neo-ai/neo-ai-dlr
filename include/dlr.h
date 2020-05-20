@@ -17,7 +17,7 @@ extern "C" {  // Open extern "C" block
 /*! \brief major version */
 #define DLR_MAJOR 1
 /*! \brief minor version */
-#define DLR_MINOR 1
+#define DLR_MINOR 2
 /*! \brief patch version */
 #define DLR_PATCH 0
 /*! \brief DLR version */
@@ -173,6 +173,17 @@ DLR_DLL
 int GetDLRInputName(DLRModelHandle* handle, int index, const char** input_name);
 
 /*!
+ \brief Gets the type of the index-th input.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index of the input.
+ \param input_type The pointer to save the type of the index-th input.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
+ */
+DLR_DLL
+int GetDLRInputType(DLRModelHandle* handle, int index, const char** input_type);
+
+/*!
  \brief Gets the name of the index-th weight.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index of the weight.
@@ -250,6 +261,19 @@ int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
 DLR_DLL
 int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
                         int* dim);
+
+/*!
+ \brief Gets the type of the index-th input.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index of the input.
+ \param input_type The pointer to save the type of the index-th input.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
+ */
+DLR_DLL
+int GetDLROutputType(DLRModelHandle* handle, int index,
+                     const char** output_type);
+
 /*!
  \brief Gets the last error message.
  \return Null-terminated string containing the error message.

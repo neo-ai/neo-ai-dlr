@@ -44,6 +44,15 @@ extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
   API_END();
 }
 
+extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
+                               const char** input_type) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *input_type = model->GetInputType(index);
+  API_END();
+}
+
 extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
                                 const char** weight_name) {
   API_BEGIN();
@@ -94,6 +103,15 @@ extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutputSizeDim(index, size, dim);
+  API_END();
+}
+
+extern "C" int GetDLROutputType(DLRModelHandle* handle, int index,
+                                const char** output_type) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *output_type = model->GetOutputType(index);
   API_END();
 }
 

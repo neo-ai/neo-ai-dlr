@@ -66,7 +66,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
 
 # Compiler flags
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -147,6 +147,19 @@ if(USE_CUDA)
     list(APPEND DLR_LINKER_LIBS ${CUDA_CUDA_LIBRARY})
     list(APPEND DLR_LINKER_LIBS ${CUDA_NVRTC_LIBRARY})
     file(GLOB RUNTIME_CUDA_SRCS ${TVM_SRC}/src/runtime/cuda/*.cc)
+
+    # Thrust is used to improve NMS performance.
+    message(STATUS "Build with Thrust support")
+    cmake_minimum_required(VERSION 3.13) # to compile CUDA code
+    set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
+    if(NOT DEFINED CMAKE_CUDA_STANDARD)
+      set(CMAKE_CUDA_STANDARD 11)
+      set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    endif()
+    enable_language(CUDA)
+    file(GLOB CONTRIB_THRUST_SRC ${TVM_SRC}/src/runtime/contrib/thrust/*.cu)
+    list(APPEND RUNTIME_CUDA_SRCS ${CONTRIB_THRUST_SRC})
+
     list(APPEND DLR_SRC ${RUNTIME_CUDA_SRCS})
     set(USE_CUDA OFF)
 endif()
@@ -207,60 +220,66 @@ if(USE_TENSORRT)
          ${TVM_SRC}/src/relay/op/tensor/transform.cc
          ${TVM_SRC}/src/relay/op/tensor/reduce.cc
          ${TVM_SRC}/src/relay/op/image/resize.cc
+         ${TVM_SRC}/src/node/container.cc
+         ${TVM_SRC}/src/ir/attrs.cc
 
          ${TVM_SRC}/src/relay/ir/expr_functor.cc
          ${TVM_SRC}/src/relay/ir/pattern_functor.cc
-         ${TVM_SRC}/src/relay/pass/util.cc
-         ${TVM_SRC}/src/relay/ir/type_functor.cc
-         ${TVM_SRC}/src/relay/ir/type.cc
-         ${TVM_SRC}/src/lang/ir.cc
-         ${TVM_SRC}/src/lang/expr.cc
-         ${TVM_SRC}/src/relay/ir/expr.cc
-         ${TVM_SRC}/src/relay/ir/adt.cc
-         ${TVM_SRC}/src/relay/ir/module.cc
-         ${TVM_SRC}/src/relay/pass/pass_manager.cc
-         ${TVM_SRC}/src/lang/attrs.cc
-         ${TVM_SRC}/src/lang/tensor.cc
-         ${TVM_SRC}/src/relay/pass/eta_expand.cc
-         ${TVM_SRC}/src/relay/pass/kind_check.cc
-         ${TVM_SRC}/src/lang/expr_operator.cc
-         ${TVM_SRC}/src/arithmetic/int_set.cc
-         ${TVM_SRC}/src/arithmetic/analyzer.cc
-         ${TVM_SRC}/src/arithmetic/modular_set.cc
-         ${TVM_SRC}/src/arithmetic/const_int_bound.cc
-         ${TVM_SRC}/src/arithmetic/canonical_simplify.cc
-         ${TVM_SRC}/src/arithmetic/rewrite_simplify.cc
-         ${TVM_SRC}/src/arithmetic/ir_mutator_with_analyzer.cc
-         ${TVM_SRC}/src/pass/ir_mutator.cc
-         ${TVM_SRC}/src/pass/ir_deep_compare.cc
-         ${TVM_SRC}/src/pass/simple_passes.cc
-         ${TVM_SRC}/src/pass/ir_visitor.cc
-         ${TVM_SRC}/src/relay/ir/pretty_printer.cc
-         ${TVM_SRC}/src/relay/ir/doc.cc
-         ${TVM_SRC}/src/relay/pass/dependency_graph.cc
-         ${TVM_SRC}/src/node/reflection.cc
-         ${TVM_SRC}/src/arithmetic/stmt_simplify.cc
-         ${TVM_SRC}/src/relay/pass/type_infer.cc
-         ${TVM_SRC}/src/relay/pass/type_solver.cc
-         ${TVM_SRC}/src/lang/api_registry.cc
-         ${TVM_SRC}/src/relay/pass/match_exhaustion.cc
-         ${TVM_SRC}/src/node/serialization.cc
-         ${TVM_SRC}/src/relay/ir/alpha_equal.cc
-         ${TVM_SRC}/src/relay/ir/error.cc
-         ${TVM_SRC}/src/relay/pass/de_duplicate.cc
-         ${TVM_SRC}/src/relay/pass/well_formed.cc
-         ${TVM_SRC}/src/relay/ir/op.cc
          ${TVM_SRC}/src/relay/op/type_relations.cc
-         ${TVM_SRC}/src/op/compute_op.cc
-         ${TVM_SRC}/src/schedule/message_passing.cc
-         ${TVM_SRC}/src/op/op_util.cc
-         ${TVM_SRC}/src/pass/ir_util.cc
-         ${TVM_SRC}/src/op/cross_thread_reduction.cc
-         ${TVM_SRC}/src/lang/data_layout.cc
-         ${TVM_SRC}/src/op/tensorize.cc
-         ${TVM_SRC}/src/pass/arg_binder.cc
+         ${TVM_SRC}/src/tir/ir/op.cc
+         ${TVM_SRC}/src/arith/int_set.cc
+         ${TVM_SRC}/src/tir/ir/expr.cc
+         ${TVM_SRC}/src/te/tensor.cc
+         ${TVM_SRC}/src/relay/ir/expr.cc
+         ${TVM_SRC}/src/ir/expr.cc
+         ${TVM_SRC}/src/relay/ir/function.cc
+         ${TVM_SRC}/src/arith/canonical_simplify.cc
+         ${TVM_SRC}/src/arith/rewrite_simplify.cc
+         ${TVM_SRC}/src/arith/ir_mutator_with_analyzer.cc
+         ${TVM_SRC}/src/tir/ir/stmt_functor.cc
+         ${TVM_SRC}/src/tir/ir/expr_functor.cc
+         ${TVM_SRC}/src/tir/ir/stmt.cc
+         ${TVM_SRC}/src/tir/analysis/deep_equal.cc
+         ${TVM_SRC}/src/relay/ir/adt.cc
+         ${TVM_SRC}/src/arith/const_int_bound.cc
+         ${TVM_SRC}/src/tir/ir/data_layout.cc
+         ${TVM_SRC}/src/tir/pass/simple_passes.cc
+         ${TVM_SRC}/src/ir/type.cc
+         ${TVM_SRC}/src/ir/tensor_type.cc
+         ${TVM_SRC}/src/ir/op.cc
+         ${TVM_SRC}/src/arith/analyzer.cc
+         ${TVM_SRC}/src/arith/modular_set.cc
+         ${TVM_SRC}/src/arith/stmt_simplify.cc
+         ${TVM_SRC}/src/node/repr_printer.cc
+         ${TVM_SRC}/src/ir/env_func.cc
+         ${TVM_SRC}/src/relay/analysis/util.cc
+         ${TVM_SRC}/src/ir/type_functor.cc
+         ${TVM_SRC}/src/ir/module.cc
+         ${TVM_SRC}/src/relay/transforms/type_infer.cc
+         ${TVM_SRC}/src/ir/error.cc
+         ${TVM_SRC}/src/relay/analysis/type_solver.cc
+         ${TVM_SRC}/src/node/reflection.cc
          ${TVM_SRC}/src/relay/ir/base.cc
-         ${TVM_SRC}/src/relay/backend/contrib/tensorrt/common_utils.cc
+         ${TVM_SRC}/src/relay/analysis/kind_check.cc
+         ${TVM_SRC}/src/printer/relay_text_printer.cc
+         ${TVM_SRC}/src/printer/doc.cc
+         ${TVM_SRC}/src/relay/analysis/dependency_graph.cc
+         ${TVM_SRC}/src/node/structural_equal.cc
+         ${TVM_SRC}/src/relay/analysis/match_exhaustion.cc
+         ${TVM_SRC}/src/node/serialization.cc
+         ${TVM_SRC}/src/relay/transforms/eta_expand.cc
+         ${TVM_SRC}/src/ir/transform.cc
+         ${TVM_SRC}/src/ir/type_relation.cc
+         ${TVM_SRC}/src/relay/transforms/de_duplicate.cc
+         ${TVM_SRC}/src/te/operation/compute_op.cc
+         ${TVM_SRC}/src/te/schedule/message_passing.cc
+         ${TVM_SRC}/src/te/operation/op_util.cc
+         ${TVM_SRC}/src/tir/pass/ir_util.cc
+         ${TVM_SRC}/src/te/operation/cross_thread_reduction.cc
+         ${TVM_SRC}/src/te/operation/tensorize.cc
+         ${TVM_SRC}/src/tir/pass/arg_binder.cc
+         ${TVM_SRC}/src/relay/ir/transform.cc
+         ${TVM_SRC}/src/relay/analysis/well_formed.cc
          )
     set(USE_TENSORRT OFF)
 endif()
@@ -426,6 +445,12 @@ if(NOT(AAR_BUILD))
         ./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite
         SHA1
         c653a09facaf2dfb5e3910030b3f74ad04259e30
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v1_0.75_224_quant.tflite
+        ./mobilenet_v1_0.75_224_quant/mobilenet_v1_0.75_224_quant.tflite
+        SHA1
+        0f5e9dae3a41c5b198595bcb5ba50b936ee61527
       )
   endif() # WITH_TENSORFLOW_LITE_LIB
   if(WITH_TENSORFLOW_LIB)
