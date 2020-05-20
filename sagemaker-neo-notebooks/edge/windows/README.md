@@ -20,3 +20,12 @@ sudo make && make install
 ## Documentation
 
 * AWS C++ SDK - http://sdk.amazonaws.com/cpp/api/LATEST/index.html
+
+
+### using the dev desktop for testing at the moment
+
+<!-- image process alternative  -->
+<!-- numpy alternative -->
+https://www.boost.org/doc/libs/1_49_0/libs/numeric/ublas/doc/index.htm
+
+https://xtensor.readthedocs.io/en/latest/numpy.html

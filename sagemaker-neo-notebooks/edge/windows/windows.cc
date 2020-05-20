@@ -477,12 +477,49 @@ void compileNeoModel(string bucket_name, string model_name)
     cout << "Done!" << endl;
 }
 
-void getModelFromS3()
+void getCompiledModelFromNeo(string bucket_name, string model_name, string compiled_filenae)
 {
+    Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
+    Aws::String aws_object_name(model_name.c_str(), model_name.size());
+
+    // download s3 object
+    Aws::S3::S3Client s3_client = getS3Client();
+
+    Aws::S3::Model::GetObjectRequest object_request;
+    object_request.SetBucket(aws_bucket_name);
+    object_request.SetKey(aws_object_name);
+
+    auto get_object_outcome = s3_client.GetObject(object_request);
+    if (!get_object_outcome.IsSuccess())
+    {
+        auto error = get_object_outcome.GetError();
+        cout << "GetModel error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
+        throw 0;
+    }
+    else
+    {
+        auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
+
+        // download the sample file
+        const char *output_filename = compiled_filenae.c_str();
+        std::ofstream output_file(output_filename, std::ios::binary);
+        output_file << model_file.rdbuf();
+    }
+}
+
+void preprocessImage (){
+    
 }
 
 void inferenceModel()
 {
+    // download an image 
+
+    // preprocess image
+    
+    // inference
+    // const data = {"data": "image"}
+       
 }
 
 int main(int argc, char **argv)
