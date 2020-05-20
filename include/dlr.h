@@ -264,10 +264,10 @@ int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
                         int* dim);
 
 /*!
- \brief Gets the type of the index-th input.
+ \brief Gets the type of the index-th output.
  \param handle The model handle returned from CreateDLRModel().
- \param index The index of the input.
- \param input_type The pointer to save the type of the index-th input.
+ \param index The index of the output.
+ \param output_type The pointer to save the type of the index-th output.
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
  message.
  */
@@ -295,7 +295,7 @@ DLR_DLL int GetDLROutputName(DLRModelHandle* handle, const int index, const char
   \param name The pointer pointing to the ouput node name.
   \param index The pointer to save the corresponding index of the output node.
 */
-DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, char* name, int* index);
+DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index);
 
 /*!
  \brief Gets the output of the node of the given name from the model.
@@ -305,7 +305,7 @@ DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, char* name, int* index);
  array of size "size" from GetDLROutputSizeDim(). \return 0 for success, -1 for
  error. Call DLRGetLastError() to get the error message.
  */
-DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, char* name, float* out);
+DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name, float* out);
 
 /*!
  \brief Gets the last error message.

@@ -139,7 +139,7 @@ extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const c
   API_END();
 }
 
-extern "C" int GetDLROutputIndex(DLRModelHandle* handle, char* name, int* index) {
+extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -147,7 +147,7 @@ extern "C" int GetDLROutputIndex(DLRModelHandle* handle, char* name, int* index)
   API_END();
 }
 
-extern "C" int GetDLROutputByName(DLRModelHandle* handle, char* name, float* out) {
+extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, float* out) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";

@@ -123,6 +123,7 @@ class DLRModelImpl(IDLRModel):
         self.output_names = []
         self.weight_names = []
         self.input_shapes = {}   # Remember shape used in _set_input()
+        self.input_dtypes = []
         self.output_dtypes = []
         
         for i in range(self.num_weights):
@@ -180,6 +181,14 @@ class DLRModelImpl(IDLRModel):
     def _fetch_input_names(self):
         for i in range(self.num_inputs):
             self.input_names.append(self._get_input_name(i))
+        
+    def _fetch_input_dtypes(self):
+        self.input_dtypes = []
+        if self.has_metadata():
+            for i in range(self.num_inputs):
+                dtype = c_char_p()
+                _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
+                self.input_dtypes.append(dtype.value.decode('utf-8'))
         
     def _fetch_output_dtypes(self):
         self.output_dtypes = []

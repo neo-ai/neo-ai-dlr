@@ -5,7 +5,7 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 #include <sys/types.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <vector>
@@ -126,7 +126,6 @@ class DLRModel {
 
   virtual int GetOutputIndex(const char* name) const {
     LOG(FATAL) << "GetOutputIndex is not supported yet!";
-    return -1;
   }
 
   virtual void GetOuputByName(const char* name, float* out) {

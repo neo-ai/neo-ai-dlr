@@ -124,10 +124,12 @@ class DLRModel(IDLRModel):
             return self._impl.has_metadata()
         except Exception as ex:
             self.neo_logger.exception("error in checking for metadata file {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_output_dtypes(self):
         try:
             return self._impl.get_output_dtypes()
         except Exception as ex:
             self.neo_logger.exception("error in getting output data types {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 

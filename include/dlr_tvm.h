@@ -3,8 +3,6 @@
 
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
-#include <json.hpp>
-
 #include "dlr_common.h"
 
 namespace dlr {
