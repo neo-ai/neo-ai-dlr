@@ -164,7 +164,7 @@ bool checkBucketExist(string bucket_name)
         Aws::Vector<Aws::S3::Model::Bucket> bucket_list = list_bucket_resp.GetResult().GetBuckets();
         for (auto const &bucket : bucket_list)
         {
-            if (bucket.GetName().compare(bucket_name) == 0)
+            if (bucket.GetName().compare(s3_bucket_name) == 0)
             {
                 return true;
             }
