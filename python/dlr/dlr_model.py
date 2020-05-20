@@ -200,8 +200,7 @@ class DLRModelImpl(IDLRModel):
     def get_output_names(self):
         if not self.has_metadata():
             raise DLRError("Model has no metadata!")
-        else:
-            return self.output_names
+        return self.output_names
 
     def get_version(self):
         """

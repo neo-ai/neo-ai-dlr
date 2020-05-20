@@ -234,16 +234,13 @@ const char* TVMModel::GetOutputName(const int index) const {
 }
 
 int TVMModel::GetOutputIndex(const char* name) const {
-  int idx = -1;
-
   for (int i = 0; i < this->num_outputs_; i++) {
     std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
     if (strcmp(name, name_str.c_str()) == 0) {
-      idx = i;
-      break;
+      return i;
     }
   } 
-  return idx;
+  return -1;
 }
 
 void TVMModel::GetOuputByName(const char* name, float* out) {
