@@ -133,6 +133,7 @@ class DLRModelImpl(IDLRModel):
         self._lazy_init_output_shape()
         self._fetch_input_names()
         self._fetch_output_names()
+        self._fetch_input_dtypes()
         self._fetch_output_dtypes()
 
     def __del__(self):
@@ -184,31 +185,23 @@ class DLRModelImpl(IDLRModel):
         
     def _fetch_input_dtypes(self):
         self.input_dtypes = []
-        if self.has_metadata():
-            for i in range(self.num_inputs):
-                dtype = c_char_p()
-                _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
-                self.input_dtypes.append(dtype.value.decode('utf-8'))
+        for i in range(self.num_inputs):
+            dtype = c_char_p()
+            _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
+            self.input_dtypes.append(dtype.value.decode('utf-8'))
         
     def _fetch_output_dtypes(self):
         self.output_dtypes = []
-        if self.has_metadata():
-            for i in range(self.num_outputs):
-                dtype = c_char_p()
-                _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
-                self.output_dtypes.append(dtype.value.decode('utf-8'))
+        for i in range(self.num_outputs):
+            dtype = c_char_p()
+            _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
+            self.output_dtypes.append(dtype.value.decode('utf-8'))
 
     def get_output_names(self):
         if not self.has_metadata():
             raise DLRError("Model has no metadata!")
         else:
             return self.output_names
-
-    def get_output_dtypes(self):
-        if not self.has_metadata():
-            raise DLRError("Model has no metadata!")
-        else:
-            return self.output_dtypes
 
     def get_version(self):
         """
