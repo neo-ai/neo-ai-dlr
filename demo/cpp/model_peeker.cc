@@ -20,6 +20,7 @@ void peek_model(DLRModelHandle model) {
   int num_outputs;
   const char* backend;
   std::vector<const char*> input_names;
+  std::vector<const char*> output_names;
   std::vector<const char*> weight_names;
   std::vector<std::vector<int64_t>> output_shapes;
 
@@ -40,6 +41,13 @@ void peek_model(DLRModelHandle model) {
   for (int i = 0; i < num_inputs; i++) {
     GetDLRInputName(&model, i, &input_names[i]);
     std::cout << input_names[i] << ", ";
+  }
+  std::cout << std::endl;
+  output_names.resize(num_outputs);
+  std::cout << "output_names: ";
+  for (int i = 0; i < num_outputs; i++) {
+    GetDLROutputName(&model, i, &output_names[i]);
+    std::cout << output_names[i] << ", ";
   }
   std::cout << std::endl;
 

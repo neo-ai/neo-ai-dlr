@@ -56,7 +56,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
 void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) {
   std::ifstream jsonFile (path);
   jsonFile >> jsonObject;
-};
+}
 
 DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   // Support the case where user provides full path to tflite file.
