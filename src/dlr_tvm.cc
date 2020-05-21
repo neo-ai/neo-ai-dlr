@@ -245,12 +245,10 @@ int TVMModel::GetOutputIndex(const char* name) const {
       return i;
     }
   } 
-  return -1;
+  LOG(FATAL) << "Invalid node name!";
 }
 
-void TVMModel::GetOuputByName(const char* name, float* out) {
+void TVMModel::GetOutputByName(const char* name, float* out) {
   int output_index = this->GetOutputIndex(name);
-  if (output_index >= 0) {
-    this->GetOutput(output_index, out);
-  }
+  this->GetOutput(output_index, out);
 }

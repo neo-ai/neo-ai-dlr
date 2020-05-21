@@ -18,6 +18,11 @@ def test_resnet():
     print('Testing inference on resnet18...')
     probabilities = model.run(input_data) #need to be a list of input arrays matching input names
     assert probabilities[0].argmax() == 151
+    assert model.get_input_names() == ["data"]
+    assert model.get_input_dtypes() == ["float32"]
+    assert model.get_output_dtypes() == ["float32"]
+    assert model.get_input_dtype(0) == "float32"
+    assert model.get_output_dtype(0) == "float32"
 
 
 def test_multi_input_multi_output():

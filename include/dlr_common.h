@@ -128,7 +128,7 @@ class DLRModel {
     LOG(FATAL) << "GetOutputIndex is not supported yet!";
   }
 
-  virtual void GetOuputByName(const char* name, float* out) {
+  virtual void GetOutputByName(const char* name, float* out) {
     LOG(FATAL) << "GetOutputByName is not supported yet!";
   }
 };

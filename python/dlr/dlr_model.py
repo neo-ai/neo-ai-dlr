@@ -240,7 +240,7 @@ class DLRModelImpl(IDLRModel):
     def get_output_name(self, index):
         if index < 0 or index >= self.num_outputs:
             raise Exception(f"Index cannot be greater than {self.num_outputs - 1}")
-        return self.get_ouput_names()[index]
+        return self.get_output_names()[index]
 
     def get_input_dtype(self, index):
         if index < 0 or index >= self.num_inputs:

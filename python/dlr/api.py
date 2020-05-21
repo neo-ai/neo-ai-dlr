@@ -127,20 +127,44 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input_dtypes(self):
-        return self._impl.get_input_dtypes()
+        try:
+            return self._impl.get_input_dtypes()
+        except Exception as ex:
+            self.neo_logger.exception("error in getting input data types {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_output_dtypes(self):
-        return self._impl.get_output_dtypes()
+        try:
+            return self._impl.get_output_dtypes()
+        except Exception as ex:
+            self.neo_logger.exception("error in getting output data types {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_input_name(self, index):
-        return self._impl.get_input_name(index)
+        try:
+            return self._impl.get_input_name(index)
+        except Exception as ex:
+            self.neo_logger.exception("error in getting input name {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_output_name(self, index):
-        return self._impl.get_output_name(index)
+        try:
+            return self._impl.get_output_name(index)
+        except Exception as ex:
+            self.neo_logger.exception("error in getting output name {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_input_dtype(self, index):
-        return self._impl.get_input_dtype(index)
+        try:
+            return self._impl.get_input_dtype(index)
+        except Exception as ex:
+            self.neo_logger.exception("error in getting input data type {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 
     def get_output_dtype(self, index):
-        return self._impl.get_ouput_dtype(index)
+        try:
+            return self._impl.get_output_dtype(index)
+        except Exception as ex:
+            self.neo_logger.exception("error in getting input data type {} {}".format(self._impl.__class__.__name__, ex))
+            raise ex
 

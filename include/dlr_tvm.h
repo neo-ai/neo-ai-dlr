@@ -53,7 +53,7 @@ class TVMModel : public DLRModel {
   virtual bool HasMetadata() const override;
   virtual const char* GetOutputName(const int index) const;
   virtual int GetOutputIndex(const char* name) const;
-  virtual void GetOuputByName(const char* name, float* out);
+  virtual void GetOutputByName(const char* name, float* out);
 };
 
 }  // namespace dlr
