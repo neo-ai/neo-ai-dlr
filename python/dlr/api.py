@@ -165,6 +165,6 @@ class DLRModel(IDLRModel):
         try:
             return self._impl.get_output_dtype(index)
         except Exception as ex:
-            self.neo_logger.exception("error in getting input data type {} {}".format(self._impl.__class__.__name__, ex))
+            self.neo_logger.exception("error in getting output data type {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
