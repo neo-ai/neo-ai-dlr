@@ -8,6 +8,7 @@
 
 // 3rd-party
 #include <nlohmann/json.hpp>
+#include <xtensor/xarray.hpp>
 
 // aws-sdk
 #include <aws/core/Aws.h>
@@ -26,6 +27,9 @@
 #include <aws/sagemaker/model/InputConfig.h>
 #include <aws/sagemaker/model/Framework.h>
 #include <aws/sagemaker/model/DescribeCompilationJobRequest.h>
+
+// internal
+#include <dlr.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -477,7 +481,7 @@ void compileNeoModel(string bucket_name, string model_name)
     cout << "Done!" << endl;
 }
 
-void getCompiledModelFromNeo(string bucket_name, string model_name, string compiled_filenae)
+void getCompiledModelFromNeo(string bucket_name, string model_name, string compiled_filename)
 {
     Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
     Aws::String aws_object_name(model_name.c_str(), model_name.size());
@@ -501,25 +505,57 @@ void getCompiledModelFromNeo(string bucket_name, string model_name, string compi
         auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
 
         // download the sample file
-        const char *output_filename = compiled_filenae.c_str();
+        const char *output_filename = compiled_filename.c_str();
         std::ofstream output_file(output_filename, std::ios::binary);
         output_file << model_file.rdbuf();
     }
 }
 
-void preprocessImage (){
-    
+void PreprocessImage()
+{
+}
+
+int GetPreprocessNpyFile(string file_name)
+{
+    return 0;
+}
+
+int RunInference(string compiled_model)
+{
+    DLRModelHandle handle;
+    int dev_type = 1; // cpu == 1
+    int dev_id = 0;
+    char *model_path = const_cast<char *>(compiled_model.c_str());
+    CreateDLRModel(&handle, model_path, dev_type, dev_id);
+
+    // std::vector<unsigned long> in_shape_ul;
+    // std::vector<T> in_data;
+    // std::vector<int64_t> in_shape =
+    //     std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
+    // int64_t in_ndim = in_shape.size();
+
+    // char *input_name = "data";
+    // int64_t *shape = 1;
+    // float *input_data;
+    // int n_dims = 3;
+    // SetDLRInput(&handle, input_name, shape, input_data, n_dims);
+
+    // RunDLRModel(&handle);
+
+    // float *output_data;
+    // GetDLROutput(&handle, 0, output_data);
+
+    return 0;
 }
 
 void inferenceModel()
 {
-    // download an image 
+    // download an image
 
     // preprocess image
-    
+
     // inference
     // const data = {"data": "image"}
-       
 }
 
 int main(int argc, char **argv)
@@ -529,11 +565,16 @@ int main(int argc, char **argv)
     Aws::SDKOptions options;
     Aws::InitAPI(options);
     {
-        // make your SDK calls here.
-        getPretrainedModel();
-        uploadModelToS3();
-        createIamStep();
-        compileNeoModel(s3_bucket_name, model_name);
+        // // make your SDK calls here.
+        // getPretrainedModel();
+        // uploadModelToS3();
+        // createIamStep();
+        // compileNeoModel(s3_bucket_name, model_name);
+
+        string compiled_filename = "./compiled-model";
+        // getCompiledModelFromNeo(s3_bucket_name, model_name, compiled_filename);
+
+        RunInference(compiled_filename);
     }
     Aws::ShutdownAPI(options);
 

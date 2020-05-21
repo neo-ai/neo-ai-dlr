@@ -20,6 +20,13 @@ cmake .. \
 make -j$(nproc)
 make install
 
+# install xtensor
+https://xtensor.readthedocs.io/en/latest/installation.html
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=path_to_prefix ..
+make install
+
 
 # build dlr
 git clone --recursive https://github.com/neo-ai/neo-ai-dlr
@@ -30,3 +37,7 @@ cmake .. \
 
 make -j$(nproc)
 export DLR_LIB=$(pwd)/lib
+
+# link file
+ln -s $DLR_LIB/libdlr.so
+ln -s $DLR_LIB/libdlr.dylib
