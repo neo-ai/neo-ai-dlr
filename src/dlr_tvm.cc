@@ -231,7 +231,8 @@ bool TVMModel::HasMetadata() const {
 
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
-    LOG(FATAL) << "No metadata file was found!";
+    LOG(INFO) << "No metadata file was found!";
+    return nullptr;
   }
   try {
     return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
@@ -243,7 +244,8 @@ const char* TVMModel::GetOutputName(const int index) const {
 
 int TVMModel::GetOutputIndex(const char* name) const {
   if (!this->HasMetadata()) {
-    LOG(FATAL) << "No metadata file was found!";
+    LOG(INFO) << "No metadata file was found!";
+    return -1;
   }
 
   try {

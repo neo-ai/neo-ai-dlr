@@ -136,7 +136,7 @@ extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const c
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *name = model->GetOutputName(index);
-  CHECK(name != nullptr) << "name is nullptr, check if metadata file has output node data";
+  CHECK(name != nullptr) << "name is nullptr, check for metadata file and see if it has output node data";
   API_END();
 }
 
@@ -145,7 +145,7 @@ extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* 
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *index = model->GetOutputIndex(name);
-  CHECK(*index != -1) << "output index is -1, check if metadata file has output node data";
+  CHECK(*index != -1) << "name is nullptr, check for metadata file and see if it has output node data";
   API_END();
 }
 
