@@ -5,6 +5,7 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 #include <sys/types.h>
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <vector>
@@ -39,6 +40,7 @@ typedef struct {
   std::string params;
   std::string model_json;
   std::string ver_json;
+  std::string metadata;
 } ModelPath;
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
@@ -46,6 +48,8 @@ void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 std::string GetBasename(const std::string& path);
 
 std::string GetParentFolder(const std::string& path);
+
+void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() &&
@@ -111,6 +115,22 @@ class DLRModel {
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual void UseCPUAffinity(bool use) = 0;
+
+  virtual bool HasMetadata() const {
+    return false;
+  }
+
+  virtual const char* GetOutputName(const int index) const {
+    LOG(FATAL) << "GetOutputName is not supported yet!";
+  }
+
+  virtual int GetOutputIndex(const char* name) const {
+    LOG(FATAL) << "GetOutputIndex is not supported yet!";
+  }
+
+  virtual void GetOutputByName(const char* name, float* out) {
+    LOG(FATAL) << "GetOutputByName is not supported yet!";
+  }
 };
 
 }  // namespace dlr

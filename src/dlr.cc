@@ -123,6 +123,38 @@ extern "C" int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs) {
   API_END();
 }
 
+extern "C" int GetDLRHasMetadata(DLRModelHandle* handle, bool* has_metadata) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *has_metadata = model->HasMetadata();
+  API_END();
+}
+
+extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const char** name) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *name = model->GetOutputName(index);
+  API_END();
+}
+
+extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *index = model->GetOutputIndex(name);
+  API_END();
+}
+
+extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, float* out) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetOutputByName(name, out);
+  API_END();
+}
+
 #ifdef DLR_TFLITE
 /*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite
  * ctor.

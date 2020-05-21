@@ -31,6 +31,8 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
       paths.params = filename;
     } else if (filename == "version.json") {
       paths.ver_json = filename;
+    } else if (EndsWith(filename, ".meta")) {
+      paths.metadata = filename;
     }
   }
   if (paths.model_json.empty() || paths.model_lib.empty() ||
@@ -62,6 +64,13 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
+  if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
+    LOG(INFO) << "Loading metadata file: " << paths.metadata;
+    LoadJsonFromFile(paths.metadata, this->metadata);
+  } else {
+    LOG(INFO) << "No metadata found";
+  }
+
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
@@ -213,4 +222,33 @@ void TVMModel::UseCPUAffinity(bool use) {
     SetEnv("TVM_BIND_THREADS", "0");
     LOG(INFO) << "CPU Affinity is disabled";
   }
+}
+
+bool TVMModel::HasMetadata() const {
+  return this->metadata != nullptr;
+}
+
+const char* TVMModel::GetOutputName(const int index) const {
+  if (!this->HasMetadata()) {
+    LOG(FATAL) << "No metadata file was found!";
+  }
+  return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
+}
+
+int TVMModel::GetOutputIndex(const char* name) const {
+  if (!this->HasMetadata()) {
+    LOG(FATAL) << "No metadata file was found!";
+  }
+  for (int i = 0; i < this->num_outputs_; i++) {
+    std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
+    if (name == name_str) {
+      return i;
+    }
+  } 
+  LOG(FATAL) << "Invalid node name!";
+}
+
+void TVMModel::GetOutputByName(const char* name, float* out) {
+  int output_index = this->GetOutputIndex(name);
+  this->GetOutput(output_index, out);
 }

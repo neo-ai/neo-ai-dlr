@@ -1,7 +1,6 @@
 #include "dlr_common.h"
-
 #include <dmlc/filesystem.h>
-
+#include <fstream>
 using namespace dlr;
 
 std::string dlr::GetParentFolder(const std::string& path) {
@@ -51,6 +50,11 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
       paths.push_back(info.path.name);
     }
   }
+}
+
+void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) {
+  std::ifstream jsonFile (path);
+  jsonFile >> jsonObject;
 }
 
 DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
