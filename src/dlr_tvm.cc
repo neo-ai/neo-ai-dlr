@@ -228,7 +228,6 @@ bool TVMModel::HasMetadata() const {
   return this->metadata != nullptr;
 }
 
-
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
     LOG(INFO) << "No metadata file was found!";

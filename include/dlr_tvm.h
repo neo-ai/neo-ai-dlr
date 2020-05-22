@@ -51,9 +51,9 @@ class TVMModel : public DLRModel {
     Following methods use metadata file to lookup input and output names.
   */
   virtual bool HasMetadata() const override;
-  virtual const char* GetOutputName(const int index) const;
-  virtual int GetOutputIndex(const char* name) const;
-  virtual void GetOutputByName(const char* name, float* out);
+  virtual const char* GetOutputName(const int index) const override;
+  virtual int GetOutputIndex(const char* name) const override;
+  virtual void GetOutputByName(const char* name, float* out) override;
 };
 
 }  // namespace dlr
