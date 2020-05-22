@@ -228,27 +228,44 @@ bool TVMModel::HasMetadata() const {
   return this->metadata != nullptr;
 }
 
+
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
-    LOG(FATAL) << "No metadata file was found!";
+    LOG(INFO) << "No metadata file was found!";
+    return nullptr;
   }
-  return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
+  try {
+    return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
+  } catch (nlohmann::detail::type_error e) {
+    LOG(INFO) << "Couldn't find output nodes in metadata file";
+    return nullptr;
+  }
 }
 
 int TVMModel::GetOutputIndex(const char* name) const {
   if (!this->HasMetadata()) {
-    LOG(FATAL) << "No metadata file was found!";
+    LOG(INFO) << "No metadata file was found!";
+    return -1;
   }
-  for (int i = 0; i < this->num_outputs_; i++) {
-    std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
-    if (name == name_str) {
-      return i;
+
+  try {
+    for (int i = 0; i < this->num_outputs_; i++) {
+      std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
+      if (name == name_str) {
+        return i;
+      }
     }
-  } 
-  LOG(FATAL) << "Invalid node name!";
+  } catch (nlohmann::detail::type_error e) {
+    LOG(INFO) << "Couldn't find output nodes in metadata file";
+  }
+
+  return -1;
 }
 
 void TVMModel::GetOutputByName(const char* name, float* out) {
   int output_index = this->GetOutputIndex(name);
+  if (output_index == -1) {
+    LOG(FATAL) << "Couldn't find index for output node";
+  }
   this->GetOutput(output_index, out);
 }
