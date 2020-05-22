@@ -161,7 +161,7 @@ const char* TFLiteModel::GetWeightName(int index) const {
   return "";  // unreachable
 }
 
-void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input,
+void TFLiteModel::SetInput(const char* name, const int64_t* shape, void* input,
                            int dim) {
   int index = GetInputId(name);
   TensorSpec input_tensors_spec = input_tensors_spec_[index];
@@ -181,7 +181,7 @@ void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input,
   std::memcpy(in_t_data, input, input_tensors_spec_[index].bytes);
 }
 
-void TFLiteModel::GetInput(const char* name, float* input) {
+void TFLiteModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
   TensorSpec input_tensors_spec = input_tensors_spec_[index];
   void* in_t_data;
@@ -202,7 +202,7 @@ void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
   }
 }
 
-void TFLiteModel::GetOutput(int index, float* out) {
+void TFLiteModel::GetOutput(int index, void* out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   TensorSpec output_tensors_spec = output_tensors_spec_[index];
   void* out_t_data;

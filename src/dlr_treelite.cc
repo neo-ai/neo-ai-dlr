@@ -113,7 +113,7 @@ const char* TreeliteModel::GetWeightName(int index) const {
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
-                             float* input, int dim) {
+                             void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
   CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
   // NOTE: If number of columns is less than num_feature, missing columns
@@ -128,12 +128,13 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   treelite_input_.reset(new TreeliteInput);
   CHECK(treelite_input_);
   treelite_input_->row_ptr.push_back(0);
+  float* input_f = (float*) input;
 
   // NOTE: Assume row-major (C) layout
   for (size_t i = 0; i < batch_size; ++i) {
     for (uint32_t j = 0; j < num_col; ++j) {
-      if (!std::isnan(input[i * num_col + j])) {
-        treelite_input_->data.push_back(input[i * num_col + j]);
+      if (!std::isnan(input_f[i * num_col + j])) {
+        treelite_input_->data.push_back(input_f[i * num_col + j]);
         treelite_input_->col_ind.push_back(j);
       }
     }
@@ -157,7 +158,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
       << TreeliteGetLastError();
 }
 
-void TreeliteModel::GetInput(const char* name, float* input) {
+void TreeliteModel::GetInput(const char* name, void* input) {
   LOG(FATAL) << "GetInput is not supported by Treelite backend";
 }
 
@@ -168,7 +169,7 @@ void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
   shape[1] = static_cast<int64_t>(treelite_output_size_);
 }
 
-void TreeliteModel::GetOutput(int index, float* out) {
+void TreeliteModel::GetOutput(int index, void* out) {
   CHECK(treelite_input_);
   std::memcpy(
       out, treelite_output_.data(),

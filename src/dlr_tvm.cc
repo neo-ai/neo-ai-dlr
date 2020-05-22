@@ -132,7 +132,7 @@ const char* TVMModel::GetWeightName(int index) const {
   return weight_names_[index].c_str();
 }
 
-void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
+void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
@@ -150,7 +150,7 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
   set_input(str, &input_tensor);
 }
 
-void TVMModel::GetInput(const char* name, float* input) {
+void TVMModel::GetInput(const char* name, void* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -170,7 +170,7 @@ void TVMModel::GetOutputShape(int index, int64_t* shape) const {
               sizeof(int64_t) * outputs_[index]->ndim);
 }
 
-void TVMModel::GetOutput(int index, float* out) {
+void TVMModel::GetOutput(int index, void* out) {
   DLTensor output_tensor = *outputs_[index];
   output_tensor.ctx = DLContext{kDLCPU, 0};
   output_tensor.data = out;
@@ -263,7 +263,7 @@ int TVMModel::GetOutputIndex(const char* name) const {
   return -1;
 }
 
-void TVMModel::GetOutputByName(const char* name, float* out) {
+void TVMModel::GetOutputByName(const char* name, void* out) {
   int output_index = this->GetOutputIndex(name);
   if (output_index == -1) {
     LOG(FATAL) << "Couldn't find index for output node";

@@ -219,7 +219,7 @@ const char* HexagonModel::GetWeightName(int index) const {
 }
 
 void HexagonModel::SetInput(const char* name, const int64_t* shape,
-                            float* input, int dim) {
+                            void* input, int dim) {
   int index = GetInputId(name);
 
   // Check Size and Dim
@@ -231,7 +231,7 @@ void HexagonModel::SetInput(const char* name, const int64_t* shape,
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
 }
 
-void HexagonModel::GetInput(const char* name, float* input) {
+void HexagonModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
   std::memcpy(input, input_, input_tensors_spec_[index].bytes);
 }
@@ -243,7 +243,7 @@ void HexagonModel::GetOutputShape(int index, int64_t* shape) const {
   }
 }
 
-void HexagonModel::GetOutput(int index, float* out) {
+void HexagonModel::GetOutput(int index, void* out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   std::memcpy(out, output_, output_tensors_spec_[index].bytes);
 }

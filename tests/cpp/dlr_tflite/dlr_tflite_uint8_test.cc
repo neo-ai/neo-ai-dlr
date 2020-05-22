@@ -129,14 +129,14 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
 
   // SetDLRInput
   const int64_t in_shape[4] = {1, 224, 224, 3};
-  if (SetDLRInput(&handle, input_name, in_shape, (float*)img, 4)) {
+  if (SetDLRInput(&handle, input_name, in_shape, img, 4)) {
     FAIL() << "SetDLRInput failed";
   }
   LOG(INFO) << "SetDLRInput - OK";
 
   // GetDLRInput
   uint8_t* input2 = new uint8_t[img_size];
-  if (GetDLRInput(&handle, input_name, (float*)input2)) {
+  if (GetDLRInput(&handle, input_name, input2)) {
     FAIL() << "GetDLRInput failed";
   }
   EXPECT_TRUE(std::equal(img, img + img_size, input2));
@@ -150,7 +150,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
 
   // GetDLROutput
   uint8_t* output = new uint8_t[out_size];
-  if (GetDLROutput(&handle, 0, (float*)output)) {
+  if (GetDLROutput(&handle, 0, output)) {
     FAIL() << "GetDLROutput failed";
   }
   size_t max_id = ArgMax(output, out_size);
