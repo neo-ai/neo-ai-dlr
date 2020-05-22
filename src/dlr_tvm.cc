@@ -224,9 +224,7 @@ void TVMModel::UseCPUAffinity(bool use) {
   }
 }
 
-bool TVMModel::HasMetadata() const {
-  return this->metadata != nullptr;
-}
+bool TVMModel::HasMetadata() const { return this->metadata != nullptr; }
 
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
@@ -234,7 +232,9 @@ const char* TVMModel::GetOutputName(const int index) const {
     return nullptr;
   }
   try {
-    return this->metadata["Model"]["Outputs"][index]["name"].get<std::string>().c_str();
+    return this->metadata["Model"]["Outputs"][index]["name"]
+        .get_ref<const std::string&>()
+        .c_str();
   } catch (nlohmann::detail::type_error e) {
     LOG(INFO) << "Couldn't find output nodes in metadata file";
     return nullptr;
@@ -249,8 +249,10 @@ int TVMModel::GetOutputIndex(const char* name) const {
 
   try {
     for (int i = 0; i < this->num_outputs_; i++) {
-      std::string name_str = this->metadata["Model"]["Outputs"][i]["name"];
-      if (name == name_str) {
+      const std::string& name_str =
+          this->metadata["Model"]["Outputs"][i]["name"]
+              .get_ref<const std::string&>();
+      if (name_str == name) {
         return i;
       }
     }
