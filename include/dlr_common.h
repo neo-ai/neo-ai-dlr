@@ -121,11 +121,11 @@ class DLRModel {
   }
 
   virtual const char* GetOutputName(const int index) const {
-    LOG(FATAL) << "GetOutputName is not supported yet!";
+    return nullptr;
   }
 
   virtual int GetOutputIndex(const char* name) const {
-    LOG(FATAL) << "GetOutputIndex is not supported yet!";
+    return -1;
   }
 
   virtual void GetOutputByName(const char* name, float* out) {
