@@ -207,7 +207,7 @@ int GetDLRWeightName(DLRModelHandle* handle, int index,
  */
 DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
-                float* input, int dim);
+                void* input, int dim);
 /*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
@@ -217,7 +217,7 @@ int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
  message.
  */
 DLR_DLL
-int GetDLRInput(DLRModelHandle* handle, const char* name, float* input);
+int GetDLRInput(DLRModelHandle* handle, const char* name, void* input);
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().
@@ -238,7 +238,7 @@ int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape);
  error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetDLROutput(DLRModelHandle* handle, int index, float* out);
+int GetDLROutput(DLRModelHandle* handle, int index, void* out);
 
 /*!
  \brief Gets the number of outputs.
@@ -305,7 +305,7 @@ DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* ind
  array of size "size" from GetDLROutputSizeDim(). \return 0 for success, -1 for
  error. Call DLRGetLastError() to get the error message.
  */
-DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name, float* out);
+DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out);
 
 /*!
  \brief Gets the last error message.

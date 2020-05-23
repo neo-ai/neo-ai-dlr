@@ -343,16 +343,6 @@ TensorflowModel::TensorflowModel(
   }
   TF_DeleteSessionOptions(opts);
   LOG(INFO) << "Tensorflow Session was created";
-
-  // Run inference to allocate output Tensors and calculate output shapes.
-  for (int i = 0; i < num_inputs_; i++) {
-    TF_Tensor* tensor = input_tensors_[i];
-    int64_t num_elements = TF_TensorElementCount(tensor);
-    float* in_t_data = (float*)TF_TensorData(tensor);
-    std::fill_n(in_t_data, num_elements, 0.1);
-  }
-  Run();
-  LOG(INFO) << "Output Tensors were allocated";
 }
 
 // Destructor
@@ -393,7 +383,7 @@ const char* TensorflowModel::GetWeightName(int index) const {
 }
 
 void TensorflowModel::SetInput(const char* name, const int64_t* shape,
-                               float* input, int dim) {
+                               void* input, int dim) {
   int index = GetInputId(name);
   TF_Tensor* tensor = input_tensors_[index];
   CHECK_EQ(dim, TF_NumDims(tensor)) << "Incorrect input dim";
@@ -401,15 +391,15 @@ void TensorflowModel::SetInput(const char* name, const int64_t* shape,
     CHECK_EQ(shape[i], TF_Dim(tensor, i)) << "Incorrect input shape";
   }
   size_t num_bytes = TF_TensorByteSize(tensor);
-  float* in_t_data = (float*)TF_TensorData(tensor);
+  void* in_t_data = TF_TensorData(tensor);
   std::memcpy(in_t_data, input, num_bytes);
 }
 
-void TensorflowModel::GetInput(const char* name, float* input) {
+void TensorflowModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
   TF_Tensor* tensor = input_tensors_[index];
   size_t num_bytes = TF_TensorByteSize(tensor);
-  float* in_t_data = (float*)TF_TensorData(tensor);
+  void* in_t_data = TF_TensorData(tensor);
   std::memcpy(input, in_t_data, num_bytes);
 }
 
@@ -422,11 +412,11 @@ void TensorflowModel::GetOutputShape(int index, int64_t* shape) const {
   }
 }
 
-void TensorflowModel::GetOutput(int index, float* output) {
+void TensorflowModel::GetOutput(int index, void* output) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   TF_Tensor* tensor = output_tensors_[index];
   size_t num_bytes = TF_TensorByteSize(tensor);
-  float* out_t_data = (float*)TF_TensorData(tensor);
+  void* out_t_data = TF_TensorData(tensor);
   std::memcpy(output, out_t_data, num_bytes);
 }
 

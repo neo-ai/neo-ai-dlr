@@ -104,11 +104,11 @@ class DLRModel {
   virtual const char* GetInputType(int index) const = 0;
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
-  virtual void GetInput(const char* name, float* input) = 0;
-  virtual void SetInput(const char* name, const int64_t* shape, float* input,
+  virtual void GetInput(const char* name, void* input) = 0;
+  virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) = 0;
   virtual void Run() = 0;
-  virtual void GetOutput(int index, float* out) = 0;
+  virtual void GetOutput(int index, void* out) = 0;
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
   virtual const char* GetOutputType(int index) const = 0;
@@ -128,7 +128,7 @@ class DLRModel {
     return -1;
   }
 
-  virtual void GetOutputByName(const char* name, float* out) {
+  virtual void GetOutputByName(const char* name, void* out) {
     LOG(FATAL) << "GetOutputByName is not supported yet!";
   }
 };

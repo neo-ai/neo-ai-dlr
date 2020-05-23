@@ -63,7 +63,7 @@ extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
 }
 
 extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
-                           const int64_t* shape, float* input, int dim) {
+                           const int64_t* shape, void* input, int dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -72,7 +72,7 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
 }
 
 extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name,
-                           float* input) {
+                           void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -89,7 +89,7 @@ extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLROutput(DLRModelHandle* handle, int index, float* out) {
+extern "C" int GetDLROutput(DLRModelHandle* handle, int index, void* out) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -149,7 +149,7 @@ extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* 
   API_END();
 }
 
-extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, float* out) {
+extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
