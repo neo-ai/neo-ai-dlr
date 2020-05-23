@@ -134,15 +134,19 @@ def CloudInstallAndTest(cloudTarget) {
     }
     sh """
     ls -lh python/dist/*.whl
-    pip3 install python/dist/*.whl
+    echo "Updating pip3..."
+    sudo -H pip3 install -U pip setuptools
+    pip3 --version
+    echo "Installing DLR Python package..."
+    pip3 install --prefer-binary python/dist/*.whl
     """
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       sh """
-      sudo pip3 install --upgrade tensorflow_gpu
+      sudo -H pip3 install --prefer-binary -U tensorflow_gpu
       """
     } else {
       sh """
-      sudo pip3 install --upgrade tensorflow
+      sudo -H pip3 install --prefer-binary -U tensorflow
       """
     }
     sh """
