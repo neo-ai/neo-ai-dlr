@@ -300,9 +300,9 @@ class DLRModelImpl(IDLRModel):
         """
         input_dtype = self._get_input_or_weight_dtype_by_name(name)
         input_ctype = np.ctypeslib.as_ctypes_type(input_dtype)
-        # float32 inputs can accept float64 data (backward compatibility).
+        # float32 inputs can accept any data (backward compatibility).
         if input_dtype == "float32":
-            type_match = data.dtype.name in ["float64", "float32"]
+            type_match = True
         else:
             type_match = (data.dtype.name == input_dtype)
         if not type_match:
