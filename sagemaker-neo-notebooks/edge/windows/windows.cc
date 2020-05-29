@@ -550,6 +550,7 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
     SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
                 (float *)input_data.data(), static_cast<int>(input_dimension));
 
+
     RunDLRModel(&handle);
 
     for (int i = 0; i < num_outputs; i++)

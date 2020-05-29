@@ -11,15 +11,28 @@ project(tutorial)
 
 set(CMAKE_CXX_FLAGS "-g")
 
+# set(XTENSOR_USE_XSIMD 1)
+# set(XTENSOR_USE_TBB 1)
+
+
 # build json 
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS s3 iam sagemaker)
+<<<<<<< HEAD
+=======
+# find_package(xtensor REQUIRED)
+>>>>>>> 71c493d401347ee36ba6ae4ccb0dbe205d1617c6
 
 add_executable(tutorial windows.cc)
 
 target_include_directories(tutorial PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
+<<<<<<< HEAD
+=======
+
+# target_include_directories(tutorial PUBLIC ${xtensor_INCLUDE_DIRS})
+>>>>>>> 71c493d401347ee36ba6ae4ccb0dbe205d1617c6
 
 
 target_compile_features(tutorial PRIVATE cxx_std_11)
@@ -29,6 +42,13 @@ add_library(dlr SHARED IMPORTED)
 set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.so)
 # set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.dylib)
 
+
+target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
+# target_link_libraries(tutorial PUBLIC xtensor)
+
+# work on linux 
+# target_link_libraries(tutorial PRIVATE ${AWSSDK_DIR} nlohmann_json::nlohmann_json)
+# target_link_libraries(tutorial ${AWSSDK_LINK_LIBRARIES})
 
 target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
 # target_link_libraries(tutorial PUBLIC xtensor)
