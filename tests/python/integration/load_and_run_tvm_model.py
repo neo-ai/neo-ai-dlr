@@ -25,6 +25,44 @@ def test_resnet():
     assert model.get_output_dtype(0) == "float32"
 
 
+def test_mobilenet_v1_0_75_224_quant():
+    # Load the model
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'mobilenet_v1_0.75_224_quant')
+    device = 'cpu'
+    model = DLRModel(model_path, device)
+    # load image (dtype: uint8)
+    image = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cat_224_uint8.npy'))
+    print('Testing inference on mobilenet_v1_0.75_224_quant...')
+    probabilities = model.run({'input': image})
+    assert probabilities[0].argmax() == 282
+    assert model.get_input_names() == ["input"]
+    assert model.get_input_dtypes() == ["uint8"]
+    assert model.get_output_dtypes() == ["uint8"]
+    assert model.get_input_dtype(0) == "uint8"
+    assert model.get_output_dtype(0) == "uint8"
+    input2 = model.get_input("input")
+    assert input2.dtype == 'uint8'
+    assert input2.shape == (1, 224, 224, 3)
+    assert (input2 == image).all()
+
+
+def test_mobilenet_v1_0_75_224_quant_wrong_input_type():
+    # Load the model
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'mobilenet_v1_0.75_224_quant')
+    device = 'cpu'
+    model = DLRModel(model_path, device)
+    # load image (dtype: float32)
+    image = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dog.npy'))
+    print('Testing inference on mobilenet_v1_0.75_224_quant with float32 input...')
+    try:
+        model.run({'input': image})
+        assert False, "ValueError is expected"
+    except ValueError as e:
+        assert str(e) == "input data with name input should have dtype uint8 but float32 is provided"
+
+
 def test_multi_input_multi_output():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
             '4in2out')
@@ -66,10 +104,12 @@ def test_assign_op():
 
 if __name__ == '__main__':
     arch = get_arch()
-    model_names = ['resnet18_v1', '4in2out', 'assign_op']
+    model_names = ['resnet18_v1', 'mobilenet_v1_0.75_224_quant', '4in2out', 'assign_op']
     for model_name in model_names:
         get_models(model_name, arch, kind='tvm')
     test_resnet()
+    test_mobilenet_v1_0_75_224_quant()
+    test_mobilenet_v1_0_75_224_quant_wrong_input_type()
     test_multi_input_multi_output()
     test_assign_op()
     print('All tests passed!')
