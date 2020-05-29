@@ -22,6 +22,19 @@ sudo make && make install
 * AWS C++ SDK - http://sdk.amazonaws.com/cpp/api/LATEST/index.html
 
 
+copy *.so file to
+
+
+### running command to generate model
+`./tutorial compile`
+
+### unzip compiler model inside the build repository
+tar -zxvf ./compiled_model.tar.gz -c ./compiled_model
+
+### running command to do inferencing
+`./tutorial inference`
+
+
 ### using the dev desktop for testing at the moment
 
 <!-- image process alternative  -->
@@ -29,3 +42,5 @@ sudo make && make install
 https://www.boost.org/doc/libs/1_49_0/libs/numeric/ublas/doc/index.htm
 
 https://xtensor.readthedocs.io/en/latest/numpy.html
+
+https://code.amazon.com/packages/NeoLenovoBenchmark-2020-03-DLR/trees/heads/dev

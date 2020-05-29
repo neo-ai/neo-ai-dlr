@@ -5,9 +5,13 @@
 #include <chrono>
 #include <sstream>
 #include <ctime>
+#include <iomanip>
+#include <stdexcept>
 
 // 3rd-party
 #include <nlohmann/json.hpp>
+// #include <xtensor/xarray.hpp>
+#include "npy.hpp"
 
 // aws-sdk
 #include <aws/core/Aws.h>
@@ -27,13 +31,11 @@
 #include <aws/sagemaker/model/Framework.h>
 #include <aws/sagemaker/model/DescribeCompilationJobRequest.h>
 
+// internal
+#include <dlr.h>
+
 using namespace std;
 using json = nlohmann::json;
-
-const string model_name = "mobilenetv2_0.25";
-const string model = model_name + ".tar.gz";
-const string model_zoo = "gluon_imagenet_classifier";
-const string filename = "./" + model;
 
 const string ROLE_NAME = "windows-demo-test-role";
 
@@ -70,17 +72,16 @@ Aws::SageMaker::SageMakerClient getSageMakerClient()
     return sm_client;
 }
 
-void getPretrainedModel()
+void GetPretrainedModel(string bucket_name, string model_name, string filename)
 {
-    const string object = "neo-ai-notebook/" + model_zoo + "/" + model;
-    const Aws::String bucket_name = "neo-ai-dlr-test-artifacts";
-    const Aws::String aws_object_name(object.c_str(), object.size());
+    const Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size()); // "neo-ai-dlr-test-artifacts";
+    const Aws::String aws_object_name(model_name.c_str(), model_name.size());
 
     // download s3 object
     Aws::S3::S3Client s3_client = getS3Client();
 
     Aws::S3::Model::GetObjectRequest object_request;
-    object_request.SetBucket(bucket_name);
+    object_request.SetBucket(aws_bucket_name);
     object_request.SetKey(aws_object_name);
 
     auto get_object_outcome = s3_client.GetObject(object_request);
@@ -125,7 +126,7 @@ void createBucket(string bucket_name)
     }
 }
 
-void uploadModel(string bucket_name, string model_name)
+void uploadModel(string bucket_name, string model_name, string filename)
 {
     Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
     Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
@@ -164,7 +165,7 @@ bool checkBucketExist(string bucket_name)
         Aws::Vector<Aws::S3::Model::Bucket> bucket_list = list_bucket_resp.GetResult().GetBuckets();
         for (auto const &bucket : bucket_list)
         {
-            if (bucket.GetName().compare(bucket_name) == 0)
+            if (bucket.GetName().compare(s3_bucket_name) == 0)
             {
                 return true;
             }
@@ -210,7 +211,7 @@ bool checkModelExist(string bucket_name, string model_name)
     return false;
 }
 
-void uploadModelToS3()
+void uploadModelToS3(string model_name, string filename)
 {
     const string s3_bucket_name = "windows-demo";
 
@@ -224,7 +225,7 @@ void uploadModelToS3()
     // then create/upload model
     if (!checkModelExist(s3_bucket_name, model_name))
     {
-        uploadModel(s3_bucket_name, model_name);
+        uploadModel(s3_bucket_name, model_name, filename);
     }
 }
 
@@ -477,10 +478,12 @@ void compileNeoModel(string bucket_name, string model_name)
     cout << "Done!" << endl;
 }
 
-void getCompiledModelFromNeo(string bucket_name, string model_name, string compiled_filenae)
+void GetCompiledModelFromNeo(string bucket_name, string model_name, string target, string compiled_filename)
 {
+    const string output_path = "output/" + model_name + "-" + target;
+
     Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
-    Aws::String aws_object_name(model_name.c_str(), model_name.size());
+    Aws::String aws_object_name(output_path.c_str(), output_path.size());
 
     // download s3 object
     Aws::S3::S3Client s3_client = getS3Client();
@@ -501,41 +504,122 @@ void getCompiledModelFromNeo(string bucket_name, string model_name, string compi
         auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
 
         // download the sample file
-        const char *output_filename = compiled_filenae.c_str();
+        const char *output_filename = compiled_filename.c_str();
         std::ofstream output_file(output_filename, std::ios::binary);
         output_file << model_file.rdbuf();
     }
 }
 
-void preprocessImage (){
-    
+template <typename T>
+int GetPreprocessNpyFile(string npy_filename,
+                         std::vector<unsigned long> &input_shape, std::vector<T> &input_data)
+{
+    npy::LoadArrayFromNumpy(npy_filename, input_shape, input_data);
+    return 0;
 }
 
-void inferenceModel()
+void RunInference(const std::string &compiled_model, const std::string &npy_name)
 {
-    // download an image 
+    DLRModelHandle handle;
 
-    // preprocess image
-    
-    // inference
-    // const data = {"data": "image"}
-       
+    int dev_type = 1; // cpu == 1
+    int dev_id = 0;
+    char *model_path = const_cast<char *>(compiled_model.c_str());
+    CreateDLRModel(&handle, model_path, dev_type, dev_id);
+
+    int num_outputs;
+    GetDLRNumOutputs(&handle, &num_outputs);
+    std::vector<std::vector<double>> outputs;
+    for (int i = 0; i < num_outputs; i++)
+    {
+        int64_t cur_size = 0;
+        int cur_dim = 0;
+        GetDLROutputSizeDim(&handle, i, &cur_size, &cur_dim);
+        std::vector<double> output(cur_size, 0);
+        outputs.push_back(output);
+    }
+
+    std::vector<unsigned long> in_shape_ul;
+    std::vector<double> input_data;
+    GetPreprocessNpyFile<double>(npy_name, in_shape_ul, input_data);
+    std::vector<int64_t> in_shape =
+        std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
+
+    string input_name = "data";
+    int64_t input_dimension = in_shape.size();
+    SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
+                (float *)input_data.data(), static_cast<int>(input_dimension));
+
+    RunDLRModel(&handle);
+
+    for (int i = 0; i < num_outputs; i++)
+    {
+        GetDLROutput(&handle, i, (float *)outputs[i].data());
+    }
+
+    for (int i = 0; i < outputs.size(); i++)
+    {
+        std::vector<double> output = outputs.data()[i];
+        for (int j = 0; j < output.size(); j++)
+        {
+            std::cout << std::setprecision(10) << output.data()[j] << std::endl;
+        }
+    }
 }
 
 int main(int argc, char **argv)
 {
-    const string s3_bucket_name = "windows-demo";
+    const string MODEL_NAME = "mobilenetv2_0.25";
+    const string MODEL = MODEL_NAME + ".tar.gz";
+    const string MODEL_ZOO = "gluon_imagenet_classifier";
+    const string FILENAME = "./" + MODEL;
 
-    Aws::SDKOptions options;
-    Aws::InitAPI(options);
-    {
-        // make your SDK calls here.
-        getPretrainedModel();
-        uploadModelToS3();
-        createIamStep();
-        compileNeoModel(s3_bucket_name, model_name);
+    const string pretrained_bucket = "neo-ai-dlr-test-artifacts";
+    const string pretrained_key = "neo-ai-notebook/" + MODEL_ZOO + "/" + MODEL;
+
+    // const string pretrained_bucket = "dlc-nightly-benchmark";
+    // const string pretrained_key = "gluon_cv_object_detection/ssd_512_mobilenet1.0_voc.tar.gz";
+
+    // const string pretrained_bucket = "dlc-nightly-benchmark";
+    // const string pretrained_key = "gluon_cv_object_detection/ssd_512_mobilenet1.0_voc.tar.gz";
+
+    const string model_name = MODEL_NAME;
+    // const string model_name = "ssd_512_mobilenet1.0_voc";
+    const string filename = "./" + model_name;
+    const string target = "ml_c4";
+
+    const string s3_bucket_name = "windows-demo";
+    
+    const std::string compiled_filename = "./compiled_model.tar.gz";
+    const std::string compiled_folder = "./compiled_model";
+    
+    const std::string npy_name = "../data/dog.npy";
+    
+    
+    if (argc != 2) {
+        std::cerr << "invalid argument count, need at least one command\n";
+        return 1;
     }
-    Aws::ShutdownAPI(options);
+    
+    const string cmd = argv[1];
+    if (cmd == "compile") {
+        Aws::SDKOptions options;
+        Aws::InitAPI(options);
+        {
+            // make your SDK calls here.
+            GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
+            uploadModelToS3(model_name, filename);
+            createIamStep();
+            compileNeoModel(s3_bucket_name, model_name);
+
+            GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
+        }
+        Aws::ShutdownAPI(options);
+    } else if (cmd == "inference") {
+        RunInference(compiled_folder, npy_name);
+    } else {
+        std::cerr << "no valid argument command\n";
+    }
 
     return 0;
 }
