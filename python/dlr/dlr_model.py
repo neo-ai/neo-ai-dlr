@@ -237,22 +237,22 @@ class DLRModelImpl(IDLRModel):
 
     def get_input_name(self, index):
         if not (0 <= index < self.num_outputs):
-            raise Exception(f"Index cannot be greater than {self.num_inputs - 1}")
+            raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
         return self.get_input_names()[index]
 
     def get_output_name(self, index):
         if not (0 <= index < self.num_outputs):
-            raise Exception(f"Index cannot be greater than {self.num_outputs - 1}")
+            raise Exception("Index cannot be greater than {}".format(self.num_outputs - 1))
         return self.get_output_names()[index]
 
     def get_input_dtype(self, index):
         if not (0 <= index < self.num_outputs):
-            raise Exception(f"Index cannot be greater than {self.num_inputs - 1}")
+            raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
         return self.get_input_dtypes()[index]
 
     def get_output_dtype(self, index):
         if not (0 <= index < self.num_outputs):
-            raise Exception(f"Index cannot be greater than {self.num_outputs - 1}")
+            raise Exception("Index cannot be greater than {}".format(self.num_outputs - 1))
         return self.get_output_dtypes()[index]
 
     def get_version(self):
