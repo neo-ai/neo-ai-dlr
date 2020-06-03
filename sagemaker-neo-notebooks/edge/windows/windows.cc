@@ -504,13 +504,16 @@ int GetPreprocessNpyFile(string npy_filename,
 
 void RunInference(const std::string &compiled_model, const std::string &npy_name)
 {
+    std::cout << "test RunInference" << std::endl;
     DLRModelHandle handle;
 
+    std::cout << "test CreateDLRModel" << std::endl;
     int dev_type = 1; // cpu == 1
     int dev_id = 0;
     char *model_path = const_cast<char *>(compiled_model.c_str());
     CreateDLRModel(&handle, model_path, dev_type, dev_id);
 
+    std::cout << "test GetDLRNumOutputs" << std::endl;
     int num_outputs;
     GetDLRNumOutputs(&handle, &num_outputs);
     std::vector<std::vector<double>> outputs;
@@ -523,12 +526,15 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
         outputs.push_back(output);
     }
 
+    std::cout << "test GetPreprocessNpyFile" << std::endl;
     std::vector<unsigned long> in_shape_ul;
     std::vector<double> input_data;
     GetPreprocessNpyFile<double>(npy_name, in_shape_ul, input_data);
     std::vector<int64_t> in_shape =
         std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
 
+  
+    std::cout << "test SetDLRInput" << std::endl;
     string input_name = "data";
     int64_t input_dimension = in_shape.size();
     SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
@@ -577,39 +583,40 @@ int main(int argc, char **argv)
 
     const std::string compiled_filename = "./compiled_model.tar.gz";
     const std::string compiled_folder = "./compiled_model";
-
-    const std::string npy_name = "../data/dog.npy";
-
-    if (argc != 2)
-    {
+    
+    // const std::string npy_name = "../data/dog.npy";
+    const std::string npy_name = "./dog.npy";
+    
+    
+    if (argc != 2) {
         std::cerr << "invalid argument count, need at least one command\n";
         return 1;
     }
 
     const string cmd = argv[1];
-    if (cmd == "compile")
-    {
-        Aws::SDKOptions options;
-        Aws::InitAPI(options);
-        {
-            // make your SDK calls here.
-            GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
-            uploadModelToS3(model_name, filename);
-            createIamStep();
-            compileNeoModel(s3_bucket_name, model_name, target_device);
+    try {
+        if (cmd == "compile") {
+            Aws::SDKOptions options;
+            Aws::InitAPI(options);
+            {
+                // make your SDK calls here.
+                GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
+                uploadModelToS3(model_name, filename);
+                createIamStep();
+                compileNeoModel(s3_bucket_name, model_name, target);
 
-            GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
+                GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
+            }
+            Aws::ShutdownAPI(options);
+        } else if (cmd == "inference") {
+            RunInference(compiled_folder, npy_name);
+            std::cout << "Test complete" << std::endl;
+        } else {
+            std::cerr << "no valid argument command\n";
         }
-        Aws::ShutdownAPI(options);
+    } catch (exception &e) {
+        std::cout << e.what() << std::endl;
     }
-    else if (cmd == "inference")
-    {
-        RunInference(compiled_folder, npy_name);
-    }
-    else
-    {
-        std::cerr << "no valid argument command\n";
-    }
-
+    
     return 0;
 }
