@@ -41,3 +41,9 @@ export DLR_LIB=$(pwd)/lib
 # link file
 ln -s $DLR_LIB/libdlr.so
 ln -s $DLR_LIB/libdlr.dylib
+
+# for windows
+C:\Program Files (x86)\aws-cpp-sdk-all\lib\cmake
+cmake .. -DBUILD_ONLY="s3" -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/aws-install
+cmake .. -DCMAKE_PREFIX_PATH="C:\Program Files (x86)\aws-cpp-sdk-all\lib\;C:\Program Files (x86)\aws-cpp-sdk-all\lib\cmake" -DBUILD_SHARED_LIBS=ON
+cmake ../ -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/aws-cpp-sdk-all/lib/;C:/Program Files (x86)/aws-cpp-sdk-all/lib/cmake" -DBUILD_SHARED_LIBS=ON

@@ -9,7 +9,7 @@
 
 `
 mkdir sdk_build
-sudo cmake ../aws-sdk-cpp -D CMAKE_BUILD_TYPE=Release -D BUILD_ONLY="s3;iam;sagemaker"
+sudo cmake ../aws-sdk-cpp -D CMAKE_BUILD_TYPE=Release -D BUILD_ONLY="s3;iam;sagemaker" 
 sudo make && make install
 `
 
@@ -25,6 +25,8 @@ sudo make && make install
 copy *.so file to
 
 
+
+
 ### running command to generate model
 `./tutorial compile`
 
@@ -33,6 +35,18 @@ tar -zxvf ./compiled_model.tar.gz -c ./compiled_model
 
 ### running command to do inferencing
 `./tutorial inference`
+
+
+## Windows Installation
+
+`cmake ..\aws-sdk-cpp -D CMAKE_BUILD_TYPE=Release -D BUILD_ONLY="s3;iam;sagemaker" -D ENABLE_TESTING=OFF`
+`msbuild INSTALL.vcxproj /p:Configuration=Release`
+
+cmake .. -DAWSSDK_DIR="C:\Program Files (x86)\aws-cpp-sdk-all"
+
+mkdir compiled_model
+tar zxvf ./compiled_model.tar.gz -C ./compled_model
+
 
 
 ### using the dev desktop for testing at the moment
