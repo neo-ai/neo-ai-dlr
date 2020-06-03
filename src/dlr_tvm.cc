@@ -224,22 +224,25 @@ void TVMModel::UseCPUAffinity(bool use) {
   }
 }
 
-bool TVMModel::HasMetadata() const { return this->metadata != nullptr; }
+bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
 
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
     LOG(INFO) << "No metadata file was found!";
     return nullptr;
   }
-  if (this->metadata.count("Model") &&
-      this->metadata["Model"].count("Outputs") &&
-      index >= 0 && index < this->metadata["Model"]["Outputs"].size() &&
-      this->metadata["Model"]["Outputs"][index].count("name")) {
-    return this->metadata["Model"]["Outputs"][index]["name"]
+  try {
+    return this->metadata.at("Model")
+        .at("Outputs")
+        .at(index)
+        .at("name")
         .get_ref<const std::string&>()
         .c_str();
+  } catch (nlohmann::json::exception&) {
+    LOG(INFO) << "Output node with index " << index
+              << " not found in metadata file";
+    return nullptr;
   }
-  return nullptr;
 }
 
 int TVMModel::GetOutputIndex(const char* name) const {
