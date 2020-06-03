@@ -7,10 +7,10 @@
 #include <ctime>
 #include <iomanip>
 #include <stdexcept>
+#include <exception>
 
 // 3rd-party
 #include <nlohmann/json.hpp>
-// #include <xtensor/xarray.hpp>
 #include "npy.hpp"
 
 // aws-sdk
