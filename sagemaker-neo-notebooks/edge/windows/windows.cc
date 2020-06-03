@@ -88,8 +88,7 @@ void GetPretrainedModel(string bucket_name, string model_name, string filename)
     if (!get_object_outcome.IsSuccess())
     {
         auto error = get_object_outcome.GetError();
-        cout << "GetModel error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("GetModel error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
     else
     {
@@ -121,8 +120,7 @@ void createBucket(string bucket_name)
     if (!outcome.IsSuccess())
     {
         auto err = outcome.GetError();
-        cout << "ERROR: CreateBucket: " << err.GetExceptionName() << ": " << err.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("CreateBucket error: " + err.GetExceptionName() + ": " + err.GetMessage())
     }
 }
 
@@ -149,9 +147,7 @@ void uploadModel(string bucket_name, string model_name, string filename)
     if (!put_object_outcome.IsSuccess())
     {
         auto error = put_object_outcome.GetError();
-        cout << "UploadModel error: " << error.GetExceptionName() << ": "
-             << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("UploadModel error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
 }
 
@@ -174,8 +170,7 @@ bool checkBucketExist(string bucket_name)
     else
     {
         auto error = list_bucket_resp.GetError();
-        cout << "ListBucket error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("ListBucket error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
     return false;
 }
@@ -203,9 +198,7 @@ bool checkModelExist(string bucket_name, string model_name)
     }
     else
     {
-        std::cout << "ListObjects error: " << list_objects_outcome.GetError().GetExceptionName()
-                  << " " << list_objects_outcome.GetError().GetMessage() << std::endl;
-        throw 0;
+        throw std::runtime_error("ListObjects error: " + list_objects_outcome.GetError().GetExceptionName() + ":" + list_objects_outcome.GetError().GetMessage());
     }
 
     return false;
@@ -265,9 +258,7 @@ bool checkIamRole(string iam_role)
         }
         else
         {
-            cout << "GetIamRole error: " << error.GetExceptionName()
-                 << ":" << error.GetMessage() << endl;
-            throw 0;
+            throw std::runtime_error("GetIamRole error: " + error.GetExceptionName() + ":" + error.GetMessage());
         }
     }
     return false;
@@ -290,8 +281,7 @@ void createIamRole(string iam_role)
     if (!create_role_outcome.IsSuccess())
     {
         auto error = create_role_outcome.GetError();
-        cout << "CreateIam error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("CreateIam error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
 }
 
@@ -313,8 +303,7 @@ void attachIamPolicy(string iam_role)
         if (!attach_policy_outcome.IsSuccess())
         {
             auto error = attach_policy_outcome.GetError();
-            cout << "ERROR: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-            throw 0;
+            throw std::runtime_error("ERROR: " + error.GetExceptionName() + ": " + error.GetMessage());
         }
     }
 }
@@ -350,8 +339,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(string job_name)
     if (!describe_job_resp.IsSuccess())
     {
         auto error = describe_job_resp.GetError();
-        cout << "Describe Job Error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("Describe Job Error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
 
     auto result = describe_job_resp.GetResult();
@@ -376,19 +364,16 @@ void getIamRole(string role_name, Aws::IAM::Model::Role &role)
         auto errorType = error.GetErrorType();
         if (errorType == Aws::IAM::IAMErrors::NO_SUCH_ENTITY)
         {
-            cout << "Role doesn't exist and will create one" << endl;
-            throw 0;
+            throw std::runtime_error("Role doesn't exist and will create one");
         }
         else
         {
-            cout << "GetIamRole error: " << error.GetExceptionName()
-                 << ":" << error.GetMessage() << endl;
-            throw 0;
+            throw std::runtime_error("GetIamRole error: " + error.GetExceptionName() + ":" + error.GetMessage());
         }
     }
 }
 
-void compileNeoModel(string bucket_name, string model_name)
+void compileNeoModel(string bucket_name, string model_name, string target)
 {
     // set input parameters
     const string input_s3 = "s3://" + bucket_name + "/" + model_name;
@@ -411,7 +396,11 @@ void compileNeoModel(string bucket_name, string model_name)
     // set output config parameters
     const string output_s3 = "s3://" + bucket_name + "/output";
     Aws::String aws_output_s3(output_s3.c_str(), output_s3.size());
-    Aws::SageMaker::Model::TargetDevice target_device = Aws::SageMaker::Model::TargetDevice::ml_c4;
+
+    // set target device
+    Aws::String aws_target_device(target.c_str(), target.size());
+    Aws::SageMaker::Model::TargetDevice target_device =
+        Aws::SageMaker::Model::TargetDeviceMapper::GetTargetDeviceForName(aws_target_device);
 
     // set output config
     Aws::SageMaker::Model::OutputConfig output_config;
@@ -428,8 +417,7 @@ void compileNeoModel(string bucket_name, string model_name)
     getIamRole(ROLE_NAME, role);
     if (role.GetArn().empty())
     {
-        cout << "role doesn't exist" << endl;
-        throw 0;
+        throw std::runtime_error("role doesn't exist");
     }
 
     // create Neo compilation job
@@ -444,8 +432,7 @@ void compileNeoModel(string bucket_name, string model_name)
     if (!compilation_resp.IsSuccess())
     {
         auto error = compilation_resp.GetError();
-        cout << "Create job error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("Create job error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
 
     // poll job for validation
@@ -463,8 +450,7 @@ void compileNeoModel(string bucket_name, string model_name)
         }
         else if (status == Aws::SageMaker::Model::CompilationJobStatus::FAILED)
         {
-            cout << "Compile fail" << endl;
-            throw 0;
+            throw std::runtime_error("Compilation fail");
         }
         std::this_thread::sleep_for(std::chrono::seconds(30));
         attempt++;
@@ -472,8 +458,7 @@ void compileNeoModel(string bucket_name, string model_name)
 
     if (isSuccess == false)
     {
-        cout << "Compilation timeout" << endl;
-        throw 0;
+        throw std::runtime_error("Compilation timeout");
     }
     cout << "Done!" << endl;
 }
@@ -496,8 +481,7 @@ void GetCompiledModelFromNeo(string bucket_name, string model_name, string targe
     if (!get_object_outcome.IsSuccess())
     {
         auto error = get_object_outcome.GetError();
-        cout << "GetModel error: " << error.GetExceptionName() << ": " << error.GetMessage() << endl;
-        throw 0;
+        throw std::runtime_error("GetModel error: " + error.GetExceptionName() + ": " + error.GetMessage());
     }
     else
     {
@@ -550,7 +534,6 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
     SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
                 (float *)input_data.data(), static_cast<int>(input_dimension));
 
-
     RunDLRModel(&handle);
 
     for (int i = 0; i < num_outputs; i++)
@@ -577,6 +560,7 @@ int main(int argc, char **argv)
 
     const string pretrained_bucket = "neo-ai-dlr-test-artifacts";
     const string pretrained_key = "neo-ai-notebook/" + MODEL_ZOO + "/" + MODEL;
+    const string target_device = "ml_c4";
 
     // const string pretrained_bucket = "dlc-nightly-benchmark";
     // const string pretrained_key = "gluon_cv_object_detection/ssd_512_mobilenet1.0_voc.tar.gz";
@@ -590,20 +574,21 @@ int main(int argc, char **argv)
     const string target = "ml_c4";
 
     const string s3_bucket_name = "windows-demo";
-    
+
     const std::string compiled_filename = "./compiled_model.tar.gz";
     const std::string compiled_folder = "./compiled_model";
-    
+
     const std::string npy_name = "../data/dog.npy";
-    
-    
-    if (argc != 2) {
+
+    if (argc != 2)
+    {
         std::cerr << "invalid argument count, need at least one command\n";
         return 1;
     }
-    
+
     const string cmd = argv[1];
-    if (cmd == "compile") {
+    if (cmd == "compile")
+    {
         Aws::SDKOptions options;
         Aws::InitAPI(options);
         {
@@ -611,14 +596,18 @@ int main(int argc, char **argv)
             GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
             uploadModelToS3(model_name, filename);
             createIamStep();
-            compileNeoModel(s3_bucket_name, model_name);
+            compileNeoModel(s3_bucket_name, model_name, target_device);
 
             GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
         }
         Aws::ShutdownAPI(options);
-    } else if (cmd == "inference") {
+    }
+    else if (cmd == "inference")
+    {
         RunInference(compiled_folder, npy_name);
-    } else {
+    }
+    else
+    {
         std::cerr << "no valid argument command\n";
     }
 
