@@ -114,7 +114,7 @@ mkdir build
 cd build
 
 # build through cmake
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
 
@@ -189,7 +189,7 @@ After build, please locate and copy the following .dll into sagemaker-neo-notebo
     cd sagemaker-neo-notebooks/edge/windows/build/Release
 
     # execute tutorial.exe to run Neo compiler
-    & tutorial compile x86_win64
+    & .\tutorial.exe compile x86_win64
     ```
 
 2. Once done so, unzip the compiled models for inference.
@@ -200,7 +200,7 @@ After build, please locate and copy the following .dll into sagemaker-neo-notebo
    ```
 
 3. Copy the pre-generated data from sagemaker-neo-notebooks/edge/windows/data/dog.npy to sagemaker-neo-notebooks\edge\windows\build\Release.
-4. To run the inference against the compiled model, just execute `./tutorial inference` to see inference against dog.npy
+4. To run the inference against the compiled model, just execute `& .\tutorial.exe inference ./dog.npy` to see inference against dog.npy
 
 ## Notes
 

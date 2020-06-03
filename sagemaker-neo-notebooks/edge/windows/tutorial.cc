@@ -608,8 +608,7 @@ int main(int argc, char **argv)
     const std::string compiled_filename = "./compiled_model.tar.gz";
     const std::string compiled_folder = "./compiled_model";
 
-    // const std::string npy_name = "../data/dog.npy";
-    const std::string npy_name = "./dog.npy";
+    
 
     if (argc != 2)
     {
@@ -637,6 +636,10 @@ int main(int argc, char **argv)
         }
         else if (cmd == "inference")
         {
+            // const std::string npy_name = "../data/dog.npy";
+            // const std::string npy_name = "./dog.npy";
+            const std::string npy_name = argv[2];
+            
             RunInference(compiled_folder, npy_name);
             std::cout << "Test complete" << std::endl;
         }

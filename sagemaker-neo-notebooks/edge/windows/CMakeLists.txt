@@ -5,6 +5,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 project(tutorial)
 
+# for debugging only
 # set(CMAKE_CXX_FLAGS "-g")
 
 # build json 
@@ -20,7 +21,7 @@ if (WIN32)
     Message(STATUS "All linked libs: ${AWSSDK_LINK_LIBRARIES}")
 endif()
 
-add_executable(tutorial windows.cc)
+add_executable(tutorial tutorial.cc)
 
 target_include_directories(tutorial PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -33,7 +34,6 @@ target_compile_features(tutorial PRIVATE cxx_std_11)
 add_library(dlr SHARED IMPORTED)
 
 if (WIN32)
-    # target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/dlr.lib)
     target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/dlr.lib)
     AWSSDK_CPY_DYN_LIBS(SERVICE "" ./)
 else ()
