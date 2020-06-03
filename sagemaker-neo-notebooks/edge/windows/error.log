@@ -1,4 +1,0 @@
-#0  0x00000000004f08f2 in std::vector<double, std::allocator<double> >::data (this=0x0) at /usr/include/c++/5/bits/stl_vector.h:891
-#1  0x00000000004e4fd1 in RunInference (compiled_model="./compiled-model", npy_name="./dog.npy")
-    at /home/ubuntu/neo-ai-dlr/sagemaker-neo-notebooks/edge/windows/windows.cc:548
-#2  0x00000000004e53d3 in main (argc=1, argv=0x7fffffffd7c8) at /home/ubuntu/neo-ai-dlr/sagemaker-neo-notebooks/edge/windows/windows.cc:588

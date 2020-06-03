@@ -74,7 +74,7 @@ Aws::SageMaker::SageMakerClient getSageMakerClient()
 }
 
 template <typename T>
-std::string getError(Aws::Client::AWSError<T> error)
+std::string getErrorMessage(Aws::Client::AWSError<T> error)
 {
     auto exception_name = error.GetExceptionName();
     std::string expection_str = std::string(exception_name.c_str(), exception_name.size());
@@ -101,7 +101,7 @@ void GetPretrainedModel(string bucket_name, string model_name, string filename)
     if (!get_object_outcome.IsSuccess())
     {
         auto error = get_object_outcome.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("GetModel error: " + error_str);
     }
     else
@@ -134,7 +134,7 @@ void createBucket(string bucket_name)
     if (!outcome.IsSuccess())
     {
         auto err = outcome.GetError();
-        const std::string error_str = getError(err);
+        const std::string error_str = getErrorMessage(err);
         throw std::runtime_error("CreateBucket error: " + error_str);
     }
 }
@@ -162,7 +162,7 @@ void uploadModel(string bucket_name, string model_name, string filename)
     if (!put_object_outcome.IsSuccess())
     {
         auto error = put_object_outcome.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("UploadModel error: " + error_str);
     }
 }
@@ -186,7 +186,7 @@ bool checkBucketExist(string bucket_name)
     else
     {
         auto error = list_bucket_resp.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("ListBucket error: " + error_str);
     }
     return false;
@@ -216,14 +216,14 @@ bool checkModelExist(string bucket_name, string model_name)
     else
     {
         auto error = list_objects_outcome.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("ListObjects error: " + error_str);
     }
 
     return false;
 }
 
-void uploadModelToS3(string model_name, string filename)
+void UploadModelToS3(string model_name, string filename)
 {
     const string s3_bucket_name = "windows-demo";
 
@@ -277,7 +277,7 @@ bool checkIamRole(string iam_role)
         }
         else
         {
-            const std::string error_str = getError(error);
+            const std::string error_str = getErrorMessage(error);
             throw std::runtime_error("GetIamRole error: " + error_str);
         }
     }
@@ -301,7 +301,7 @@ void createIamRole(string iam_role)
     if (!create_role_outcome.IsSuccess())
     {
         auto error = create_role_outcome.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("CreateIam error: " + error_str);
     }
 }
@@ -324,13 +324,13 @@ void attachIamPolicy(string iam_role)
         if (!attach_policy_outcome.IsSuccess())
         {
             auto error = attach_policy_outcome.GetError();
-            const std::string error_str = getError(error);
+            const std::string error_str = getErrorMessage(error);
             throw std::runtime_error("AttachIamPolicy error : " + error_str);
         }
     }
 }
 
-void createIamStep()
+void CreateIamStep()
 {
     if (!checkIamRole(ROLE_NAME))
     {
@@ -361,7 +361,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(string job_name)
     if (!describe_job_resp.IsSuccess())
     {
         auto error = describe_job_resp.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("DescribeCompilationJob error: " + error_str);
     }
 
@@ -391,13 +391,13 @@ void getIamRole(string role_name, Aws::IAM::Model::Role &role)
         }
         else
         {
-            const std::string error_str = getError(error);
+            const std::string error_str = getErrorMessage(error);
             throw std::runtime_error("GetIamRole error: " + error_str);
         }
     }
 }
 
-void compileNeoModel(string bucket_name, string model_name, string target)
+void CompileNeoModel(string bucket_name, string model_name, string target)
 {
     // set input parameters
     const string input_s3 = "s3://" + bucket_name + "/" + model_name;
@@ -456,7 +456,7 @@ void compileNeoModel(string bucket_name, string model_name, string target)
     if (!compilation_resp.IsSuccess())
     {
         auto error = compilation_resp.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("CreateCompilationJob error: " + error_str);
     }
 
@@ -506,7 +506,7 @@ void GetCompiledModelFromNeo(string bucket_name, string model_name, string targe
     if (!get_object_outcome.IsSuccess())
     {
         auto error = get_object_outcome.GetError();
-        const std::string error_str = getError(error);
+        const std::string error_str = getErrorMessage(error);
         throw std::runtime_error("GetModel error: " + error_str);
     }
     else
@@ -602,7 +602,6 @@ int main(int argc, char **argv)
     const string model_name = MODEL_NAME;
     // const string model_name = "ssd_512_mobilenet1.0_voc";
     const string filename = "./" + model_name;
-    const string target = "ml_c4";
 
     const string s3_bucket_name = "windows-demo";
 
@@ -623,15 +622,15 @@ int main(int argc, char **argv)
     {
         if (cmd == "compile")
         {
+            const string target = argv[2];
             Aws::SDKOptions options;
             Aws::InitAPI(options);
             {
                 // make your SDK calls here.
                 GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
-                uploadModelToS3(model_name, filename);
-                createIamStep();
-                compileNeoModel(s3_bucket_name, model_name, target);
-
+                UploadModelToS3(model_name, filename);
+                CreateIamStep();
+                CompileNeoModel(s3_bucket_name, model_name, target);
                 GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
             }
             Aws::ShutdownAPI(options);
