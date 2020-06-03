@@ -11,13 +11,18 @@ project(tutorial)
 
 set(CMAKE_CXX_FLAGS "-g")
 
-# set(XTENSOR_USE_XSIMD 1)
-# set(XTENSOR_USE_TBB 1)
-
-
 # build json 
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS s3 iam sagemaker)
+
+if (WIN32)
+    Message(STATUS "AWSSDK_LIB_DIR ${AWSSDK_LIB_DIR}")
+    Message(STATUS "AWSSDK_BIN_DIR ${AWSSDK_BIN_DIR}")
+    Message(STATUS "AWSSDK_INCLUDE_DIR ${AWSSDK_INCLUDE_DIR}")
+    Message(STATUS "AWSSDK_PLATFORM_DEPS ${AWSSDK_PLATFORM_DEPS}")
+    Message(STATUS "All AWSSDK TARGETS: ${AWSSDK_TARGETS}")
+    Message(STATUS "All linked libs: ${AWSSDK_LINK_LIBRARIES}")
+endif()
 
 add_executable(tutorial windows.cc)
 
@@ -30,18 +35,24 @@ target_compile_features(tutorial PRIVATE cxx_std_11)
 
 # add dlr
 add_library(dlr SHARED IMPORTED)
-set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.so)
-# set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.dylib)
+
+if (WIN32)
+    # target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/dlr.lib)
+    target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/dlr.lib)
+    AWSSDK_CPY_DYN_LIBS(SERVICE "" ./)
+else ()
+    set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.so)
+    target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
+endif()
 
 
-target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
-# target_link_libraries(tutorial PUBLIC xtensor)
+
+
 
 # work on linux 
 # target_link_libraries(tutorial PRIVATE ${AWSSDK_DIR} nlohmann_json::nlohmann_json)
 # target_link_libraries(tutorial ${AWSSDK_LINK_LIBRARIES})
 
-target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
 # target_link_libraries(tutorial PUBLIC xtensor)
 
 # work on linux 
