@@ -520,6 +520,37 @@ void GetCompiledModelFromNeo(string bucket_name, string model_name, string targe
     }
 }
 
+void DownloadNpyData() 
+{
+    Aws::S3::S3Client s3_client = getS3Client();
+    
+    // this is a preprocess image file in our sample directory
+    // this can be changed to any s3 bucket you specified
+    Aws::String aws_bucket_name = "neo-ai-dlr-test-artifacts";
+    Aws::String aws_object_name = "test-data/dog.npy";
+    std::string filename = "dog.npy";
+
+    Aws::S3::Model::GetObjectRequest object_request;
+    object_request.SetBucket(aws_bucket_name);
+    object_request.SetKey(aws_object_name);
+
+    auto get_object_outcome = s3_client.GetObject(object_request);
+    if (!get_object_outcome.IsSuccess())
+    {
+        auto error = get_object_outcome.GetError();
+        const std::string error_str = getErrorMessage(error);
+        throw std::runtime_error("DownloadNpyData error: " + error_str);
+    }
+    else
+    {
+        auto &image_file = get_object_outcome.GetResultWithOwnership().GetBody();
+        const char *output_filename = filename.c_str();
+        std::ofstream output_file(output_filename, std::ios::binary);
+        output_file << image_file.rdbuf();
+    }
+    
+}
+
 template <typename T>
 int GetPreprocessNpyFile(string npy_filename,
                          std::vector<unsigned long> &input_shape, std::vector<T> &input_data)
@@ -541,20 +572,20 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
     std::cout << "GetDLRNumOutputs" << std::endl;
     int num_outputs;
     GetDLRNumOutputs(&handle, &num_outputs);
-    std::vector<std::vector<double>> outputs;
+    std::vector<std::vector<float>> outputs;
     for (int i = 0; i < num_outputs; i++)
     {
         int64_t cur_size = 0;
         int cur_dim = 0;
         GetDLROutputSizeDim(&handle, i, &cur_size, &cur_dim);
-        std::vector<double> output(cur_size, 0);
+        std::vector<float> output(cur_size, 0);
         outputs.push_back(output);
     }
 
     std::cout << "GetPreprocessNpyFile" << std::endl;
     std::vector<unsigned long> in_shape_ul;
-    std::vector<double> input_data;
-    GetPreprocessNpyFile<double>(npy_name, in_shape_ul, input_data);
+    std::vector<float> input_data;
+    GetPreprocessNpyFile<float>(npy_name, in_shape_ul, input_data);
     std::vector<int64_t> in_shape =
         std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
 
@@ -574,8 +605,8 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
 
     // print the output for examination
     int idx = 0;
-    double max_val = 0;
-    std::vector<double> data = outputs[0];
+    float max_val = 0;
+    std::vector<float> data = outputs[0];
     for (int i=0;i<data.size();i++){
         if (data[i] > max_val) {
             max_val = data[i];
@@ -636,8 +667,16 @@ int main(int argc, char **argv)
         }
         else if (cmd == "inference")
         {
-            const std::string npy_name = argv[2];
+            const std::string npy_name = "./dog.npy";
+            Aws::SDKOptions options;
+            Aws::InitAPI(options);
+            {
+                // download sample npy file
+                DownloadNpyData();    
+            }
+            Aws::ShutdownAPI(options);
             
+            // run inference
             RunInference(compiled_folder, npy_name);
         }
         else
