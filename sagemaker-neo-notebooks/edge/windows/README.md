@@ -136,7 +136,7 @@ make
    tar -zxvf ./compiled_model.tar.gz -C ./compled_model
    ```
 
-3. To run the inference against the compiled model, just execute `./tutorial inference` to see inference against dog.npy
+3. To run the inference against the compiled model, just execute `./tutorial inference ../data/dog.npy` to see inference against dog.npy
 
 ### Windows Tutorial
 
@@ -187,6 +187,11 @@ After build, please locate and copy the following .dll into sagemaker-neo-notebo
 
     ```shell
     cd sagemaker-neo-notebooks/edge/windows/build/Release
+
+    # export AWS credentials
+    $Env:AWS_ACCESS_KEY_ID="<YOUR AWS_ACCESS_KEY_ID>"
+    $Env:AWS_SECRET_ACCESS_KEY="<YOUR AWS_SECRET_ACCESS_KEY>"
+    $Env:AWS_SESSION_TOKEN="<YOUR AWS_SESSION_TOKEN>"
 
     # execute tutorial.exe to run Neo compiler
     & .\tutorial.exe compile x86_win64
