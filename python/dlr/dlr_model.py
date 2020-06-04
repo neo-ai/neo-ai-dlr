@@ -3,11 +3,12 @@ import ctypes
 from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
 import numpy as np
 import os
+import sys
 from .api import IDLRModel
 from .compatibility import check_tensorrt_compatibility
-
 from .libpath import find_lib_path
 
+<<<<<<< HEAD
 # Map from dtype string to ctype type.
 # Equivalent to np.ctypeslib.as_ctypes_type which requires numpy>=1.16.1
 DTYPE_TO_CTYPE = {
@@ -33,28 +34,15 @@ def _get_ctype_from_dtype(dtype):
     if dtype not in DTYPE_TO_CTYPE:
         raise ValueError("Model has input or output datatype {} which is not supported.".format(dtype))
     return DTYPE_TO_CTYPE[dtype]
+=======
+>>>>>>> Use dlr binary from compilation artifact if avaliable
 
 class DLRError(Exception):
     """Error thrown by DLR"""
     pass
 
-def _check_call(ret):
-    """
-    Check the return value of C API call
-    This function will raise exception when error occurs.
-    Wrap every API call with this function
-
-    Parameters
-    ----------
-    ret : int
-        return value from API calls
-    """
-    if ret != 0:
-        raise DLRError(_LIB.DLRGetLastError().decode('ascii'))
-
-def _load_lib():
+def _load_lib(lib_paths):
     """Load DLR library."""
-    lib_paths = find_lib_path()
     if len(lib_paths) == 0:
         return None
     try:
@@ -87,9 +75,6 @@ def _load_lib():
     lib.DLRGetLastError.restype = ctypes.c_char_p
     return lib
 
-# load the DLR library globally
-_LIB = _load_lib()
-
 class DLRModelImpl(IDLRModel):
     """
     Load a Neo-compiled model
@@ -113,16 +98,47 @@ class DLRModelImpl(IDLRModel):
 
     def _parse_backend(self):
         backend = c_char_p()
-        _check_call(_LIB.GetDLRBackend(byref(self.handle),
+        self._check_call(self._lib.GetDLRBackend(byref(self.handle),
                                        byref(backend)))
         return backend.value.decode('ascii')
 
     def _get_version(self):
         version = c_char_p()
-        _check_call(_LIB.GetDLRVersion(byref(version)))
+        self._check_call(self._lib.GetDLRVersion(byref(version)))
         return version.value.decode('ascii')
 
-    def __init__(self, model_path, dev_type='cpu', dev_id=0):
+    def _check_call(self, ret):
+        """
+        Check the return value of C API call
+        This function will raise exception when error occurs.
+        Wrap every API call with this function
+
+        Parameters
+        ----------
+        ret : int
+            return value from API calls
+        """
+        if ret != 0:
+            raise DLRError(self._lib.DLRGetLastError().decode('ascii'))
+
+    def _init_libdlr(self):
+        paths = find_lib_path()
+        
+        local_libdlr_so_path = os.path.join(self.model_path, "libdlr.so")
+        if sys.platform == 'win32':
+            local_libdlr_so_path = os.path.join(self.model_path, "dlr.dll")
+        elif sys.platform == 'darwin':
+            local_libdlr_so_path = os.path.join(self.model_path, "dlr.dylib")
+        
+        if not self.use_default_dlr and os.path.exists(local_libdlr_so_path):
+            self.logger.info(f"Found libdlr.so in model artifact. Using {local_libdlr_so_path}")
+            paths = [local_libdlr_so_path]
+        else:
+            self.logger.info(f"Using default libdlr.so from {paths[0]}")
+        self._lib = _load_lib(paths)
+
+    def __init__(self, model_path, dev_type='cpu', dev_id=0, use_default_dlr=False, logger=None):
+        self.logger = logger
         if not os.path.exists(model_path):
             raise ValueError("model_path %s doesn't exist" % model_path)
         # Backwards compatibility for .tensorrt artifacts.
@@ -135,7 +151,10 @@ class DLRModelImpl(IDLRModel):
             'gpu': 2,
             'opencl': 4,
         }
-        _check_call(_LIB.CreateDLRModel(byref(self.handle),
+        self.model_path = model_path
+        self.use_default_dlr = use_default_dlr
+        self._init_libdlr()
+        self._check_call(self._lib.CreateDLRModel(byref(self.handle),
                                         c_char_p(model_path.encode()),
                                         c_int(device_table[dev_type]),
                                         c_int(dev_id)))
@@ -166,20 +185,20 @@ class DLRModelImpl(IDLRModel):
     def __del__(self):
         if getattr(self, "handle", None) is not None and self.handle is not None:
             if getattr(self, "lib", None) is not None:
-                _check_call(_LIB.DeleteDLRModel(byref(self.handle)))
+                self._check_call(self._lib.DeleteDLRModel(byref(self.handle)))
             self.handle = None
 
     def _get_num_inputs(self):
         """Get the number of inputs of a network"""
         num_inputs = c_int()
-        _check_call(_LIB.GetDLRNumInputs(byref(self.handle),
+        self._check_call(self._lib.GetDLRNumInputs(byref(self.handle),
                                          byref(num_inputs)))
         return num_inputs.value
 
     def _get_num_weights(self):
         """Get the number of weights of a network"""
         num_weights = c_int()
-        _check_call(_LIB.GetDLRNumWeights(byref(self.handle),
+        self._check_call(self._lib.GetDLRNumWeights(byref(self.handle),
                                           byref(num_weights)))
         return num_weights.value
 
@@ -195,7 +214,7 @@ class DLRModelImpl(IDLRModel):
 
     def has_metadata(self) -> bool:
         flag = ctypes.c_bool()
-        _check_call(_LIB.GetDLRHasMetadata(byref(self.handle), byref(flag)))
+        self._check_call(self._lib.GetDLRHasMetadata(byref(self.handle), byref(flag)))
         return flag.value
     
     def _fetch_output_names(self):
@@ -203,7 +222,7 @@ class DLRModelImpl(IDLRModel):
         try:
             for i in range(self.num_outputs):
                 name = c_char_p()
-                _check_call(_LIB.GetDLROutputName(byref(self.handle), i, byref(name)))
+                self._check_call(self._lib.GetDLROutputName(byref(self.handle), i, byref(name)))
                 self.output_names.append(name.value.decode('utf-8'))
         except Exception:
             """
@@ -223,7 +242,7 @@ class DLRModelImpl(IDLRModel):
         try:
             for i in range(self.num_inputs):
                 dtype = c_char_p()
-                _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
+                self._check_call(self._lib.GetDLRInputType(byref(self.handle), i, byref(dtype)))
                 self.input_dtypes.append(dtype.value.decode('utf-8'))
         except Exception:
             """
@@ -237,7 +256,7 @@ class DLRModelImpl(IDLRModel):
         try:
             for i in range(self.num_outputs):
                 dtype = c_char_p()
-                _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
+                self._check_call(self._lib.GetDLROutputType(byref(self.handle), i, byref(dtype)))
                 self.output_dtypes.append(dtype.value.decode('utf-8'))
         except Exception:
             """
@@ -293,7 +312,7 @@ class DLRModelImpl(IDLRModel):
 
     def _get_input_name(self, index):
         name = ctypes.c_char_p()
-        _check_call(_LIB.GetDLRInputName(byref(self.handle),
+        self._check_call(self._lib.GetDLRInputName(byref(self.handle),
                                          c_int(index), byref(name)))
         return name.value.decode("utf-8")
 
@@ -305,7 +324,7 @@ class DLRModelImpl(IDLRModel):
 
     def _get_weight_name(self, index):
         name = ctypes.c_char_p()
-        _check_call(_LIB.GetDLRWeightName(byref(self.handle),
+        self._check_call(self._lib.GetDLRWeightName(byref(self.handle),
                                           c_int(index), byref(name)))
         return name.value.decode("utf-8")
 
@@ -337,7 +356,7 @@ class DLRModelImpl(IDLRModel):
         in_data = np.ascontiguousarray(data, dtype=input_dtype)
         shape = np.array(in_data.shape, dtype=np.int64)
         self.input_shapes[name] = shape
-        _check_call(_LIB.SetDLRInput(byref(self.handle),
+        self._check_call(self._lib.SetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
                                      in_data.ctypes.data_as(POINTER(input_ctype)),
@@ -347,12 +366,12 @@ class DLRModelImpl(IDLRModel):
 
     def _run(self):
         """A light wrapper to call run in the DLR backend."""
-        _check_call(_LIB.RunDLRModel(byref(self.handle)))
+        self._check_call(self._lib.RunDLRModel(byref(self.handle)))
 
     def _get_num_outputs(self):
         """Get the number of outputs of a network"""
         num_outputs = c_int()
-        _check_call(_LIB.GetDLRNumOutputs(byref(self.handle),
+        self._check_call(self._lib.GetDLRNumOutputs(byref(self.handle),
                                           byref(num_outputs)))
         return num_outputs.value
 
@@ -374,7 +393,7 @@ class DLRModelImpl(IDLRModel):
         idx = ctypes.c_int(index)
         size = ctypes.c_longlong()
         dim = ctypes.c_int()
-        _check_call(_LIB.GetDLROutputSizeDim(byref(self.handle), idx,
+        self._check_call(self._lib.GetDLROutputSizeDim(byref(self.handle), idx,
                                                       byref(size), byref(dim)))
         return size.value, dim.value
 
@@ -396,7 +415,7 @@ class DLRModelImpl(IDLRModel):
             self.output_size_dim = [(0, 0)] * self._get_num_outputs()
         self.output_size_dim[index] = (size, dim)
         shape = np.zeros(dim, dtype=np.int64)
-        _check_call(_LIB.GetDLROutputShape(byref(self.handle),
+        self._check_call(self._lib.GetDLROutputShape(byref(self.handle),
                                                     c_int(index),
                     shape.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))))
         return shape
@@ -420,7 +439,7 @@ class DLRModelImpl(IDLRModel):
         output_dtype = self.get_output_dtype(index)
         output_ctype = _get_ctype_from_dtype(output_dtype)
         output = np.zeros(self.output_size_dim[index][0], dtype=output_dtype)
-        _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
+        self._check_call(self._lib.GetDLROutput(byref(self.handle), c_int(index),
                     output.ctypes.data_as(ctypes.POINTER(output_ctype))))
         out = output.reshape(self.output_shapes[index])
         return out
@@ -493,7 +512,7 @@ class DLRModelImpl(IDLRModel):
             shape = self.input_shapes[name]
         shape = np.array(shape)
         out = np.zeros(shape.prod(), dtype=input_dtype)
-        _check_call(_LIB.GetDLRInput(byref(self.handle),
+        self._check_call(self._lib.GetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      out.ctypes.data_as(ctypes.POINTER(input_ctype))))
         out = out.reshape(shape)
