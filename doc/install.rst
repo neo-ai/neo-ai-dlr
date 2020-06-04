@@ -156,6 +156,8 @@ Now, provide the extracted .tar.gz folder path to ``-DUSE_TENSORRT`` when config
   cd ../python
   python3 setup.py install --user
 
+See `Additional Options for TensorRT Optimized Models <https://neo-ai-dlr.readthedocs.io/en/latest/tensorrt.html>`_ to learn how to enable FP16 precision and more for your Neo optimized models which use TensorRT.
+
 
 Building for OpenCL Devices
 """""""""""""""""""""""""""

@@ -9,6 +9,25 @@ On X86_64 CPU targets running Linux, you can install latest release of DLR packa
 
 For installation of DLR on GPU targets, non-x86 edge devices, or building DLR from source, please refer to [Installing DLR](https://neo-ai-dlr.readthedocs.io/en/latest/install.html)
 
+## Usage
+
+```python
+
+import dlr
+import numpy as np
+
+# Load model.
+# /path/to/model is a directory containing the compiled model artifacts (.so, .params, .json)
+model = dlr.DLRModel('/path/to/model', 'cpu', 0)
+
+# Prepare some input data.
+x = np.random.rand(1, 3, 224, 224)
+
+# Run inference.
+y = model.run(x)
+
+```
+
 ## Documentation
 For instructions on using DLR, please refer to [Amazon SageMaker Neo – Train Your Machine Learning Models Once, Run Them Anywhere](https://aws.amazon.com/blogs/aws/amazon-sagemaker-neo-train-your-machine-learning-models-once-run-them-anywhere/)
 
