@@ -31,6 +31,8 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
       paths.params = filename;
     } else if (filename == "version.json") {
       paths.ver_json = filename;
+    } else if (EndsWith(filename, ".meta")) {
+      paths.metadata = filename;
     }
   }
   if (paths.model_json.empty() || paths.model_lib.empty() ||
@@ -62,6 +64,13 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
+  if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
+    LOG(INFO) << "Loading metadata file: " << paths.metadata;
+    LoadJsonFromFile(paths.metadata, this->metadata);
+  } else {
+    LOG(INFO) << "No metadata found";
+  }
+
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
@@ -123,7 +132,7 @@ const char* TVMModel::GetWeightName(int index) const {
   return weight_names_[index].c_str();
 }
 
-void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
+void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
@@ -141,7 +150,7 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, float* input,
   set_input(str, &input_tensor);
 }
 
-void TVMModel::GetInput(const char* name, float* input) {
+void TVMModel::GetInput(const char* name, void* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -161,7 +170,7 @@ void TVMModel::GetOutputShape(int index, int64_t* shape) const {
               sizeof(int64_t) * outputs_[index]->ndim);
 }
 
-void TVMModel::GetOutput(int index, float* out) {
+void TVMModel::GetOutput(int index, void* out) {
   DLTensor output_tensor = *outputs_[index];
   output_tensor.ctx = DLContext{kDLCPU, 0};
   output_tensor.data = out;
@@ -213,4 +222,48 @@ void TVMModel::UseCPUAffinity(bool use) {
     SetEnv("TVM_BIND_THREADS", "0");
     LOG(INFO) << "CPU Affinity is disabled";
   }
+}
+
+bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
+
+const char* TVMModel::GetOutputName(const int index) const {
+  if (!this->HasMetadata()) {
+    LOG(INFO) << "No metadata file was found!";
+    return nullptr;
+  }
+  try {
+    return this->metadata.at("Model")
+        .at("Outputs")
+        .at(index)
+        .at("name")
+        .get_ref<const std::string&>()
+        .c_str();
+  } catch (nlohmann::json::exception&) {
+    LOG(INFO) << "Output node with index " << index
+              << " not found in metadata file";
+    return nullptr;
+  }
+}
+
+int TVMModel::GetOutputIndex(const char* name) const {
+  if (!this->HasMetadata()) {
+    LOG(INFO) << "No metadata file was found!";
+    return -1;
+  }
+  for (int i = 0; i < this->num_outputs_; i++) {
+    const char* output_name = GetOutputName(i);
+    if (output_name == nullptr) return -1;
+    if (strcmp(output_name, name) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void TVMModel::GetOutputByName(const char* name, void* out) {
+  int output_index = this->GetOutputIndex(name);
+  if (output_index == -1) {
+    LOG(FATAL) << "Couldn't find index for output node";
+  }
+  this->GetOutput(output_index, out);
 }

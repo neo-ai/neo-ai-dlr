@@ -1,6 +1,6 @@
 # coding: utf-8
 import ctypes
-from ctypes import cdll, c_void_p, c_int, c_float, c_char_p, byref, POINTER, c_longlong
+from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
 import numpy as np
 import os
 from .api import IDLRModel
@@ -120,15 +120,22 @@ class DLRModelImpl(IDLRModel):
         self.num_inputs = self._get_num_inputs()
         self.num_weights = self._get_num_weights()
         self.input_names = []
+        self.input_name_to_index = {}
+        self.output_names = []
         self.weight_names = []
         self.input_shapes = {}   # Remember shape used in _set_input()
-        for i in range(self.num_inputs):
-            self.input_names.append(self._get_input_name(i))
+        self.input_dtypes = []
+        self.output_dtypes = []
+        
         for i in range(self.num_weights):
             self.weight_names.append(self._get_weight_name(i))
 
         self.num_outputs = self._get_num_outputs()
         self._lazy_init_output_shape()
+        self._fetch_input_names()
+        self._fetch_output_names()
+        self._fetch_input_dtypes()
+        self._fetch_output_dtypes()
 
     def __del__(self):
         if getattr(self, "handle", None) is not None and self.handle is not None:
@@ -160,15 +167,93 @@ class DLRModelImpl(IDLRModel):
         """
         return self.input_names
 
-    def get_output_names(self):
-        """
-        Get all output names
+    def has_metadata(self) -> bool:
+        flag = ctypes.c_bool()
+        _check_call(_LIB.GetDLRHasMetadata(byref(self.handle), byref(flag)))
+        return flag.value
+    
+    def _fetch_output_names(self):
+        self.output_names = []
+        try:
+            for i in range(self.num_outputs):
+                name = c_char_p()
+                _check_call(_LIB.GetDLROutputName(byref(self.handle), i, byref(name)))
+                self.output_names.append(name.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_output_names method
+            """
+            pass
 
-        Returns
-        -------
-        out : list of :py:class:`str`
-        """
-        raise NotImplementedError
+    def _fetch_input_names(self):
+        for i in range(self.num_inputs):
+            name = self._get_input_name(i)
+            self.input_names.append(name)
+            self.input_name_to_index[name] = i
+        
+    def _fetch_input_dtypes(self):
+        self.input_dtypes = []
+        try:
+            for i in range(self.num_inputs):
+                dtype = c_char_p()
+                _check_call(_LIB.GetDLRInputType(byref(self.handle), i, byref(dtype)))
+                self.input_dtypes.append(dtype.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_input_dtypes method
+            """
+            pass
+        
+    def _fetch_output_dtypes(self):
+        self.output_dtypes = []
+        try:
+            for i in range(self.num_outputs):
+                dtype = c_char_p()
+                _check_call(_LIB.GetDLROutputType(byref(self.handle), i, byref(dtype)))
+                self.output_dtypes.append(dtype.value.decode('utf-8'))
+        except Exception:
+            """
+                currently only tvm, tf_lite and treelite support this. For the backends that don't
+                support this we throw the NotImplementedError in get_output_dtypes method
+            """
+            pass
+
+    def get_output_names(self):
+        if not self.output_names:
+            raise NotImplementedError
+        return self.output_names
+
+    def get_input_dtypes(self):
+        if not self.input_dtypes:
+            raise NotImplementedError
+        return self.input_dtypes
+
+    def get_output_dtypes(self):
+        if not self.output_dtypes:
+            raise NotImplementedError
+        return self.output_dtypes
+
+    def get_input_name(self, index):
+        if not (0 <= index < self.num_outputs):
+            raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
+        return self.get_input_names()[index]
+
+    def get_output_name(self, index):
+        if not (0 <= index < self.num_outputs):
+            raise Exception("Index cannot be greater than {}".format(self.num_outputs - 1))
+        return self.get_output_names()[index]
+
+    def get_input_dtype(self, index):
+        if not (0 <= index < self.num_outputs):
+            raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
+        return self.get_input_dtypes()[index]
+
+    def get_output_dtype(self, index):
+        if not (0 <= index < self.num_outputs):
+            raise Exception("Index cannot be greater than {}".format(self.num_outputs - 1))
+        return self.get_output_dtypes()[index]
 
     def get_version(self):
         """
@@ -186,11 +271,22 @@ class DLRModelImpl(IDLRModel):
                                          c_int(index), byref(name)))
         return name.value.decode("utf-8")
 
+    def _get_input_index(self, name) -> int:
+        index = self.input_name_to_index.get(name)
+        if index is None:
+            raise ValueError("{} is not a valid input name.".format(name))
+        return index
+
     def _get_weight_name(self, index):
         name = ctypes.c_char_p()
         _check_call(_LIB.GetDLRWeightName(byref(self.handle),
                                           c_int(index), byref(name)))
         return name.value.decode("utf-8")
+
+    def _get_input_or_weight_dtype_by_name(self, name):
+        if name in self.weight_names:
+            return "float32"
+        return self.get_input_dtype(self._get_input_index(name))
 
     def _set_input(self, name, data):
         """Set the input using the input name with data
@@ -202,13 +298,23 @@ class DLRModelImpl(IDLRModel):
         data : list of numbers
             The data to be set.
         """
-        in_data = np.ascontiguousarray(data, dtype=np.float32)
+        input_dtype = self._get_input_or_weight_dtype_by_name(name)
+        input_ctype = np.ctypeslib.as_ctypes_type(input_dtype)
+        # float32 inputs can accept any data (backward compatibility).
+        if input_dtype == "float32":
+            type_match = True
+        else:
+            type_match = (data.dtype.name == input_dtype)
+        if not type_match:
+            raise ValueError("input data with name {} should have dtype {} but {} is provided".
+                             format(name, input_dtype, data.dtype.name))
+        in_data = np.ascontiguousarray(data, dtype=input_dtype)
         shape = np.array(in_data.shape, dtype=np.int64)
         self.input_shapes[name] = shape
         _check_call(_LIB.SetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
-                                     in_data.ctypes.data_as(POINTER(c_float)),
+                                     in_data.ctypes.data_as(POINTER(input_ctype)),
                                      c_int(in_data.ndim)))
         if self.backend == 'treelite':
             self._lazy_init_output_shape()
@@ -225,7 +331,7 @@ class DLRModelImpl(IDLRModel):
         return num_outputs.value
 
     def _get_output_size_dim(self, index):
-        """Get the size and the dimenson of the index-th output.
+        """Get the size and the dimension of the index-th output.
 
         Parameters
         __________
@@ -285,10 +391,11 @@ class DLRModelImpl(IDLRModel):
         if index >= len(self.output_shapes) or index < 0:
             raise ValueError("index is expected between 0 and "
                              "len(output_shapes)-1, but got %d" % index)
-
-        output = np.zeros(self.output_size_dim[index][0], dtype=np.float32)
+        output_dtype = self.get_output_dtype(index)
+        output_ctype = np.ctypeslib.as_ctypes_type(output_dtype)
+        output = np.zeros(self.output_size_dim[index][0], dtype=output_dtype)
         _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
-                    output.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
+                    output.ctypes.data_as(ctypes.POINTER(output_ctype))))
         out = output.reshape(self.output_shapes[index])
         return out
 
@@ -354,12 +461,14 @@ class DLRModelImpl(IDLRModel):
             raise ValueError('Since set_input() was never called with ' +
                              'input {}, we cannot infer its shape. '.format(name) +
                              'Shape parameter should be explicitly specified')
+        input_dtype = self._get_input_or_weight_dtype_by_name(name)
+        input_ctype = np.ctypeslib.as_ctypes_type(input_dtype)
         if shape is None:
             shape = self.input_shapes[name]
         shape = np.array(shape)
-        out = np.zeros(shape.prod(), dtype=np.float32)
+        out = np.zeros(shape.prod(), dtype=input_dtype)
         _check_call(_LIB.GetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
-                                     out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))))
+                                     out.ctypes.data_as(ctypes.POINTER(input_ctype))))
         out = out.reshape(shape)
         return out

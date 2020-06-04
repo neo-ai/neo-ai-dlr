@@ -5,5 +5,11 @@ lib
 3rdparty/tensorflow*
 3rdparty/flatbuffers*
 .DS_Store
-.idea
 .vscode
+Pipfile
+Pipfile.lock
+python/dlr.egg-info/
+tests/python/integration/*
+!tests/python/integration/*.py
+.idea
+

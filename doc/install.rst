@@ -236,9 +236,6 @@ Build ``libtensorflow-lite.a`` as explained `here <https://www.tensorflow.org/li
 
 To build ``libtensorflow-lite.a`` for Android you can look at this `docs <https://gist.github.com/apivovarov/9f67fc02b84cf6d139c05aa1a8bc16f9>`_
 
-Attention! You need to apply the following patches to tensorflow r1.15 branch:
-https://github.com/tensorflow/tensorflow/pull/36689
-
 To build DLR with TFLite use cmake flag ``WITH_TENSORFLOW_LITE_LIB``, e.g.
 
 .. code-block:: bash

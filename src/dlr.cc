@@ -63,7 +63,7 @@ extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
 }
 
 extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
-                           const int64_t* shape, float* input, int dim) {
+                           const int64_t* shape, void* input, int dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -72,7 +72,7 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
 }
 
 extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name,
-                           float* input) {
+                           void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -89,7 +89,7 @@ extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLROutput(DLRModelHandle* handle, int index, float* out) {
+extern "C" int GetDLROutput(DLRModelHandle* handle, int index, void* out) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -120,6 +120,40 @@ extern "C" int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs) {
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetNumOutputs(num_outputs);
+  API_END();
+}
+
+extern "C" int GetDLRHasMetadata(DLRModelHandle* handle, bool* has_metadata) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *has_metadata = model->HasMetadata();
+  API_END();
+}
+
+extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const char** name) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *name = model->GetOutputName(index);
+  CHECK(*name != nullptr) << "name is nullptr, check for metadata file and see if it has output node data";
+  API_END();
+}
+
+extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *index = model->GetOutputIndex(name);
+  CHECK(*index != -1) << "name is nullptr, check for metadata file and see if it has output node data";
+  API_END();
+}
+
+extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetOutputByName(name, out);
   API_END();
 }
 

@@ -5,6 +5,7 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 #include <sys/types.h>
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <vector>
@@ -39,6 +40,7 @@ typedef struct {
   std::string params;
   std::string model_json;
   std::string ver_json;
+  std::string metadata;
 } ModelPath;
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
@@ -46,6 +48,8 @@ void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 std::string GetBasename(const std::string& path);
 
 std::string GetParentFolder(const std::string& path);
+
+void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() &&
@@ -100,17 +104,33 @@ class DLRModel {
   virtual const char* GetInputType(int index) const = 0;
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
-  virtual void GetInput(const char* name, float* input) = 0;
-  virtual void SetInput(const char* name, const int64_t* shape, float* input,
+  virtual void GetInput(const char* name, void* input) = 0;
+  virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) = 0;
   virtual void Run() = 0;
-  virtual void GetOutput(int index, float* out) = 0;
+  virtual void GetOutput(int index, void* out) = 0;
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
   virtual const char* GetOutputType(int index) const = 0;
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual void UseCPUAffinity(bool use) = 0;
+
+  virtual bool HasMetadata() const {
+    return false;
+  }
+
+  virtual const char* GetOutputName(const int index) const {
+    return nullptr;
+  }
+
+  virtual int GetOutputIndex(const char* name) const {
+    return -1;
+  }
+
+  virtual void GetOutputByName(const char* name, void* out) {
+    LOG(FATAL) << "GetOutputByName is not supported yet!";
+  }
 };
 
 }  // namespace dlr

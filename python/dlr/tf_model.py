@@ -26,8 +26,8 @@ def _load_frozen_graph(frozen_graph_file, device):
     """
     logging.info("Loading frozen graph: {}".format(frozen_graph_file))
     with tf.device(device):
-        with tf.gfile.GFile(frozen_graph_file, 'rb') as f:
-            graph_def = tf.GraphDef()
+        with tf.io.gfile.GFile(frozen_graph_file, 'rb') as f:
+            graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(f.read())
         with tf.Graph().as_default() as graph:
             tf.import_graph_def(graph_def, name=PREFIX)
@@ -106,9 +106,9 @@ class TFModelImpl(IDLRModel):
         # Turn on XLA JIT compilation
         # Turning on JIT at the session level will not result in operations being compiled for the CPU.
         # Currently JIT at the session level only supports GPU.
-        config = tf.ConfigProto()
-        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-        self._sess = tf.Session(graph=self._graph, config=config)
+        config = tf.compat.v1.ConfigProto()
+        config.graph_options.optimizer_options.global_jit_level = tf.compat.v1.OptimizerOptions.ON_1
+        self._sess = tf.compat.v1.Session(graph=self._graph, config=config)
 
     def __enter__(self):
         return self

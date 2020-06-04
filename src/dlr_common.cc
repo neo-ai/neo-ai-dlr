@@ -2,6 +2,7 @@
 
 #include <dmlc/filesystem.h>
 
+#include <fstream>
 using namespace dlr;
 
 std::string dlr::GetParentFolder(const std::string& path) {
@@ -50,6 +51,17 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
     if (info.type != dmlc::io::FileType::kDirectory) {
       paths.push_back(info.path.name);
     }
+  }
+}
+
+void dlr::LoadJsonFromFile(const std::string& path,
+                           nlohmann::json& jsonObject) {
+  std::ifstream jsonFile(path);
+  try {
+    jsonFile >> jsonObject;
+  } catch (nlohmann::json::exception&) {
+    LOG(INFO) << "Failed to load metadata file";
+    jsonObject = nullptr;
   }
 }
 
