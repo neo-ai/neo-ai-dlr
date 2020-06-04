@@ -59,7 +59,8 @@ void RunInference(DLRModelHandle model, const char* data_path,
 
   std::vector<unsigned long> in_shape_ul;
   std::vector<T> in_data;
-  npy::LoadArrayFromNumpy(data_path, in_shape_ul, in_data);
+  bool fortran_order;
+  npy::LoadArrayFromNumpy(data_path, in_shape_ul, fortran_order, in_data);
 
   std::vector<int64_t> in_shape =
       std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
