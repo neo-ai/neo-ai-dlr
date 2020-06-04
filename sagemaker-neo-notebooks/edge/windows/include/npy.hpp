@@ -499,7 +499,7 @@ inline void LoadArrayFromNumpy(const std::string& filename, std::vector<unsigned
     // check if the typestring matches the given one
     Typestring typestring_o {data};
     std::string expect_typestr = typestring_o.str();
-    std::cout << expect_typestr << " vs. " << typestr << std::endl;
+    // std::cout << expect_typestr << " vs. " << typestr << std::endl;
     
     if (typestr != expect_typestr) {
       throw std::runtime_error("formatting error: typestrings not matching");

@@ -530,16 +530,15 @@ int GetPreprocessNpyFile(string npy_filename,
 
 void RunInference(const std::string &compiled_model, const std::string &npy_name)
 {
-    std::cout << "test RunInference" << std::endl;
     DLRModelHandle handle;
 
-    std::cout << "test CreateDLRModel" << std::endl;
+    std::cout << "CreateDLRModel" << std::endl;
     int dev_type = 1; // cpu == 1
     int dev_id = 0;
     char *model_path = const_cast<char *>(compiled_model.c_str());
     CreateDLRModel(&handle, model_path, dev_type, dev_id);
 
-    std::cout << "test GetDLRNumOutputs" << std::endl;
+    std::cout << "GetDLRNumOutputs" << std::endl;
     int num_outputs;
     GetDLRNumOutputs(&handle, &num_outputs);
     std::vector<std::vector<double>> outputs;
@@ -552,19 +551,20 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
         outputs.push_back(output);
     }
 
-    std::cout << "test GetPreprocessNpyFile" << std::endl;
+    std::cout << "GetPreprocessNpyFile" << std::endl;
     std::vector<unsigned long> in_shape_ul;
     std::vector<double> input_data;
     GetPreprocessNpyFile<double>(npy_name, in_shape_ul, input_data);
     std::vector<int64_t> in_shape =
         std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
 
-    std::cout << "test SetDLRInput" << std::endl;
+    std::cout << "SetDLRInput" << std::endl;
     string input_name = "data";
     int64_t input_dimension = in_shape.size();
     SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
                 (float *)input_data.data(), static_cast<int>(input_dimension));
 
+    std::cout << "RunDLRModel" << std::endl;
     RunDLRModel(&handle);
 
     for (int i = 0; i < num_outputs; i++)
@@ -572,45 +572,45 @@ void RunInference(const std::string &compiled_model, const std::string &npy_name
         GetDLROutput(&handle, i, (float *)outputs[i].data());
     }
 
-    for (int i = 0; i < outputs.size(); i++)
-    {
-        std::vector<double> output = outputs.data()[i];
-        for (int j = 0; j < output.size(); j++)
-        {
-            std::cout << std::setprecision(10) << output.data()[j] << std::endl;
+    // print the output for examination
+    int idx = 0;
+    double max_val = 0;
+    std::vector<double> data = outputs[0];
+    for (int i=0;i<data.size();i++){
+        if (data[i] > max_val) {
+            max_val = data[i];
+            idx = i;
         }
     }
+    std::cout << "max prob: " << max_val << " at " << idx << std::endl; 
+    std::cout << "Inference complete" << std::endl;
 }
 
 int main(int argc, char **argv)
 {
-    const string MODEL_NAME = "mobilenetv2_0.25";
+    // in this example, we're using gluon_imagenet_classifier resnet18
+    const string MODEL_NAME = "resnet18_v1";
     const string MODEL = MODEL_NAME + ".tar.gz";
     const string MODEL_ZOO = "gluon_imagenet_classifier";
     const string FILENAME = "./" + MODEL;
 
+    // this is where we set input bucket
+    // this can be changed to your corresponding input
     const string pretrained_bucket = "neo-ai-dlr-test-artifacts";
     const string pretrained_key = "neo-ai-notebook/" + MODEL_ZOO + "/" + MODEL;
     const string target_device = "ml_c4";
 
-    // const string pretrained_bucket = "dlc-nightly-benchmark";
-    // const string pretrained_key = "gluon_cv_object_detection/ssd_512_mobilenet1.0_voc.tar.gz";
-
-    // const string pretrained_bucket = "dlc-nightly-benchmark";
-    // const string pretrained_key = "gluon_cv_object_detection/ssd_512_mobilenet1.0_voc.tar.gz";
-
     const string model_name = MODEL_NAME;
-    // const string model_name = "ssd_512_mobilenet1.0_voc";
     const string filename = "./" + model_name;
 
+    // s3 bucket for compiled model output
     const string s3_bucket_name = "windows-demo";
 
-    const std::string compiled_filename = "./compiled_model.tar.gz";
-    const std::string compiled_folder = "./compiled_model";
-
+    // compiled model meta
+    const string compiled_filename = "./compiled_model.tar.gz";
+    const string compiled_folder = "./compiled_model";
     
-
-    if (argc != 2)
+    if (argc <= 2)
     {
         std::cerr << "invalid argument count, need at least one command\n";
         return 1;
@@ -636,12 +636,9 @@ int main(int argc, char **argv)
         }
         else if (cmd == "inference")
         {
-            // const std::string npy_name = "../data/dog.npy";
-            // const std::string npy_name = "./dog.npy";
             const std::string npy_name = argv[2];
             
             RunInference(compiled_folder, npy_name);
-            std::cout << "Test complete" << std::endl;
         }
         else
         {
