@@ -24,9 +24,12 @@ endif()
 add_executable(tutorial tutorial.cc)
 
 target_include_directories(tutorial PUBLIC
+    $<BUILD_INTERFACE:${DLR_HOME}/include>
+    $<INSTALL_INTERFACE:include>)
+    
+target_include_directories(tutorial PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-
 
 target_compile_features(tutorial PRIVATE cxx_std_11)
 
@@ -34,9 +37,10 @@ target_compile_features(tutorial PRIVATE cxx_std_11)
 add_library(dlr SHARED IMPORTED)
 
 if (WIN32)
-    target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/dlr.lib)
+    set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${DLR_HOME}/build/lib/dlr.lib)
+    target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
     AWSSDK_CPY_DYN_LIBS(SERVICE "" ./)
 else ()
-    set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libdlr.so)
+    set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${DLR_HOME}/build/lib/libdlr.so)
     target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
 endif()
