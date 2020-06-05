@@ -40,9 +40,9 @@ target_compile_features(tutorial PRIVATE cxx_std_11)
 add_library(dlr SHARED IMPORTED)
 
 if (WIN32)
-    set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${DLR_HOME}/build/lib/dlr.lib)
+    target_link_libraries(tutorial PRIVATE ${AWSSDK_LINK_LIBRARIES} ${DLR_HOME}/build/lib/dlr.lib)
 else ()
     set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${DLR_HOME}/build/lib/libdlr.so)
+    target_link_libraries(tutorial PRIVATE ${AWSSDK_LINK_LIBRARIES} dlr)
 endif()
 
-target_link_libraries(tutorial PRIVATE ${AWSSDK_LINK_LIBRARIES} dlr)
