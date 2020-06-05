@@ -21,12 +21,13 @@ if (WIN32)
     Message(STATUS "All linked libs: ${AWSSDK_LINK_LIBRARIES}")
 endif()
 
+set(JSON_SRC "${DLR_HOME}/3rdparty/json")
 set(LIBNPY_SRC "${DLR_HOME}/3rdparty/libnpy")
 
 add_executable(tutorial tutorial.cc)
 
+target_include_directories(tutorial PUBLIC ${JSON_SRC})
 target_include_directories(tutorial PUBLIC ${LIBNPY_SRC})
-
 target_include_directories(tutorial PUBLIC
     $<BUILD_INTERFACE:${DLR_HOME}/include>
     $<INSTALL_INTERFACE:include>)
@@ -42,4 +43,4 @@ else ()
     set_target_properties(dlr PROPERTIES IMPORTED_LOCATION ${DLR_HOME}/build/lib/libdlr.so)
 endif()
 
-target_link_libraries(tutorial PRIVATE nlohmann_json::nlohmann_json ${AWSSDK_LINK_LIBRARIES} dlr)
+target_link_libraries(tutorial PRIVATE ${AWSSDK_LINK_LIBRARIES} dlr)
