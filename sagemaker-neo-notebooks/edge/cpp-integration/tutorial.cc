@@ -65,8 +65,8 @@ Aws::SageMaker::SageMakerClient getSageMakerClient() {
   return sm_client;
 }
 
-template <typename t>
-std::string getErrorMessage(Aws::Client::AWSError<t>& error) {
+template <typename T>
+std::string getErrorMessage(Aws::Client::AWSError<T>& error) {
   auto exception_name = error.GetExceptionName();
   std::string expection_str = std::string(exception_name.c_str(), exception_name.size());
 
