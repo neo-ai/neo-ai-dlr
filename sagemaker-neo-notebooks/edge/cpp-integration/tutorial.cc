@@ -71,7 +71,7 @@ Aws::SageMaker::SageMakerClient getSageMakerClient() {
 }
 
 template <typename T>
-std::string getErrorMessage(Aws::Client::AWSError<T> error) {
+std::string getErrorMessage(Aws::Client::AWSError<T> &error) {
   auto exception_name = error.GetExceptionName();
   std::string expection_str =
       std::string(exception_name.c_str(), exception_name.size());
@@ -82,8 +82,8 @@ std::string getErrorMessage(Aws::Client::AWSError<T> error) {
   return expection_str + ":" + error_msg_str;
 }
 
-void GetPretrainedModel(string bucket_name, string model_name,
-                        string filename) {
+void GetPretrainedModel(string &bucket_name, string &model_name,
+                        string &filename) {
   const Aws::String aws_bucket_name(
       bucket_name.c_str(), bucket_name.size());  // "neo-ai-dlr-test-artifacts";
   const Aws::String aws_object_name(model_name.c_str(), model_name.size());
@@ -203,8 +203,8 @@ bool checkModelExist(string bucket_name, string model_name) {
   return false;
 }
 
-void UploadModelToS3(string model_name, string filename, string s3_bucket_name) {
-
+void UploadModelToS3(string &model_name, string &filename,
+                     string &s3_bucket_name) {
   // first create bucket
   bool isBucketExist = checkBucketExist(s3_bucket_name);
   if (!isBucketExist) {
@@ -350,7 +350,7 @@ void getIamRole(string role_name, Aws::IAM::Model::Role &role) {
   }
 }
 
-void CompileNeoModel(string bucket_name, string model_name, string target) {
+void CompileNeoModel(string &bucket_name, string &model_name, string &target) {
   // set input parameters
   const string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
@@ -435,8 +435,8 @@ void CompileNeoModel(string bucket_name, string model_name, string target) {
   cout << "Done!" << endl;
 }
 
-void GetCompiledModelFromNeo(string bucket_name, string model_name,
-                             string target, string compiled_filename) {
+void GetCompiledModelFromNeo(string &bucket_name, string &model_name,
+                             string &target, string &compiled_filename) {
   const string output_path = "output/" + model_name + "-" + target;
 
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
@@ -557,26 +557,26 @@ void RunInference(const std::string &compiled_model,
 
 int main(int argc, char **argv) {
   // in this example, we're using gluon_imagenet_classifier resnet18
-  const string MODEL_NAME = "resnet18_v1";
-  const string MODEL = MODEL_NAME + ".tar.gz";
-  const string MODEL_ZOO = "gluon_imagenet_classifier";
-  const string FILENAME = "./" + MODEL;
+  string MODEL_NAME = "resnet18_v1";
+  string MODEL = MODEL_NAME + ".tar.gz";
+  string MODEL_ZOO = "gluon_imagenet_classifier";
+  string FILENAME = "./" + MODEL;
 
   // this is where we set input bucket
   // this can be changed to your corresponding input
-  const string pretrained_bucket = "neo-ai-dlr-test-artifacts";
-  const string pretrained_key = "neo-ai-notebook/" + MODEL_ZOO + "/" + MODEL;
-  const string target_device = "ml_c4";
+  string pretrained_bucket = "neo-ai-dlr-test-artifacts";
+  string pretrained_key = "neo-ai-notebook/" + MODEL_ZOO + "/" + MODEL;
+  string target_device = "ml_c4";
 
-  const string model_name = MODEL_NAME;
-  const string filename = "./" + model_name;
+  string model_name = MODEL_NAME;
+  string filename = "./" + model_name;
 
   // s3 bucket for compiled model output
-  const string s3_bucket_name = "windows-demo";
+  string s3_bucket_name = "windows-demo";
 
   // compiled model meta
-  const string compiled_filename = "./compiled_model.tar.gz";
-  const string compiled_folder = "./compiled_model";
+  string compiled_filename = "./compiled_model.tar.gz";
+  string compiled_folder = "./compiled_model";
 
   if (argc < 2) {
     std::cerr << "invalid argument count, need at least one command\n";
@@ -586,7 +586,7 @@ int main(int argc, char **argv) {
   const string cmd = argv[1];
   try {
     if (cmd == "compile") {
-      const string target = argv[2];
+      string target = argv[2];
       Aws::SDKOptions options;
       Aws::InitAPI(options);
       {

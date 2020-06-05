@@ -6,7 +6,9 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 project(tutorial)
 
 # for debugging only
-# set(CMAKE_CXX_FLAGS "-g")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "-g")
+endif()
 
 # build json 
 find_package(nlohmann_json 3.2.0 REQUIRED)

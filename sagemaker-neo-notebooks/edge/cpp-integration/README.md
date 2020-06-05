@@ -5,15 +5,13 @@
 
 Please review the following prerequisites tasks before proceed with tutorial
 
-### Environment Setup
+### Prerequisite Software and Environment for Windows
 
-#### Environment Setup for Windows
+1. In order to compile DLR and tutorial dependencies, please install [Visual Studio 2019](https://visualstudio.microsoft.com/vs/).
+2. Setup msbuild path properly fo PowerShell.
+   1. ppend your msbuild path, such as C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin, to your system path.
 
-In order to compile DLR and tutorial dependencies, please install [Visual Studio 2019](https://visualstudio.microsoft.com/vs/).
-
-Additionally, please make sure msbuild path is setup properly for PowerShell. In order to do so, please append your msbuild path, such as C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin, to your system path.
-
-### Install CMake
+#### Install CMake
 
 Please make sure CMake is installed prior start this tutorial. Both linux/windows distributions can be located here [https://cmake.org/download/]
 
@@ -38,7 +36,6 @@ cmake .. \
 # install the sdk
 make
 make install
-```
 
 #### Install SDK on Windows
 
