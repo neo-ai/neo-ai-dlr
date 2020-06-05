@@ -35,11 +35,11 @@
 // internal
 #include <dlr.h>
 
-const std::string ROLE_NAME = "windows-demo-test-role";
+std::string ROLE_NAME = "windows-demo-test-role";
 
 Aws::S3::S3Client getS3Client() {
   // for tutorial, we set region to us-west-2
-  const std::string region = "us-west-2";
+  std::string region = "us-west-2";
   Aws::String region_aws_s(region.c_str(), region.size());
 
   // init client
@@ -57,7 +57,7 @@ Aws::IAM::IAMClient getIamClient() {
 
 Aws::SageMaker::SageMakerClient getSageMakerClient() {
   // for tutorial, we set region to us-west-2
-  const std::string region = "us-west-2";
+  std::string region = "us-west-2";
   Aws::String region_aws_s(region.c_str(), region.size());
 
   // init client
@@ -95,7 +95,7 @@ void GetPretrainedModel(std::string &bucket_name, std::string &model_name,
   auto get_object_outcome = s3_client.GetObject(object_request);
   if (!get_object_outcome.IsSuccess()) {
     auto error = get_object_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("GetModel error: " + error_str);
   } else {
     auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
@@ -107,7 +107,7 @@ void GetPretrainedModel(std::string &bucket_name, std::string &model_name,
   }
 }
 
-void createBucket(std::string bucket_name) {
+void createBucket(std::string &bucket_name) {
   // create bucket
   const Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::Model::CreateBucketRequest request;
@@ -125,12 +125,13 @@ void createBucket(std::string bucket_name) {
   auto outcome = s3_client.CreateBucket(request);
   if (!outcome.IsSuccess()) {
     auto err = outcome.GetError();
-    const std::string error_str = getErrorMessage(err);
+    std::string error_str = getErrorMessage(err);
     throw std::runtime_error("CreateBucket error: " + error_str);
   }
 }
 
-void uploadModel(std::string bucket_name, std::string model_name, std::string filename) {
+void uploadModel(std::string &bucket_name, std::string &model_name,
+                 std::string &filename) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
@@ -141,20 +142,21 @@ void uploadModel(std::string bucket_name, std::string model_name, std::string fi
   object_request.SetKey(s3_aws_object_name);
 
   // set binary to body
-  const std::shared_ptr<Aws::IOStream> input_data = Aws::MakeShared<Aws::FStream>(
-      "SampleAllocationTag", filename.c_str(), std::ios_base::in | std::ios_base::binary);
+  const std::shared_ptr<Aws::IOStream> input_data =
+      Aws::MakeShared<Aws::FStream>("SampleAllocationTag", filename.c_str(),
+                                    std::ios_base::in | std::ios_base::binary);
   object_request.SetBody(input_data);
 
   // put model to the s3 bucket
   auto put_object_outcome = s3_client.PutObject(object_request);
   if (!put_object_outcome.IsSuccess()) {
     auto error = put_object_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("UploadModel error: " + error_str);
   }
 }
 
-bool checkBucketExist(std::string bucket_name) {
+bool checkBucketExist(std::string &bucket_name) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
   auto list_bucket_resp = s3_client.ListBuckets();
@@ -168,13 +170,13 @@ bool checkBucketExist(std::string bucket_name) {
     }
   } else {
     auto error = list_bucket_resp.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("ListBucket error: " + error_str);
   }
   return false;
 }
 
-bool checkModelExist(std::string bucket_name, std::string model_name) {
+bool checkModelExist(std::string &bucket_name, std::string &model_name) {
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String aws_model_name(model_name.c_str(), model_name.size());
 
@@ -193,7 +195,7 @@ bool checkModelExist(std::string bucket_name, std::string model_name) {
     }
   } else {
     auto error = list_objects_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("ListObjects error: " + error_str);
   }
 
@@ -227,7 +229,7 @@ nlohmann::json getIamPolicy() {
   return policy;
 }
 
-bool checkIamRole(std::string iam_role) {
+bool checkIamRole(std::string &iam_role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(iam_role.c_str(), iam_role.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -242,16 +244,16 @@ bool checkIamRole(std::string iam_role) {
     if (errorType == Aws::IAM::IAMErrors::NO_SUCH_ENTITY) {
       std::cout << "Role doesn't exist and will create one" << std::endl;
     } else {
-      const std::string error_str = getErrorMessage(error);
+      std::string error_str = getErrorMessage(error);
       throw std::runtime_error("GetIamRole error: " + error_str);
     }
   }
   return false;
 }
 
-void createIamRole(std::string iam_role) {
+void createIamRole(std::string &iam_role) {
   nlohmann::json policy = getIamPolicy();
-  const std::string policy_s = policy.dump();
+  std::string policy_s = policy.dump();
   const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
   const Aws::String aws_policy_name(policy_s.c_str(), policy_s.size());
 
@@ -264,12 +266,12 @@ void createIamRole(std::string iam_role) {
   auto create_role_outcome = iam_client.CreateRole(create_role_request);
   if (!create_role_outcome.IsSuccess()) {
     auto error = create_role_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("CreateIam error: " + error_str);
   }
 }
 
-void attachIamPolicy(std::string iam_role) {
+void attachIamPolicy(std::string &iam_role) {
   const std::vector<Aws::String> policies = {
       "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
       "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
@@ -285,7 +287,7 @@ void attachIamPolicy(std::string iam_role) {
         iam_client.AttachRolePolicy(attach_policy_request);
     if (!attach_policy_outcome.IsSuccess()) {
       auto error = attach_policy_outcome.GetError();
-      const std::string error_str = getErrorMessage(error);
+      std::string error_str = getErrorMessage(error);
       throw std::runtime_error("AttachIamPolicy error : " + error_str);
     }
   }
@@ -299,15 +301,17 @@ void CreateIamStep() {
 }
 
 std::string getJobName() {
-  std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
+  std::chrono::milliseconds ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch());
 
   std::stringstream ss;
   ss << "pi-demo-" << std::to_string(ms.count());
   return ss.str();
 }
 
-Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string job_name) {
+Aws::SageMaker::Model::CompilationJobStatus poll_job_status(
+    std::string &job_name) {
   Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
   Aws::SageMaker::Model::DescribeCompilationJobRequest describe_job_request;
 
@@ -318,7 +322,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string job_name
 
   if (!describe_job_resp.IsSuccess()) {
     auto error = describe_job_resp.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("DescribeCompilationJob error: " + error_str);
   }
 
@@ -326,7 +330,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string job_name
   return result.GetCompilationJobStatus();
 }
 
-void getIamRole(std::string role_name, Aws::IAM::Model::Role &role) {
+void getIamRole(std::string &role_name, Aws::IAM::Model::Role &role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(role_name.c_str(), role_name.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -341,23 +345,24 @@ void getIamRole(std::string role_name, Aws::IAM::Model::Role &role) {
     if (errorType == Aws::IAM::IAMErrors::NO_SUCH_ENTITY) {
       throw std::runtime_error("Role doesn't exist and will create one");
     } else {
-      const std::string error_str = getErrorMessage(error);
+      std::string error_str = getErrorMessage(error);
       throw std::runtime_error("GetIamRole error: " + error_str);
     }
   }
 }
 
-void CompileNeoModel(std::string &bucket_name, std::string &model_name, std::string &target) {
+void CompileNeoModel(std::string &bucket_name, std::string &model_name,
+                     std::string &target) {
   // set input parameters
-  const std::string input_s3 = "s3://" + bucket_name + "/" + model_name;
+  std::string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
   const Aws::SageMaker::Model::Framework framework =
       Aws::SageMaker::Model::Framework::MXNET;
   const Aws::String aws_s3_uri(input_s3.c_str(), input_s3.size());
-  const Aws::String data_shape = "{\"data\":[1,3,224,224]}";
+  const Aws::String data_shape = "{'data':[1,3,224,224]}";
   const Aws::String aws_role_name(ROLE_NAME.c_str(), ROLE_NAME.size());
 
-  const std::string job_name = getJobName();
+  std::string job_name = getJobName();
   const Aws::String aws_job_name(job_name.c_str(), job_name.size());
 
   // set input config
@@ -368,7 +373,7 @@ void CompileNeoModel(std::string &bucket_name, std::string &model_name, std::str
   input_config.SetDataInputConfig(data_shape);
 
   // set output config parameters
-  const std::string output_s3 = "s3://" + bucket_name + "/output";
+  std::string output_s3 = "s3://" + bucket_name + "/output";
   Aws::String aws_output_s3(output_s3.c_str(), output_s3.size());
 
   // set target device
@@ -405,14 +410,14 @@ void CompileNeoModel(std::string &bucket_name, std::string &model_name, std::str
   auto compilation_resp = sm_client.CreateCompilationJob(create_job_request);
   if (!compilation_resp.IsSuccess()) {
     auto error = compilation_resp.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("CreateCompilationJob error: " + error_str);
   }
 
   // poll job for validation
   bool isSuccess = false;
-  int attempt = 0;
-  while (attempt < 10) {
+  int attempts = 10;
+  for (int i = 0; i < attempts; i++) {
     std::cout << "Waiting for compilation..." << std::endl;
     auto status = poll_job_status(job_name);
     if (status == Aws::SageMaker::Model::CompilationJobStatus::COMPLETED) {
@@ -423,7 +428,6 @@ void CompileNeoModel(std::string &bucket_name, std::string &model_name, std::str
       throw std::runtime_error("Compilation fail");
     }
     std::this_thread::sleep_for(std::chrono::seconds(30));
-    attempt++;
   }
 
   if (isSuccess == false) {
@@ -433,8 +437,9 @@ void CompileNeoModel(std::string &bucket_name, std::string &model_name, std::str
 }
 
 void GetCompiledModelFromNeo(std::string &bucket_name, std::string &model_name,
-                             std::string &target, std::string &compiled_filename) {
-  const std::string output_path = "output/" + model_name + "-" + target;
+                             std::string &target,
+                             std::string &compiled_filename) {
+  std::string output_path = "output/" + model_name + "-" + target;
 
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String aws_object_name(output_path.c_str(), output_path.size());
@@ -449,7 +454,7 @@ void GetCompiledModelFromNeo(std::string &bucket_name, std::string &model_name,
   auto get_object_outcome = s3_client.GetObject(object_request);
   if (!get_object_outcome.IsSuccess()) {
     auto error = get_object_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("GetModel error: " + error_str);
   } else {
     auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
@@ -477,7 +482,7 @@ void DownloadNpyData() {
   auto get_object_outcome = s3_client.GetObject(object_request);
   if (!get_object_outcome.IsSuccess()) {
     auto error = get_object_outcome.GetError();
-    const std::string error_str = getErrorMessage(error);
+    std::string error_str = getErrorMessage(error);
     throw std::runtime_error("DownloadNpyData error: " + error_str);
   } else {
     auto &image_file = get_object_outcome.GetResultWithOwnership().GetBody();
@@ -488,7 +493,7 @@ void DownloadNpyData() {
 }
 
 template <typename T>
-int GetPreprocessNpyFile(std::string npy_filename,
+int GetPreprocessNpyFile(std::string &npy_filename,
                          std::vector<unsigned long> &input_shape,
                          std::vector<T> &input_data) {
   bool fortran_order;
@@ -496,15 +501,13 @@ int GetPreprocessNpyFile(std::string npy_filename,
   return 0;
 }
 
-void RunInference(const std::string &compiled_model,
-                  const std::string &npy_name) {
+void RunInference(std::string &compiled_model, std::string &npy_name) {
   DLRModelHandle handle;
 
   std::cout << "CreateDLRModel" << std::endl;
   int dev_type = 1;  // cpu == 1
   int dev_id = 0;
-  char *model_path = const_cast<char *>(compiled_model.c_str());
-  CreateDLRModel(&handle, model_path, dev_type, dev_id);
+  CreateDLRModel(&handle, compiled_model.c_str(), dev_type, dev_id);
 
   std::cout << "GetDLRNumOutputs" << std::endl;
   int num_outputs;
@@ -528,14 +531,14 @@ void RunInference(const std::string &compiled_model,
   std::cout << "SetDLRInput" << std::endl;
   std::string input_name = "data";
   int64_t input_dimension = in_shape.size();
-  SetDLRInput(&handle, input_name.c_str(), in_shape.data(),
-              (float *)input_data.data(), static_cast<int>(input_dimension));
+  SetDLRInput(&handle, input_name.c_str(), in_shape.data(), input_data.data(),
+              static_cast<int>(input_dimension));
 
   std::cout << "RunDLRModel" << std::endl;
   RunDLRModel(&handle);
 
   for (int i = 0; i < num_outputs; i++) {
-    GetDLROutput(&handle, i, (float *)outputs[i].data());
+    GetDLROutput(&handle, i, outputs[i].data());
   }
 
   // print the output for examination
@@ -580,36 +583,36 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  const std::string cmd = argv[1];
+  std::string cmd = argv[1];
   try {
     if (cmd == "compile") {
       std::string target = argv[2];
       Aws::SDKOptions options;
       Aws::InitAPI(options);
-      {
-        // make your SDK calls here.
-        GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
-        UploadModelToS3(model_name, filename, s3_bucket_name);
-        CreateIamStep();
-        CompileNeoModel(s3_bucket_name, model_name, target);
-        GetCompiledModelFromNeo(s3_bucket_name, model_name, target,
-                                compiled_filename);
-      }
+
+      // make your SDK calls here.
+      GetPretrainedModel(pretrained_bucket, pretrained_key, filename);
+      UploadModelToS3(model_name, filename, s3_bucket_name);
+      CreateIamStep();
+      CompileNeoModel(s3_bucket_name, model_name, target);
+      GetCompiledModelFromNeo(s3_bucket_name, model_name, target,
+                              compiled_filename);
+
       Aws::ShutdownAPI(options);
     } else if (cmd == "inference") {
-      const std::string npy_name = "./dog.npy";
+      std::string npy_name = "./dog.npy";
       Aws::SDKOptions options;
       Aws::InitAPI(options);
-      {
-        // download sample npy file
-        DownloadNpyData();
-      }
-      Aws::ShutdownAPI(options);
+
+      // download sample npy file
+      DownloadNpyData();
 
       // run inference
       RunInference(compiled_folder, npy_name);
+
+      Aws::ShutdownAPI(options);
     } else {
-      std::cerr << "no valid argument command\n";
+      std::cerr << "no valid argument command" << std::endl;
     }
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;

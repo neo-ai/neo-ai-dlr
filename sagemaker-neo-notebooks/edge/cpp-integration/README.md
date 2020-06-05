@@ -164,7 +164,9 @@ mkdir build
 cd build
 
 # build through cmake
-cmake ../ -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/aws-cpp-sdk-all/lib/;C:/Program Files (x86)/aws-cpp-sdk-all/lib/cmake" -DBUILD_SHARED_LIBS=ON -DDLR_HOME="C:/neo-ai-dlr"
+cmake ../ \`
+-DCMAKE_PREFIX_PATH="C:/Program Files (x86)/aws-cpp-sdk-all/lib/;C:/Program Files (x86)/aws-cpp-sdk-all/lib/cmake" \`
+-DBUILD_SHARED_LIBS=ON -DDLR_HOME="C:/path/to/neo-ai-dlr"
 
 # msbuild to release repo
 msbuild .\tutorial.sln /p:Configuration=Release
