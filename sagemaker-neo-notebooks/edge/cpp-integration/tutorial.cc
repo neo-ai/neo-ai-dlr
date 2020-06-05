@@ -39,8 +39,7 @@ std::string ROLE_NAME = "windows-demo-test-role";
 
 Aws::S3::S3Client getS3Client() {
   // for tutorial, we set region to us-west-2
-  std::string region = "us-west-2";
-  Aws::String region_aws_s(region.c_str(), region.size());
+  Aws::String region_aws_s("us-west-2");
 
   // init client
   Aws::Client::ClientConfiguration client_config;
@@ -57,8 +56,7 @@ Aws::IAM::IAMClient getIamClient() {
 
 Aws::SageMaker::SageMakerClient getSageMakerClient() {
   // for tutorial, we set region to us-west-2
-  std::string region = "us-west-2";
-  Aws::String region_aws_s(region.c_str(), region.size());
+  Aws::String region_aws_s("us-west-2");
 
   // init client
   Aws::Client::ClientConfiguration client_config;
@@ -416,7 +414,7 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::str
     std::this_thread::sleep_for(std::chrono::seconds(30));
   }
 
-  if (isSuccess == false) {
+  if (!isSuccess) {
     throw std::runtime_error("Compilation timeout");
   }
   std::cout << "Done!" << std::endl;

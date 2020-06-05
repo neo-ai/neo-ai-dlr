@@ -1,5 +1,5 @@
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.6)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
