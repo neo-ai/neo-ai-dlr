@@ -111,7 +111,7 @@ mkdir build
 cd build
 
 # build through cmake
-cmake .. -DCMAKE_BUILD_TYPE=Release -DDLR_HOME="/home/ubuntu/neo-ai-dlr"
+cmake .. -DCMAKE_BUILD_TYPE=Release -DDLR_HOME="/path/to/neo-ai-dlr"
 make
 ```
 
