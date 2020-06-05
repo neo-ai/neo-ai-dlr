@@ -67,8 +67,8 @@ Aws::SageMaker::SageMakerClient getSageMakerClient() {
   return sm_client;
 }
 
-template <typename T>
-std::string getErrorMessage(Aws::Client::AWSError<T> &error) {
+template <typename t>
+std::string getErrorMessage(Aws::Client::AWSError<t>& error) {
   auto exception_name = error.GetExceptionName();
   std::string expection_str =
       std::string(exception_name.c_str(), exception_name.size());
@@ -79,8 +79,8 @@ std::string getErrorMessage(Aws::Client::AWSError<T> &error) {
   return expection_str + ":" + error_msg_str;
 }
 
-void GetPretrainedModel(std::string &bucket_name, std::string &model_name,
-                        std::string &filename) {
+void GetPretrainedModel(std::string& bucket_name, std::string& model_name,
+                        std::string& filename) {
   const Aws::String aws_bucket_name(
       bucket_name.c_str(), bucket_name.size());  // "neo-ai-dlr-test-artifacts";
   const Aws::String aws_object_name(model_name.c_str(), model_name.size());
@@ -98,23 +98,23 @@ void GetPretrainedModel(std::string &bucket_name, std::string &model_name,
     std::string error_str = getErrorMessage(error);
     throw std::runtime_error("GetModel error: " + error_str);
   } else {
-    auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
+    auto& model_file = get_object_outcome.GetResultWithOwnership().GetBody();
 
     // download the sample file
-    const char *output_filename = filename.c_str();
+    const char* output_filename = filename.c_str();
     std::ofstream output_file(output_filename, std::ios::binary);
     output_file << model_file.rdbuf();
   }
 }
 
-void createBucket(std::string &bucket_name) {
+void createBucket(std::string& bucket_name) {
   // create bucket
   const Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::Model::CreateBucketRequest request;
   request.SetBucket(s3_bucket_name);
 
   // for demo purpose: we set that to us-west-2
-  const Aws::S3::Model::BucketLocationConstraint &region =
+  const Aws::S3::Model::BucketLocationConstraint& region =
       Aws::S3::Model::BucketLocationConstraint::us_west_2;
   Aws::S3::S3Client s3_client = getS3Client();
   Aws::S3::Model::CreateBucketConfiguration bucket_config;
@@ -130,8 +130,8 @@ void createBucket(std::string &bucket_name) {
   }
 }
 
-void uploadModel(std::string &bucket_name, std::string &model_name,
-                 std::string &filename) {
+void uploadModel(std::string& bucket_name, std::string& model_name,
+                 std::string& filename) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
@@ -156,14 +156,14 @@ void uploadModel(std::string &bucket_name, std::string &model_name,
   }
 }
 
-bool checkBucketExist(std::string &bucket_name) {
+bool checkBucketExist(std::string& bucket_name) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
   auto list_bucket_resp = s3_client.ListBuckets();
   if (list_bucket_resp.IsSuccess()) {
     Aws::Vector<Aws::S3::Model::Bucket> bucket_list =
         list_bucket_resp.GetResult().GetBuckets();
-    for (auto const &bucket : bucket_list) {
+    for (auto const& bucket : bucket_list) {
       if (bucket.GetName().compare(s3_bucket_name) == 0) {
         return true;
       }
@@ -176,7 +176,7 @@ bool checkBucketExist(std::string &bucket_name) {
   return false;
 }
 
-bool checkModelExist(std::string &bucket_name, std::string &model_name) {
+bool checkModelExist(std::string& bucket_name, std::string& model_name) {
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String aws_model_name(model_name.c_str(), model_name.size());
 
@@ -188,7 +188,7 @@ bool checkModelExist(std::string &bucket_name, std::string &model_name) {
   if (list_objects_outcome.IsSuccess()) {
     Aws::Vector<Aws::S3::Model::Object> object_list =
         list_objects_outcome.GetResult().GetContents();
-    for (auto const &s3_object : object_list) {
+    for (auto const& s3_object : object_list) {
       if (s3_object.GetKey().compare(aws_model_name) == 0) {
         return true;
       }
@@ -202,8 +202,8 @@ bool checkModelExist(std::string &bucket_name, std::string &model_name) {
   return false;
 }
 
-void UploadModelToS3(std::string &model_name, std::string &filename,
-                     std::string &s3_bucket_name) {
+void UploadModelToS3(std::string& model_name, std::string& filename,
+                     std::string& s3_bucket_name) {
   // first create bucket
   bool isBucketExist = checkBucketExist(s3_bucket_name);
   if (!isBucketExist) {
@@ -229,7 +229,7 @@ nlohmann::json getIamPolicy() {
   return policy;
 }
 
-bool checkIamRole(std::string &iam_role) {
+bool checkIamRole(std::string& iam_role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(iam_role.c_str(), iam_role.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -251,7 +251,7 @@ bool checkIamRole(std::string &iam_role) {
   return false;
 }
 
-void createIamRole(std::string &iam_role) {
+void createIamRole(std::string& iam_role) {
   nlohmann::json policy = getIamPolicy();
   std::string policy_s = policy.dump();
   const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
@@ -271,7 +271,7 @@ void createIamRole(std::string &iam_role) {
   }
 }
 
-void attachIamPolicy(std::string &iam_role) {
+void attachIamPolicy(std::string& iam_role) {
   const std::vector<Aws::String> policies = {
       "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
       "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
@@ -311,7 +311,7 @@ std::string getJobName() {
 }
 
 Aws::SageMaker::Model::CompilationJobStatus poll_job_status(
-    std::string &job_name) {
+    std::string& job_name) {
   Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
   Aws::SageMaker::Model::DescribeCompilationJobRequest describe_job_request;
 
@@ -330,7 +330,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(
   return result.GetCompilationJobStatus();
 }
 
-void getIamRole(std::string &role_name, Aws::IAM::Model::Role &role) {
+void getIamRole(std::string& role_name, Aws::IAM::Model::Role& role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(role_name.c_str(), role_name.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -351,8 +351,8 @@ void getIamRole(std::string &role_name, Aws::IAM::Model::Role &role) {
   }
 }
 
-void CompileNeoModel(std::string &bucket_name, std::string &model_name,
-                     std::string &target) {
+void CompileNeoModel(std::string& bucket_name, std::string& model_name,
+                     std::string& target) {
   // set input parameters
   std::string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
@@ -436,9 +436,9 @@ void CompileNeoModel(std::string &bucket_name, std::string &model_name,
   std::cout << "Done!" << std::endl;
 }
 
-void GetCompiledModelFromNeo(std::string &bucket_name, std::string &model_name,
-                             std::string &target,
-                             std::string &compiled_filename) {
+void GetCompiledModelFromNeo(std::string& bucket_name, std::string& model_name,
+                             std::string& target,
+                             std::string& compiled_filename) {
   std::string output_path = "output/" + model_name + "-" + target;
 
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
@@ -457,10 +457,10 @@ void GetCompiledModelFromNeo(std::string &bucket_name, std::string &model_name,
     std::string error_str = getErrorMessage(error);
     throw std::runtime_error("GetModel error: " + error_str);
   } else {
-    auto &model_file = get_object_outcome.GetResultWithOwnership().GetBody();
+    auto& model_file = get_object_outcome.GetResultWithOwnership().GetBody();
 
     // download the sample file
-    const char *output_filename = compiled_filename.c_str();
+    const char* output_filename = compiled_filename.c_str();
     std::ofstream output_file(output_filename, std::ios::binary);
     output_file << model_file.rdbuf();
   }
@@ -485,23 +485,23 @@ void DownloadNpyData() {
     std::string error_str = getErrorMessage(error);
     throw std::runtime_error("DownloadNpyData error: " + error_str);
   } else {
-    auto &image_file = get_object_outcome.GetResultWithOwnership().GetBody();
-    const char *output_filename = filename.c_str();
+    auto& image_file = get_object_outcome.GetResultWithOwnership().GetBody();
+    const char* output_filename = filename.c_str();
     std::ofstream output_file(output_filename, std::ios::binary);
     output_file << image_file.rdbuf();
   }
 }
 
 template <typename T>
-int GetPreprocessNpyFile(std::string &npy_filename,
-                         std::vector<unsigned long> &input_shape,
-                         std::vector<T> &input_data) {
+int GetPreprocessNpyFile(std::string& npy_filename,
+                         std::vector<unsigned long>& input_shape,
+                         std::vector<T>& input_data) {
   bool fortran_order;
   npy::LoadArrayFromNumpy(npy_filename, input_shape, fortran_order, input_data);
   return 0;
 }
 
-void RunInference(std::string &compiled_model, std::string &npy_name) {
+void RunInference(std::string& compiled_model, std::string& npy_name) {
   DLRModelHandle handle;
 
   std::cout << "CreateDLRModel" << std::endl;
@@ -555,7 +555,7 @@ void RunInference(std::string &compiled_model, std::string &npy_name) {
   std::cout << "Inference complete" << std::endl;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // in this example, we're using gluon_imagenet_classifier resnet18
   std::string MODEL_NAME = "resnet18_v1";
   std::string MODEL = MODEL_NAME + ".tar.gz";
@@ -614,7 +614,7 @@ int main(int argc, char **argv) {
     } else {
       std::cerr << "no valid argument command" << std::endl;
     }
-  } catch (std::exception &e) {
+  } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
 
