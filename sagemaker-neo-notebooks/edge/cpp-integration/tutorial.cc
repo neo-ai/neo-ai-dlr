@@ -560,7 +560,7 @@ int main(int argc, char** argv) {
   std::string compiled_folder = "./compiled_model";
 
   if (argc < 2) {
-    std::cerr << "invalid argument count, need at least one command\n";
+    std::cerr << "invalid argument count, need at least one command" << std::endl;
     return 1;
   }
 
