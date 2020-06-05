@@ -70,8 +70,7 @@ Aws::SageMaker::SageMakerClient getSageMakerClient() {
 template <typename t>
 std::string getErrorMessage(Aws::Client::AWSError<t>& error) {
   auto exception_name = error.GetExceptionName();
-  std::string expection_str =
-      std::string(exception_name.c_str(), exception_name.size());
+  std::string expection_str = std::string(exception_name.c_str(), exception_name.size());
 
   auto error_msg = error.GetMessage();
   std::string error_msg_str = std::string(error_msg.c_str(), error_msg.size());
@@ -79,10 +78,9 @@ std::string getErrorMessage(Aws::Client::AWSError<t>& error) {
   return expection_str + ":" + error_msg_str;
 }
 
-void GetPretrainedModel(std::string& bucket_name, std::string& model_name,
-                        std::string& filename) {
-  const Aws::String aws_bucket_name(
-      bucket_name.c_str(), bucket_name.size());  // "neo-ai-dlr-test-artifacts";
+void GetPretrainedModel(std::string& bucket_name, std::string& model_name, std::string& filename) {
+  const Aws::String aws_bucket_name(bucket_name.c_str(),
+                                    bucket_name.size());  // "neo-ai-dlr-test-artifacts";
   const Aws::String aws_object_name(model_name.c_str(), model_name.size());
 
   // download s3 object
@@ -130,8 +128,7 @@ void createBucket(std::string& bucket_name) {
   }
 }
 
-void uploadModel(std::string& bucket_name, std::string& model_name,
-                 std::string& filename) {
+void uploadModel(std::string& bucket_name, std::string& model_name, std::string& filename) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
@@ -142,9 +139,8 @@ void uploadModel(std::string& bucket_name, std::string& model_name,
   object_request.SetKey(s3_aws_object_name);
 
   // set binary to body
-  const std::shared_ptr<Aws::IOStream> input_data =
-      Aws::MakeShared<Aws::FStream>("SampleAllocationTag", filename.c_str(),
-                                    std::ios_base::in | std::ios_base::binary);
+  const std::shared_ptr<Aws::IOStream> input_data = Aws::MakeShared<Aws::FStream>(
+      "SampleAllocationTag", filename.c_str(), std::ios_base::in | std::ios_base::binary);
   object_request.SetBody(input_data);
 
   // put model to the s3 bucket
@@ -161,8 +157,7 @@ bool checkBucketExist(std::string& bucket_name) {
   Aws::S3::S3Client s3_client = getS3Client();
   auto list_bucket_resp = s3_client.ListBuckets();
   if (list_bucket_resp.IsSuccess()) {
-    Aws::Vector<Aws::S3::Model::Bucket> bucket_list =
-        list_bucket_resp.GetResult().GetBuckets();
+    Aws::Vector<Aws::S3::Model::Bucket> bucket_list = list_bucket_resp.GetResult().GetBuckets();
     for (auto const& bucket : bucket_list) {
       if (bucket.GetName().compare(s3_bucket_name) == 0) {
         return true;
@@ -202,8 +197,7 @@ bool checkModelExist(std::string& bucket_name, std::string& model_name) {
   return false;
 }
 
-void UploadModelToS3(std::string& model_name, std::string& filename,
-                     std::string& s3_bucket_name) {
+void UploadModelToS3(std::string& model_name, std::string& filename, std::string& s3_bucket_name) {
   // first create bucket
   bool isBucketExist = checkBucketExist(s3_bucket_name);
   if (!isBucketExist) {
@@ -272,9 +266,8 @@ void createIamRole(std::string& iam_role) {
 }
 
 void attachIamPolicy(std::string& iam_role) {
-  const std::vector<Aws::String> policies = {
-      "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
-      "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
+  const std::vector<Aws::String> policies = {"arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
+                                             "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
   const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
 
   Aws::IAM::IAMClient iam_client = getIamClient();
@@ -283,8 +276,7 @@ void attachIamPolicy(std::string& iam_role) {
     Aws::IAM::Model::AttachRolePolicyRequest attach_policy_request;
     attach_policy_request.SetPolicyArn(aws_policy_arn);
     attach_policy_request.SetRoleName(aws_role_name);
-    auto attach_policy_outcome =
-        iam_client.AttachRolePolicy(attach_policy_request);
+    auto attach_policy_outcome = iam_client.AttachRolePolicy(attach_policy_request);
     if (!attach_policy_outcome.IsSuccess()) {
       auto error = attach_policy_outcome.GetError();
       std::string error_str = getErrorMessage(error);
@@ -301,24 +293,21 @@ void CreateIamStep() {
 }
 
 std::string getJobName() {
-  std::chrono::milliseconds ms =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch());
+  std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
 
   std::stringstream ss;
   ss << "pi-demo-" << std::to_string(ms.count());
   return ss.str();
 }
 
-Aws::SageMaker::Model::CompilationJobStatus poll_job_status(
-    std::string& job_name) {
+Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string& job_name) {
   Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
   Aws::SageMaker::Model::DescribeCompilationJobRequest describe_job_request;
 
   Aws::String aws_job_name(job_name.c_str(), job_name.size());
   describe_job_request.SetCompilationJobName(aws_job_name);
-  auto describe_job_resp =
-      sm_client.DescribeCompilationJob(describe_job_request);
+  auto describe_job_resp = sm_client.DescribeCompilationJob(describe_job_request);
 
   if (!describe_job_resp.IsSuccess()) {
     auto error = describe_job_resp.GetError();
@@ -351,13 +340,11 @@ void getIamRole(std::string& role_name, Aws::IAM::Model::Role& role) {
   }
 }
 
-void CompileNeoModel(std::string& bucket_name, std::string& model_name,
-                     std::string& target) {
+void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::string& target) {
   // set input parameters
   std::string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
-  const Aws::SageMaker::Model::Framework framework =
-      Aws::SageMaker::Model::Framework::MXNET;
+  const Aws::SageMaker::Model::Framework framework = Aws::SageMaker::Model::Framework::MXNET;
   const Aws::String aws_s3_uri(input_s3.c_str(), input_s3.size());
   const Aws::String data_shape = "{'data':[1,3,224,224]}";
   const Aws::String aws_role_name(ROLE_NAME.c_str(), ROLE_NAME.size());
@@ -379,8 +366,7 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name,
   // set target device
   Aws::String aws_target_device(target.c_str(), target.size());
   Aws::SageMaker::Model::TargetDevice target_device =
-      Aws::SageMaker::Model::TargetDeviceMapper::GetTargetDeviceForName(
-          aws_target_device);
+      Aws::SageMaker::Model::TargetDeviceMapper::GetTargetDeviceForName(aws_target_device);
 
   // set output config
   Aws::SageMaker::Model::OutputConfig output_config;
@@ -436,8 +422,7 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name,
   std::cout << "Done!" << std::endl;
 }
 
-void GetCompiledModelFromNeo(std::string& bucket_name, std::string& model_name,
-                             std::string& target,
+void GetCompiledModelFromNeo(std::string& bucket_name, std::string& model_name, std::string& target,
                              std::string& compiled_filename) {
   std::string output_path = "output/" + model_name + "-" + target;
 
@@ -493,8 +478,7 @@ void DownloadNpyData() {
 }
 
 template <typename T>
-int GetPreprocessNpyFile(std::string& npy_filename,
-                         std::vector<unsigned long>& input_shape,
+int GetPreprocessNpyFile(std::string& npy_filename, std::vector<unsigned long>& input_shape,
                          std::vector<T>& input_data) {
   bool fortran_order;
   npy::LoadArrayFromNumpy(npy_filename, input_shape, fortran_order, input_data);
@@ -525,8 +509,7 @@ void RunInference(std::string& compiled_model, std::string& npy_name) {
   std::vector<unsigned long> in_shape_ul;
   std::vector<float> input_data;
   GetPreprocessNpyFile<float>(npy_name, in_shape_ul, input_data);
-  std::vector<int64_t> in_shape =
-      std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
+  std::vector<int64_t> in_shape = std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
 
   std::cout << "SetDLRInput" << std::endl;
   std::string input_name = "data";
@@ -595,8 +578,7 @@ int main(int argc, char** argv) {
       UploadModelToS3(model_name, filename, s3_bucket_name);
       CreateIamStep();
       CompileNeoModel(s3_bucket_name, model_name, target);
-      GetCompiledModelFromNeo(s3_bucket_name, model_name, target,
-                              compiled_filename);
+      GetCompiledModelFromNeo(s3_bucket_name, model_name, target, compiled_filename);
 
       Aws::ShutdownAPI(options);
     } else if (cmd == "inference") {
