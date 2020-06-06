@@ -35,7 +35,7 @@
 // internal
 #include <dlr.h>
 
-std::string ROLE_NAME = "windows-demo-test-role";
+const std::string ROLE_NAME = "windows-demo-test-role";
 
 Aws::S3::S3Client getS3Client() {
   // for tutorial, we set region to us-west-2
@@ -221,7 +221,7 @@ nlohmann::json getIamPolicy() {
   return policy;
 }
 
-bool checkIamRole(std::string& iam_role) {
+bool checkIamRole(const std::string& iam_role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(iam_role.c_str(), iam_role.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -243,7 +243,7 @@ bool checkIamRole(std::string& iam_role) {
   return false;
 }
 
-void createIamRole(std::string& iam_role) {
+void createIamRole(const std::string& iam_role) {
   nlohmann::json policy = getIamPolicy();
   std::string policy_s = policy.dump();
   const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
@@ -263,7 +263,7 @@ void createIamRole(std::string& iam_role) {
   }
 }
 
-void attachIamPolicy(std::string& iam_role) {
+void attachIamPolicy(const std::string& iam_role) {
   const std::vector<Aws::String> policies = {"arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
                                              "arn:aws:iam::aws:policy/AmazonS3FullAccess"};
   const Aws::String aws_role_name(iam_role.c_str(), iam_role.size());
@@ -317,7 +317,7 @@ Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string& job_nam
   return result.GetCompilationJobStatus();
 }
 
-void getIamRole(std::string& role_name, Aws::IAM::Model::Role& role) {
+void getIamRole(const std::string& role_name, Aws::IAM::Model::Role& role) {
   Aws::IAM::IAMClient iam_client = getIamClient();
   Aws::String aws_iam_role(role_name.c_str(), role_name.size());
   Aws::IAM::Model::GetRoleRequest get_role_request;
@@ -399,14 +399,14 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::str
   }
 
   // poll job for validation
-  bool isSuccess = false;
+  bool is_success = false;
   int attempts = 10;
   for (int i = 0; i < attempts; i++) {
     std::cout << "Waiting for compilation..." << std::endl;
     auto status = poll_job_status(job_name);
     if (status == Aws::SageMaker::Model::CompilationJobStatus::COMPLETED) {
       std::cout << "Compile successfully" << std::endl;
-      isSuccess = true;
+      is_success = true;
       break;
     } else if (status == Aws::SageMaker::Model::CompilationJobStatus::FAILED) {
       throw std::runtime_error("Compilation fail");
@@ -414,7 +414,7 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::str
     std::this_thread::sleep_for(std::chrono::seconds(30));
   }
 
-  if (!isSuccess) {
+  if (!is_success) {
     throw std::runtime_error("Compilation timeout");
   }
   std::cout << "Done!" << std::endl;
