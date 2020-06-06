@@ -1,7 +1,6 @@
 #include "dlr_tvm.h"
 
 #include <stdlib.h>
-
 #include <fstream>
 #include <iterator>
 #include <numeric>
@@ -228,8 +227,7 @@ bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
 
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
-    LOG(INFO) << "No metadata file was found!";
-    return nullptr;
+    throw dmlc::Error("No metadata file was found!");
   }
   try {
     return this->metadata.at("Model")
@@ -238,17 +236,15 @@ const char* TVMModel::GetOutputName(const int index) const {
         .at("name")
         .get_ref<const std::string&>()
         .c_str();
-  } catch (nlohmann::json::exception&) {
-    LOG(INFO) << "Output node with index " << index
-              << " not found in metadata file";
-    return nullptr;
+  } catch (nlohmann::json::out_of_range& e) {
+    LOG(ERROR) << e.what();
+    throw dmlc::Error("Output node was not found in metadata file!");
   }
 }
 
 int TVMModel::GetOutputIndex(const char* name) const {
   if (!this->HasMetadata()) {
-    LOG(INFO) << "No metadata file was found!";
-    return -1;
+    throw dmlc::Error("No metadata file was found!");
   }
   for (int i = 0; i < this->num_outputs_; i++) {
     const char* output_name = GetOutputName(i);
@@ -257,13 +253,10 @@ int TVMModel::GetOutputIndex(const char* name) const {
       return i;
     }
   }
-  return -1;
+  throw dmlc::Error("Couldn't find index for output node!");
 }
 
 void TVMModel::GetOutputByName(const char* name, void* out) {
   int output_index = this->GetOutputIndex(name);
-  if (output_index == -1) {
-    LOG(FATAL) << "Couldn't find index for output node";
-  }
   this->GetOutput(output_index, out);
 }
