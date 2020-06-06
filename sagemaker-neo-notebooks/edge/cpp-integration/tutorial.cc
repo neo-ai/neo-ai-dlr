@@ -518,6 +518,7 @@ void RunInference(std::string& compiled_model, std::string& npy_name) {
   std::cout << "RunDLRModel" << std::endl;
   RunDLRModel(&handle);
 
+  std::cout << "GetDLROutput" << std::endl;
   for (int i = 0; i < num_outputs; i++) {
     GetDLROutput(&handle, i, outputs[i].data());
   }
