@@ -152,7 +152,7 @@ void uploadModel(const std::string& bucket_name, const std::string& model_name,
   }
 }
 
-bool checkBucketExist(std::string& bucket_name) {
+bool checkBucketExist(const std::string& bucket_name) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
   auto list_bucket_resp = s3_client.ListBuckets();
@@ -171,7 +171,7 @@ bool checkBucketExist(std::string& bucket_name) {
   return false;
 }
 
-bool checkModelExist(std::string& bucket_name, std::string& model_name) {
+bool checkModelExist(const std::string& bucket_name, const std::string& model_name) {
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String aws_model_name(model_name.c_str(), model_name.size());
 
@@ -197,7 +197,8 @@ bool checkModelExist(std::string& bucket_name, std::string& model_name) {
   return false;
 }
 
-void UploadModelToS3(std::string& model_name, std::string& filename, std::string& s3_bucket_name) {
+void UploadModelToS3(const std::string& model_name, const std::string& filename,
+                     const std::string& s3_bucket_name) {
   // first create bucket
   bool isBucketExist = checkBucketExist(s3_bucket_name);
   if (!isBucketExist) {
@@ -301,7 +302,7 @@ std::string getJobName() {
   return ss.str();
 }
 
-Aws::SageMaker::Model::CompilationJobStatus poll_job_status(std::string& job_name) {
+Aws::SageMaker::Model::CompilationJobStatus poll_job_status(const std::string& job_name) {
   Aws::SageMaker::SageMakerClient sm_client = getSageMakerClient();
   Aws::SageMaker::Model::DescribeCompilationJobRequest describe_job_request;
 
@@ -340,7 +341,8 @@ void getIamRole(const std::string& role_name, Aws::IAM::Model::Role& role) {
   }
 }
 
-void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::string& target) {
+void CompileNeoModel(const std::string& bucket_name, const std::string& model_name,
+                     const std::string& target) {
   // set input parameters
   std::string input_s3 = "s3://" + bucket_name + "/" + model_name;
 
@@ -422,8 +424,8 @@ void CompileNeoModel(std::string& bucket_name, std::string& model_name, std::str
   std::cout << "Done!" << std::endl;
 }
 
-void GetCompiledModelFromNeo(std::string& bucket_name, std::string& model_name, std::string& target,
-                             std::string& compiled_filename) {
+void GetCompiledModelFromNeo(const std::string& bucket_name, const std::string& model_name,
+                             const std::string& target, const std::string& compiled_filename) {
   std::string output_path = "output/" + model_name + "-" + target;
 
   Aws::String aws_bucket_name(bucket_name.c_str(), bucket_name.size());
@@ -478,7 +480,7 @@ void DownloadNpyData() {
 }
 
 template <typename T>
-int GetPreprocessNpyFile(std::string& npy_filename, std::vector<unsigned long>& input_shape,
+int GetPreprocessNpyFile(const std::string& npy_filename, std::vector<unsigned long>& input_shape,
                          std::vector<T>& input_data) {
   bool fortran_order;
   npy::LoadArrayFromNumpy(npy_filename, input_shape, fortran_order, input_data);
