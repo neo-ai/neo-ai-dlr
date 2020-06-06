@@ -66,7 +66,7 @@ Aws::SageMaker::SageMakerClient getSageMakerClient() {
 }
 
 template <typename T>
-std::string getErrorMessage(Aws::Client::AWSError<T>& error) {
+std::string getErrorMessage(const Aws::Client::AWSError<T>& error) {
   auto exception_name = error.GetExceptionName();
   std::string expection_str = std::string(exception_name.c_str(), exception_name.size());
 
@@ -76,7 +76,8 @@ std::string getErrorMessage(Aws::Client::AWSError<T>& error) {
   return expection_str + ":" + error_msg_str;
 }
 
-void GetPretrainedModel(std::string& bucket_name, std::string& model_name, std::string& filename) {
+void GetPretrainedModel(const std::string& bucket_name, const std::string& model_name,
+                        const std::string& filename) {
   const Aws::String aws_bucket_name(bucket_name.c_str(),
                                     bucket_name.size());  // "neo-ai-dlr-test-artifacts";
   const Aws::String aws_object_name(model_name.c_str(), model_name.size());
@@ -103,7 +104,7 @@ void GetPretrainedModel(std::string& bucket_name, std::string& model_name, std::
   }
 }
 
-void createBucket(std::string& bucket_name) {
+void createBucket(const std::string& bucket_name) {
   // create bucket
   const Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::S3::Model::CreateBucketRequest request;
@@ -126,7 +127,8 @@ void createBucket(std::string& bucket_name) {
   }
 }
 
-void uploadModel(std::string& bucket_name, std::string& model_name, std::string& filename) {
+void uploadModel(const std::string& bucket_name, const std::string& model_name,
+                 const std::string& filename) {
   Aws::String s3_bucket_name(bucket_name.c_str(), bucket_name.size());
   Aws::String s3_aws_object_name(model_name.c_str(), model_name.size());
   Aws::S3::S3Client s3_client = getS3Client();
