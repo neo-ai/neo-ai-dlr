@@ -11,3 +11,5 @@ Pipfile.lock
 python/dlr.egg-info/
 tests/python/integration/*
 !tests/python/integration/*.py
+.idea
+
