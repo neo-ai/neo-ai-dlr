@@ -238,7 +238,10 @@ const char* TVMModel::GetOutputName(const int index) const {
         .c_str();
   } catch (nlohmann::json::out_of_range& e) {
     LOG(ERROR) << e.what();
-    throw dmlc::Error("Output node was not found in metadata file!");
+    std::string msg = "Output node with index";
+    msg += " " + std::to_string(index);
+    msg += " was not found in metadata file!";
+    throw dmlc::Error(msg);
   }
 }
 
@@ -253,7 +256,10 @@ int TVMModel::GetOutputIndex(const char* name) const {
       return i;
     }
   }
-  throw dmlc::Error("Couldn't find index for output node!");
+
+    std::string msg = "Couldn't find index for output node";
+    msg += " " + std::string{name} + "!";
+    throw dmlc::Error(msg);
 }
 
 void TVMModel::GetOutputByName(const char* name, void* out) {

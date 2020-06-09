@@ -86,7 +86,6 @@ class DLRModel {
   DLContext ctx_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
-  std::vector<int64_t> output_shape_;
 
  public:
   DLRModel(const DLContext& ctx, const DLRBackend& backend)
