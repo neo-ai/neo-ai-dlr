@@ -24,23 +24,23 @@ Table 1: List of Supported Devices
 +==============+==============+===========================================================================================================================================================+
 | Acer         | TV AISage    |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/acer-aarch64-linaro4_4_154-glibc2_24-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl            |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Amazon       | AWS a1       |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/a1-aarch64-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl                |
+| Amazon       | AWS a1 Instance |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/a1-aarch64-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl                |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Amazon       | AWS p2/p3/g4 |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/p3-x86_64-cu10-ubuntu18_04-glibc2_27-libstdpp3_4/dlr-1.2.0-py2.py3-none-any.whl             |
+| Amazon       | AWS p2/p3/g4 Instance w/ TensorRT 7 |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/p3-x86_64-cu10-ubuntu18_04-glibc2_27-libstdpp3_4/dlr-1.2.0-py2.py3-none-any.whl             |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Amazon       | Deeplens     |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.1.0/deeplens-x86_64-igp-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.1.0-py2.py3-none-any.whl       |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Rockchips    | RK3399       |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.1.0/firefly-aarch64-mali-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.1.0-py2.py3-none-any.whl      |
+| Rockchips    | RK3399       |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/firefly-aarch64-mali-ubuntu16_04-glibc2_23-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl      |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NVIDIA       | Jetson TX1   |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsontx1-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl    |
+| NVIDIA       | Jetson TX1 (JetPack 4.3)  |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsontx1-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl    |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NVIDIA       | Jetson TX2   |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsontx2-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl    |
+| NVIDIA       | Jetson TX2 (JetPack 4.3)  |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsontx2-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl    |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NVIDIA       | Jetson Nano  |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsonnano-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl   |
+| NVIDIA       | Jetson Nano (JetPack 4.3) |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsonnano-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl   |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NVIDIA       | Jetson Xavier|  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsonxavier-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl |
+| NVIDIA       |Jetson Xavier (JetPack 4.3)|  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/jetsonxavier-aarch64-cu10-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Raspberry    | Rasp3b       |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.1.0-py2.py3-none-any.whl             |
+| Raspberry    | Rasp3b       |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl             |
 +--------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 If your device is not listed in the table, use table2. You will identify your device by the processor architecture, operating system, and versions of GLIBC and LIBSTDC++. Of note, DLR installation may depend on other configuration differences or even location of dependency libraries; if the provided wheel URL does not work, please consider compiling DLR from source (see `Building DLR from source`_ section).
@@ -53,7 +53,7 @@ Table2: List of Supported Architectures (Incomplete)
 +========================+==============+===============+===================+============================================================================================================================================+ 
 | aarch64                | Ubuntu 18.04 | 2.27+         | 3.4+              |  https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/a1-aarch64-ubuntu18_04-glibc2_27-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl | 
 +------------------------+--------------+---------------+-------------------+--------------------------------------------------------------------------------------------------------------------------------------------+ 
-| armv7l                 | Debian 9.0   | 2.24+         | 3.4+              |https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.1.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.1.0-py2.py3-none-any.whl| 
+| armv7l                 | Debian 9.0   | 2.24+         | 3.4+              |https://neo-ai-dlr-release.s3-us-west-2.amazonaws.com/v1.2.0/pi-armv7l-raspbian4.14.71-glibc2_24-libstdcpp3_4/dlr-1.2.0-py2.py3-none-any.whl| 
 +------------------------+--------------+---------------+-------------------+--------------------------------------------------------------------------------------------------------------------------------------------+ 
 
 
@@ -123,12 +123,24 @@ Once the compilation is completed, install the Python package by running ``setup
   cd ../python
   python3 setup.py install --user
 
-Building for GPU
-""""""""""""""""
+Building for NVIDIA GPU on Jetson Devices
+"""""""""""""""""""""""""""""""""""""""""
 
 By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
 
-If you have a system install of TensorRT via Deb or RPM package, or if you are on a Jetson device, use the following steps:
+DLR requires CMake 3.13 or greater. First, we will build CMake from source.
+
+.. code-block:: bash
+
+  sudo apt-get install libssl-dev
+  wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2.tar.gz
+  tar xvf cmake-3.17.2.tar.gz
+  cd cmake-3.17.2
+  ./bootstrap
+  make -j4
+  sudo make install
+
+Now, build DLR.
 
 .. code-block:: bash
  
@@ -141,9 +153,16 @@ If you have a system install of TensorRT via Deb or RPM package, or if you are o
   cd ../python
   python3 setup.py install --user
 
+Building for NVIDIA GPU (Cloud or Desktop)
+""""""""""""""""""""""""""""""""""""""""""
+
+By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
+
 If you do not have a system install of TensorRT, first download the relevant .tar.gz file from https://developer.nvidia.com/nvidia-tensorrt-download
 Please follow instructions from https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html#installing-tar to install TensorRT.
 Now, provide the extracted .tar.gz folder path to ``-DUSE_TENSORRT`` when configuring cmake.
+
+If you have a system install of TensorRT via Deb or RPM package, you can instead use ``-DUSE_TENSORRT=ON` which will find the install directory automatically.
 
 .. code-block:: bash
 
