@@ -1,6 +1,6 @@
 #include "dlr.h"
 
-#include "dlr_common.h"
+#include "dlr_model.h"
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
 #ifdef DLR_HEXAGON

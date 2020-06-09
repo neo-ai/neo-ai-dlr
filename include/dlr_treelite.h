@@ -3,7 +3,7 @@
 
 #include <treelite/c_api_runtime.h>
 
-#include "dlr_common.h"
+#include "dlr_model.h"
 
 namespace dlr {
 

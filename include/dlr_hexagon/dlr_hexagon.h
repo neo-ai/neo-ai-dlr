@@ -1,7 +1,7 @@
 #ifndef DLR_HEXAGON_H_
 #define DLR_HEXAGON_H_
 
-#include "dlr_common.h"
+#include "dlr_model.h"
 
 namespace dlr {
 
