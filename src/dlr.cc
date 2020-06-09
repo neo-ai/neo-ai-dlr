@@ -3,12 +3,6 @@
 #include "dlr_common.h"
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
-#ifdef DLR_TFLITE
-#include "dlr_tflite/dlr_tflite.h"
-#endif  // DLR_TFLITE
-#ifdef DLR_TENSORFLOW
-#include "dlr_tensorflow/dlr_tensorflow.h"
-#endif  // DLR_TENSORFLOW
 #ifdef DLR_HEXAGON
 #include "dlr_hexagon/dlr_hexagon.h"
 #endif  // DLR_HEXAGON
@@ -166,57 +160,6 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-#ifdef DLR_TFLITE
-/*! \brief Translate c args from ctypes to std types for DLRModelFromTFLite
- * ctor.
- */
-int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
-                             int threads, int use_nnapi) {
-  API_BEGIN();
-  const std::string model_path_string(model_path);
-  // TFLiteModel class does not use DLContext internally
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
-  ctx.device_id = 0;
-  DLRModel* model =
-      new TFLiteModel(model_path_string, ctx, threads, (bool)use_nnapi);
-  *handle = model;
-  API_END();
-}
-#endif  // DLR_TFLITE
-
-#ifdef DLR_TENSORFLOW
-/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow
- * ctor.
- */
-int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
-                                 const DLR_TFTensorDesc* inputs, int input_size,
-                                 const char* outputs[], int output_size,
-                                 const DLR_TFConfig tf_config) {
-  API_BEGIN();
-  const std::string model_path_string(model_path);
-  // TensorflowModel class does not use DLContext internally
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
-  ctx.device_id = 0;
-  std::vector<std::string> v_inputs(input_size);
-  std::vector<std::vector<int64_t>> v_input_shapes(input_size);
-  for (int i = 0; i < input_size; i++) {
-    DLR_TFTensorDesc v = inputs[i];
-    v_inputs[i] = v.name;
-    v_input_shapes[i] = std::vector<int64_t>(v.dims, v.dims + v.num_dims);
-  }
-  std::vector<std::string> v_outputs(output_size);
-  for (int i = 0; i < output_size; i++) {
-    v_outputs[i] = outputs[i];
-  }
-  DLRModel* model = new TensorflowModel(model_path_string, ctx, v_inputs,
-                                        v_input_shapes, v_outputs, tf_config);
-  *handle = model;
-  API_END();
-}
-#endif  // DLR_TENSORFLOW
-
 #ifdef DLR_HEXAGON
 /*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
  * ctor.
@@ -263,32 +206,6 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
     model = new TVMModel(path_vec, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
     model = new TreeliteModel(path_vec, ctx);
-#ifdef DLR_TFLITE
-  } else if (backend == DLRBackend::kTFLITE) {
-    // By default use undefined number of threads - threads=0 and use_nnapi=0
-    DLRModelHandle tf_handle;
-    int errC = CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(tf_handle);
-#endif  // DLR_TFLITE
-#ifdef DLR_TENSORFLOW
-  } else if (backend == DLRBackend::kTENSORFLOW) {
-    // input and output tensor names will be detected automatically.
-    // use undefined number of threads - threads=0
-    // GPUOptions.allow_growth is True
-    // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
-    // share GPU memory. No Performance degradation was detected.
-    DLRModelHandle tf_handle;
-    DLR_TFConfig tf_config = {};
-    tf_config.inter_op_parallelism_threads = 0;
-    tf_config.intra_op_parallelism_threads = 0;
-    tf_config.gpu_options.allow_growth = 1;
-    tf_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
-    int errC = CreateDLRModelFromTensorflow(&tf_handle, model_path, NULL, 0,
-                                            NULL, 0, tf_config);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(tf_handle);
-#endif  // DLR_TENSORFLOW
 #ifdef DLR_HEXAGON
   } else if (backend == DLRBackend::kHEXAGON) {
     DLRModelHandle hexagon_handle;

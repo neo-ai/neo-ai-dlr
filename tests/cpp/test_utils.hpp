@@ -32,4 +32,3 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
 }
 
 #endif
-
