@@ -1,12 +1,26 @@
 # coding: utf-8
 import ctypes
-from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
+from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong, c_float
 import numpy as np
 import os
 from .api import IDLRModel
 from .compatibility import check_tensorrt_compatibility
 
 from .libpath import find_lib_path
+
+def _get_ctype_from_dtype(dtype):
+    """Get ctype from dtype. Backwards compatible with older numpy versions.
+    
+    Parameters
+    ----------
+    dtype: str
+        Type as a string, e.g. "float32".
+    """
+    if hasattr(np.ctypeslib, 'as_ctypes_type'):
+       return np.ctypeslib.as_ctypes_type(dtype)
+    if dtype != "float32":
+        raise ValueError("Numpy 1.16.1 or greater is required for models with non-float32 inputs or outputs.")
+    return c_float
 
 class DLRError(Exception):
     """Error thrown by DLR"""
@@ -299,7 +313,7 @@ class DLRModelImpl(IDLRModel):
             The data to be set.
         """
         input_dtype = self._get_input_or_weight_dtype_by_name(name)
-        input_ctype = np.ctypeslib.as_ctypes_type(input_dtype)
+        input_ctype = _get_ctype_from_dtype(input_dtype)
         # float32 inputs can accept any data (backward compatibility).
         if input_dtype == "float32":
             type_match = True
@@ -392,7 +406,7 @@ class DLRModelImpl(IDLRModel):
             raise ValueError("index is expected between 0 and "
                              "len(output_shapes)-1, but got %d" % index)
         output_dtype = self.get_output_dtype(index)
-        output_ctype = np.ctypeslib.as_ctypes_type(output_dtype)
+        output_ctype = _get_ctype_from_dtype(input_dtype)(output_dtype)
         output = np.zeros(self.output_size_dim[index][0], dtype=output_dtype)
         _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
                     output.ctypes.data_as(ctypes.POINTER(output_ctype))))
@@ -462,7 +476,7 @@ class DLRModelImpl(IDLRModel):
                              'input {}, we cannot infer its shape. '.format(name) +
                              'Shape parameter should be explicitly specified')
         input_dtype = self._get_input_or_weight_dtype_by_name(name)
-        input_ctype = np.ctypeslib.as_ctypes_type(input_dtype)
+        input_ctype = _get_ctype_from_dtype(input_dtype)
         if shape is None:
             shape = self.input_shapes[name]
         shape = np.array(shape)
