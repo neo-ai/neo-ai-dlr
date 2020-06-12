@@ -19,14 +19,17 @@ def find_lib_path():
        List of all found library path to DLR
     """
     curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
-    dll_path = [curr_path, os.path.join(curr_path, '../../lib/'),
-                os.path.join(curr_path, '../../build/lib/'),
-                os.path.join(curr_path, './lib/'),
-                os.path.join(curr_path, './build/lib/'),
-                os.path.join(sys.prefix, 'dlr'),
+    # Prioritize library in system path over the current_path.
+    dll_path = [os.path.join(sys.prefix, 'dlr'),
                 os.path.join(sys.prefix, 'local', 'dlr'),
                 os.path.join(sys.exec_prefix, 'local', 'dlr'),
-                os.path.join(os.path.expanduser('~'), '.local', 'dlr')]
+                os.path.join(os.path.expanduser('~'), '.local', 'dlr'),
+                os.path.join(curr_path, '../../lib/'),
+                os.path.join(curr_path, '../../build/lib/'),
+                os.path.join(curr_path, './lib/'),
+                os.path.join(curr_path, './build/lib/'), 
+                curr_path]
+    
     if sys.platform == 'win32':
         if platform.architecture()[0] == '64bit':
             dll_path.append(os.path.join(curr_path, '../../windows/x64/Release/'))
@@ -48,4 +51,6 @@ def find_lib_path():
         raise DLRLibraryNotFound(
             'Cannot find DLR Library in the candidate path, ' +
             'List of candidates:\n' + ('\n'.join(dll_path)))
-    return lib_path
+
+    # If multiple paths are found always prefer the one that is in system paths.
+    return lib_path[0]

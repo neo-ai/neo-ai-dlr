@@ -79,7 +79,7 @@ class DLRModel(IDLRModel):
                 dev_type = 'cpu'
             if dev_id is None:
                 dev_id = 0
-            self._impl = DLRModelImpl(model_path, dev_type, dev_id, use_default_dlr, self.neo_logger)
+            self._impl = DLRModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
         except Exception as ex:
             self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
