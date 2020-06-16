@@ -28,7 +28,7 @@ def _get_ctype_from_dtype(dtype):
         "int64": ctypes.c_long,
     }
     if dtype not in dtype_to_ctype:
-        raise ValueError("Model has input or output datatype \"{}\" which is not supported.".format(dtype))
+        raise ValueError("Model has input or output datatype {} which is not supported.".format(dtype))
     return dtype_to_ctype[dtype]
 
 class DLRError(Exception):
