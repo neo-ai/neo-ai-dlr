@@ -5,11 +5,12 @@ RUN apt update
 RUN apt install -y build-essential
 RUN apt install -y llvm-9 clang-9
 RUN apt install -y cmake git wget curl vim zip
-RUN apt install -y python3 python3-dev
+RUN apt install -y python3 python3-dev python3-distutils
 RUN apt install -y libedit-dev libxml2-dev antlr4
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
 
+RUN pip3 install -U pip setuptools wheel
 RUN pip3 install numpy decorator attrs antlr4-python3-runtime
 
 WORKDIR /root
