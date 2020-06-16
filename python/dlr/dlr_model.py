@@ -1,6 +1,6 @@
 # coding: utf-8
 import ctypes
-from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong, c_float
+from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
 import numpy as np
 import os
 from .api import IDLRModel
@@ -9,18 +9,27 @@ from .compatibility import check_tensorrt_compatibility
 from .libpath import find_lib_path
 
 def _get_ctype_from_dtype(dtype):
-    """Get ctype from dtype. Backwards compatible with older numpy versions.
-    
+    """
+    Convert type string to ctype type.
+
     Parameters
     ----------
     dtype: str
         Type as a string, e.g. "float32".
     """
-    if hasattr(np.ctypeslib, 'as_ctypes_type'):
-       return np.ctypeslib.as_ctypes_type(dtype)
-    if dtype != "float32":
-        raise ValueError("Numpy 1.16.1 or greater is required for models with non-float32 inputs or outputs.")
-    return c_float
+    dtype_to_ctype = {
+        "float32": ctypes.c_float,
+        "float64": ctypes.c_double,
+        "uint8": ctypes.c_ubyte,
+        "uint32": ctypes.c_uint,
+        "uint64": ctypes.c_ulong,
+        "int8": ctypes.c_byte,
+        "int32": ctypes.c_int,
+        "int64": ctypes.c_long,
+    }
+    if dtype not in dtype_to_ctype:
+        raise ValueError("Model has input or output datatype \"{}\" which is not supported.".format(dtype))
+    return dtype_to_ctype[dtype]
 
 class DLRError(Exception):
     """Error thrown by DLR"""
@@ -406,7 +415,7 @@ class DLRModelImpl(IDLRModel):
             raise ValueError("index is expected between 0 and "
                              "len(output_shapes)-1, but got %d" % index)
         output_dtype = self.get_output_dtype(index)
-        output_ctype = _get_ctype_from_dtype(input_dtype)(output_dtype)
+        output_ctype = _get_ctype_from_dtype(output_dtype)
         output = np.zeros(self.output_size_dim[index][0], dtype=output_dtype)
         _check_call(_LIB.GetDLROutput(byref(self.handle), c_int(index),
                     output.ctypes.data_as(ctypes.POINTER(output_ctype))))
