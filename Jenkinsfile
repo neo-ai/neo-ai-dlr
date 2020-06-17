@@ -135,7 +135,7 @@ def CloudInstallAndTest(cloudTarget) {
     sh """
     ls -lh python/dist/*.whl
     echo "Updating pip3..."
-    sudo -H pip3 install -U pip setuptools
+    sudo -H pip3 install -U pip setuptools wheel
     pip3 --version
     echo "Installing DLR Python package..."
     pip3 install --prefer-binary python/dist/*.whl
