@@ -50,7 +50,7 @@ def _is_module_found(name):
 
 # Wrapper class
 class DLRModel(IDLRModel):
-    def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None):
+    def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
@@ -79,7 +79,7 @@ class DLRModel(IDLRModel):
                 dev_type = 'cpu'
             if dev_id is None:
                 dev_id = 0
-            self._impl = DLRModelImpl(model_path, dev_type, dev_id)
+            self._impl = DLRModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
         except Exception as ex:
             self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
