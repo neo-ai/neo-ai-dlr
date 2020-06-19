@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
                               int batch_size) {
@@ -30,5 +31,5 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
   return img;
 }
 
-
 #endif
+
