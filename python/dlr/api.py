@@ -51,6 +51,18 @@ def _is_module_found(name):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
+        """
+        Load a Neo-compiled model.
+
+        Parameters
+        ----------
+        model_path : str
+            Full path to the directory containing the compiled model artifacts (.so, .params, .json)
+        dev_type : str
+            Device type ('cpu', 'gpu', or 'opencl')
+        dev_id : int
+            Device ID
+        """
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
@@ -85,6 +97,14 @@ class DLRModel(IDLRModel):
             raise ex
 
     def run(self, input_values):
+        """
+        Run inference. Returns a list of np.ndarrays.
+
+        Parameters
+        ----------
+        input_values : np.ndarray or dict
+            A numpy array for a single input model or dict of input_name -> np.ndarray.
+        """
         try:
             return self._impl.run(input_values)
         except Exception as ex:
