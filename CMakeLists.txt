@@ -536,3 +536,9 @@ if(NOT(AAR_BUILD))
 endif()
 # Group sources
 #auto_source_group("${SOURCES}")
+
+set(INSTALL_DLR OFF CACHE BOOL "allow users to install dlr to consume via cmake")
+
+if(INSTALL_DLR)
+    include(cmake/dlrInstall.cmake)
+endif()
