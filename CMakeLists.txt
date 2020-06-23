@@ -444,6 +444,32 @@ if(NOT(AAR_BUILD))
     message(STATUS "Added Test: " ${__execname})
   endforeach()
 
+  set(CAT_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/cat224-3.txt)
+  if(NOT EXISTS ${CAT_IMAGE})
+  download_file(
+    https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
+    ${CAT_IMAGE}
+    SHA1
+    e35e82f3371bed37caa7ecece417f50876414077
+  )
+  endif()
+  
+  # Download compiled model for unit tests
+  set(RESNET_MODEL ${CMAKE_CURRENT_BINARY_DIR}/resnet_v1_5_50)
+  if(NOT IS_DIRECTORY ${RESNET_MODEL})
+    file(MAKE_DIRECTORY ${RESNET_MODEL})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/resnet_v1.5_50-ml_c4.tar.gz
+      /tmp/resnet_v1.5_50-ml_c4.tar.gz
+      SHA1
+      447c22239e63882a2bc754db550131756373d4df
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/resnet_v1.5_50-ml_c4.tar.gz
+                    WORKING_DIRECTORY ${RESNET_MODEL})
+  endif()
+
+
   if(WITH_TENSORFLOW_LITE_LIB)
       # Download Test TFLite model
       file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
@@ -487,14 +513,6 @@ if(NOT(AAR_BUILD))
         6746c34f54aad3df24d9fc5f632ebd9dfc64ed69
       )
   endif() # WITH_HEXAGON
-  if(WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON)
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
-        ./cat224-3.txt
-        SHA1
-        e35e82f3371bed37caa7ecece417f50876414077
-      )
-  endif() # WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON
 endif()
 # Group sources
 #auto_source_group("${SOURCES}")
