@@ -34,7 +34,7 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
     ListDir(dir, paths_vec);
   }
   for (auto filename : paths_vec) {
-    if (EndsWith(filename, LIBEXT)) {
+    if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
     } else if (filename == "version.json") {
       paths.ver_json = filename;

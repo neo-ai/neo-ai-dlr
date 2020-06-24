@@ -19,13 +19,16 @@
 
 #endif
 
-/* OS-specific library file extension */
+/* OS-specific library file extension and the name of the generated dynamic library*/
 #ifdef _WIN32
 #define LIBEXT ".dll"
+#define LIBDLR "dlr.dll"
 #elif __APPLE__
 #define LIBEXT ".dylib"
+#define LIBDLR "libdlr.dylib"
 #else
 #define LIBEXT ".so"
+#define LIBDLR "libdlr.so"
 #endif
 
 namespace dlr {
