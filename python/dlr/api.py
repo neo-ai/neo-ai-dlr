@@ -51,6 +51,24 @@ def _is_module_found(name):
 # Wrapper class
 class DLRModel(IDLRModel):
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
+        """
+        Load a Neo-compiled model.
+
+        Parameters
+        ----------
+        model_path : str
+            Full path to the directory containing the compiled model artifacts (.so, .params, .json)
+        dev_type : str
+            Device type ('cpu', 'gpu', or 'opencl')
+        dev_id : int (optional)
+            Device ID. Default is 0.
+        error_log_file: str (optional)
+            File to log errors to.
+        use_default_dlr: bool
+            DLR will load libdlr.so from the compiled model artifacts if it is available. This
+            setting can override that behavior to use the system installed DLR when use_default_dlr
+            is True.
+        """
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
@@ -85,6 +103,26 @@ class DLRModel(IDLRModel):
             raise ex
 
     def run(self, input_values):
+        """
+        Run inference with given input(s)
+
+        Parameters
+        ----------
+        input_values : a single :py:class:`numpy.ndarray` or a dictionary
+            For decision tree models, provide a single :py:class:`numpy.ndarray`
+            to indicate a single input, as decision trees always accept only one
+            input.
+
+            For deep learning models, provide a dictionary where keys are input
+            names (of type :py:class:`str`) and values are input tensors (of type
+            :py:class:`numpy.ndarray`). Deep learning models allow more than one
+            input, so each input must have a unique name.
+
+        Returns
+        -------
+        out : :py:class:`numpy.ndarray`
+            Prediction result
+        """
         try:
             return self._impl.run(input_values)
         except Exception as ex:
@@ -92,6 +130,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input_names(self):
+        """
+        Get all input names
+
+        Returns
+        -------
+        out : list of :py:class:`str`
+        """
         try:
             return self._impl.get_input_names()
         except Exception as ex:
@@ -99,6 +144,17 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input(self, name, shape=None):
+        """
+        Get the current value of an input.
+
+        Parameters
+        ----------
+        name : str
+            The name of an input
+        shape : np.array (optional)
+            If given, use as the shape of the returned array. Otherwise, the shape of
+            the returned array will be inferred from the last call to set_input().
+        """
         try:
             return self._impl.get_input(name, shape)
         except Exception as ex:
@@ -106,6 +162,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_output_names(self):
+        """
+        Get all output names. Only valid when the model has a metadata file.
+
+        Returns
+        -------
+        names : list of :py:class:`str`
+        """
         try:
             return self._impl.get_output_names()
         except Exception as ex:
@@ -113,6 +176,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_version(self):
+        """
+        Get version of loaded DLR library.
+
+        Returns
+        -------
+        version : str "{major}.{minor}.{patch}"
+        """
         try:
             return self._impl.get_version()
         except Exception as ex:
@@ -120,6 +190,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def has_metadata(self):
+        """
+        Whether the model has a metadata file which provides additional information such as output names.
+
+        Returns
+        -------
+        has_metadata : bool
+        """
         try:
             return self._impl.has_metadata()
         except Exception as ex:
@@ -127,6 +204,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input_dtypes(self):
+        """
+        Get datatype of all inputs.
+
+        Returns
+        -------
+        dtypes : list of :py:class:`str`
+        """
         try:
             return self._impl.get_input_dtypes()
         except Exception as ex:
@@ -134,6 +218,13 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_output_dtypes(self):
+        """
+        Get datatype of all outputs.
+
+        Returns
+        -------
+        dtypes : list of :py:class:`str`
+        """
         try:
             return self._impl.get_output_dtypes()
         except Exception as ex:
@@ -141,6 +232,18 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input_name(self, index):
+        """
+        Get the name of the input at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the input
+
+        Returns
+        -------
+        name : str
+        """
         try:
             return self._impl.get_input_name(index)
         except Exception as ex:
@@ -148,6 +251,18 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_output_name(self, index):
+        """
+        Get the name of the output at the given index. Only valid when the model has a metadata file.
+
+        Parameters
+        ----------
+        index : int
+            Index of the input
+
+        Returns
+        -------
+        name : str
+        """
         try:
             return self._impl.get_output_name(index)
         except Exception as ex:
@@ -155,6 +270,18 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_input_dtype(self, index):
+        """
+        Get the type of the input at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the input
+
+        Returns
+        -------
+        type : str
+        """
         try:
             return self._impl.get_input_dtype(index)
         except Exception as ex:
@@ -162,9 +289,20 @@ class DLRModel(IDLRModel):
             raise ex
 
     def get_output_dtype(self, index):
+        """
+        Get the type of the output at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index of the input
+
+        Returns
+        -------
+        type : str
+        """
         try:
             return self._impl.get_output_dtype(index)
         except Exception as ex:
             self.neo_logger.exception("error in getting output data type {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
-
