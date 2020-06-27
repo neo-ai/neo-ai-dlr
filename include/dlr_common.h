@@ -31,6 +31,12 @@
 #define LIBDLR "libdlr.so"
 #endif
 
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
+
 namespace dlr {
 
 /* The following file names are reserved by SageMaker and should not be used
@@ -79,7 +85,7 @@ DLRBackend GetBackend(std::vector<std::string> dirname);
       << (msg) << ". Value read: " << (value) << ", Expected: " << (expected);
 
 // Abstract class
-class DLRModel {
+class DLR_DLL DLRModel {
  protected:
   std::string version_;
   DLRBackend backend_;
@@ -106,9 +112,11 @@ class DLRModel {
   virtual int GetNumOutputs() { return num_outputs_; }
   virtual const char* GetOutputName(const int index) const { 
     LOG(ERROR) << "GetOutputName is not supported yet!";
+    return NULL;
   }
   virtual int GetOutputIndex(const char* name) const { 
     LOG(ERROR) << "GetOutputName is not supported yet!";
+    return -1;
   }
   virtual const char* GetOutputType(int index) const = 0;
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
