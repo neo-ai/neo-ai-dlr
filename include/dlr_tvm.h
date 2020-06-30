@@ -3,7 +3,7 @@
 
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
-#include "dlr_common.h"
+#include "dlr_model.h"
 
 namespace dlr {
 
