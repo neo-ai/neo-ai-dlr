@@ -400,7 +400,6 @@ if(NOT(AAR_BUILD))
                     WORKING_DIRECTORY ${RESNET_MODEL})
     file(REMOVE /tmp/resnet_v1.5_50-ml_c4.tar.gz)
   endif()
-
   set(XGBOOST_TEST_MODEL ${CMAKE_CURRENT_BINARY_DIR}/xgboost_test)
   if(NOT IS_DIRECTORY ${XGBOOST_TEST_MODEL})
     file(MAKE_DIRECTORY ${XGBOOST_TEST_MODEL})
