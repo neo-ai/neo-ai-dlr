@@ -54,6 +54,11 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
+bool dlr::IsFileEmpty(const std::string& filePath) {
+  std::ifstream pFile(filePath);
+  return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
 void dlr::LoadJsonFromFile(const std::string& path,
                            nlohmann::json& jsonObject) {
   std::ifstream jsonFile(path);

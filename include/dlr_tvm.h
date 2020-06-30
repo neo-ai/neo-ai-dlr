@@ -9,7 +9,7 @@ namespace dlr {
 
 /*! \brief Get the paths of the TVM model files.
  */
-ModelPath GetTvmPaths(std::vector<std::string> tar_path);
+ModelArtifact GetTvmPaths(std::vector<std::string> tar_path);
 
 /*! \brief class TVMModel
  */
@@ -20,15 +20,16 @@ class TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
+  std::vector<std::string> model_paths_;
   nlohmann::json metadata;
-  void SetupTVMModule(std::vector<std::string> model_path);
+  void SetupTVMModule();
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(std::vector<std::string> model_path, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
-    SetupTVMModule(model_path);
+  explicit TVMModel(std::vector<std::string> model_paths, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTVM), model_paths_(model_paths) {
+    SetupTVMModule();
   }
 
   virtual const char* GetInputName(int index) const override;

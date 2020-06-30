@@ -27,8 +27,8 @@ std::string GetVersion(const std::string& json_path) {
   return version;
 }
 
-ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
-  ModelPath paths;
+ModelArtifact dlr::GetTreelitePaths(std::vector<std::string> dirname) {
+  ModelArtifact paths;
   std::vector<std::string> paths_vec;
   for (auto dir : dirname) {
     ListDir(dir, paths_vec);
@@ -51,7 +51,7 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
 }
 
 void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
-  ModelPath paths = GetTreelitePaths(model_path);
+  ModelArtifact paths = GetTreelitePaths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
   const char* val = std::getenv("OMP_NUM_THREADS");

@@ -7,8 +7,8 @@
 
 using namespace dlr;
 
-ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
-  ModelPath paths;
+ModelArtifact dlr::GetTvmPaths(std::vector<std::string> dirname) {
+  ModelArtifact paths;
   std::vector<std::string> paths_vec;
   for (auto dir : dirname) {
     ListDir(dir, paths_vec);
@@ -45,13 +45,8 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   return paths;
 }
 
-bool IsFileEmpty(const std::string& filePath) {
-  std::ifstream pFile(filePath);
-  return pFile.peek() == std::ifstream::traits_type::eof();
-}
-
-void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
-  ModelPath paths = GetTvmPaths(model_path);
+void TVMModel::SetupTVMModule() {
+  ModelArtifact paths = GetTvmPaths(model_paths_);
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();

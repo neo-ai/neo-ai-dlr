@@ -20,7 +20,7 @@ struct TreeliteInput {
 
 /*! \brief Get the paths of the Treelite model files.
  */
-ModelPath GetTreelitePaths(std::vector<std::string> dirname);
+ModelArtifact GetTreelitePaths(std::vector<std::string> dirname);
 
 /*! \brief class TreeliteModel
  */

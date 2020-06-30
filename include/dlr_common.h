@@ -44,9 +44,11 @@ typedef struct {
   std::string model_json;
   std::string ver_json;
   std::string metadata;
-} ModelPath;
+} ModelArtifact;
 
 void ListDir(const std::string &dirname, std::vector<std::string> &paths);
+
+bool IsFileEmpty(const std::string& filePath);
 
 std::string GetBasename(const std::string &path);
 
