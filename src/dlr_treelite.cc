@@ -6,54 +6,31 @@
 
 using namespace dlr;
 
-// not used (was used in SetupTreeliteModule)
-std::string GetVersion(const std::string& json_path) {
-  std::ifstream file(json_path);
-  bool colon_flag = false;
-  bool quote_flag = false;
-  std::string version = "";
-  if (file.is_open()) {
-    char c;
-    while (file.good()) {
-      c = file.get();
-      if (c == ':')
-        colon_flag = true;
-      else if (colon_flag && quote_flag && (c == '"'))
-        return version;
-      else if (colon_flag && quote_flag)
-        version.push_back(c);
-    }
-  }
-  return version;
-}
-
-ModelArtifact dlr::GetTreelitePaths(std::vector<std::string> dirname) {
-  ModelArtifact paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
+void TreeliteModel::InitModelArtifact(const std::vector<std::string> &paths) {
+  TreeliteModelArtifact artifact{};
+  std::vector<std::string> filenames = ListFilesInDirectories(paths);
+  for (auto filename : filenames) {
     if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
+      artifact.model_lib = filename;
     } else if (filename == "version.json") {
-      paths.ver_json = filename;
+      artifact.ver_json = filename;
     }
   }
-  if (paths.model_lib.empty()) {
+  if (artifact.model_lib.empty()) {
     LOG(INFO) << "No valid Treelite model files found under folder(s):";
-    for (auto dir : dirname) {
+    for (auto dir : paths) {
       LOG(INFO) << dir;
     }
     LOG(FATAL);
   }
-  return paths;
+
+  model_artifact_ = artifact;
 }
 
-void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
-  ModelArtifact paths = GetTreelitePaths(model_path);
+void TreeliteModel::SetupTreeliteModule() {
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
+  TreeliteModelArtifact& artifact = static_cast<TreeliteModelArtifact&>(model_artifact_);
   const char* val = std::getenv("OMP_NUM_THREADS");
   int num_worker_threads = (val ? std::atoi(val) : -1);
   num_inputs_ = 1;
@@ -61,7 +38,7 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   // Give a dummy input name to Treelite model.
   input_names_.push_back("data");
   input_types_.push_back("float32");
-  CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads,
+  CHECK_EQ(TreelitePredictorLoad(artifact.model_lib.c_str(), num_worker_threads,
                                  &treelite_model_),
            0)
       << TreeliteGetLastError();
@@ -89,7 +66,6 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
            0)
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
-  // version_ = GetVersion(paths.ver_json);
 }
 
 std::vector<std::string> TreeliteModel::GetWeightNames() const {
@@ -204,7 +180,6 @@ void TreeliteModel::Run() {
       << TreeliteGetLastError();
 }
 
-const char* TreeliteModel::GetBackend() const { return "treelite"; }
 
 void TreeliteModel::SetNumThreads(int threads) {
   LOG(FATAL) << "SetNumThreads is not supported by Treelite backend";

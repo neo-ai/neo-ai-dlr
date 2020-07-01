@@ -7,12 +7,13 @@
 
 namespace dlr {
 
-/*! \brief Get the paths of the TVM model files.
- */
-ModelArtifact GetTvmPaths(std::vector<std::string> tar_path);
+struct TVMModelArtifact: dlr::ModelArtifact {
+  std::string model_lib;
+  std::string params;
+  std::string model_json;
+};
 
-/*! \brief class TVMModel
- */
+
 class TVMModel : public DLRModel {
  private:
   tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
@@ -20,15 +21,16 @@ class TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  std::vector<std::string> model_paths_;
   nlohmann::json metadata;
+  void InitModelArtifact(const std::vector<std::string> &paths);
   void SetupTVMModule();
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(std::vector<std::string> model_paths, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM), model_paths_(model_paths) {
+  explicit TVMModel(std::vector<std::string> paths, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTVM) {
+    InitModelArtifact(paths);
     SetupTVMModule();
   }
 
@@ -44,7 +46,6 @@ class TVMModel : public DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 

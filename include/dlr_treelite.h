@@ -7,6 +7,10 @@
 
 namespace dlr {
 
+struct TreeliteModelArtifact: ModelArtifact {
+  std::string model_lib;
+};
+
 /*! \brief Structure to hold Treelite Input.
  */
 struct TreeliteInput {
@@ -17,10 +21,6 @@ struct TreeliteInput {
   size_t num_col;
   CSRBatchHandle handle;
 };
-
-/*! \brief Get the paths of the Treelite model files.
- */
-ModelArtifact GetTreelitePaths(std::vector<std::string> dirname);
 
 /*! \brief class TreeliteModel
  */
@@ -35,15 +35,17 @@ class TreeliteModel : public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float> treelite_output_;
-  void SetupTreeliteModule(std::vector<std::string> model_path);
+  void InitModelArtifact(const std::vector<std::string> &paths);
+  void SetupTreeliteModule();
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(std::vector<std::string> model_path,
+  explicit TreeliteModel(std::vector<std::string> paths,
                          const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTREELITE) {
-    SetupTreeliteModule(model_path);
+    InitModelArtifact(paths);
+    SetupTreeliteModule();
   }
 
   virtual const char* GetInputName(int index) const override;
@@ -58,7 +60,6 @@ class TreeliteModel : public DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 };

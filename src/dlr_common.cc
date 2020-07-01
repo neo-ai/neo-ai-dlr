@@ -42,8 +42,9 @@ std::string dlr::GetBasename(const std::string& path) {
 #endif
 }
 
-void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
-  dmlc::io::URI uri(dirname.c_str());
+std::vector<std::string> dlr::ListFilesInDirectory(const std::string& directory_path) {
+  std::vector<std::string> paths;
+  dmlc::io::URI uri(directory_path.c_str());
   dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
   std::vector<dmlc::io::FileInfo> file_list;
   fs->ListDirectory(uri, &file_list);
@@ -52,6 +53,16 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
       paths.push_back(info.path.name);
     }
   }
+  return paths;
+}
+
+std::vector<std::string> dlr::ListFilesInDirectories(const std::vector<std::string> &directory_paths) {
+  std::vector<std::string> paths;
+  for (auto dir : directory_paths) {
+    auto dir_paths = ListFilesInDirectory(dir);
+    paths.insert(paths.end(), dir_paths.begin(), dir_paths.end());
+  }
+  return paths;
 }
 
 bool dlr::IsFileEmpty(const std::string& filePath) {
@@ -70,22 +81,19 @@ void dlr::LoadJsonFromFile(const std::string& path,
   }
 }
 
-DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
+DLRBackend dlr::GetBackend(std::vector<std::string> directory_paths) {
   // Support the case where user provides full path to tflite file.
-  if (EndsWith(dir_paths[0], ".tflite")) {
+  if (EndsWith(directory_paths[0], ".tflite")) {
     return DLRBackend::kTFLITE;
   }
-  if (EndsWith(dir_paths[0], ".pb")) {
+  if (EndsWith(directory_paths[0], ".pb")) {
     return DLRBackend::kTENSORFLOW;
   }
-  if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
+  if (EndsWith(directory_paths[0], "_hexagon_model.so")) {
     return DLRBackend::kHEXAGON;
   }
   // Scan Directory content to guess the backend.
-  std::vector<std::string> paths;
-  for (auto dir : dir_paths) {
-    dlr::ListDir(dir, paths);
-  }
+  std::vector<std::string> paths = ListFilesInDirectories(directory_paths);
   for (auto filename : paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;

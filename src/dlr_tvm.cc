@@ -7,13 +7,10 @@
 
 using namespace dlr;
 
-ModelArtifact dlr::GetTvmPaths(std::vector<std::string> dirname) {
-  ModelArtifact paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
+void TVMModel::InitModelArtifact(const std::vector<std::string> &paths) {
+  TVMModelArtifact artifact{};
+  std::vector<std::string>filenames = ListFilesInDirectories(paths);
+  for (auto filename : filenames) {
     std::string basename = GetBasename(filename);
     if (EndsWith(filename, ".json") &&
         std::all_of(
@@ -21,46 +18,47 @@ ModelArtifact dlr::GetTvmPaths(std::vector<std::string> dirname) {
             std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
             [basename](const std::string& s) { return (s != basename); }) &&
         filename != "version.json") {
-      paths.model_json = filename;
+      artifact.model_json = filename;
     } else if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
+      artifact.model_lib = filename;
     } else if (EndsWith(filename, ".tensorrt")) {
-      paths.model_lib = filename;
+      artifact.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
-      paths.params = filename;
+      artifact.params = filename;
     } else if (filename == "version.json") {
-      paths.ver_json = filename;
+      artifact.ver_json = filename;
     } else if (EndsWith(filename, ".meta")) {
-      paths.metadata = filename;
+      artifact.metadata = filename;
     }
   }
-  if (paths.model_json.empty() || paths.model_lib.empty() ||
-      paths.params.empty()) {
+  if (artifact.model_json.empty() || artifact.model_lib.empty() ||
+      artifact.params.empty()) {
     LOG(INFO) << "No valid TVM model files found under folder:";
-    for (auto dir : dirname) {
+    for (auto dir : paths) {
       LOG(INFO) << dir;
     }
     LOG(FATAL);
   }
-  return paths;
+
+  model_artifact_ = artifact;
 }
 
 void TVMModel::SetupTVMModule() {
-  ModelArtifact paths = GetTvmPaths(model_paths_);
-  std::ifstream jstream(paths.model_json);
+  TVMModelArtifact& artifact = static_cast<TVMModelArtifact&>(model_artifact_);
+  std::ifstream jstream(artifact.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
+  std::ifstream pstream(artifact.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
   tvm::runtime::Module module;
-  if (!IsFileEmpty(paths.model_lib)) {
-    module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
+  if (!IsFileEmpty(artifact.model_lib)) {
+    module = tvm::runtime::Module::LoadFromFile(artifact.model_lib);
   }
-  if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
-    LOG(INFO) << "Loading metadata file: " << paths.metadata;
-    LoadJsonFromFile(paths.metadata, this->metadata);
+  if (!artifact.metadata.empty() && !IsFileEmpty(artifact.metadata)) {
+    LOG(INFO) << "Loading metadata file: " << artifact.metadata;
+    LoadJsonFromFile(artifact.metadata, this->metadata);
   } else {
     LOG(INFO) << "No metadata found";
   }
@@ -190,8 +188,6 @@ void TVMModel::Run() {
   tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
   run();
 }
-
-const char* TVMModel::GetBackend() const { return "tvm"; }
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

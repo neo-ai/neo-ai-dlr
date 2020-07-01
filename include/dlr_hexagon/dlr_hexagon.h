@@ -5,6 +5,11 @@
 
 namespace dlr {
 
+struct HexagonModelArtifact: ModelArtifact {
+  std::string model_file;
+  std::string skeleton_file;
+};
+
 /*! \brief Get the paths of the Hexagon model files.
  */
 std::string GetHexagonModelFile(const std::string& dirname);
@@ -22,18 +27,16 @@ typedef struct {
 /*! \brief class HexagonModel
  */
 class HexagonModel : public DLRModel {
+
+
  private:
   std::vector<HexagonTensorSpec> input_tensors_spec_;
   std::vector<HexagonTensorSpec> output_tensors_spec_;
-  void GenTensorSpec(bool isInput);
-  int GetInputId(const char* name);
-  void PrintHexagonNNLog();
-  int graph_id_;
-  uint8_t* input_;
-  uint8_t* output_;
-  int debug_level_;
-  char* log_buf_;
-  int log_buf_size_;
+  int graph_id_ = 0;
+  int debug_level_ = 0;
+  uint8_t* input_ = nullptr;
+  uint8_t* output_ = nullptr;
+  char* log_buf_ = nullptr;
 
   int (*dlr_hexagon_model_init)(int*, uint8_t**, uint8_t**, int);
   int (*dlr_hexagon_model_exec)(int, uint8_t*, uint8_t*);
@@ -42,6 +45,15 @@ class HexagonModel : public DLRModel {
   int (*dlr_hexagon_input_spec)(int, char**, int*, int**, int*, int*);
   int (*dlr_hexagon_output_spec)(int, char**, int*, int**, int*, int*);
 
+  void InitModelArtifact(const std::string &paths);
+  void LoadSymbols();
+  void InitHexagonModel();
+  void PrintHexagonNNLog();
+  void AllocateLogBuffer();
+  void GenTensorSpec(bool isInput);
+  void InitInputOutputTensorSpecs();
+  int GetInputId(const char* name);
+
  public:
   /*! \brief Load model files from given folder path.
    */
@@ -49,19 +61,24 @@ class HexagonModel : public DLRModel {
                         const int debug_level);
   ~HexagonModel();
 
+  static const int kLogBufferSize = 2*1024*1024;
+
+  virtual int GetNumInputs() const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
-  virtual const char* GetWeightName(int index) const override;
-  virtual std::vector<std::string> GetWeightNames() const override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
+
   virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  virtual const char* GetBackend() const override;
+
+  virtual const char* GetWeightName(int index) const override;
+  virtual std::vector<std::string> GetWeightNames() const override;
+
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 };

@@ -13,6 +13,7 @@ class DLRModel {
   size_t num_weights_ = 0;
   size_t num_outputs_ = 1;
   DLContext ctx_;
+  ModelArtifact model_artifact_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
 
@@ -50,11 +51,22 @@ class DLRModel {
   virtual const char *GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
 
-  virtual const char *GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const { return false; }
   virtual void UseCPUAffinity(bool use) = 0;
   virtual void Run() = 0;
+
+  virtual const char *GetBackend() const {
+    if (backend_ == DLRBackend::kTVM) {
+      return "tvm";
+    } else if (backend_ == DLRBackend::kTREELITE) {
+      return "treelite";
+    } else if (backend_ == DLRBackend::kTREELITE) {
+      return "hexagon";
+    } else {
+      LOG(FATAL) << "Unsupported DLRBackend!";
+    }
+  };
 };
 }  // namespace dlr
 

@@ -7,45 +7,38 @@
 
 using namespace dlr;
 
-std::string dlr::GetHexagonModelFile(const std::string& dirname) {
-  // Support the case where user provides full path to _hexagon_model.so file.
-  if (EndsWith(dirname, "_hexagon_model.so")) {
-    return dirname;
-  }
-  // Scan Dir to find _hexagon_model.so file
-  std::string hexagon_model_so_file;
-  std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
-  for (auto filename : paths_vec) {
-    std::string basename = GetBasename(filename);
-    if (EndsWith(basename, "_hexagon_model.so")) {
-      if (hexagon_model_so_file.empty()) {
-        hexagon_model_so_file = filename;
+// START - Helper functions for TVM Model
+void HexagonModel::InitModelArtifact(const std::string &path) {
+  HexagonModelArtifact artifact{};
+  std::vector<std::string>filenames = ListFilesInDirectory(path);
+  for (auto filename: filenames) {
+    if(EndsWith(filename, "_hexagon_model.so")) {
+      if (artifact.model_file.empty()) {
+        artifact.model_file = filename;
       } else {
         LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: "
-                   << dirname;
+                   << path;
       }
+    } else if (filename == "libhexagon_nn_skel.so") {
+      artifact.skeleton_file = filename;
     }
   }
-  if (hexagon_model_so_file.empty()) {
-    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << dirname;
-  }
-  return hexagon_model_so_file;
-}
 
-bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {
-  // Scan Dir to find libhexagon_nn_skel.so
-  std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
-  for (auto filename : paths_vec) {
-    std::string basename = GetBasename(filename);
-    if (basename == "libhexagon_nn_skel.so") {
-      return true;
-    }
+  if (artifact.model_file.empty()) {
+    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << path;
   }
-  LOG(INFO) << "libhexagon_nn_skel.so file is not found under folder: "
-            << dirname;
-  return false;
+
+  if (artifact.skeleton_file.empty()) {
+    LOG(INFO)
+        << "libhexagon_nn_skel.so file is not found. User needs to set "
+           "ADSP_LIBRARY_PATH to point to libhexagon_nn_skel.so file folder";
+  } else {
+    char* model_folder_abs = realpath(path.c_str(), NULL);
+    LOG(INFO) << "ADSP_LIBRARY_PATH=" << model_folder_abs;
+    setenv("ADSP_LIBRARY_PATH", model_folder_abs, 1);
+    free(model_folder_abs);
+  }
+  model_artifact_ = artifact;
 }
 
 void* dlr::FindSymbol(void* handle, const char* fn_name) {
@@ -56,19 +49,65 @@ void* dlr::FindSymbol(void* handle, const char* fn_name) {
   }
   return fn;
 }
+// END - Helper functions
+
+HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
+                           const int debug_level)
+    : DLRModel(ctx, DLRBackend::kHEXAGON) {
+  LOG(INFO) << "Initializing HexagonModel!";
+  debug_level_ = debug_level;
+  InitModelArtifact(model_path);
+  AllocateLogBuffer();
+  LoadSymbols();
+  InitHexagonModel();
+  InitInputOutputTensorSpecs();
+  LOG(INFO) << "HexagonModel was created!";
+}
+
+HexagonModel::~HexagonModel() {
+  if (graph_id_ != 0 && dlr_hexagon_model_close != nullptr) {
+    (*dlr_hexagon_model_close)(graph_id_);
+    input_ = nullptr;
+    output_ = nullptr;
+    graph_id_ = 0;
+  }
+  if (log_buf_ != nullptr) {
+    delete[] log_buf_;
+    log_buf_ = nullptr;
+  }
+  LOG(INFO) << "HexagonModel was deleted";
+}
+
+void HexagonModel::InitHexagonModel() {
+  int err = (*dlr_hexagon_model_init)(&graph_id_, &input_, &output_, debug_level_);
+  if (err != 0) {
+    PrintHexagonNNLog();
+    LOG(FATAL) << "dlr_hexagon_model_init failed: " << err;
+    return;  // unreachable
+  }
+  PrintHexagonNNLog();
+}
 
 void HexagonModel::PrintHexagonNNLog() {
   int err = (*dlr_hexagon_nn_getlog)(graph_id_, (unsigned char*)log_buf_,
-                                     log_buf_size_);
+                                     kLogBufferSize);
   if (err == 0) {
     LOG(INFO) << log_buf_;
+  }
+}
+
+void HexagonModel::AllocateLogBuffer() {
+  log_buf_ = new char[kLogBufferSize];
+  if (log_buf_ == nullptr) {
+    LOG(FATAL) << "Can not allocate print buffer, size: " << kLogBufferSize;
+    return;  // unreachable
   }
 }
 
 void HexagonModel::GenTensorSpec(bool isInput) {
   int err = 0;
   int id = 0;
-  char* name = NULL;
+  char* name = nullptr;
   int dim = 0;
   int* shape = NULL;
   int length = 0;
@@ -102,6 +141,16 @@ void HexagonModel::GenTensorSpec(bool isInput) {
   }
 }
 
+void HexagonModel::InitInputOutputTensorSpecs() {
+  // Save the number of inputs
+  GenTensorSpec(true /*isInput*/);
+  num_inputs_ = input_tensors_spec_.size();
+
+  // Save the number of outputs
+  GenTensorSpec(false /*isInput*/);
+  num_outputs_ = output_tensors_spec_.size();
+}
+
 int HexagonModel::GetInputId(const char* name) {
   // In most of the cases it will be just 1 element in the vector.
   // Scan vector to find tensor by name.
@@ -114,25 +163,10 @@ int HexagonModel::GetInputId(const char* name) {
   return -1;  // unreachable
 }
 
-// Constructor
-HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
-                           const int debug_level)
-    : DLRModel(ctx, DLRBackend::kHEXAGON) {
-  const std::string model_so_file = GetHexagonModelFile(model_path);
-  LOG(INFO) << "Model: " << model_so_file;
-  const std::string model_folder = GetParentFolder(model_so_file);
-  if (FindHexagonNNSkelFile(model_folder)) {
-    char* model_folder_abs = realpath(model_folder.c_str(), NULL);
-    LOG(INFO) << "ADSP_LIBRARY_PATH=" << model_folder_abs;
-    setenv("ADSP_LIBRARY_PATH", model_folder_abs, 1);
-    free(model_folder_abs);
-  } else {
-    LOG(INFO)
-        << "libhexagon_nn_skel.so file is not found. User needs to set "
-           "ADSP_LIBRARY_PATH to point to libhexagon_nn_skel.so file folder";
-  }
+void HexagonModel::LoadSymbols() {
+  HexagonModelArtifact& artifact = static_cast<HexagonModelArtifact&>(model_artifact_);
 
-  void* handle = dlopen(model_so_file.c_str(), RTLD_NOW | RTLD_LOCAL);
+  void* handle = dlopen(artifact.model_file.c_str(), RTLD_NOW | RTLD_LOCAL);
   if (!handle) {
     LOG(FATAL) << "Model file open error: " << dlerror();
     return;  // unreachable
@@ -150,52 +184,6 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
       FindSymbol(handle, "dlr_hexagon_input_spec");
   *(void**)(&dlr_hexagon_output_spec) =
       FindSymbol(handle, "dlr_hexagon_output_spec");
-
-  graph_id_ = 0;
-  input_ = NULL;
-  output_ = NULL;
-  log_buf_ = NULL;
-  debug_level_ = debug_level;
-  int err = 0;
-  log_buf_size_ = 2 * 1024 * 1024;
-  log_buf_ = new char[log_buf_size_];
-  if (log_buf_ == NULL) {
-    LOG(FATAL) << "Can not allocate print buffer, size: " << log_buf_size_;
-    return;  // unreachable
-  }
-
-  err = (*dlr_hexagon_model_init)(&graph_id_, &input_, &output_, debug_level_);
-  if (err != 0) {
-    PrintHexagonNNLog();
-    LOG(FATAL) << "dlr_hexagon_model_init failed: " << err;
-    return;  // unreachable
-  }
-  PrintHexagonNNLog();
-
-  // Save the number of inputs
-  GenTensorSpec(true /*isInput*/);
-  num_inputs_ = input_tensors_spec_.size();
-
-  // Save the number of outputs
-  GenTensorSpec(false /*isInput*/);
-  num_outputs_ = output_tensors_spec_.size();
-
-  LOG(INFO) << "HexagonModel was created";
-}
-
-// Destructor
-HexagonModel::~HexagonModel() {
-  if (graph_id_ != 0 && dlr_hexagon_model_close != NULL) {
-    (*dlr_hexagon_model_close)(graph_id_);
-    input_ = NULL;
-    output_ = NULL;
-    graph_id_ = 0;
-  }
-  if (log_buf_ != NULL) {
-    delete[] log_buf_;
-    log_buf_ = NULL;
-  }
-  LOG(INFO) << "HexagonModel was deleted";
 }
 
 std::vector<std::string> HexagonModel::GetWeightNames() const {
@@ -267,8 +255,6 @@ void HexagonModel::Run() {
     return;  // unreachable
   }
 }
-
-const char* HexagonModel::GetBackend() const { return "hexagon"; }
 
 void HexagonModel::SetNumThreads(int threads) {
   LOG(FATAL) << "SetNumThreads is not supported by Hexagon backend";

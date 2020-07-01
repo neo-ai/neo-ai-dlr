@@ -38,17 +38,16 @@ namespace dlr {
 constexpr const char *SAGEMAKER_AUXILIARY_JSON_FILES[] = {"model-shapes.json",
                                                           "hyperparams.json"};
 
-typedef struct {
-  std::string model_lib;
-  std::string params;
-  std::string model_json;
+struct ModelArtifact{
   std::string ver_json;
   std::string metadata;
-} ModelArtifact;
-
-void ListDir(const std::string &dirname, std::vector<std::string> &paths);
+};
 
 bool IsFileEmpty(const std::string& filePath);
+
+std::vector<std::string> ListFilesInDirectory(const std::string &directory_path);
+
+std::vector<std::string> ListFilesInDirectories(const std::vector<std::string> &directory_paths);
 
 std::string GetBasename(const std::string &path);
 
