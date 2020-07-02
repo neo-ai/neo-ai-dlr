@@ -79,6 +79,7 @@ void dlr::LoadJsonFromFile(const std::string& path,
     LOG(INFO) << "Failed to load metadata file";
     jsonObject = nullptr;
   }
+  jsonFile.close();
 }
 
 DLRBackend dlr::GetBackend(std::vector<std::string> directory_paths) {

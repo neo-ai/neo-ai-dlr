@@ -35,6 +35,7 @@ class TreeliteModel : public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float> treelite_output_;
+  TreeliteModelArtifact model_artifact_;
   void InitModelArtifact(const std::vector<std::string> &paths);
   void SetupTreeliteModule();
 

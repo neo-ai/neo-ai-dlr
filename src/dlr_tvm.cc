@@ -8,7 +8,7 @@
 using namespace dlr;
 
 void TVMModel::InitModelArtifact(const std::vector<std::string> &paths) {
-  TVMModelArtifact artifact{};
+  model_artifact_ = {};
   std::vector<std::string>filenames = ListFilesInDirectories(paths);
   for (auto filename : filenames) {
     std::string basename = GetBasename(filename);
@@ -18,81 +18,85 @@ void TVMModel::InitModelArtifact(const std::vector<std::string> &paths) {
             std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
             [basename](const std::string& s) { return (s != basename); }) &&
         filename != "version.json") {
-      artifact.model_json = filename;
+      model_artifact_.model_json = filename;
     } else if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
-      artifact.model_lib = filename;
+      model_artifact_.model_lib = filename;
     } else if (EndsWith(filename, ".tensorrt")) {
-      artifact.model_lib = filename;
+      model_artifact_.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
-      artifact.params = filename;
+      model_artifact_.params = filename;
     } else if (filename == "version.json") {
-      artifact.ver_json = filename;
+      model_artifact_.ver_json = filename;
     } else if (EndsWith(filename, ".meta")) {
-      artifact.metadata = filename;
+      model_artifact_.metadata = filename;
     }
   }
-  if (artifact.model_json.empty() || artifact.model_lib.empty() ||
-      artifact.params.empty()) {
+  if (model_artifact_.model_json.empty() || model_artifact_.model_lib.empty() ||
+      model_artifact_.params.empty()) {
     LOG(INFO) << "No valid TVM model files found under folder:";
     for (auto dir : paths) {
       LOG(INFO) << dir;
     }
     LOG(FATAL);
   }
-
-  model_artifact_ = artifact;
 }
 
-void TVMModel::SetupTVMModule() {
-  TVMModelArtifact& artifact = static_cast<TVMModelArtifact&>(model_artifact_);
-  std::ifstream jstream(artifact.model_json);
+void TVMModel::SetupTvmGraphRuntimeAndModule() {
+  std::ifstream jstream(model_artifact_.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(artifact.params, std::ios::in | std::ios::binary);
+  std::ifstream pstream(model_artifact_.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
   tvm::runtime::Module module;
-  if (!IsFileEmpty(artifact.model_lib)) {
-    module = tvm::runtime::Module::LoadFromFile(artifact.model_lib);
-  }
-  if (!artifact.metadata.empty() && !IsFileEmpty(artifact.metadata)) {
-    LOG(INFO) << "Loading metadata file: " << artifact.metadata;
-    LoadJsonFromFile(artifact.metadata, this->metadata);
-  } else {
-    LOG(INFO) << "No metadata found";
+  if (!IsFileEmpty(model_artifact_.model_lib)) {
+    module = tvm::runtime::Module::LoadFromFile(model_artifact_.model_lib);
   }
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
 
-  tvm_module_ = std::make_shared<tvm::runtime::Module>(
-      tvm::runtime::Module(tvm_graph_runtime_));
+  tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));
+}
 
+void TVMModel::LoadModelMetadata() {
+  if (!model_artifact_.metadata.empty() && !IsFileEmpty(model_artifact_.metadata)) {
+    LOG(INFO) << "Loading metadata file: " << model_artifact_.metadata;
+    LoadJsonFromFile(model_artifact_.metadata, this->metadata);
+  } else {
+    LOG(INFO) << "No metadata found";
+  }
+}
+
+void TVMModel::FetchInputAndWeightNodesData() {
   // This is the combined count of inputs and weights
-  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
-  std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_weights; i++) {
-    input_names.push_back(tvm_graph_runtime_->GetInputName(i));
+  const auto num_input_and_weight_nodes = tvm_graph_runtime_->NumInputs();
+  std::vector<std::string> input_and_weight_node_names;
+  for (int i = 0; i < num_input_and_weight_nodes; i++) {
+    input_and_weight_node_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
   // Get list of weights
   weight_names_ = tvm_graph_runtime_->GetWeightNames();
   num_weights_ = weight_names_.size();
-  // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
+  // tvm_graph_runtime_.GetInputName(*) returns both inputs and weights
   // Compute set difference to get names of inputs only
-  std::sort(input_names.begin(), input_names.end());
+  std::sort(input_and_weight_node_names.begin(), input_and_weight_node_names.end());
   std::sort(weight_names_.begin(), weight_names_.end());
-  std::set_difference(input_names.begin(), input_names.end(),
+  std::set_difference(input_and_weight_node_names.begin(), input_and_weight_node_names.end(),
                       weight_names_.begin(), weight_names_.end(),
                       std::inserter(input_names_, input_names_.begin()));
   // Save the number of inputs
   num_inputs_ = input_names_.size();
   input_types_.resize(num_inputs_);
   for (int i = 0; i < num_inputs_; i++) {
-    input_types_[i] = tvm_graph_runtime_->GetInputType(i);
+    int input_index = tvm_graph_runtime_->GetInputIndex(input_names_[i]);
+    input_types_[i] = tvm_graph_runtime_->GetInputType(input_index);
   }
+}
 
+void TVMModel::FetchOutputNodesData() {
   // Get the number of output and reserve space to save output tensor
   // pointers.
   num_outputs_ = tvm_graph_runtime_->NumOutputs();
@@ -103,6 +107,11 @@ void TVMModel::SetupTVMModule() {
     outputs_[i] = output.operator->();
     output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
   }
+}
+
+void TVMModel::FetchModelNodesData() {
+  FetchInputAndWeightNodesData();
+  FetchOutputNodesData();
 }
 
 std::vector<std::string> TVMModel::GetWeightNames() const {
@@ -126,8 +135,8 @@ const char* TVMModel::GetWeightName(int index) const {
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) {
-  std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
+  std::string node_name(name);
+  int index = tvm_graph_runtime_->GetInputIndex(node_name);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
   input_tensor.ctx = DLContext{kDLCPU, 0};
@@ -139,12 +148,12 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
       std::multiplies<int64_t>());
   CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
   tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
-  set_input(str, &input_tensor);
+  set_input(node_name, &input_tensor);
 }
 
 void TVMModel::GetInput(const char* name, void* input) {
-  std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
+  std::string node_name(name);
+  int index = tvm_graph_runtime_->GetInputIndex(node_name);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor;
   input_tensor.data = input;
@@ -160,6 +169,10 @@ void TVMModel::GetInput(const char* name, void* input) {
 void TVMModel::GetOutputShape(int index, int64_t* shape) const {
   std::memcpy(shape, outputs_[index]->shape,
               sizeof(int64_t) * outputs_[index]->ndim);
+}
+
+tvm::runtime::NDArray TVMModel::GetOutput(int index) {
+  return tvm_graph_runtime_->GetOutput(index);
 }
 
 void TVMModel::GetOutput(int index, void* out) {
@@ -185,8 +198,7 @@ const char* TVMModel::GetOutputType(int index) const {
 }
 
 void TVMModel::Run() {
-  tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
-  run();
+  tvm_graph_runtime_->Run();
 }
 
 static inline int SetEnv(const char* key, const char* value) {

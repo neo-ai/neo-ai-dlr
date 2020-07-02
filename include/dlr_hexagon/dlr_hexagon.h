@@ -45,6 +45,8 @@ class HexagonModel : public DLRModel {
   int (*dlr_hexagon_input_spec)(int, char**, int*, int**, int*, int*);
   int (*dlr_hexagon_output_spec)(int, char**, int*, int**, int*, int*);
 
+  HexagonModelArtifact model_artifact_;
+
   void InitModelArtifact(const std::string &paths);
   void LoadSymbols();
   void InitHexagonModel();

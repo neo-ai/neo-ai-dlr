@@ -21,9 +21,14 @@ class TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
+  TVMModelArtifact model_artifact_;
   nlohmann::json metadata;
   void InitModelArtifact(const std::vector<std::string> &paths);
-  void SetupTVMModule();
+  void SetupTvmGraphRuntimeAndModule();
+  void LoadModelMetadata();
+  void FetchModelNodesData();
+  void FetchInputAndWeightNodesData();
+  void FetchOutputNodesData();
 
  public:
   /*! \brief Load model files from given folder path.
@@ -31,7 +36,9 @@ class TVMModel : public DLRModel {
   explicit TVMModel(std::vector<std::string> paths, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     InitModelArtifact(paths);
-    SetupTVMModule();
+    SetupTvmGraphRuntimeAndModule();
+    LoadModelMetadata();
+    FetchModelNodesData();
   }
 
   virtual const char* GetInputName(int index) const override;
@@ -42,6 +49,8 @@ class TVMModel : public DLRModel {
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
   virtual void Run() override;
+
+  tvm::runtime::NDArray GetOutput(int index);
   virtual void GetOutput(int index, void* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;

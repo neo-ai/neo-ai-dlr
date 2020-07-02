@@ -13,7 +13,6 @@ class DLRModel {
   size_t num_weights_ = 0;
   size_t num_outputs_ = 1;
   DLContext ctx_;
-  ModelArtifact model_artifact_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
 
