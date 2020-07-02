@@ -59,13 +59,19 @@ class HexagonModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit HexagonModel(const std::string& model_path, const DLContext& ctx,
-                        const int debug_level);
+  explicit HexagonModel(const std::string& model_path, const DLContext& ctx, const int debug_level)
+      : DLRModel(ctx, DLRBackend::kHEXAGON), debug_level_(debug_level) {
+    InitModelArtifact(model_path);
+    AllocateLogBuffer();
+    LoadSymbols();
+    InitHexagonModel();
+    InitInputOutputTensorSpecs();
+  }
+
   ~HexagonModel();
 
   static const int kLogBufferSize = 2*1024*1024;
 
-  virtual int GetNumInputs() const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
   virtual void GetInput(const char* name, void* input) override;

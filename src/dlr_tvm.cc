@@ -171,10 +171,6 @@ void TVMModel::GetOutputShape(int index, int64_t* shape) const {
               sizeof(int64_t) * outputs_[index]->ndim);
 }
 
-tvm::runtime::NDArray TVMModel::GetOutput(int index) {
-  return tvm_graph_runtime_->GetOutput(index);
-}
-
 void TVMModel::GetOutput(int index, void* out) {
   DLTensor output_tensor = *outputs_[index];
   output_tensor.ctx = DLContext{kDLCPU, 0};

@@ -63,7 +63,7 @@ class DLRModel {
     } else if (backend_ == DLRBackend::kTREELITE) {
       return "hexagon";
     } else {
-      LOG(FATAL) << "Unsupported DLRBackend!";
+      LOG(ERROR) << "Unsupported DLRBackend!";
     }
   };
 };

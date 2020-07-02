@@ -27,17 +27,18 @@ struct TreeliteInput {
 class TreeliteModel : public DLRModel {
  private:
   // fields for Treelite model
-  PredictorHandle treelite_model_;
-  size_t treelite_num_feature_;
+  PredictorHandle model_;
+  size_t num_of_input_features_;
   // size of temporary buffer per instance
-  size_t treelite_output_buffer_size_;
+  size_t output_buffer_size_;
   // size of output per instance
-  size_t treelite_output_size_;
-  std::unique_ptr<TreeliteInput> treelite_input_;
-  std::vector<float> treelite_output_;
+  size_t output_size_;
+  std::unique_ptr<TreeliteInput> input_ = nullptr;
+  std::vector<float> output_ =  {};
   TreeliteModelArtifact model_artifact_;
   void InitModelArtifact(const std::vector<std::string> &paths);
-  void SetupTreeliteModule();
+  void SetupTreeliteModel();
+  void FetchModelNodesData();
 
  public:
   /*! \brief Load model files from given folder path.
@@ -46,7 +47,8 @@ class TreeliteModel : public DLRModel {
                          const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTREELITE) {
     InitModelArtifact(paths);
-    SetupTreeliteModule();
+    SetupTreeliteModel();
+    FetchModelNodesData();
   }
 
   virtual const char* GetInputName(int index) const override;
