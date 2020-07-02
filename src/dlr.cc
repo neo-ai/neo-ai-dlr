@@ -329,9 +329,9 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
 
 extern "C" int GetDLRVersion(const char** out) {
   API_BEGIN();
-  std::string version_str = std::to_string(DLR_MAJOR) + "." +
-                            std::to_string(DLR_MINOR) + "." +
-                            std::to_string(DLR_PATCH);
+  static const std::string version_str = std::to_string(DLR_MAJOR) + "." +
+                                         std::to_string(DLR_MINOR) + "." +
+                                         std::to_string(DLR_PATCH);
   *out = version_str.c_str();
   API_END();
 }
