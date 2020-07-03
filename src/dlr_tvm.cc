@@ -114,23 +114,19 @@ void TVMModel::FetchModelNodesData() {
   FetchOutputNodesData();
 }
 
-std::vector<std::string> TVMModel::GetWeightNames() const {
-  return tvm_graph_runtime_->GetWeightNames();
-}
-
-const char* TVMModel::GetInputName(int index) const {
+const std::string& TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_names_[index].c_str();
+  return input_names_[index];
 }
 
-const char* TVMModel::GetInputType(int index) const {
+const std::string& TVMModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_types_[index].c_str();
+  return input_types_[index];
 }
 
-const char* TVMModel::GetWeightName(int index) const {
+const std::string& TVMModel::GetWeightName(int index) const {
   CHECK_LT(index, num_weights_) << "Weight index is out of range.";
-  return weight_names_[index].c_str();
+  return weight_names_[index];
 }
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
@@ -188,9 +184,9 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *dim = tensor->ndim;
 }
 
-const char* TVMModel::GetOutputType(int index) const {
+const std::string& TVMModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  return output_types_[index].c_str();
+  return output_types_[index];
 }
 
 void TVMModel::Run() {
@@ -224,7 +220,7 @@ void TVMModel::UseCPUAffinity(bool use) {
 
 bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
 
-const char* TVMModel::GetOutputName(const int index) const {
+const std::string& TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
     throw dmlc::Error("No metadata file was found!");
   }
@@ -233,8 +229,7 @@ const char* TVMModel::GetOutputName(const int index) const {
         .at("Outputs")
         .at(index)
         .at("name")
-        .get_ref<const std::string&>()
-        .c_str();
+        .get_ref<const std::string&>();
   } catch (nlohmann::json::out_of_range& e) {
     LOG(ERROR) << e.what();
     std::string msg = "Output node with index";
@@ -249,7 +244,7 @@ int TVMModel::GetOutputIndex(const char* name) const {
     throw dmlc::Error("No metadata file was found!");
   }
   for (int i = 0; i < this->num_outputs_; i++) {
-    const char* output_name = GetOutputName(i);
+    const char* output_name = GetOutputName(i).c_str();
     if (output_name == nullptr) return -1;
     if (strcmp(output_name, name) == 0) {
       return i;

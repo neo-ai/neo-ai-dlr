@@ -16,10 +16,10 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
   EXPECT_EQ(model.HasMetadata(), true);
-  EXPECT_STREQ(model.GetOutputName(0), "ArgMax:0");
-  EXPECT_STREQ(model.GetOutputType(0), "int32");
-  EXPECT_STREQ(model.GetOutputName(1), "softmax_tensor:0");
-  EXPECT_STREQ(model.GetOutputType(1), "float32");
+  EXPECT_EQ(model.GetOutputName(0), "ArgMax:0");
+  EXPECT_EQ(model.GetOutputType(0), "int32");
+  EXPECT_EQ(model.GetOutputName(1), "softmax_tensor:0");
+  EXPECT_EQ(model.GetOutputType(1), "float32");
 
   const int batch_size = 1;
   size_t img_size = 224*224*3;
@@ -38,7 +38,7 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   float* output1[output_size];
   float* output2[output_size];
   EXPECT_NO_THROW(model.GetOutput(index, output1));
-  EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index), output2));
+  EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index).c_str(), output2));
   EXPECT_EQ(output1[0], output2[0]);
 
   try {

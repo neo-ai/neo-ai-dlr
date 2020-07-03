@@ -45,11 +45,11 @@ class TreeliteTest : public ::testing::Test {
 TEST_F(TreeliteTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
 TEST_F(TreeliteTest, TestGetInputName) {
-  EXPECT_STREQ(model->GetInputName(0), "data");
+  EXPECT_EQ(model->GetInputName(0), "data");
 }
 
 TEST_F(TreeliteTest, TestGetInputType) {
-  EXPECT_STREQ(model->GetInputType(0), "float32");
+  EXPECT_EQ(model->GetInputType(0), "float32");
 }
 
 TEST_F(TreeliteTest, TestGetInput) {
@@ -68,7 +68,7 @@ TEST_F(TreeliteTest, TestGetNumOutputs) {
 }
 
 TEST_F(TreeliteTest, TestGetOutputType) {
-  EXPECT_STREQ(model->GetOutputType(0), "float32");
+  EXPECT_EQ(model->GetOutputType(0), "float32");
 }
 
 TEST_F(TreeliteTest, TestGetOutputShape) {

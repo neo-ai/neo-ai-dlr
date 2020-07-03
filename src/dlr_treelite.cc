@@ -6,6 +6,11 @@
 
 using namespace dlr;
 
+
+const std::string TreeliteModel::INPUT_NAME = "data";
+const std::string TreeliteModel::INPUT_TYPE = "float32";
+const std::string TreeliteModel::OUTPUT_TYPE = "float32";
+
 void TreeliteModel::InitModelArtifact(const std::vector<std::string> &paths) {
   model_artifact_ = {};
   std::vector<std::string> filenames = ListFilesInDirectories(paths);
@@ -61,21 +66,17 @@ void TreeliteModel::FetchModelNodesData() {
 }
 
 
-std::vector<std::string> TreeliteModel::GetWeightNames() const {
-  LOG(FATAL) << "GetWeightNames is not supported by Treelite backend";
-}
-
-const char* TreeliteModel::GetInputName(int index) const {
+const std::string& TreeliteModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return "data";
+  return INPUT_NAME;
 }
 
-const char* TreeliteModel::GetInputType(int index) const {
+const std::string& TreeliteModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return "float32";
+  return INPUT_TYPE;
 }
 
-const char* TreeliteModel::GetWeightName(int index) const {
+const std::string& TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
 }
 
@@ -154,9 +155,9 @@ void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *dim = 2;
 }
 
-const char* TreeliteModel::GetOutputType(int index) const {
+const std::string& TreeliteModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  return "float32";
+  return OUTPUT_TYPE;
 }
 
 void TreeliteModel::Run() {

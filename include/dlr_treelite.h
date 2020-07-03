@@ -26,6 +26,9 @@ struct TreeliteInput {
  */
 class TreeliteModel : public DLRModel {
  private:
+  static const std::string INPUT_NAME;
+  static const std::string INPUT_TYPE;
+  static const std::string OUTPUT_TYPE;
   // fields for Treelite model
   PredictorHandle model_;
   size_t num_of_input_features_;
@@ -51,20 +54,23 @@ class TreeliteModel : public DLRModel {
     FetchModelNodesData();
   }
 
-  virtual const char* GetInputName(int index) const override;
-  virtual const char* GetInputType(int index) const override;
-  virtual const char* GetWeightName(int index) const override;
-  virtual std::vector<std::string> GetWeightNames() const override;
+  virtual const std::string& GetInputName(int index) const override;
+  virtual const std::string& GetInputType(int index) const override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
-  virtual void Run() override;
+
+  virtual const std::string& GetOutputType(int index) const override;
   virtual void GetOutput(int index, void* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
-  virtual const char* GetOutputType(int index) const override;
+
+  virtual const std::string& GetWeightName(int index) const override;
+
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+
+  virtual void Run() override;
 };
 
 }  // namespace dlr

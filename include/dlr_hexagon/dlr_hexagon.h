@@ -72,8 +72,8 @@ class HexagonModel : public DLRModel {
 
   static const int kLogBufferSize = 2*1024*1024;
 
-  virtual const char* GetInputName(int index) const override;
-  virtual const char* GetInputType(int index) const override;
+  virtual const std::string& GetInputName(int index) const override;
+  virtual const std::string& GetInputType(int index) const override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
@@ -82,10 +82,9 @@ class HexagonModel : public DLRModel {
   virtual void GetOutput(int index, void* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
-  virtual const char* GetOutputType(int index) const override;
+  virtual const std::string& GetOutputType(int index) const override;
 
-  virtual const char* GetWeightName(int index) const override;
-  virtual std::vector<std::string> GetWeightNames() const override;
+  virtual const std::string& GetWeightName(int index) const override;
 
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;

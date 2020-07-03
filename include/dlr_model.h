@@ -23,21 +23,21 @@ class DLRModel {
 
   /* Input related functions */
   virtual int GetNumInputs() const { return num_inputs_; }
-  virtual const char *GetInputName(int index) const = 0;
-  virtual const char *GetInputType(int index) const = 0;
+  virtual const std::string& GetInputName(int index) const = 0;
+  virtual const std::string& GetInputType(int index) const = 0;
   virtual void GetInput(const char *name, void *input) = 0;
   virtual void SetInput(const char *name, const int64_t *shape, void *input,
                         int dim) = 0;
 
   /* Ouput related functions */
   virtual int GetNumOutputs() { return num_outputs_; }
-  virtual const char *GetOutputName(const int index) const {
+  virtual const std::string& GetOutputName(const int index) const {
     LOG(ERROR) << "GetOutputName is not supported yet!";
   }
   virtual int GetOutputIndex(const char *name) const {
     LOG(ERROR) << "GetOutputName is not supported yet!";
   }
-  virtual const char *GetOutputType(int index) const = 0;
+  virtual const std::string& GetOutputType(int index) const = 0;
   virtual void GetOutputShape(int index, int64_t *shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t *size, int *dim) = 0;
   virtual void GetOutput(int index, void *out) = 0;
@@ -47,15 +47,14 @@ class DLRModel {
 
   /* Weights releated functions */
   virtual int GetNumWeights() const { return num_weights_; }
-  virtual const char *GetWeightName(int index) const = 0;
-  virtual std::vector<std::string> GetWeightNames() const = 0;
+  virtual const std::string& GetWeightName(int index) const = 0;
 
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const { return false; }
   virtual void UseCPUAffinity(bool use) = 0;
   virtual void Run() = 0;
 
-  virtual const char *GetBackend() const {
+  virtual const std::string GetBackend() const {
     if (backend_ == DLRBackend::kTVM) {
       return "tvm";
     } else if (backend_ == DLRBackend::kTREELITE) {

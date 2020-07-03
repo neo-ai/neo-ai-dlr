@@ -34,7 +34,7 @@ extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *input_name = model->GetInputName(index);
+  *input_name = model->GetInputName(index).c_str();
   API_END();
 }
 
@@ -43,7 +43,7 @@ extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *input_type = model->GetInputType(index);
+  *input_type = model->GetInputType(index).c_str();
   API_END();
 }
 
@@ -52,7 +52,7 @@ extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *weight_name = model->GetWeightName(index);
+  *weight_name = model->GetWeightName(index).c_str();
   API_END();
 }
 
@@ -105,7 +105,7 @@ extern "C" int GetDLROutputType(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *output_type = model->GetOutputType(index);
+  *output_type = model->GetOutputType(index).c_str();
   API_END();
 }
 
@@ -129,9 +129,9 @@ extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const c
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *name = model->GetOutputName(index);
+  *name = model->GetOutputName(index).c_str();
   try {
-    *name = model->GetOutputName(index);
+    *name = model->GetOutputName(index).c_str();
   } catch (dmlc::Error& e) {
     LOG(ERROR) << e.what();
     return -1;
@@ -240,7 +240,7 @@ extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
-  *name = static_cast<DLRModel*>(*handle)->GetBackend();
+  *name = static_cast<DLRModel*>(*handle)->GetBackend().c_str();
   API_END();
 }
 

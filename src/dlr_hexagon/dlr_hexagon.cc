@@ -180,24 +180,17 @@ void HexagonModel::LoadSymbols() {
       FindSymbol(handle, "dlr_hexagon_output_spec");
 }
 
-std::vector<std::string> HexagonModel::GetWeightNames() const {
-  LOG(FATAL) << "GetWeightNames is not supported by Hexagon backend";
-  return std::vector<std::string>();  // unreachable
-}
-
-const char* HexagonModel::GetInputName(int index) const {
+const std::string& HexagonModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_names_[index].c_str();
+  return input_names_[index];
 }
 
-const char* HexagonModel::GetInputType(int index) const {
+const std::string& HexagonModel::GetInputType(int index) const {
   LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
-  return "";  // unreachable
 }
 
-const char* HexagonModel::GetWeightName(int index) const {
+const std::string& HexagonModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";
-  return "";  // unreachable
 }
 
 void HexagonModel::SetInput(const char* name, const int64_t* shape,
@@ -236,9 +229,8 @@ void HexagonModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *dim = output_tensors_spec_[index].dim;
 }
 
-const char* HexagonModel::GetOutputType(int index) const {
+const std::string& HexagonModel::GetOutputType(int index) const {
   LOG(FATAL) << "GetOutputType is not supported by Hexagon backend";
-  return "";  // unreachable
 }
 
 void HexagonModel::Run() {
@@ -246,7 +238,6 @@ void HexagonModel::Run() {
   // Invoke
   if (err != 0) {
     LOG(FATAL) << "Failed to exec hexagon model: " << err;
-    return;  // unreachable
   }
 }
 
