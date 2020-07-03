@@ -79,7 +79,7 @@ extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  model->GetOutputShape(index, shape);
+  shape = const_cast<int64_t*>(model->GetOutputShape(index).data());
   API_END();
 }
 
@@ -96,7 +96,8 @@ extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  model->GetOutputSizeDim(index, size, dim);
+  *size = model->GetOutputSize(index);
+  *dim = model->GetOutputDim(index);
   API_END();
 }
 

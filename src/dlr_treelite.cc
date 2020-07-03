@@ -65,6 +65,14 @@ void TreeliteModel::FetchModelNodesData() {
   CHECK_LE(output_size_, output_buffer_size_) << "Precondition violated";
 }
 
+void TreeliteModel::UpdateOutputShape() {
+  output_shape_.resize(2);
+  // Use -1 if input is yet unspecified and batch size is not known
+  output_shape_[0] = input_ ? static_cast<int64_t>(input_->num_row) : -1;
+  output_shape_[1] = static_cast<int64_t>(output_size_);
+}
+
+
 
 const std::string& TreeliteModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
@@ -130,11 +138,8 @@ void TreeliteModel::GetInput(const char* name, void* input) {
   LOG(FATAL) << "GetInput is not supported by Treelite backend";
 }
 
-void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
-  // Use -1 if input is yet unspecified and batch size is not known
-  shape[0] =
-      input_ ? static_cast<int64_t>(input_->num_row) : -1;
-  shape[1] = static_cast<int64_t>(output_size_);
+const std::vector<int64_t>& TreeliteModel::GetOutputShape(int index) const {
+  return output_shape_;
 }
 
 void TreeliteModel::GetOutput(int index, void* out) {
@@ -144,15 +149,18 @@ void TreeliteModel::GetOutput(int index, void* out) {
       sizeof(float) * (input_->num_row) * output_size_);
 }
 
-void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
+const int64_t TreeliteModel::GetOutputSize(int index) const {
   if (input_) {
-    *size =
-        static_cast<int64_t>(input_->num_row * output_size_);
+    return static_cast<int64_t>(input_->num_row * output_size_);
+        ;
   } else {
     // Input is yet unspecified and batch is not known
-    *size = output_size_;
+    return output_size_;
   }
-  *dim = 2;
+}
+
+const int TreeliteModel::GetOutputDim(int index) const {
+  return 2;
 }
 
 const std::string& TreeliteModel::GetOutputType(int index) const {

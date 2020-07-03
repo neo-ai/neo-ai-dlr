@@ -37,6 +37,7 @@ class HexagonModel : public DLRModel {
   uint8_t* input_ = nullptr;
   uint8_t* output_ = nullptr;
   char* log_buf_ = nullptr;
+  std::vector<std::vector<int64_t>> output_shapes_;
 
   int (*dlr_hexagon_model_init)(int*, uint8_t**, uint8_t**, int);
   int (*dlr_hexagon_model_exec)(int, uint8_t*, uint8_t*);
@@ -55,6 +56,7 @@ class HexagonModel : public DLRModel {
   void GenTensorSpec(bool isInput);
   void InitInputOutputTensorSpecs();
   int GetInputId(const char* name);
+  void UpdateOutputShapes();
 
  public:
   /*! \brief Load model files from given folder path.
@@ -66,6 +68,7 @@ class HexagonModel : public DLRModel {
     LoadSymbols();
     InitHexagonModel();
     InitInputOutputTensorSpecs();
+    UpdateOutputShapes();
   }
 
   ~HexagonModel();
@@ -78,16 +81,18 @@ class HexagonModel : public DLRModel {
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
 
-  virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;
-  virtual void GetOutputShape(int index, int64_t* shape) const override;
-  virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
+  virtual const std::vector<int64_t>& GetOutputShape(int index) const override;
+  virtual const int64_t GetOutputSize(int index) const override;
+  virtual const int GetOutputDim(int index) const override;
   virtual const std::string& GetOutputType(int index) const override;
 
   virtual const std::string& GetWeightName(int index) const override;
 
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+
+  virtual void Run() override;
 };
 
 }  // namespace dlr

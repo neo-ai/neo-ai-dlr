@@ -138,16 +138,6 @@ void HexagonModel::GenTensorSpec(bool isInput) {
   }
 }
 
-void HexagonModel::InitInputOutputTensorSpecs() {
-  // Save the number of inputs
-  GenTensorSpec(true /*isInput*/);
-  num_inputs_ = input_tensors_spec_.size();
-
-  // Save the number of outputs
-  GenTensorSpec(false /*isInput*/);
-  num_outputs_ = output_tensors_spec_.size();
-}
-
 int HexagonModel::GetInputId(const char* name) {
   // In most of the cases it will be just 1 element in the vector.
   // Scan vector to find tensor by name.
@@ -180,6 +170,25 @@ void HexagonModel::LoadSymbols() {
       FindSymbol(handle, "dlr_hexagon_output_spec");
 }
 
+void HexagonModel::InitInputOutputTensorSpecs() {
+  // Save the number of inputs
+  GenTensorSpec(true /*isInput*/);
+  num_inputs_ = input_tensors_spec_.size();
+
+  // Save the number of outputs
+  GenTensorSpec(false /*isInput*/);
+  num_outputs_ = output_tensors_spec_.size();
+
+}
+
+void HexagonModel::UpdateOutputShapes() {
+  output_shapes_.resize(num_outputs_);
+  for(auto i = 0; i < num_outputs_; i++) {
+    std::vector<int64_t> output_shape(output_tensors_spec_[i].shape.begin(), output_tensors_spec_[i].shape.end());
+    output_shapes_[i] = output_shape;
+  }
+}
+
 const std::string& HexagonModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index];
@@ -204,6 +213,7 @@ void HexagonModel::SetInput(const char* name, const int64_t* shape,
         << "Incorrect input shape";
   }
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
+  UpdateOutputShapes();
 }
 
 void HexagonModel::GetInput(const char* name, void* input) {
@@ -211,11 +221,9 @@ void HexagonModel::GetInput(const char* name, void* input) {
   std::memcpy(input, input_, input_tensors_spec_[index].bytes);
 }
 
-void HexagonModel::GetOutputShape(int index, int64_t* shape) const {
+const std::vector<int64_t>& HexagonModel::GetOutputShape(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  for (int i = 0; i < output_tensors_spec_[index].dim; i++) {
-    shape[i] = (int64_t)output_tensors_spec_[index].shape[i];
-  }
+  return output_shapes_[index];
 }
 
 void HexagonModel::GetOutput(int index, void* out) {
@@ -223,10 +231,14 @@ void HexagonModel::GetOutput(int index, void* out) {
   std::memcpy(out, output_, output_tensors_spec_[index].bytes);
 }
 
-void HexagonModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
+const int64_t HexagonModel::GetOutputSize(int index) const  {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  *size = output_tensors_spec_[index].size;
-  *dim = output_tensors_spec_[index].dim;
+  return output_tensors_spec_[index].size;
+}
+
+const int HexagonModel::GetOutputDim(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_tensors_spec_[index].dim;
 }
 
 const std::string& HexagonModel::GetOutputType(int index) const {

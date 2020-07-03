@@ -38,8 +38,9 @@ class DLRModel {
     LOG(ERROR) << "GetOutputName is not supported yet!";
   }
   virtual const std::string& GetOutputType(int index) const = 0;
-  virtual void GetOutputShape(int index, int64_t *shape) const = 0;
-  virtual void GetOutputSizeDim(int index, int64_t *size, int *dim) = 0;
+  virtual const std::vector<int64_t>& GetOutputShape(int index) const = 0;
+  virtual const int64_t GetOutputSize(int index) const = 0;
+  virtual const int GetOutputDim(int index) const = 0;
   virtual void GetOutput(int index, void *out) = 0;
   virtual void GetOutputByName(const char *name, void *out) {
     LOG(ERROR) << "GetOutputByName is not supported yet!";

@@ -107,11 +107,21 @@ void TVMModel::FetchOutputNodesData() {
     outputs_[i] = output.operator->();
     output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
   }
+  UpdateOutputShapes();
 }
 
 void TVMModel::FetchModelNodesData() {
   FetchInputAndWeightNodesData();
   FetchOutputNodesData();
+}
+
+void TVMModel::UpdateOutputShapes() {
+  output_shapes_.resize(num_outputs_);
+  for (int i = 0; i < num_outputs_; i++) {
+    std::vector <int64_t> output_shape;
+    output_shape.assign(outputs_[i]->shape, outputs_[i]->shape + outputs_[i]->ndim);
+    output_shapes_[i] = output_shape;
+  }
 }
 
 const std::string& TVMModel::GetInputName(int index) const {
@@ -145,6 +155,8 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
   CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
   tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
   set_input(node_name, &input_tensor);
+  // Updated output shapes to account for batch size.
+  UpdateOutputShapes();
 }
 
 void TVMModel::GetInput(const char* name, void* input) {
@@ -162,10 +174,10 @@ void TVMModel::GetInput(const char* name, void* input) {
   arr.CopyTo(&input_tensor);
 }
 
-void TVMModel::GetOutputShape(int index, int64_t* shape) const {
-  std::memcpy(shape, outputs_[index]->shape,
-              sizeof(int64_t) * outputs_[index]->ndim);
+const std::vector<int64_t>& TVMModel::GetOutputShape(int index) const {
+  return output_shapes_[index];
 }
+
 
 void TVMModel::GetOutput(int index, void* out) {
   DLTensor output_tensor = *outputs_[index];
@@ -175,13 +187,16 @@ void TVMModel::GetOutput(int index, void* out) {
   get_output(index, &output_tensor);
 }
 
-void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
-  *size = 1;
-  const DLTensor* tensor = outputs_[index];
-  for (int i = 0; i < tensor->ndim; ++i) {
-    *size *= tensor->shape[i];
+const int64_t TVMModel::GetOutputSize(int index) const {
+  int64_t size = 1;
+  for(const auto& elem: output_shapes_[index]) {
+    size *= elem;
   }
-  *dim = tensor->ndim;
+  return size;
+}
+
+const int TVMModel::GetOutputDim(int index) const {
+  return output_shapes_[index].size();
 }
 
 const std::string& TVMModel::GetOutputType(int index) const {
