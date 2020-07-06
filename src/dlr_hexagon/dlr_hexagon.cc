@@ -179,6 +179,16 @@ void HexagonModel::InitInputOutputTensorSpecs() {
   GenTensorSpec(false /*isInput*/);
   num_outputs_ = output_tensors_spec_.size();
 
+  UpdateInputShapes();
+  UpdateOutputShapes();
+}
+
+void HexagonModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  for (auto i = 0; i < num_inputs_; i++) {
+    std::vector<int64_t> input_shape(input_tensors_spec_[i].shape.begin(), input_tensors_spec_[i].shape.end());
+    input_shapes_[i] = input_shape;
+  }
 }
 
 void HexagonModel::UpdateOutputShapes() {
@@ -213,12 +223,30 @@ void HexagonModel::SetInput(const char* name, const int64_t* shape,
         << "Incorrect input shape";
   }
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
+
+  // Updated input and output shapes to account for batch size.
+  UpdateInputShapes();
   UpdateOutputShapes();
 }
 
 void HexagonModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
   std::memcpy(input, input_, input_tensors_spec_[index].bytes);
+}
+
+const int64_t HexagonModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_tensors_spec_[index].size;
+}
+
+const int HexagonModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_tensors_spec_[index].dim;
+}
+
+const std::vector<int64_t>& HexagonModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index];
 }
 
 const std::vector<int64_t>& HexagonModel::GetOutputShape(int index) const {

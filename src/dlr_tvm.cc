@@ -94,6 +94,8 @@ void TVMModel::FetchInputAndWeightNodesData() {
     int input_index = tvm_graph_runtime_->GetInputIndex(input_names_[i]);
     input_types_[i] = tvm_graph_runtime_->GetInputType(input_index);
   }
+
+  UpdateInputShapes();
 }
 
 void TVMModel::FetchOutputNodesData() {
@@ -124,6 +126,16 @@ void TVMModel::UpdateOutputShapes() {
   }
 }
 
+void TVMModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  for (int i = 0; i < num_inputs_; i++) {
+    std::vector <int64_t> input_shape;
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(i);
+    input_shape.assign(arr->shape, arr->shape + arr->ndim);
+    input_shapes_[i] = input_shape;
+  }
+}
+
 const std::string& TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index];
@@ -132,6 +144,27 @@ const std::string& TVMModel::GetInputName(int index) const {
 const std::string& TVMModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_types_[index];
+}
+
+const std::vector<int64_t>& TVMModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index];
+}
+
+const int64_t TVMModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  int64_t size = sizeof(arr->dtype);
+  for (auto i = 0; i < arr->ndim; i++) {
+    size *= arr->shape[i];
+  }
+  return size;
+}
+
+const int TVMModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  return arr->ndim;
 }
 
 const std::string& TVMModel::GetWeightName(int index) const {
@@ -155,7 +188,9 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
   CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
   tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
   set_input(node_name, &input_tensor);
-  // Updated output shapes to account for batch size.
+
+  // Updated input and output shapes to account for batch size.
+  UpdateInputShapes();
   UpdateOutputShapes();
 }
 

@@ -37,7 +37,6 @@ class HexagonModel : public DLRModel {
   uint8_t* input_ = nullptr;
   uint8_t* output_ = nullptr;
   char* log_buf_ = nullptr;
-  std::vector<std::vector<int64_t>> output_shapes_;
 
   int (*dlr_hexagon_model_init)(int*, uint8_t**, uint8_t**, int);
   int (*dlr_hexagon_model_exec)(int, uint8_t*, uint8_t*);
@@ -56,6 +55,7 @@ class HexagonModel : public DLRModel {
   void GenTensorSpec(bool isInput);
   void InitInputOutputTensorSpecs();
   int GetInputId(const char* name);
+  void UpdateInputShapes();
   void UpdateOutputShapes();
 
  public:
@@ -68,7 +68,6 @@ class HexagonModel : public DLRModel {
     LoadSymbols();
     InitHexagonModel();
     InitInputOutputTensorSpecs();
-    UpdateOutputShapes();
   }
 
   ~HexagonModel();
@@ -77,6 +76,11 @@ class HexagonModel : public DLRModel {
 
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
+
+  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
+  virtual const int GetInputDim(int index) const override;
+
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;

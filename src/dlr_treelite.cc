@@ -63,16 +63,39 @@ void TreeliteModel::FetchModelNodesData() {
            0)
       << TreeliteGetLastError();
   CHECK_LE(output_size_, output_buffer_size_) << "Precondition violated";
+  UpdateInputShapes();
+  UpdateOutputShapes();
 }
 
-void TreeliteModel::UpdateOutputShape() {
-  output_shape_.resize(2);
+void TreeliteModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  std::vector<int64_t> input_shape(2);
+  input_shape[0] = input_ ? static_cast<int64_t>(input_->num_row) : -1;
+  input_shape[1] = static_cast<int64_t>(num_of_input_features_);
+  input_shapes_[0] = input_shape;
+}
+
+void TreeliteModel::UpdateOutputShapes() {
+  output_shapes_.resize(num_outputs_);
+  std::vector<int64_t> output_shape(2);
   // Use -1 if input is yet unspecified and batch size is not known
-  output_shape_[0] = input_ ? static_cast<int64_t>(input_->num_row) : -1;
-  output_shape_[1] = static_cast<int64_t>(output_size_);
+  output_shape[0] = input_ ? static_cast<int64_t>(input_->num_row) : -1;
+  output_shape[1] = static_cast<int64_t>(output_size_);
+  output_shapes_[0] = output_shape;
 }
 
+const int64_t TreeliteModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  int64_t size = sizeof(float);
+  for (auto shape: input_shapes_[index]) {
+    size *= shape;
+  }
+  return size;
+}
 
+const int TreeliteModel::GetInputDim(int index) const {
+  return 2;
+}
 
 const std::string& TreeliteModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
@@ -82,6 +105,11 @@ const std::string& TreeliteModel::GetInputName(int index) const {
 const std::string& TreeliteModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return INPUT_TYPE;
+}
+
+const std::vector<int64_t>& TreeliteModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index];
 }
 
 const std::string& TreeliteModel::GetWeightName(int index) const {
@@ -132,6 +160,10 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
                num_of_input_features_, &input_->handle),
            0)
       << TreeliteGetLastError();
+
+  // Updated input and output shapes to account for batch size.
+  UpdateInputShapes();
+  UpdateOutputShapes();
 }
 
 void TreeliteModel::GetInput(const char* name, void* input) {
@@ -139,10 +171,12 @@ void TreeliteModel::GetInput(const char* name, void* input) {
 }
 
 const std::vector<int64_t>& TreeliteModel::GetOutputShape(int index) const {
-  return output_shape_;
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_shapes_[index];
 }
 
 void TreeliteModel::GetOutput(int index, void* out) {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   CHECK(input_);
   std::memcpy(
       out, output_.data(),
@@ -150,6 +184,7 @@ void TreeliteModel::GetOutput(int index, void* out) {
 }
 
 const int64_t TreeliteModel::GetOutputSize(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   if (input_) {
     return static_cast<int64_t>(input_->num_row * output_size_);
         ;

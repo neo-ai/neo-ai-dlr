@@ -38,12 +38,12 @@ class TreeliteModel : public DLRModel {
   size_t output_size_;
   std::unique_ptr<TreeliteInput> input_ = nullptr;
   std::vector<float> output_ =  {};
-  std::vector<int64_t> output_shape_;
   TreeliteModelArtifact model_artifact_;
   void InitModelArtifact(const std::vector<std::string> &paths);
   void SetupTreeliteModel();
   void FetchModelNodesData();
-  void UpdateOutputShape();
+  void UpdateInputShapes();
+  void UpdateOutputShapes();
 
  public:
   /*! \brief Load model files from given folder path.
@@ -58,6 +58,11 @@ class TreeliteModel : public DLRModel {
 
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
+
+  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
+  virtual const int GetInputDim(int index) const override;
+
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;

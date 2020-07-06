@@ -21,7 +21,6 @@ class TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  std::vector<std::vector<int64_t>> output_shapes_;
   TVMModelArtifact model_artifact_;
   nlohmann::json metadata;
   void InitModelArtifact(const std::vector<std::string> &paths);
@@ -30,6 +29,7 @@ class TVMModel : public DLRModel {
   void FetchModelNodesData();
   void FetchInputAndWeightNodesData();
   void FetchOutputNodesData();
+  void UpdateInputShapes();
   void UpdateOutputShapes();
 
  public:
@@ -45,6 +45,11 @@ class TVMModel : public DLRModel {
 
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
+
+  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
+  virtual const int GetInputDim(int index) const override;
+
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
