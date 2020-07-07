@@ -167,19 +167,21 @@ const std::string& TVMModel::GetWeightName(int index) const {
   CHECK_LT(index, num_weights_) << "Weight index is out of range.";
   return weight_names_[index];
 }
-
-void TVMModel::SetInput(std::string name, const int64_t batch_size, void* input) {
-  int index = tvm_graph_runtime_->GetInputIndex(name);
+void TVMModel::SetInput(const int index, const int64_t batch_size, void* input) {
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
   input_tensor.ctx = DLContext{kDLCPU, 0};
   input_tensor.data = input;
-  tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
-  set_input(name, &input_tensor);
+  tvm_graph_runtime_->SetInput(index, &input_tensor);
 
   // Updated input and output shapes to account for batch size.
   UpdateInputShapes();
   UpdateOutputShapes();
+}
+
+void TVMModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+  int index = tvm_graph_runtime_->GetInputIndex(name);
+  SetInput(index, batch_size, input);
 }
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
@@ -210,13 +212,10 @@ const std::vector<int64_t>& TVMModel::GetOutputShape(int index) const {
   return output_shapes_[index];
 }
 
-
 void TVMModel::GetOutput(int index, void* out) {
-  DLTensor output_tensor = *outputs_[index];
-  output_tensor.ctx = DLContext{kDLCPU, 0};
-  output_tensor.data = out;
-  tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
-  get_output(index, &output_tensor);
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  DLManagedTensor * output_tensor = output.ToDLPack();
+  std::memcpy(out, output_tensor->dl_tensor.data, GetOutputSize(index));
 }
 
 const int64_t TVMModel::GetOutputSize(int index) const {
@@ -239,6 +238,17 @@ const std::string& TVMModel::GetOutputType(int index) const {
 void TVMModel::Run() {
   tvm_graph_runtime_->Run();
 }
+
+// void TVMModel::Run(const int batch_size, std::vector<void*> inputs, std::vector<void*> output) {
+//   CHECK_EQ(inputs.size(), num_inputs_) << "Invalid number of inputs.";
+//   CHECK_EQ(outpus.size(), num_outputs_) << "Invalid number of outputs.";
+//   for(int index; index < num_inputs_; i++) {
+//     SetInput(index, inputs[index]);
+//   }
+//   for(int index; index < num_outputs_; i++) {
+//     GetOutput(index, outputs[index]);
+//   }
+// }
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

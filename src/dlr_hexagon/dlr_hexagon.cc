@@ -212,13 +212,18 @@ const std::string& HexagonModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";
 }
 
-void HexagonModel::SetInput(std::string name, const int64_t batch_size, void* input) {
-  int index = GetInputId(name.c_str());
+
+void HexagonModel::SetInput(const int index, const int64_t batch_size, void* input) {
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
 
   // Updated input and output shapes to account for batch size.
   UpdateInputShapes();
   UpdateOutputShapes();
+}
+
+void HexagonModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+  int index = GetInputId(name.c_str());
+  SetInput(index, batch_size, input);
 }
 
 void HexagonModel::SetInput(const char* name, const int64_t* shape,
@@ -232,7 +237,7 @@ void HexagonModel::SetInput(const char* name, const int64_t* shape,
     CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
         << "Incorrect input shape";
   }
-  SetInput(name, shape[0], input);
+  SetInput(name, *shape, input);
 }
 
 void HexagonModel::GetInput(const char* name, void* input) {

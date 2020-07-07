@@ -82,6 +82,7 @@ class HexagonModel : public DLRModel {
   virtual const int GetInputDim(int index) const override;
 
   virtual void GetInput(const char* name, void* input) override;
+  virtual void SetInput(const int index, const int64_t batch_size, void* input) override;
   virtual void SetInput(std::string name, const int64_t batch_size, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
@@ -98,6 +99,7 @@ class HexagonModel : public DLRModel {
   virtual void UseCPUAffinity(bool use) override;
 
   virtual void Run() override;
+  // virtual void Run(const int batch_size, std::vector<void*> intputs, std::vector<void*> outputs) override;
 };
 
 }  // namespace dlr

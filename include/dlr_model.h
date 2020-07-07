@@ -32,6 +32,7 @@ class DLRModel {
   virtual const int64_t GetInputSize(int index) const = 0;
   virtual const int GetInputDim(int index) const = 0;
 
+  virtual void SetInput(const int index, int64_t batch_size, void* input) = 0;
   virtual void SetInput(std::string name, const int64_t batch_size, void* input) = 0;
   virtual void SetInput(const char *name, const int64_t *shape, void *input,
                         int dim) = 0;
@@ -62,6 +63,7 @@ class DLRModel {
   virtual bool HasMetadata() const { return false; }
   virtual void UseCPUAffinity(bool use) = 0;
   virtual void Run() = 0;
+  // virtual void Run(const int batch_size, std::vector<void*> intputs, std::vector<void*> outputs) = 0;
 
   virtual const std::string GetBackend() const {
     if (backend_ == DLRBackend::kTVM) {

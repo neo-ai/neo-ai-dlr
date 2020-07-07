@@ -114,7 +114,7 @@ const std::string& TreeliteModel::GetWeightName(int index) const {
 }
 
 
-void TreeliteModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+void TreeliteModel::SetInput(const int index, const int64_t batch_size, void* input) {
   input_.reset(new TreeliteInput);
   CHECK(input_);
   input_->row_ptr.push_back(0);
@@ -152,6 +152,10 @@ void TreeliteModel::SetInput(std::string name, const int64_t batch_size, void* i
   UpdateOutputShapes();
 }
 
+void TreeliteModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+  SetInput(0, batch_size, input);
+}
+
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
                              void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
@@ -164,7 +168,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
       << shape[1] << ", Expected: " << num_of_input_features_ << " or less";
 
   std::string node_name(name);
-  SetInput(node_name, shape[0], input);
+  SetInput(node_name, *shape, input);
 }
 
 void TreeliteModel::GetInput(const char* name, void* input) {
