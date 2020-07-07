@@ -19,8 +19,7 @@ ModelPath GetTvmPaths(std::vector<std::string> tar_path);
 
 /*! \brief class TVMModel
  */
-
-class  DLR_DLL TVMModel : public DLRModel {
+class DLR_DLL TVMModel : public DLRModel {
  private:
   tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
