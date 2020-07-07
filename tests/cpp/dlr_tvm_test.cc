@@ -60,7 +60,7 @@ TEST_F(TVMTest,TestGetInputShape) {
 }
 
 TEST_F(TVMTest, TestGetInputSize) {
-    EXPECT_EQ(model->GetInputSize(0), sizeof(float)*1*224*224*3);
+    EXPECT_EQ(model->GetInputSize(0), 1*224*224*3);
 }
 
 TEST_F(TVMTest, TestGetInputDim) {

@@ -55,7 +55,7 @@ TEST_F(TreeliteTest, TestGetInputType) {
 
 TEST_F(TreeliteTest, TestGetInputSize) {
     EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
-    EXPECT_EQ(model->GetInputSize(0), sizeof(float)*in_size);
+    EXPECT_EQ(model->GetInputSize(0), in_size);
 }
 
 TEST_F(TreeliteTest, TestGetInputDim) {

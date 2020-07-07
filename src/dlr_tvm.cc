@@ -154,11 +154,7 @@ const std::vector<int64_t>& TVMModel::GetInputShape(int index) const {
 const int64_t TVMModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-  int64_t size = sizeof(arr->dtype);
-  for (auto i = 0; i < arr->ndim; i++) {
-    size *= arr->shape[i];
-  }
-  return size;
+  return std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
 }
 
 const int TVMModel::GetInputDim(int index) const {
@@ -172,26 +168,27 @@ const std::string& TVMModel::GetWeightName(int index) const {
   return weight_names_[index];
 }
 
-void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
-                        int dim) {
-  std::string node_name(name);
-  int index = tvm_graph_runtime_->GetInputIndex(node_name);
+void TVMModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+  int index = tvm_graph_runtime_->GetInputIndex(name);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
   input_tensor.ctx = DLContext{kDLCPU, 0};
   input_tensor.data = input;
-  int64_t read_size =
-      std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
-  int64_t expected_size = std::accumulate(
-      input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
-      std::multiplies<int64_t>());
-  CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
   tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
-  set_input(node_name, &input_tensor);
+  set_input(name, &input_tensor);
 
   // Updated input and output shapes to account for batch size.
   UpdateInputShapes();
   UpdateOutputShapes();
+}
+
+void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
+                        int dim) {
+  std::string node_name(name);
+  int index = tvm_graph_runtime_->GetInputIndex(node_name);
+  int64_t read_size = std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
+  CHECK_SHAPE("Mismatch found in input data size", read_size, GetInputSize(index));
+  SetInput(node_name, *shape, input);
 }
 
 void TVMModel::GetInput(const char* name, void* input) {

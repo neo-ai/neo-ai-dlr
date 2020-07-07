@@ -86,11 +86,8 @@ void TreeliteModel::UpdateOutputShapes() {
 
 const int64_t TreeliteModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  int64_t size = sizeof(float);
-  for (auto shape: input_shapes_[index]) {
-    size *= shape;
-  }
-  return size;
+  std::vector<int64_t> shape = GetInputShape(index);
+  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
 }
 
 const int TreeliteModel::GetInputDim(int index) const {
@@ -116,19 +113,8 @@ const std::string& TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
 }
 
-void TreeliteModel::SetInput(const char* name, const int64_t* shape,
-                             void* input, int dim) {
-  // NOTE: Assume that missing values are represented by NAN
-  CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
-  // NOTE: If number of columns is less than num_feature, missing columns
-  //       will be automatically padded with missing values
-  CHECK_LE(static_cast<size_t>(shape[1]), num_of_input_features_)
-      << "ClientError: Mismatch found in input shape at dimension 1. Value "
-         "read: "
-      << shape[1] << ", Expected: " << num_of_input_features_ << " or less";
 
-  const size_t batch_size = static_cast<size_t>(shape[0]);
-  const uint32_t num_col = static_cast<uint32_t>(shape[1]);
+void TreeliteModel::SetInput(std::string name, const int64_t batch_size, void* input) {
   input_.reset(new TreeliteInput);
   CHECK(input_);
   input_->row_ptr.push_back(0);
@@ -136,9 +122,9 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
 
   // NOTE: Assume row-major (C) layout
   for (size_t i = 0; i < batch_size; ++i) {
-    for (uint32_t j = 0; j < num_col; ++j) {
-      if (!std::isnan(input_f[i * num_col + j])) {
-        input_->data.push_back(input_f[i * num_col + j]);
+    for (uint32_t j = 0; j < num_of_input_features_; ++j) {
+      if (!std::isnan(input_f[i * num_of_input_features_ + j])) {
+        input_->data.push_back(input_f[i * num_of_input_features_ + j]);
         input_->col_ind.push_back(j);
       }
     }
@@ -150,7 +136,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   CHECK_EQ(input_->row_ptr.size(), batch_size + 1);
 
   // Save dimensions for input
-  input_->num_row = batch_size;
+  input_->num_row = static_cast<size_t>(batch_size);
   input_->num_col = num_of_input_features_;
 
   // Register CSR matrix with Treelite backend
@@ -164,6 +150,21 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   // Updated input and output shapes to account for batch size.
   UpdateInputShapes();
   UpdateOutputShapes();
+}
+
+void TreeliteModel::SetInput(const char* name, const int64_t* shape,
+                             void* input, int dim) {
+  // NOTE: Assume that missing values are represented by NAN
+  CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
+  // NOTE: If number of columns is less than num_feature, missing columns
+  //       will be automatically padded with missing values
+  CHECK_LE(static_cast<size_t>(shape[1]), num_of_input_features_)
+      << "ClientError: Mismatch found in input shape at dimension 1. Value "
+         "read: "
+      << shape[1] << ", Expected: " << num_of_input_features_ << " or less";
+
+  std::string node_name(name);
+  SetInput(node_name, shape[0], input);
 }
 
 void TreeliteModel::GetInput(const char* name, void* input) {

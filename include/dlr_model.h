@@ -32,7 +32,7 @@ class DLRModel {
   virtual const int64_t GetInputSize(int index) const = 0;
   virtual const int GetInputDim(int index) const = 0;
 
-  virtual void SetInput(std::string name, const int batch_size, void* input) = 0;
+  virtual void SetInput(std::string name, const int64_t batch_size, void* input) = 0;
   virtual void SetInput(const char *name, const int64_t *shape, void *input,
                         int dim) = 0;
   virtual void GetInput(const char *name, void *input) = 0;
