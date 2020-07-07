@@ -7,7 +7,7 @@
 
 namespace dlr {
 
-struct TreeliteModelArtifact: ModelArtifact {
+struct TreeliteModelArtifact : ModelArtifact {
   std::string model_lib;
 };
 
@@ -37,51 +37,50 @@ class TreeliteModel : public DLRModel {
   // size of output per instance
   size_t output_size_;
   std::unique_ptr<TreeliteInput> input_ = nullptr;
-  std::vector<float> output_ =  {};
-  TreeliteModelArtifact model_artifact_;
-  void InitModelArtifact(const std::vector<std::string> &paths);
+  std::vector<float> output_ = {};
+  virtual void InitModelArtifact() override;
   void SetupTreeliteModel();
   void FetchModelNodesData();
   void UpdateInputShapes();
   void UpdateOutputShapes();
+  static const int kInputDim = 2;
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(std::vector<std::string> paths,
-                         const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTREELITE) {
-    InitModelArtifact(paths);
+  explicit TreeliteModel(std::vector<std::string> paths, const DLContext& ctx)
+      : DLRModel(paths, ctx, DLRBackend::kTREELITE) {
+    InitModelArtifact();
     SetupTreeliteModel();
     FetchModelNodesData();
+    LoadMetadataFromModelArtifact();
   }
 
+  virtual const int GetInputDim(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
-
   virtual const std::vector<int64_t>& GetInputShape(int index) const override;
-  virtual const int64_t GetInputSize(int index) const override;
-  virtual const int GetInputDim(int index) const override;
-
   virtual void GetInput(const char* name, void* input) override;
-  virtual void SetInput(const int index, const int64_t batch_size, void* input) override;
-  virtual void SetInput(std::string name, const int64_t batch_size, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
+  virtual void SetInput(const int index, const int64_t batch_size,
+                        void* input) override;
+  virtual void SetInput(std::string name, const int64_t batch_size,
+                        void* input) override;
 
-  virtual const std::string& GetOutputType(int index) const override;
-  virtual void GetOutput(int index, void* out) override;
-  virtual const std::vector<int64_t>& GetOutputShape(int index) const override;
-  virtual const int64_t GetOutputSize(int index) const override;
   virtual const int GetOutputDim(int index) const override;
-
-  virtual const std::string& GetWeightName(int index) const override;
+  virtual const int64_t GetOutputSize(int index) const override;
+  virtual const std::string& GetOutputType(int index) const override;
+  virtual const std::vector<int64_t>& GetOutputShape(int index) const override;
+  virtual void GetOutput(int index, void* out) override;
 
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 
   virtual void Run() override;
-  // virtual void Run(const int batch_size, std::vector<void*> intputs, std::vector<void*> outputs) override;
+  // virtual void Run(const int batch_size, std::vector<void*> intputs,
+  // std::vector<void*> outputs) override;
 };
 
 }  // namespace dlr

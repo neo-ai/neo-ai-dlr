@@ -42,7 +42,8 @@ std::string dlr::GetBasename(const std::string& path) {
 #endif
 }
 
-std::vector<std::string> dlr::ListFilesInDirectory(const std::string& directory_path) {
+std::vector<std::string> dlr::ListFilesInDirectory(
+    const std::string& directory_path) {
   std::vector<std::string> paths;
   dmlc::io::URI uri(directory_path.c_str());
   dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
@@ -56,7 +57,8 @@ std::vector<std::string> dlr::ListFilesInDirectory(const std::string& directory_
   return paths;
 }
 
-std::vector<std::string> dlr::ListFilesInDirectories(const std::vector<std::string> &directory_paths) {
+std::vector<std::string> dlr::ListFilesInDirectories(
+    const std::vector<std::string>& directory_paths) {
   std::vector<std::string> paths;
   for (auto dir : directory_paths) {
     auto dir_paths = ListFilesInDirectory(dir);

@@ -19,7 +19,8 @@
 
 #endif
 
-/* OS-specific library file extension and the name of the generated dynamic library*/
+/* OS-specific library file extension and the name of the generated dynamic
+ * library*/
 #ifdef _WIN32
 #define LIBEXT ".dll"
 #define LIBDLR "dlr.dll"
@@ -38,16 +39,18 @@ namespace dlr {
 constexpr const char *SAGEMAKER_AUXILIARY_JSON_FILES[] = {"model-shapes.json",
                                                           "hyperparams.json"};
 
-struct ModelArtifact{
+struct ModelArtifact {
   std::string ver_json;
   std::string metadata;
 };
 
-bool IsFileEmpty(const std::string& filePath);
+bool IsFileEmpty(const std::string &filePath);
 
-std::vector<std::string> ListFilesInDirectory(const std::string &directory_path);
+std::vector<std::string> ListFilesInDirectory(
+    const std::string &directory_path);
 
-std::vector<std::string> ListFilesInDirectories(const std::vector<std::string> &directory_paths);
+std::vector<std::string> ListFilesInDirectories(
+    const std::vector<std::string> &directory_paths);
 
 std::string GetBasename(const std::string &path);
 

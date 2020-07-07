@@ -65,14 +65,6 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << "GetDLRNumOutputs: " << num_outputs;
   EXPECT_EQ(1, num_outputs);
 
-  // GetDLRNumWeights
-  int num_weights;
-  if (GetDLRNumWeights(&handle, &num_weights)) {
-    FAIL() << "GetDLRNumWeights failed";
-  }
-  LOG(INFO) << "GetDLRNumWeights: " << num_weights;
-  EXPECT_EQ(0, num_weights);
-
   // GetDLRInputName
   const char* input_name;
   if (GetDLRInputName(&handle, 0, &input_name)) {

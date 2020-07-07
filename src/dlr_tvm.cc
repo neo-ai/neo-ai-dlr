@@ -1,15 +1,17 @@
 #include "dlr_tvm.h"
 
 #include <stdlib.h>
+
 #include <fstream>
 #include <iterator>
 #include <numeric>
 
 using namespace dlr;
 
-void TVMModel::InitModelArtifact(const std::vector<std::string> &paths) {
-  model_artifact_ = {};
-  std::vector<std::string>filenames = ListFilesInDirectories(paths);
+void TVMModel::InitModelArtifact() {
+  std::shared_ptr<TVMModelArtifact> artifact =
+      std::make_shared<TVMModelArtifact>();
+  std::vector<std::string> filenames = ListFilesInDirectories(paths_);
   for (auto filename : filenames) {
     std::string basename = GetBasename(filename);
     if (EndsWith(filename, ".json") &&
@@ -18,59 +20,52 @@ void TVMModel::InitModelArtifact(const std::vector<std::string> &paths) {
             std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
             [basename](const std::string& s) { return (s != basename); }) &&
         filename != "version.json") {
-      model_artifact_.model_json = filename;
+      artifact->model_json = filename;
     } else if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
-      model_artifact_.model_lib = filename;
+      artifact->model_lib = filename;
     } else if (EndsWith(filename, ".tensorrt")) {
-      model_artifact_.model_lib = filename;
+      artifact->model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
-      model_artifact_.params = filename;
+      artifact->params = filename;
     } else if (filename == "version.json") {
-      model_artifact_.ver_json = filename;
+      artifact->ver_json = filename;
     } else if (EndsWith(filename, ".meta")) {
-      model_artifact_.metadata = filename;
+      artifact->metadata = filename;
     }
   }
-  if (model_artifact_.model_json.empty() || model_artifact_.model_lib.empty() ||
-      model_artifact_.params.empty()) {
+  if (artifact->model_json.empty() || artifact->model_lib.empty() ||
+      artifact->params.empty()) {
     LOG(INFO) << "No valid TVM model files found under folder:";
-    for (auto dir : paths) {
+    for (auto dir : paths_) {
       LOG(INFO) << dir;
     }
     LOG(FATAL);
+  } else {
+    model_artifact_ = std::shared_ptr<ModelArtifact>(artifact);
   }
 }
 
-void TVMModel::SetupTvmGraphRuntimeAndModule() {
-  std::ifstream jstream(model_artifact_.model_json);
+void TVMModel::SetupTvmGraphRuntime() {
+  std::shared_ptr<TVMModelArtifact> artifact =
+      std::static_pointer_cast<TVMModelArtifact>(model_artifact_);
+  std::ifstream jstream(artifact->model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
-  std::ifstream pstream(model_artifact_.params, std::ios::in | std::ios::binary);
+  std::ifstream pstream(artifact->params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
 
   tvm::runtime::Module module;
-  if (!IsFileEmpty(model_artifact_.model_lib)) {
-    module = tvm::runtime::Module::LoadFromFile(model_artifact_.model_lib);
+  if (!IsFileEmpty(artifact->model_lib)) {
+    module = tvm::runtime::Module::LoadFromFile(artifact->model_lib);
   }
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_blob.str());
-
-  tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));
 }
 
-void TVMModel::LoadModelMetadata() {
-  if (!model_artifact_.metadata.empty() && !IsFileEmpty(model_artifact_.metadata)) {
-    LOG(INFO) << "Loading metadata file: " << model_artifact_.metadata;
-    LoadJsonFromFile(model_artifact_.metadata, this->metadata);
-  } else {
-    LOG(INFO) << "No metadata found";
-  }
-}
-
-void TVMModel::FetchInputAndWeightNodesData() {
+void TVMModel::FetchInputNodesData() {
   // This is the combined count of inputs and weights
   const auto num_input_and_weight_nodes = tvm_graph_runtime_->NumInputs();
   std::vector<std::string> input_and_weight_node_names;
@@ -78,14 +73,15 @@ void TVMModel::FetchInputAndWeightNodesData() {
     input_and_weight_node_names.push_back(tvm_graph_runtime_->GetInputName(i));
   }
   // Get list of weights
-  weight_names_ = tvm_graph_runtime_->GetWeightNames();
-  num_weights_ = weight_names_.size();
+  std::vector<std::string> weight_names = tvm_graph_runtime_->GetWeightNames();
   // tvm_graph_runtime_.GetInputName(*) returns both inputs and weights
   // Compute set difference to get names of inputs only
-  std::sort(input_and_weight_node_names.begin(), input_and_weight_node_names.end());
-  std::sort(weight_names_.begin(), weight_names_.end());
-  std::set_difference(input_and_weight_node_names.begin(), input_and_weight_node_names.end(),
-                      weight_names_.begin(), weight_names_.end(),
+  std::sort(input_and_weight_node_names.begin(),
+            input_and_weight_node_names.end());
+  std::sort(weight_names.begin(), weight_names.end());
+  std::set_difference(input_and_weight_node_names.begin(),
+                      input_and_weight_node_names.end(), weight_names.begin(),
+                      weight_names.end(),
                       std::inserter(input_names_, input_names_.begin()));
   // Save the number of inputs
   num_inputs_ = input_names_.size();
@@ -112,28 +108,37 @@ void TVMModel::FetchOutputNodesData() {
   UpdateOutputShapes();
 }
 
-void TVMModel::FetchModelNodesData() {
-  FetchInputAndWeightNodesData();
-  FetchOutputNodesData();
+void TVMModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  for (int i = 0; i < num_inputs_; i++) {
+    std::vector<int64_t> input_shape;
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(i);
+    input_shape.assign(arr->shape, arr->shape + arr->ndim);
+    input_shapes_[i] = input_shape;
+  }
 }
 
 void TVMModel::UpdateOutputShapes() {
   output_shapes_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
-    std::vector <int64_t> output_shape;
-    output_shape.assign(outputs_[i]->shape, outputs_[i]->shape + outputs_[i]->ndim);
+    std::vector<int64_t> output_shape;
+    output_shape.assign(outputs_[i]->shape,
+                        outputs_[i]->shape + outputs_[i]->ndim);
     output_shapes_[i] = output_shape;
   }
 }
 
-void TVMModel::UpdateInputShapes() {
-  input_shapes_.resize(num_inputs_);
-  for (int i = 0; i < num_inputs_; i++) {
-    std::vector <int64_t> input_shape;
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(i);
-    input_shape.assign(arr->shape, arr->shape + arr->ndim);
-    input_shapes_[i] = input_shape;
-  }
+const int TVMModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  return arr->ndim;
+}
+
+const int64_t TVMModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  return std::accumulate(arr->shape, arr->shape + arr->ndim, 1,
+                         std::multiplies<int64_t>());
 }
 
 const std::string& TVMModel::GetInputName(int index) const {
@@ -151,48 +156,6 @@ const std::vector<int64_t>& TVMModel::GetInputShape(int index) const {
   return input_shapes_[index];
 }
 
-const int64_t TVMModel::GetInputSize(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-  return std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
-}
-
-const int TVMModel::GetInputDim(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-  return arr->ndim;
-}
-
-const std::string& TVMModel::GetWeightName(int index) const {
-  CHECK_LT(index, num_weights_) << "Weight index is out of range.";
-  return weight_names_[index];
-}
-void TVMModel::SetInput(const int index, const int64_t batch_size, void* input) {
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-  DLTensor input_tensor = *(arr.operator->());
-  input_tensor.ctx = DLContext{kDLCPU, 0};
-  input_tensor.data = input;
-  tvm_graph_runtime_->SetInput(index, &input_tensor);
-
-  // Updated input and output shapes to account for batch size.
-  UpdateInputShapes();
-  UpdateOutputShapes();
-}
-
-void TVMModel::SetInput(std::string name, const int64_t batch_size, void* input) {
-  int index = tvm_graph_runtime_->GetInputIndex(name);
-  SetInput(index, batch_size, input);
-}
-
-void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
-                        int dim) {
-  std::string node_name(name);
-  int index = tvm_graph_runtime_->GetInputIndex(node_name);
-  int64_t read_size = std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
-  CHECK_SHAPE("Mismatch found in input data size", read_size, GetInputSize(index));
-  SetInput(node_name, *shape, input);
-}
-
 void TVMModel::GetInput(const char* name, void* input) {
   std::string node_name(name);
   int index = tvm_graph_runtime_->GetInputIndex(node_name);
@@ -208,26 +171,63 @@ void TVMModel::GetInput(const char* name, void* input) {
   arr.CopyTo(&input_tensor);
 }
 
-const std::vector<int64_t>& TVMModel::GetOutputShape(int index) const {
-  return output_shapes_[index];
+void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
+                        int dim) {
+  std::string node_name(name);
+  int index = tvm_graph_runtime_->GetInputIndex(node_name);
+  int64_t read_size =
+      std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
+  CHECK_SHAPE("Mismatch found in input data size", read_size,
+              GetInputSize(index));
+  SetInput(node_name, *shape, input);
 }
 
-void TVMModel::GetOutput(int index, void* out) {
-  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
-  DLManagedTensor * output_tensor = output.ToDLPack();
-  std::memcpy(out, output_tensor->dl_tensor.data, GetOutputSize(index));
+void TVMModel::SetInput(const int index, const int64_t batch_size,
+                        void* input) {
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  DLTensor input_tensor = *(arr.operator->());
+  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.data = input;
+  tvm_graph_runtime_->SetInput(index, &input_tensor);
+
+  // Updated input and output shapes to account for batch size.
+  UpdateInputShapes();
+  UpdateOutputShapes();
 }
 
-const int64_t TVMModel::GetOutputSize(int index) const {
-  int64_t size = 1;
-  for(const auto& elem: output_shapes_[index]) {
-    size *= elem;
-  }
-  return size;
+void TVMModel::SetInput(std::string name, const int64_t batch_size,
+                        void* input) {
+  int index = tvm_graph_runtime_->GetInputIndex(name);
+  SetInput(index, batch_size, input);
 }
 
 const int TVMModel::GetOutputDim(int index) const {
   return output_shapes_[index].size();
+}
+
+const int64_t TVMModel::GetOutputSize(int index) const {
+  return std::accumulate(output_shapes_[index].begin(),
+                         output_shapes_[index].end(), 1,
+                         std::multiplies<int64_t>());
+}
+
+const std::string& TVMModel::GetOutputName(const int index) const {
+  if (!HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  try {
+    return metadata.at("Model")
+        .at("Outputs")
+        .at(index)
+        .at("name")
+        .get_ref<const std::string&>();
+  } catch (nlohmann::json::out_of_range& e) {
+    LOG(ERROR) << e.what();
+    std::string msg = "Output node with index";
+    msg += " " + std::to_string(index);
+    msg += " was not found in metadata file!";
+    throw dmlc::Error(msg);
+  }
 }
 
 const std::string& TVMModel::GetOutputType(int index) const {
@@ -235,20 +235,37 @@ const std::string& TVMModel::GetOutputType(int index) const {
   return output_types_[index];
 }
 
-void TVMModel::Run() {
-  tvm_graph_runtime_->Run();
+const std::vector<int64_t>& TVMModel::GetOutputShape(int index) const {
+  return output_shapes_[index];
 }
 
-// void TVMModel::Run(const int batch_size, std::vector<void*> inputs, std::vector<void*> output) {
-//   CHECK_EQ(inputs.size(), num_inputs_) << "Invalid number of inputs.";
-//   CHECK_EQ(outpus.size(), num_outputs_) << "Invalid number of outputs.";
-//   for(int index; index < num_inputs_; i++) {
-//     SetInput(index, inputs[index]);
-//   }
-//   for(int index; index < num_outputs_; i++) {
-//     GetOutput(index, outputs[index]);
-//   }
-// }
+int TVMModel::GetOutputIndex(const char* name) const {
+  if (!HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  for (int i = 0; i < num_outputs_; i++) {
+    const char* output_name = GetOutputName(i).c_str();
+    if (output_name == nullptr) return -1;
+    if (strcmp(output_name, name) == 0) {
+      return i;
+    }
+  }
+
+  std::string msg = "Couldn't find index for output node";
+  msg += " " + std::string{name} + "!";
+  throw dmlc::Error(msg);
+}
+
+void TVMModel::GetOutput(int index, void* out) {
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  DLManagedTensor* output_tensor = output.ToDLPack();
+  std::memcpy(out, output_tensor->dl_tensor.data, GetOutputSize(index));
+}
+
+void TVMModel::GetOutputByName(const char* name, void* out) {
+  int output_index = GetOutputIndex(name);
+  GetOutput(output_index, out);
+}
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32
@@ -275,45 +292,16 @@ void TVMModel::UseCPUAffinity(bool use) {
   }
 }
 
-bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
+void TVMModel::Run() { tvm_graph_runtime_->Run(); }
 
-const std::string& TVMModel::GetOutputName(const int index) const {
-  if (!this->HasMetadata()) {
-    throw dmlc::Error("No metadata file was found!");
-  }
-  try {
-    return this->metadata.at("Model")
-        .at("Outputs")
-        .at(index)
-        .at("name")
-        .get_ref<const std::string&>();
-  } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    std::string msg = "Output node with index";
-    msg += " " + std::to_string(index);
-    msg += " was not found in metadata file!";
-    throw dmlc::Error(msg);
-  }
-}
-
-int TVMModel::GetOutputIndex(const char* name) const {
-  if (!this->HasMetadata()) {
-    throw dmlc::Error("No metadata file was found!");
-  }
-  for (int i = 0; i < this->num_outputs_; i++) {
-    const char* output_name = GetOutputName(i).c_str();
-    if (output_name == nullptr) return -1;
-    if (strcmp(output_name, name) == 0) {
-      return i;
-    }
-  }
-
-    std::string msg = "Couldn't find index for output node";
-    msg += " " + std::string{name} + "!";
-    throw dmlc::Error(msg);
-}
-
-void TVMModel::GetOutputByName(const char* name, void* out) {
-  int output_index = this->GetOutputIndex(name);
-  this->GetOutput(output_index, out);
-}
+// void TVMModel::Run(const int batch_size, std::vector<void*> inputs,
+// std::vector<void*> output) {
+//   CHECK_EQ(inputs.size(), num_inputs_) << "Invalid number of inputs.";
+//   CHECK_EQ(outpus.size(), num_outputs_) << "Invalid number of outputs.";
+//   for(int index; index < num_inputs_; i++) {
+//     SetInput(index, inputs[index]);
+//   }
+//   for(int index; index < num_outputs_; i++) {
+//     GetOutput(index, outputs[index]);
+//   }
+// }

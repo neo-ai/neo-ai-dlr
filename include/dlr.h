@@ -54,9 +54,9 @@ int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
 /*!
  \brief Creates a DLR model from Hexagon
  \param handle The pointer to save the model handle.
- \param model_path Path to _hexagon_model.so file or to the top-level directory containing the file
- \param debug_level 0 - no debug, 100 - max debug.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ \param model_path Path to _hexagon_model.so file or to the top-level directory
+ containing the file \param debug_level 0 - no debug, 100 - max debug. \return 0
+ for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
@@ -218,16 +218,18 @@ int GetDLROutputType(DLRModelHandle* handle, int index,
 /*!
  \brief Check if metadata file is found in the compilation artifact
  \param handle The model handle returned from CreateDLRModel().
- \param has_metadata The pointer to save boolean value to indicate the presence of metadata file.
+ \param has_metadata The pointer to save boolean value to indicate the presence
+ of metadata file.
 */
 DLR_DLL int GetDLRHasMetadata(DLRModelHandle* handle, bool* has_metadata);
 
 /*!
- \brief Gets the output node names of the uncompiled model from the metadata file
-  \param handle The model handle returned from CreateDLRModel().
-  \param names The pointer to save array containing output node names.
+ \brief Gets the output node names of the uncompiled model from the metadata
+ file \param handle The model handle returned from CreateDLRModel(). \param
+ names The pointer to save array containing output node names.
 */
-DLR_DLL int GetDLROutputName(DLRModelHandle* handle, const int index, const char** name);
+DLR_DLL int GetDLROutputName(DLRModelHandle* handle, const int index,
+                             const char** name);
 
 /*!
  \brief Gets the output node index using the node name
@@ -235,7 +237,8 @@ DLR_DLL int GetDLROutputName(DLRModelHandle* handle, const int index, const char
   \param name The pointer pointing to the output node name.
   \param index The pointer to save the corresponding index of the output node.
 */
-DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index);
+DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name,
+                              int* index);
 
 /*!
  \brief Gets the output of the node of the given name from the model.
@@ -245,7 +248,8 @@ DLR_DLL int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* ind
  array of size "size" from GetDLROutputSizeDim(). \return 0 for success, -1 for
  error. Call DLRGetLastError() to get the error message.
  */
-DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out);
+DLR_DLL int GetDLROutputByName(DLRModelHandle* handle, const char* name,
+                               void* out);
 
 /*!
  \brief Gets the last error message.

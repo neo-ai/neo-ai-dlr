@@ -8,57 +8,54 @@
 using namespace dlr;
 
 // START - Helper functions for TVM Model
-void HexagonModel::InitModelArtifact(const std::string &path) {
-  model_artifact_ = {};
+void HexagonModel::InitModelArtifact() {
+  CHECK_EQ(paths_.size(), 1)
+      << "Found multiple paths. Only a single path is allowed!";
+  std::shared_ptr<HexagonModelArtifact> artifact =
+      std::make_shared<HexagonModelArtifact>();
 
-  std::string directory = path;
+  std::string directory = paths_[0];
   bool path_is_directory = true;
-  if (EndsWith(path, "_hexagon_model.so")) {
-    directory = GetParentFolder(path);
-    model_artifact_.model_file = path;
+  if (EndsWith(directory, "_hexagon_model.so")) {
+    directory = GetParentFolder(directory);
+    artifact->model_file = directory;
     path_is_directory = false;
   }
 
-  std::vector<std::string>filenames = ListFilesInDirectory(directory);
-  for (auto filename: filenames) {
-    if(path_is_directory && EndsWith(filename, "_hexagon_model.so")) {
-      if (model_artifact_.model_file.empty()) {
-        model_artifact_.model_file = filename;
+  std::vector<std::string> filenames = ListFilesInDirectory(directory);
+  for (auto filename : filenames) {
+    if (path_is_directory && EndsWith(filename, "_hexagon_model.so")) {
+      if (artifact->model_file.empty()) {
+        artifact->model_file = filename;
       } else {
         LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: "
-                   << path;
+                   << paths_[0];
       }
     } else if (EndsWith(filename, "libhexagon_nn_skel.so")) {
-      model_artifact_.skeleton_file = filename;
+      artifact->skeleton_file = filename;
     } else if (EndsWith(filename, "compiled.meta")) {
-      model_artifact_.metadata = filename;
+      artifact->metadata = filename;
     }
   }
 
-  if (model_artifact_.model_file.empty()) {
-    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << path;
+  if (artifact->model_file.empty()) {
+    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << paths_[0];
   }
 
-  if (model_artifact_.skeleton_file.empty()) {
+  if (artifact->skeleton_file.empty()) {
     LOG(INFO)
         << "libhexagon_nn_skel.so file is not found. User needs to set "
            "ADSP_LIBRARY_PATH to point to libhexagon_nn_skel.so file folder";
   } else {
-    char* model_folder_abs = realpath(path.c_str(), NULL);
+    char* model_folder_abs = realpath(paths_[0].c_str(), NULL);
     LOG(INFO) << "ADSP_LIBRARY_PATH=" << model_folder_abs;
     setenv("ADSP_LIBRARY_PATH", model_folder_abs, 1);
     free(model_folder_abs);
   }
+
+  model_artifact_ = std::shared_ptr<ModelArtifact>(artifact);
 }
 
-void* dlr::FindSymbol(void* handle, const char* fn_name) {
-  LOG(INFO) << "Loading " << fn_name;
-  void* fn = dlsym(handle, fn_name);
-  if (!fn) {
-    LOG(FATAL) << "dlsym error for " << fn_name << ":" << dlerror();
-  }
-  return fn;
-}
 // END - Helper functions
 
 HexagonModel::~HexagonModel() {
@@ -76,7 +73,8 @@ HexagonModel::~HexagonModel() {
 }
 
 void HexagonModel::InitHexagonModel() {
-  int err = (*dlr_hexagon_model_init)(&graph_id_, &input_, &output_, debug_level_);
+  int err =
+      (*dlr_hexagon_model_init)(&graph_id_, &input_, &output_, debug_level_);
   if (err != 0) {
     PrintHexagonNNLog();
     LOG(FATAL) << "dlr_hexagon_model_init failed: " << err;
@@ -150,24 +148,35 @@ int HexagonModel::GetInputId(const char* name) {
 }
 
 void HexagonModel::LoadSymbols() {
-  LOG(INFO) << "Model File " << model_artifact_.model_file;
-  void* handle = dlopen(model_artifact_.model_file.c_str(), RTLD_NOW | RTLD_LOCAL);
+  std::shared_ptr<HexagonModelArtifact> artifact =
+      std::static_pointer_cast<HexagonModelArtifact>(model_artifact_);
+  LOG(INFO) << "Model File " << artifact->model_file;
+  void* handle = dlopen(artifact->model_file.c_str(), RTLD_NOW | RTLD_LOCAL);
   if (!handle) {
     LOG(FATAL) << "Model file open error: " << dlerror();
   }
 
+  auto find_symbol = [](void* handle, const char* fn_name) -> void* {
+    LOG(INFO) << "Loading " << fn_name;
+    void* fn = dlsym(handle, fn_name);
+    if (!fn) {
+      LOG(FATAL) << "dlsym error for " << fn_name << ":" << dlerror();
+    }
+    return fn;
+  };
+
   *(void**)(&dlr_hexagon_model_init) =
-      FindSymbol(handle, "dlr_hexagon_model_init");
+      find_symbol(handle, "dlr_hexagon_model_init");
   *(void**)(&dlr_hexagon_model_exec) =
-      FindSymbol(handle, "dlr_hexagon_model_exec");
+      find_symbol(handle, "dlr_hexagon_model_exec");
   *(void**)(&dlr_hexagon_model_close) =
-      FindSymbol(handle, "dlr_hexagon_model_close");
+      find_symbol(handle, "dlr_hexagon_model_close");
   *(void**)(&dlr_hexagon_nn_getlog) =
-      FindSymbol(handle, "dlr_hexagon_nn_getlog");
+      find_symbol(handle, "dlr_hexagon_nn_getlog");
   *(void**)(&dlr_hexagon_input_spec) =
-      FindSymbol(handle, "dlr_hexagon_input_spec");
+      find_symbol(handle, "dlr_hexagon_input_spec");
   *(void**)(&dlr_hexagon_output_spec) =
-      FindSymbol(handle, "dlr_hexagon_output_spec");
+      find_symbol(handle, "dlr_hexagon_output_spec");
 }
 
 void HexagonModel::InitInputOutputTensorSpecs() {
@@ -186,15 +195,17 @@ void HexagonModel::InitInputOutputTensorSpecs() {
 void HexagonModel::UpdateInputShapes() {
   input_shapes_.resize(num_inputs_);
   for (auto i = 0; i < num_inputs_; i++) {
-    std::vector<int64_t> input_shape(input_tensors_spec_[i].shape.begin(), input_tensors_spec_[i].shape.end());
+    std::vector<int64_t> input_shape(input_tensors_spec_[i].shape.begin(),
+                                     input_tensors_spec_[i].shape.end());
     input_shapes_[i] = input_shape;
   }
 }
 
 void HexagonModel::UpdateOutputShapes() {
   output_shapes_.resize(num_outputs_);
-  for(auto i = 0; i < num_outputs_; i++) {
-    std::vector<int64_t> output_shape(output_tensors_spec_[i].shape.begin(), output_tensors_spec_[i].shape.end());
+  for (auto i = 0; i < num_outputs_; i++) {
+    std::vector<int64_t> output_shape(output_tensors_spec_[i].shape.begin(),
+                                      output_tensors_spec_[i].shape.end());
     output_shapes_[i] = output_shape;
   }
 }
@@ -208,12 +219,8 @@ const std::string& HexagonModel::GetInputType(int index) const {
   LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
 }
 
-const std::string& HexagonModel::GetWeightName(int index) const {
-  LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";
-}
-
-
-void HexagonModel::SetInput(const int index, const int64_t batch_size, void* input) {
+void HexagonModel::SetInput(const int index, const int64_t batch_size,
+                            void* input) {
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
 
   // Updated input and output shapes to account for batch size.
@@ -221,13 +228,14 @@ void HexagonModel::SetInput(const int index, const int64_t batch_size, void* inp
   UpdateOutputShapes();
 }
 
-void HexagonModel::SetInput(std::string name, const int64_t batch_size, void* input) {
+void HexagonModel::SetInput(std::string name, const int64_t batch_size,
+                            void* input) {
   int index = GetInputId(name.c_str());
   SetInput(index, batch_size, input);
 }
 
-void HexagonModel::SetInput(const char* name, const int64_t* shape,
-                            void* input, int dim) {
+void HexagonModel::SetInput(const char* name, const int64_t* shape, void* input,
+                            int dim) {
   int index = GetInputId(name);
   std::string node_name(name);
 
@@ -270,7 +278,7 @@ void HexagonModel::GetOutput(int index, void* out) {
   std::memcpy(out, output_, output_tensors_spec_[index].bytes);
 }
 
-const int64_t HexagonModel::GetOutputSize(int index) const  {
+const int64_t HexagonModel::GetOutputSize(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   return output_tensors_spec_[index].size;
 }

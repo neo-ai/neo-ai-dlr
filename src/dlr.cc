@@ -21,14 +21,6 @@ extern "C" int GetDLRNumInputs(DLRModelHandle* handle, int* num_inputs) {
   API_END();
 }
 
-extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
-  API_BEGIN();
-  DLRModel* model = static_cast<DLRModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  *num_weights = model->GetNumWeights();
-  API_END();
-}
-
 extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
                                const char** input_name) {
   API_BEGIN();
@@ -44,15 +36,6 @@ extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   *input_type = model->GetInputType(index).c_str();
-  API_END();
-}
-
-extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
-                                const char** weight_name) {
-  API_BEGIN();
-  DLRModel* model = static_cast<DLRModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  *weight_name = model->GetWeightName(index).c_str();
   API_END();
 }
 
@@ -126,7 +109,8 @@ extern "C" int GetDLRHasMetadata(DLRModelHandle* handle, bool* has_metadata) {
   API_END();
 }
 
-extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const char** name) {
+extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index,
+                                const char** name) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -140,7 +124,8 @@ extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const c
   API_END();
 }
 
-extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* index) {
+extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name,
+                                 int* index) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -153,7 +138,8 @@ extern "C" int GetDLROutputIndex(DLRModelHandle* handle, const char* name, int* 
   API_END();
 }
 
-extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void* out) {
+extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name,
+                                  void* out) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -168,12 +154,13 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
 int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
                               int debug_level) {
   API_BEGIN();
-  const std::string model_path_string(model_path);
+  std::vector<std::string> paths = {model_path};
   // HexagonModel class does not use DLContext internally
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  DLRModel* model = new HexagonModel(model_path_string, ctx, debug_level);
+
+  DLRModel* model = new HexagonModel(paths, ctx, debug_level);
   *handle = model;
   API_END();
 }
