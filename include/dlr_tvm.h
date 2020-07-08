@@ -43,6 +43,7 @@ class TVMModel : public DLRModel {
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
   virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual void GetInput(int index, void* input) override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
@@ -64,13 +65,6 @@ class TVMModel : public DLRModel {
   virtual void UseCPUAffinity(bool use) override;
 
   virtual void Run() override;
-  // virtual void Run(const int batch_size, std::vector<void*> intputs,
-  // std::vector<void*> outputs) override;
-
-  /*
-    Following methods use metadata file to lookup input and output names.
-  */
-  virtual bool HasMetadata() const override;
 };
 
 }  // namespace dlr

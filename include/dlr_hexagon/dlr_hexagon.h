@@ -44,9 +44,9 @@ class HexagonModel : public DLRModel {
   void AllocateLogBuffer();
   void GenTensorSpec(bool isInput);
   void InitInputOutputTensorSpecs();
-  int GetInputId(const char* name);
   void UpdateInputShapes();
   void UpdateOutputShapes();
+  int GetInputIndex(const char* name);
 
  public:
   /*! \brief Load model files from given folder path.
@@ -70,6 +70,7 @@ class HexagonModel : public DLRModel {
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
   virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual void GetInput(int index, void* input) override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) override;
   virtual void SetInput(const int index, const int64_t batch_size, void* input) override;

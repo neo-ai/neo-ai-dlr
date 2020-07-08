@@ -88,6 +88,13 @@ TEST_F(TreeliteTest, TestGetOutputType) {
   EXPECT_EQ(model->GetOutputType(0), "float32");
 }
 
+TEST_F(TreeliteTest, TestRun) {
+  void *outputs[1];
+  outputs[0] = malloc(sizeof(float) * model->GetOutputSize(0));
+  EXPECT_NO_THROW(
+      model->DLRModel::Run(1, reinterpret_cast<void **>(&data), outputs));
+}
+
 TEST_F(TreeliteTest, TestGetOutputShape) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
   std::vector<int64_t> out_shape = model->GetOutputShape(0);

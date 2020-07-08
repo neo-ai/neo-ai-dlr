@@ -61,6 +61,7 @@ class TreeliteModel : public DLRModel {
   virtual const std::string& GetInputName(int index) const override;
   virtual const std::string& GetInputType(int index) const override;
   virtual const std::vector<int64_t>& GetInputShape(int index) const override;
+  virtual void GetInput(int index, void* input) override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;

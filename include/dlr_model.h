@@ -36,12 +36,12 @@ class DLRModel {
 
   virtual bool HasMetadata() const;
 
-  /* Input related functions */
   virtual const int GetInputDim(int index) const = 0;
   virtual const int64_t GetInputSize(int index) const = 0;
   virtual const std::string &GetInputName(int index) const = 0;
   virtual const std::string &GetInputType(int index) const = 0;
   virtual const std::vector<int64_t> &GetInputShape(int index) const = 0;
+  virtual void GetInput(int index, void *input) = 0;
   virtual void GetInput(const char *name, void *input) = 0;
   virtual void SetInput(const char *name, const int64_t *shape, void *input,
                         int dim) = 0;
@@ -49,7 +49,6 @@ class DLRModel {
   virtual void SetInput(std::string name, const int64_t batch_size,
                         void *input) = 0;
 
-  /* Ouput related functions */
   virtual const int GetOutputDim(int index) const = 0;
   virtual const int64_t GetOutputSize(int index) const = 0;
   virtual const std::string &GetOutputName(const int index) const;
@@ -62,9 +61,8 @@ class DLRModel {
   virtual void SetNumThreads(int threads) = 0;
   virtual void UseCPUAffinity(bool use) = 0;
 
-  virtual void Run() = 0;
-  // virtual void Run(const int batch_size, std::vector<void*> intputs,
-  // std::vector<void*> outputs) = 0;
+  virtual void Run();
+  virtual void Run(int batch_size, void **inputs, void **outputs);
 };
 }  // namespace dlr
 

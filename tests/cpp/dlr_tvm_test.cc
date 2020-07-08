@@ -1,6 +1,7 @@
 #include "dlr_tvm.h"
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "test_utils.hpp"
 
@@ -57,7 +58,7 @@ TEST_F(TVMTest, TestGetInput) {
   EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
   float observed_input_data[img_size];
   EXPECT_NO_THROW(model->GetInput("input_tensor", observed_input_data));
-  EXPECT_EQ(*img, *observed_input_data);
+  EXPECT_EQ(*img, observed_input_data[0]);
 }
 
 TEST_F(TVMTest, TestGetInputShape) {
@@ -87,13 +88,26 @@ TEST_F(TVMTest, TestGetOutputSize) { EXPECT_EQ(model->GetOutputSize(0), 1); }
 
 TEST_F(TVMTest, TestGetOutputDim) { EXPECT_EQ(model->GetOutputSize(0), 1); }
 
+TEST_F(TVMTest, TestRun) {
+  void* outputs[2];
+  outputs[0] = malloc(sizeof(float) * model->GetOutputSize(0));
+  outputs[1] = malloc(sizeof(float) * model->GetOutputSize(1));
+  EXPECT_NO_THROW(
+      model->DLRModel::Run(1, reinterpret_cast<void**>(&img), outputs));
+  float observed_input_data[img_size];
+  EXPECT_NO_THROW(model->GetInput(0, observed_input_data));
+  EXPECT_EQ(*img, observed_input_data[0]);
+  free(outputs[0]);
+  free(outputs[1]);
+}
+
 TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
   EXPECT_EQ(model->HasMetadata(), true);
   EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
   EXPECT_NO_THROW(model->Run());
 
-  float* output1[1];
-  float* output2[1];
+  float output1[1];
+  float output2[1];
   EXPECT_NO_THROW(model->GetOutput(0, output1));
   EXPECT_NO_THROW(
       model->GetOutputByName(model->GetOutputName(0).c_str(), output2));
@@ -119,18 +133,34 @@ TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
   }
 }
 
-TEST_F(TVMTest, TestTvmModelApisWithoutMetadata) {
+TEST(TVM, TestTvmModelApisWithoutMetadata) {
+  std::string model_path = "./resnet_v1_5_50";
+  std::string metadata_file = model_path + "/compiled.meta";
+  std::string metadata_file_bak = model_path + "/compiled.meta.bak";
+
   // rename metadata file such that metadata file is not found.
   std::rename(metadata_file.c_str(), metadata_file_bak.c_str());
-  EXPECT_EQ(model->HasMetadata(), false);
+
+  const int device_type = 1;  // 1 - kDLCPU
+  const int device_id = 0;
+  DLContext ctx  = {
+    static_cast<DLDeviceType>(device_type),
+    device_id
+  };
+  std::vector<std::string> paths = {model_path};
+  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+
+  EXPECT_EQ(model.GetNumInputs(), 1);
+  EXPECT_EQ(model.GetNumOutputs(), 2);
+  EXPECT_EQ(model.HasMetadata(), false);
   try {
-    model->GetOutputName(0);
-  } catch (const dmlc::Error& e) {
+    model.GetOutputName(0);
+  } catch(const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "No metadata file was found!");
   }
   try {
-    model->GetOutputIndex("blah");
-  } catch (const dmlc::Error& e) {
+    model.GetOutputIndex("blah");
+  } catch(const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "No metadata file was found!");
   }
 
@@ -138,22 +168,40 @@ TEST_F(TVMTest, TestTvmModelApisWithoutMetadata) {
   std::rename(metadata_file_bak.c_str(), metadata_file.c_str());
 }
 
-TEST_F(TVMTest, TestTvmModelApisWithoutOutputInMetadata) {
-  std::rename(metadata_file.c_str(), metadata_file_bak.c_str());
+TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
+  // rename metadata file such that metadata file is not found.
+  std::string model_path = "./resnet_v1_5_50";
+  std::string metadata_file = model_path + "/compiled.meta";
+  std::string metadata_file_bak = model_path + "/compiled.meta.bak";
 
-  EXPECT_EQ(model->HasMetadata(), true);
+  std::rename(metadata_file.c_str(), metadata_file_bak.c_str());
+  std::ofstream mocked_metadata;
+  mocked_metadata.open(metadata_file.c_str());
+  mocked_metadata << "{}\n";
+  mocked_metadata.close();
+
+  const int device_type = 1;  // 1 - kDLCPU
+  const int device_id = 0;
+  DLContext ctx  = {
+    static_cast<DLDeviceType>(device_type),
+    device_id
+  };
+  std::vector<std::string> paths = {model_path};
+  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+
+  EXPECT_EQ(model.GetNumInputs(), 1);
+  EXPECT_EQ(model.GetNumOutputs(), 2);
+  EXPECT_EQ(model.HasMetadata(), true);
 
   try {
-    model->GetOutputName(0);
-  } catch (const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(),
-                 "Output node with index 0 was not found in metadata file!");
+    model.GetOutputName(0);
+  } catch(const dmlc::Error& e) {
+    EXPECT_STREQ(e.what(), "Output node with index 0 was not found in metadata file!");
   }
   try {
-    model->GetOutputIndex("blah");
-  } catch (const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(),
-                 "Output node with index 0 was not found in metadata file!");
+    model.GetOutputIndex("blah");
+  } catch(const dmlc::Error& e) {
+    EXPECT_STREQ(e.what(), "Output node with index 0 was not found in metadata file!");
   }
 
   // put it back

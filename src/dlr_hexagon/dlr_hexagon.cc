@@ -7,7 +7,6 @@
 
 using namespace dlr;
 
-// START - Helper functions for TVM Model
 void HexagonModel::InitModelArtifact() {
   CHECK_EQ(paths_.size(), 1)
       << "Found multiple paths. Only a single path is allowed!";
@@ -55,8 +54,6 @@ void HexagonModel::InitModelArtifact() {
 
   model_artifact_ = std::shared_ptr<ModelArtifact>(artifact);
 }
-
-// END - Helper functions
 
 HexagonModel::~HexagonModel() {
   if (graph_id_ != 0 && dlr_hexagon_model_close != nullptr) {
@@ -136,7 +133,7 @@ void HexagonModel::GenTensorSpec(bool isInput) {
   }
 }
 
-int HexagonModel::GetInputId(const char* name) {
+int HexagonModel::GetInputIndex(const char* name) {
   // In most of the cases it will be just 1 element in the vector.
   // Scan vector to find tensor by name.
   for (int i = 0; i < num_inputs_; i++) {
@@ -230,13 +227,13 @@ void HexagonModel::SetInput(const int index, const int64_t batch_size,
 
 void HexagonModel::SetInput(std::string name, const int64_t batch_size,
                             void* input) {
-  int index = GetInputId(name.c_str());
+  int index = GetInputIndex(name.c_str());
   SetInput(index, batch_size, input);
 }
 
 void HexagonModel::SetInput(const char* name, const int64_t* shape, void* input,
                             int dim) {
-  int index = GetInputId(name);
+  int index = GetInputIndex(name);
   std::string node_name(name);
 
   // Check Size and Dim
@@ -248,9 +245,13 @@ void HexagonModel::SetInput(const char* name, const int64_t* shape, void* input,
   SetInput(name, *shape, input);
 }
 
-void HexagonModel::GetInput(const char* name, void* input) {
-  int index = GetInputId(name);
+void HexagonModel::GetInput(int index, void* input) {
   std::memcpy(input, input_, input_tensors_spec_[index].bytes);
+}
+
+void HexagonModel::GetInput(const char* name, void* input) {
+  int index = GetInputIndex(name);
+  GetInput(index, input);
 }
 
 const int64_t HexagonModel::GetInputSize(int index) const {

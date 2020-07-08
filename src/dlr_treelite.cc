@@ -109,8 +109,13 @@ const std::vector<int64_t>& TreeliteModel::GetInputShape(int index) const {
   return input_shapes_[index];
 }
 
+void TreeliteModel::GetInput(int index, void* input) {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  input = input_->data.data();
+}
+
 void TreeliteModel::GetInput(const char* name, void* input) {
-  LOG(FATAL) << "GetInput is not supported by Treelite backend";
+  input = input_->data.data();
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,

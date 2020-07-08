@@ -156,9 +156,7 @@ const std::vector<int64_t>& TVMModel::GetInputShape(int index) const {
   return input_shapes_[index];
 }
 
-void TVMModel::GetInput(const char* name, void* input) {
-  std::string node_name(name);
-  int index = tvm_graph_runtime_->GetInputIndex(node_name);
+void TVMModel::GetInput(int index, void* input) {
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor;
   input_tensor.data = input;
@@ -169,6 +167,12 @@ void TVMModel::GetInput(const char* name, void* input) {
   input_tensor.strides = nullptr;
   input_tensor.byte_offset = 0;
   arr.CopyTo(&input_tensor);
+}
+
+void TVMModel::GetInput(const char* name, void* input) {
+  std::string node_name(name);
+  int index = tvm_graph_runtime_->GetInputIndex(node_name);
+  GetInput(index, input);
 }
 
 void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
@@ -293,15 +297,3 @@ void TVMModel::UseCPUAffinity(bool use) {
 }
 
 void TVMModel::Run() { tvm_graph_runtime_->Run(); }
-
-// void TVMModel::Run(const int batch_size, std::vector<void*> inputs,
-// std::vector<void*> output) {
-//   CHECK_EQ(inputs.size(), num_inputs_) << "Invalid number of inputs.";
-//   CHECK_EQ(outpus.size(), num_outputs_) << "Invalid number of outputs.";
-//   for(int index; index < num_inputs_; i++) {
-//     SetInput(index, inputs[index]);
-//   }
-//   for(int index; index < num_outputs_; i++) {
-//     GetOutput(index, outputs[index]);
-//   }
-// }
