@@ -151,10 +151,9 @@ TEST(Hexagon, CreateDLRModelFromHexagonFromFile) {
   // CreateDLRModelFromHexagon (use _hexagon_model.so file)
   const char* model_file =
       "./dlr_hexagon_model/mobilenet_v1_0.75_224_quant_hexagon_model.so";
-  int debug_level = 0;
 
   DLRModelHandle handle = NULL;
-  if (CreateDLRModelFromHexagon(&handle, model_file, debug_level)) {
+  if (CreateDLRModel(&handle, model_file, 0, 0)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromHexagon - OK";

@@ -147,66 +147,11 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name,
   API_END();
 }
 
-#ifdef DLR_HEXAGON
-/*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
- * ctor.
- */
-int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
-                              int debug_level) {
-  API_BEGIN();
-  std::vector<std::string> paths = {model_path};
-  // HexagonModel class does not use DLContext internally
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
-  ctx.device_id = 0;
-
-  DLRModel* model = new HexagonModel(paths, ctx, debug_level);
-  *handle = model;
-  API_END();
-}
-#endif  // DLR_HEXAGON
-
-/*! \brief Translate c args from ctypes to std types for DLRModel ctor.
- */
 extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
                               int dev_type, int dev_id) {
   API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
-
-  /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
-
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
-
-  DLRBackend backend = dlr::GetBackend(path_vec);
-  DLRModel* model;
-  if (backend == DLRBackend::kTVM) {
-    model = new TVMModel(path_vec, ctx);
-  } else if (backend == DLRBackend::kTREELITE) {
-    model = new TreeliteModel(path_vec, ctx);
-#ifdef DLR_HEXAGON
-  } else if (backend == DLRBackend::kHEXAGON) {
-    DLRModelHandle hexagon_handle;
-    int errC = CreateDLRModelFromHexagon(&hexagon_handle, model_path,
-                                         1 /*debug_level*/);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(hexagon_handle);
-#endif  // DLR_HEXAGON
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-    return -1;  // unreachable
-  }
-  *handle = model;
+  std::string path(model_path);
+  *handle = DLRModel::create_model(path, dev_type, dev_id);
   API_END();
 }
 

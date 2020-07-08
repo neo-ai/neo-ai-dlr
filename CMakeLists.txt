@@ -87,6 +87,7 @@ set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
 set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
+set(PYBIND11_SRC "${PROJECT_SOURCE_DIR}/3rdparty/pybind11")
 
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
@@ -328,6 +329,13 @@ add_custom_target(combined_lib
 	COMMAND rm -rf ${OPREFIX}*
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
+
+# Python bindings
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+add_subdirectory("${PYBIND11_SRC}")
+pybind11_add_module(pydlr src/python/dlr_python.cc)
+target_link_libraries(pydlr PUBLIC dlr)
 
 # Demos
 set(DEMO_EXECS "")

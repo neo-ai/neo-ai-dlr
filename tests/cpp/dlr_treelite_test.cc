@@ -19,7 +19,7 @@ class TreeliteTest : public ::testing::Test {
   const int64_t out_size = 1;
   const int out_dim = 2;
 
-  dlr::TreeliteModel *model;
+  dlr::DLRModel *model;
 
   TreeliteTest() {
     // Setup input data
@@ -29,11 +29,10 @@ class TreeliteTest : public ::testing::Test {
     }
 
     // Instantiate model
-    const int device_type = 1;
-    const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    int device_type = 1;
+    int device_id = 0;
     std::vector<std::string> paths = {"./xgboost_test"};
-    model = new dlr::TreeliteModel(paths, ctx);
+    model = dlr::DLRModel::create_model(paths, device_type, device_id);
   }
 
   ~TreeliteTest() {

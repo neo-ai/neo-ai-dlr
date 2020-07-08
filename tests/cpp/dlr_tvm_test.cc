@@ -1,3 +1,4 @@
+#include "dlr_model.h"
 #include "dlr_tvm.h"
 
 #include <gtest/gtest.h>
@@ -24,18 +25,17 @@ class TVMTest : public ::testing::Test {
   const std::string metadata_file = "./resnet_v1_5_50/compiled.meta";
   const std::string metadata_file_bak = "./resnet_v1_5_50/compiled.meta.bak";
 
-  dlr::TVMModel* model;
+  dlr::DLRModel* model;
 
   TVMTest() {
     // Setup input data
     img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
 
     // Instantiate model
-    const int device_type = 1;
-    const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    int device_type = 1;
+    int device_id = 0;
     std::vector<std::string> paths = {model_path};
-    model = new dlr::TVMModel(paths, ctx);
+    model = dlr::DLRModel::create_model(paths, device_type, device_id);
   }
 
   ~TVMTest() {

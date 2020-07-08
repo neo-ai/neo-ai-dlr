@@ -32,12 +32,6 @@ DLR_DLL
 int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
                    int dev_id);
 
-#ifdef DLR_HEXAGON
-DLR_DLL
-int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
-                              int debug_level);
-#endif  // DLR_HEXAGON
-
 DLR_DLL
 int DeleteDLRModel(DLRModelHandle* handle);
 
