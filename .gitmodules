@@ -4,6 +4,9 @@
 [submodule "3rdparty/treelite"]
 	path = 3rdparty/treelite
 	url = https://github.com/neo-ai/treelite
+[submodule "3rdparty/pybind11"]
+	path = 3rdparty/pybind11
+	url = https://github.com/pybind/pybind11.git
 [submodule "3rdparty/libnpy"]
 	path = 3rdparty/libnpy
 	url = https://github.com/llohse/libnpy.git
