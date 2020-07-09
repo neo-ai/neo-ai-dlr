@@ -101,6 +101,21 @@ TEST_F(TVMTest, TestRun) {
   free(outputs[1]);
 }
 
+TEST_F(TVMTest, TestRunWithInputsAsDict) {
+  std::map<std::string, void*> inputs;
+  inputs.insert(std::make_pair("input_tensor", img));
+  std::vector<void*> outputs(2);
+  outputs[0] = malloc(sizeof(float) * model->GetOutputSize(0));
+  outputs[1] = malloc(sizeof(float) * model->GetOutputSize(1));
+  EXPECT_NO_THROW(
+      model->DLRModel::Run(1, inputs, outputs));
+  float observed_input_data[img_size];
+  EXPECT_NO_THROW(model->GetInput(0, observed_input_data));
+  EXPECT_EQ(*img, observed_input_data[0]);
+  free(outputs[0]);
+  free(outputs[1]);
+}
+
 TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
   EXPECT_EQ(model->HasMetadata(), true);
   EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
@@ -128,8 +143,8 @@ TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
   try {
     model->GetOutputName(2);
   } catch (const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(),
-                 "Output index out of range.");
+    std::string msg(e.what());
+    EXPECT_TRUE(msg.find("Output index out of range."));
   }
 }
 
@@ -196,12 +211,14 @@ TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
   try {
     model.GetOutputName(0);
   } catch(const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(), "Check failed: output_names_.size() == num_outputs_ (0 vs. 2) : Output node with index 0 was not found in metadata file!");
+    std::string msg(e.what());
+    EXPECT_TRUE(msg.find("Output node with index 0 was not found in metadata file!"));
   }
   try {
     model.GetOutputIndex("blah");
   } catch(const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(), "Check failed: output_names_.size() == num_outputs_ (0 vs. 2) : Output node with index 0 was not found in metadata file!");
+    std::string msg(e.what());
+    EXPECT_TRUE(msg.find("Output node with index 0 was not found in metadata file!"));
   }
 
   // put it back

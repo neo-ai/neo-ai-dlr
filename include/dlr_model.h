@@ -73,7 +73,8 @@ class DLRModel {
   virtual void UseCPUAffinity(bool use) = 0;
 
   virtual void Run();
-  virtual void Run(int batch_size, void **inputs, void **outputs);
+  virtual void Run(const int64_t batch_size, void **inputs, void **outputs);
+  virtual void Run(const int64_t batch_size, std::map<std::string, void*>& inputs, std::vector<void*>& outputs);
 };
 }  // namespace dlr
 

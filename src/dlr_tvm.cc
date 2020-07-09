@@ -121,9 +121,10 @@ void TVMModel::UpdateInputShapes() {
 void TVMModel::UpdateOutputShapes() {
   output_shapes_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
+    tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(i);
+    std::cout << "Output Shape: " << output->shape[0] << std::endl;
     std::vector<int64_t> output_shape;
-    output_shape.assign(outputs_[i]->shape,
-                        outputs_[i]->shape + outputs_[i]->ndim);
+    output_shape.assign(output->shape, output->shape + output->ndim);
     output_shapes_[i] = output_shape;
   }
 }
@@ -173,15 +174,15 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
 
 void TVMModel::SetInput(const int index, const int64_t batch_size,
                         void* input) {
+  tvm::runtime::Module tvm_module = tvm::runtime::Module(tvm_graph_runtime_);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
   input_tensor.ctx = DLContext{kDLCPU, 0};
   input_tensor.data = input;
-  tvm_graph_runtime_->SetInput(index, &input_tensor);
-
-  // Updated input and output shapes to account for batch size.
+  tvm::runtime::PackedFunc set_input = tvm_module.GetFunction("set_input");
+  set_input(index, &input_tensor);
+  // Updated input to account for batch size.
   UpdateInputShapes();
-  UpdateOutputShapes();
 }
 
 void TVMModel::SetInput(std::string name, const int64_t batch_size,
@@ -191,19 +192,24 @@ void TVMModel::SetInput(std::string name, const int64_t batch_size,
 }
 
 const int TVMModel::GetOutputDim(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   return output_shapes_[index].size();
 }
 
 const int64_t TVMModel::GetOutputSize(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   return std::accumulate(output_shapes_[index].begin(),
                          output_shapes_[index].end(), 1,
                          std::multiplies<int64_t>());
 }
 
 void TVMModel::GetOutput(int index, void* out) {
-  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
-  DLManagedTensor* output_tensor = output.ToDLPack();
-  std::memcpy(out, output_tensor->dl_tensor.data, GetOutputSize(index));
+  tvm::runtime::Module tvm_module = tvm::runtime::Module(tvm_graph_runtime_);
+  DLTensor output_tensor = *outputs_[index];
+  output_tensor.ctx = DLContext{kDLCPU, 0};
+  output_tensor.data = out;
+  tvm::runtime::PackedFunc get_output = tvm_module.GetFunction("get_output");
+  get_output(index, &output_tensor);
 }
 
 
@@ -232,4 +238,7 @@ void TVMModel::UseCPUAffinity(bool use) {
   }
 }
 
-void TVMModel::Run() { tvm_graph_runtime_->Run(); }
+void TVMModel::Run() {
+  tvm_graph_runtime_->Run();
+  UpdateOutputShapes();
+}

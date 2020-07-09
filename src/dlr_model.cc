@@ -140,10 +140,10 @@ int DLRModel::GetOutputIndex(const char* name) const {
   if (!HasMetadata()) {
     throw dmlc::Error("No metadata file was found!");
   }
+  std::string output_node_name(name);
   for (int i = 0; i < num_outputs_; i++) {
-    const char* output_name = GetOutputName(i).c_str();
-    if (output_name == nullptr) return -1;
-    if (strcmp(output_name, name) == 0) {
+    std::string node_name = GetOutputName(i);
+    if (output_node_name == node_name) {
       return i;
     }
   }
@@ -162,12 +162,22 @@ bool DLRModel::HasMetadata() const { return !this->metadata.is_null(); }
 
 void DLRModel::Run() { LOG(ERROR) << "Not Implemented!"; }
 
-void DLRModel::Run(int batch_size, void** inputs, void** outputs) {
+void DLRModel::Run(const int64_t batch_size, void** inputs, void** outputs) {
   for (int index = 0; index < num_inputs_; index++) {
     SetInput(index, batch_size, *(inputs + index));
   }
   Run();
   for (int index = 0; index < num_outputs_; index++) {
     GetOutput(index, *(outputs + index));
+  }
+}
+
+void DLRModel::Run(const int64_t batch_size, std::map<std::string, void*>& inputs, std::vector<void*>& outputs) {
+  for (std::pair<std::string, void*> input : inputs) {
+    SetInput(input.first, batch_size, input.second);
+  }
+  Run();
+  for (int index = 0; index < num_outputs_; index++) {
+    GetOutput(index, outputs[index]);
   }
 }

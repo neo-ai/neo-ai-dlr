@@ -131,17 +131,12 @@ class DLRModelImpl(IDLRModel):
         self.version = self._get_version()
 
         self.num_inputs = self._get_num_inputs()
-        self.num_weights = self._get_num_weights()
         self.input_names = []
         self.input_name_to_index = {}
         self.output_names = []
-        self.weight_names = []
         self.input_shapes = {}   # Remember shape used in _set_input()
         self.input_dtypes = []
         self.output_dtypes = []
-        
-        for i in range(self.num_weights):
-            self.weight_names.append(self._get_weight_name(i))
 
         self.num_outputs = self._get_num_outputs()
         self._lazy_init_output_shape()
@@ -186,13 +181,6 @@ class DLRModelImpl(IDLRModel):
         _check_call(DLRModelImpl._LIB.GetDLRNumInputs(byref(self.handle),
                                          byref(num_inputs)))
         return num_inputs.value
-
-    def _get_num_weights(self):
-        """Get the number of weights of a network"""
-        num_weights = c_int()
-        _check_call(DLRModelImpl._LIB.GetDLRNumWeights(byref(self.handle),
-                                          byref(num_weights)))
-        return num_weights.value
 
     def get_input_names(self):
         """
@@ -314,17 +302,6 @@ class DLRModelImpl(IDLRModel):
             raise ValueError("{} is not a valid input name.".format(name))
         return index
 
-    def _get_weight_name(self, index):
-        name = ctypes.c_char_p()
-        _check_call(DLRModelImpl._LIB.GetDLRWeightName(byref(self.handle),
-                                          c_int(index), byref(name)))
-        return name.value.decode("utf-8")
-
-    def _get_input_or_weight_dtype_by_name(self, name):
-        if name in self.weight_names:
-            return "float32"
-        return self.get_input_dtype(self._get_input_index(name))
-
     def _set_input(self, name, data):
         """Set the input using the input name with data
 
@@ -335,7 +312,7 @@ class DLRModelImpl(IDLRModel):
         data : list of numbers
             The data to be set.
         """
-        input_dtype = self._get_input_or_weight_dtype_by_name(name)
+        input_dtype = self.get_input_dtype(self._get_input_index(name))
         input_ctype = _get_ctype_from_dtype(input_dtype)
         # float32 inputs can accept any data (backward compatibility).
         if input_dtype == "float32":
@@ -467,8 +444,7 @@ class DLRModelImpl(IDLRModel):
         elif isinstance(input_values, dict):
             # TVM model
             for key, value in input_values.items():
-                if (self.input_names and key not in self.input_names) and \
-                   (self.weight_names and key not in self.weight_names):
+                if (self.input_names and key not in self.input_names):
                     raise ValueError("%s is not a valid input name." % key)
                 self._set_input(key, value)
         else:
@@ -498,7 +474,7 @@ class DLRModelImpl(IDLRModel):
             raise ValueError('Since set_input() was never called with ' +
                              'input {}, we cannot infer its shape. '.format(name) +
                              'Shape parameter should be explicitly specified')
-        input_dtype = self._get_input_or_weight_dtype_by_name(name)
+        input_dtype = self.get_input_dtype(self._get_input_index(name))
         input_ctype = _get_ctype_from_dtype(input_dtype)
         if shape is None:
             shape = self.input_shapes[name]

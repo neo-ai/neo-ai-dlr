@@ -62,7 +62,8 @@ extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  shape = const_cast<int64_t*>(model->GetOutputShape(index).data());
+  std::vector<int64_t> output_shape = model->GetOutputShape(index);
+  std::memcpy(shape, output_shape.data(), sizeof(int64_t)*output_shape.size());
   API_END();
 }
 

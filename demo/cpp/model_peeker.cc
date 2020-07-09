@@ -30,9 +30,6 @@ void peek_model(DLRModelHandle model) {
   GetDLRNumInputs(&model, &num_inputs);
   std::cout << "num_inputs = " << num_inputs << std::endl;
 
-  GetDLRNumWeights(&model, &num_weights);
-  std::cout << "num_weights = " << num_weights << std::endl;
-
   GetDLRNumOutputs(&model, &num_outputs);
   std::cout << "num_outputs = " << num_outputs << std::endl;
 
