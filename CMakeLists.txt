@@ -107,6 +107,7 @@ FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
+    ${TVM_SRC}/src/runtime/metadata_module.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
 
@@ -219,78 +220,54 @@ if(USE_TENSORRT)
     include_directories("${TVM_SRC}/3rdparty/rang/include")
     include_directories("${TVM_SRC}/3rdparty/compiler-rt")
     include_directories("${TVM_SRC}/topi/include")
-    list(APPEND DLR_SRC
-         # Ops
-         ${TVM_SRC}/src/relay/op/nn/nn.cc
-         ${TVM_SRC}/src/relay/op/nn/pooling.cc
-         ${TVM_SRC}/src/relay/op/nn/convolution.cc
-         ${TVM_SRC}/src/relay/op/nn/pad.cc
-         ${TVM_SRC}/src/relay/op/tensor/binary.cc
-         ${TVM_SRC}/src/relay/op/tensor/unary.cc
-         ${TVM_SRC}/src/relay/op/tensor/transform.cc
-         ${TVM_SRC}/src/relay/op/tensor/reduce.cc
-         ${TVM_SRC}/src/relay/op/image/resize.cc
-         ${TVM_SRC}/src/node/container.cc
-         ${TVM_SRC}/src/ir/attrs.cc
-
-         ${TVM_SRC}/src/relay/ir/expr_functor.cc
-         ${TVM_SRC}/src/relay/ir/pattern_functor.cc
-         ${TVM_SRC}/src/relay/op/type_relations.cc
-         ${TVM_SRC}/src/tir/ir/op.cc
-         ${TVM_SRC}/src/arith/int_set.cc
-         ${TVM_SRC}/src/tir/ir/expr.cc
-         ${TVM_SRC}/src/te/tensor.cc
-         ${TVM_SRC}/src/relay/ir/expr.cc
-         ${TVM_SRC}/src/ir/expr.cc
-         ${TVM_SRC}/src/relay/ir/function.cc
-         ${TVM_SRC}/src/arith/canonical_simplify.cc
-         ${TVM_SRC}/src/arith/rewrite_simplify.cc
-         ${TVM_SRC}/src/arith/ir_mutator_with_analyzer.cc
-         ${TVM_SRC}/src/tir/ir/stmt_functor.cc
-         ${TVM_SRC}/src/tir/ir/expr_functor.cc
-         ${TVM_SRC}/src/tir/ir/stmt.cc
-         ${TVM_SRC}/src/tir/analysis/deep_equal.cc
-         ${TVM_SRC}/src/relay/ir/adt.cc
-         ${TVM_SRC}/src/arith/const_int_bound.cc
-         ${TVM_SRC}/src/tir/ir/data_layout.cc
-         ${TVM_SRC}/src/tir/pass/simple_passes.cc
-         ${TVM_SRC}/src/ir/type.cc
-         ${TVM_SRC}/src/ir/tensor_type.cc
-         ${TVM_SRC}/src/ir/op.cc
-         ${TVM_SRC}/src/arith/analyzer.cc
-         ${TVM_SRC}/src/arith/modular_set.cc
-         ${TVM_SRC}/src/arith/stmt_simplify.cc
-         ${TVM_SRC}/src/node/repr_printer.cc
-         ${TVM_SRC}/src/ir/env_func.cc
-         ${TVM_SRC}/src/relay/analysis/util.cc
-         ${TVM_SRC}/src/ir/type_functor.cc
-         ${TVM_SRC}/src/ir/module.cc
-         ${TVM_SRC}/src/relay/transforms/type_infer.cc
-         ${TVM_SRC}/src/ir/error.cc
-         ${TVM_SRC}/src/relay/analysis/type_solver.cc
-         ${TVM_SRC}/src/node/reflection.cc
-         ${TVM_SRC}/src/relay/ir/base.cc
-         ${TVM_SRC}/src/relay/analysis/kind_check.cc
-         ${TVM_SRC}/src/printer/relay_text_printer.cc
-         ${TVM_SRC}/src/printer/doc.cc
-         ${TVM_SRC}/src/relay/analysis/dependency_graph.cc
-         ${TVM_SRC}/src/node/structural_equal.cc
-         ${TVM_SRC}/src/relay/analysis/match_exhaustion.cc
-         ${TVM_SRC}/src/node/serialization.cc
-         ${TVM_SRC}/src/relay/transforms/eta_expand.cc
-         ${TVM_SRC}/src/ir/transform.cc
-         ${TVM_SRC}/src/ir/type_relation.cc
-         ${TVM_SRC}/src/relay/transforms/de_duplicate.cc
-         ${TVM_SRC}/src/te/operation/compute_op.cc
-         ${TVM_SRC}/src/te/schedule/message_passing.cc
-         ${TVM_SRC}/src/te/operation/op_util.cc
-         ${TVM_SRC}/src/tir/pass/ir_util.cc
-         ${TVM_SRC}/src/te/operation/cross_thread_reduction.cc
-         ${TVM_SRC}/src/te/operation/tensorize.cc
-         ${TVM_SRC}/src/tir/pass/arg_binder.cc
-         ${TVM_SRC}/src/relay/ir/transform.cc
-         ${TVM_SRC}/src/relay/analysis/well_formed.cc
-         )
+    file(GLOB_RECURSE COMPILER_SRCS
+        ${TVM_SRC}/src/node/*.cc
+        ${TVM_SRC}/src/ir/*.cc
+        ${TVM_SRC}/src/arith/*.cc
+        ${TVM_SRC}/src/te/*.cc
+        ${TVM_SRC}/src/autotvm/*.cc
+        ${TVM_SRC}/src/tir/*.cc
+        ${TVM_SRC}/src/driver/*.cc
+        ${TVM_SRC}/src/printer/*.cc
+        ${TVM_SRC}/src/support/*.cc
+    )
+    file(GLOB CODEGEN_SRCS
+      ${TVM_SRC}/src/target/*.cc
+      ${TVM_SRC}/src/target/source/*.cc
+    )
+    list(APPEND COMPILER_SRCS ${CODEGEN_SRCS})
+    file(GLOB_RECURSE RELAY_OP_SRCS
+        ${TVM_SRC}/src/relay/op/*.cc
+    )
+    file(GLOB_RECURSE RELAY_PASS_SRCS
+        ${TVM_SRC}/src/relay/analysis/*.cc
+        ${TVM_SRC}/src/relay/transforms/*.cc
+        ${TVM_SRC}/src/relay/quantize/*.cc
+    )
+    file(GLOB RELAY_BACKEND_SRCS
+        ${TVM_SRC}/src/relay/backend/*.cc
+        ${TVM_SRC}/src/relay/backend/vm/*.cc
+    )
+    file(GLOB_RECURSE RELAY_IR_SRCS
+        ${TVM_SRC}/src/relay/ir/*.cc
+    )
+    file(GLOB_RECURSE RELAY_QNN_SRCS
+        ${TVM_SRC}/src/relay/qnn/*.cc
+    )
+    list(APPEND COMPILER_SRCS ${RELAY_OP_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_PASS_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_BACKEND_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_IR_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_QNN_SRCS})
+    file(GLOB DATATYPE_SRCS ${TVM_SRC}/src/target/datatype/*.cc)
+    list(APPEND COMPILER_SRCS ${DATATYPE_SRCS})
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_metal_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_sdaccel_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_aocl_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_opencl_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/runtime/container.cc)
+    list(APPEND DLR_SRC ${COMPILER_SRCS})
+    message("${COMPILER_SRCS}")
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW_LITE_LIB)
