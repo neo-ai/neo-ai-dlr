@@ -18,7 +18,6 @@ class TVMModel : public DLRModel {
  private:
   tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
   std::vector<const DLTensor*> outputs_;
-  std::vector<std::string> output_types_;
   virtual void InitModelArtifact() override;
   void SetupTvmGraphRuntime();
   void FetchInputNodesData();
@@ -40,9 +39,6 @@ class TVMModel : public DLRModel {
 
   virtual const int GetInputDim(int index) const override;
   virtual const int64_t GetInputSize(int index) const override;
-  virtual const std::string& GetInputName(int index) const override;
-  virtual const std::string& GetInputType(int index) const override;
-  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
   virtual void GetInput(int index, void* input) override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
@@ -54,12 +50,7 @@ class TVMModel : public DLRModel {
 
   virtual const int GetOutputDim(int index) const override;
   virtual const int64_t GetOutputSize(int index) const override;
-  virtual const std::string& GetOutputName(const int index) const override;
-  virtual const std::string& GetOutputType(int index) const override;
-  virtual const std::vector<int64_t>& GetOutputShape(int index) const override;
-  virtual int GetOutputIndex(const char* name) const override;
   virtual void GetOutput(int index, void* out) override;
-  virtual void GetOutputByName(const char* name, void* out) override;
 
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;

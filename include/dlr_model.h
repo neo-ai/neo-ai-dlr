@@ -16,12 +16,15 @@ class DLRModel {
   std::vector<std::string> paths_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
+  std::vector<std::string> output_names_;
+  std::vector<std::string> output_types_;
   std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<std::vector<int64_t>> output_shapes_;
   std::shared_ptr<ModelArtifact> model_artifact_;
 
   virtual void InitModelArtifact() = 0;
   void LoadMetadataFromModelArtifact();
+  void FetchOutputNamesFromMetadata();
 
  public:
   DLRModel(std::vector<std::string> paths, const DLContext &ctx,
@@ -42,9 +45,11 @@ class DLRModel {
 
   virtual const int GetInputDim(int index) const = 0;
   virtual const int64_t GetInputSize(int index) const = 0;
-  virtual const std::string &GetInputName(int index) const = 0;
-  virtual const std::string &GetInputType(int index) const = 0;
-  virtual const std::vector<int64_t> &GetInputShape(int index) const = 0;
+  virtual const std::string &GetInputName(int index) const;
+  virtual const std::vector<std::string> &GetInputNames() const;
+  virtual const std::string &GetInputType(int index) const;
+  virtual const std::vector<std::string> &GetInputTypes() const;
+  virtual const std::vector<int64_t> &GetInputShape(int index) const;
   virtual void GetInput(int index, void *input) = 0;
   virtual void GetInput(const char *name, void *input) = 0;
   virtual void SetInput(const char *name, const int64_t *shape, void *input,
@@ -56,8 +61,10 @@ class DLRModel {
   virtual const int GetOutputDim(int index) const = 0;
   virtual const int64_t GetOutputSize(int index) const = 0;
   virtual const std::string &GetOutputName(const int index) const;
-  virtual const std::string &GetOutputType(int index) const = 0;
-  virtual const std::vector<int64_t> &GetOutputShape(int index) const = 0;
+  virtual const std::vector<std::string> &GetOutputNames() const;
+  virtual const std::string &GetOutputType(int index) const;
+  virtual const std::vector<std::string> &GetOutputTypes() const;
+  virtual const std::vector<int64_t> &GetOutputShape(int index) const;
   virtual int GetOutputIndex(const char *name) const;
   virtual void GetOutput(int index, void *out) = 0;
   virtual void GetOutputByName(const char *name, void *out);

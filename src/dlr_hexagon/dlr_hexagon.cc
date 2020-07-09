@@ -207,15 +207,6 @@ void HexagonModel::UpdateOutputShapes() {
   }
 }
 
-const std::string& HexagonModel::GetInputName(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_names_[index];
-}
-
-const std::string& HexagonModel::GetInputType(int index) const {
-  LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
-}
-
 void HexagonModel::SetInput(const int index, const int64_t batch_size,
                             void* input) {
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
@@ -262,16 +253,6 @@ const int64_t HexagonModel::GetInputSize(int index) const {
 const int HexagonModel::GetInputDim(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_tensors_spec_[index].dim;
-}
-
-const std::vector<int64_t>& HexagonModel::GetInputShape(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_shapes_[index];
-}
-
-const std::vector<int64_t>& HexagonModel::GetOutputShape(int index) const {
-  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  return output_shapes_[index];
 }
 
 void HexagonModel::GetOutput(int index, void* out) {

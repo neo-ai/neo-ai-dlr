@@ -129,7 +129,7 @@ TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
     model->GetOutputName(2);
   } catch (const dmlc::Error& e) {
     EXPECT_STREQ(e.what(),
-                 "Output node with index 2 was not found in metadata file!");
+                 "Output index out of range.");
   }
 }
 
@@ -196,12 +196,12 @@ TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
   try {
     model.GetOutputName(0);
   } catch(const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(), "Output node with index 0 was not found in metadata file!");
+    EXPECT_STREQ(e.what(), "Check failed: output_names_.size() == num_outputs_ (0 vs. 2) : Output node with index 0 was not found in metadata file!");
   }
   try {
     model.GetOutputIndex("blah");
   } catch(const dmlc::Error& e) {
-    EXPECT_STREQ(e.what(), "Output node with index 0 was not found in metadata file!");
+    EXPECT_STREQ(e.what(), "Check failed: output_names_.size() == num_outputs_ (0 vs. 2) : Output node with index 0 was not found in metadata file!");
   }
 
   // put it back

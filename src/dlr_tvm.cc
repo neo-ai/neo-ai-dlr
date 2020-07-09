@@ -141,21 +141,6 @@ const int64_t TVMModel::GetInputSize(int index) const {
                          std::multiplies<int64_t>());
 }
 
-const std::string& TVMModel::GetInputName(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_names_[index];
-}
-
-const std::string& TVMModel::GetInputType(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_types_[index];
-}
-
-const std::vector<int64_t>& TVMModel::GetInputShape(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_shapes_[index];
-}
-
 void TVMModel::GetInput(int index, void* input) {
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor;
@@ -215,61 +200,12 @@ const int64_t TVMModel::GetOutputSize(int index) const {
                          std::multiplies<int64_t>());
 }
 
-const std::string& TVMModel::GetOutputName(const int index) const {
-  if (!HasMetadata()) {
-    throw dmlc::Error("No metadata file was found!");
-  }
-  try {
-    return metadata.at("Model")
-        .at("Outputs")
-        .at(index)
-        .at("name")
-        .get_ref<const std::string&>();
-  } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    std::string msg = "Output node with index";
-    msg += " " + std::to_string(index);
-    msg += " was not found in metadata file!";
-    throw dmlc::Error(msg);
-  }
-}
-
-const std::string& TVMModel::GetOutputType(int index) const {
-  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  return output_types_[index];
-}
-
-const std::vector<int64_t>& TVMModel::GetOutputShape(int index) const {
-  return output_shapes_[index];
-}
-
-int TVMModel::GetOutputIndex(const char* name) const {
-  if (!HasMetadata()) {
-    throw dmlc::Error("No metadata file was found!");
-  }
-  for (int i = 0; i < num_outputs_; i++) {
-    const char* output_name = GetOutputName(i).c_str();
-    if (output_name == nullptr) return -1;
-    if (strcmp(output_name, name) == 0) {
-      return i;
-    }
-  }
-
-  std::string msg = "Couldn't find index for output node";
-  msg += " " + std::string{name} + "!";
-  throw dmlc::Error(msg);
-}
-
 void TVMModel::GetOutput(int index, void* out) {
   tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
   DLManagedTensor* output_tensor = output.ToDLPack();
   std::memcpy(out, output_tensor->dl_tensor.data, GetOutputSize(index));
 }
 
-void TVMModel::GetOutputByName(const char* name, void* out) {
-  int output_index = GetOutputIndex(name);
-  GetOutput(output_index, out);
-}
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

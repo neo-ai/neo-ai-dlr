@@ -67,9 +67,6 @@ class HexagonModel : public DLRModel {
 
   virtual const int GetInputDim(int index) const override;
   virtual const int64_t GetInputSize(int index) const override;
-  virtual const std::string& GetInputName(int index) const override;
-  virtual const std::string& GetInputType(int index) const override;
-  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
   virtual void GetInput(int index, void* input) override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) override;
@@ -79,14 +76,12 @@ class HexagonModel : public DLRModel {
   virtual const int GetOutputDim(int index) const override;
   virtual const int64_t GetOutputSize(int index) const override;
   virtual const std::string& GetOutputType(int index) const override;
-  virtual const std::vector<int64_t>& GetOutputShape(int index) const override;
   virtual void GetOutput(int index, void* out) override;
 
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 
   virtual void Run() override;
-  // virtual void Run(const int batch_size, std::vector<void*> intputs, std::vector<void*> outputs) override;
 };
 
 }  // namespace dlr

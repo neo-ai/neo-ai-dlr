@@ -6,16 +6,27 @@
 #endif
 using namespace dlr;
 
+void DLRModel::FetchOutputNamesFromMetadata() {
+  output_names_ = {};
+  try {
+    for(int i = 0; i < num_outputs_; i++) {
+      output_names_.push_back(metadata.at("Model").at("Outputs").at(i).at("name").get_ref<const std::string&>());
+    }
+  } catch (nlohmann::json::out_of_range& e) {
+    LOG(ERROR) << e.what();
+  }
+}
+
 void DLRModel::LoadMetadataFromModelArtifact() {
   if (!model_artifact_->metadata.empty() &&
       !IsFileEmpty(model_artifact_->metadata)) {
     LOG(INFO) << "Loading metadata file: " << model_artifact_->metadata;
     LoadJsonFromFile(model_artifact_->metadata, metadata);
+    FetchOutputNamesFromMetadata();
   } else {
     LOG(INFO) << "No metadata found";
   }
 }
-
 
 DLRModel *DLRModel::create_model(std::string path, int device_type, int device_id) {
   /* Logic to handle Windows drive letter */
@@ -72,16 +83,79 @@ const std::string DLRModel::GetBackend() const {
   }
 }
 
-const std::string& DLRModel::GetOutputName(int index) const {
-  LOG(ERROR) << "GetOutputName is not supported yet!";
+const std::string& DLRModel::GetInputName(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_names_[index];
+}
+
+const std::vector<std::string>& DLRModel::GetInputNames() const {
+  return input_names_;
+}
+
+const std::string& DLRModel::GetInputType(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_types_[index];
+}
+
+const std::vector<std::string>& DLRModel::GetInputTypes() const {
+  return input_types_;
+}
+
+const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index];
+}
+
+const std::string& DLRModel::GetOutputType(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_types_[index];
+}
+
+const std::vector<std::string>& DLRModel::GetOutputTypes() const {
+  return output_types_;
+}
+
+const std::vector<int64_t>& DLRModel::GetOutputShape(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_shapes_[index];
+}
+
+const std::string& DLRModel::GetOutputName(const int index) const {
+  if (!HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  CHECK_EQ(output_names_.size(), num_outputs_) << "Output node with index " << index << " was not found in metadata file!";
+  return output_names_[index];
+}
+
+const std::vector<std::string>& DLRModel::GetOutputNames() const {
+  if (!HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  return output_names_;
 }
 
 int DLRModel::GetOutputIndex(const char* name) const {
-  LOG(ERROR) << "GetOutputName is not supported yet!";
+  if (!HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  for (int i = 0; i < num_outputs_; i++) {
+    const char* output_name = GetOutputName(i).c_str();
+    if (output_name == nullptr) return -1;
+    if (strcmp(output_name, name) == 0) {
+      return i;
+    }
+  }
+
+  std::string msg = "Couldn't find index for output node";
+  msg += " " + std::string{name} + "!";
+  throw dmlc::Error(msg);
 }
 
 void DLRModel::GetOutputByName(const char* name, void* out) {
-  LOG(ERROR) << "GetOutputByName is not supported yet!";
+  int output_index = GetOutputIndex(name);
+  GetOutput(output_index, out);
 }
 
 bool DLRModel::HasMetadata() const { return !this->metadata.is_null(); }
