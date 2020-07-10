@@ -1,42 +1,75 @@
-import os
 import io
-from setuptools import setup, find_packages
-from subprocess import check_output
-from setuptools.dist import Distribution
-from platform import system
-from dlr import __version__
+import os
+import re
+import sys
+import platform
+import subprocess
 
-data_files = []
-for path, dirnames, filenames in os.walk('python'):
-    for filename in filenames:
-        data_files.append(os.path.join(path, filename))
-
-# Use libpath.py to locate libdlr.so
-LIBPATH_PY = os.path.abspath('./dlr/libpath.py')
-LIBPATH = {'__file__': LIBPATH_PY}
-exec(compile(open(LIBPATH_PY, "rb").read(), LIBPATH_PY, 'exec'),
-     LIBPATH, LIBPATH)
+from setuptools import setup, Extension, find_packages
+from setuptools.command.build_ext import build_ext
+from distutils.version import LooseVersion
 
 CURRENT_DIR = os.path.dirname(__file__)
-LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](), CURRENT_DIR)]
 
-if not LIB_PATH:
-    raise RuntimeError('libdlr.so missing. Please compile first using CMake')
+class CMakeExtension(Extension):
+    def __init__(self, name, sourcedir=''):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
+
+
+class CMakeBuild(build_ext):
+    def run(self):
+        try:
+            out = subprocess.check_output(['cmake', '--version'])
+        except OSError:
+            raise RuntimeError("CMake must be installed to build the following extensions: " +
+                               ", ".join(e.name for e in self.extensions))
+
+        if platform.system() == "Windows":
+            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
+            if cmake_version < '3.6.0':
+                raise RuntimeError("CMake >= 3.6.0 is required on Windows")
+
+        for ext in self.extensions:
+            self.build_extension(ext)
+
+    def build_extension(self, ext):
+        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        # required for auto-detection of auxiliary "native" libs
+        if not extdir.endswith(os.path.sep):
+            extdir += os.path.sep
+
+        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+
+        cfg = 'Debug' if self.debug else 'Release'
+        build_args = ['--config', cfg]
+
+        if platform.system() == "Windows":
+            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
+            if sys.maxsize > 2**32:
+                cmake_args += ['-A', 'x64']
+            build_args += ['--', '/m']
+        else:
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            build_args += ['--', '-j2']
+
+        env = os.environ.copy()
+        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
+                                                              self.distribution.get_version())
+        if not os.path.exists(self.build_temp):
+            os.makedirs(self.build_temp)
+        subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
+        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
 setup(
     name="dlr",
-    version=__version__,
-
+    version="1.2.0",
+    packages = find_packages(),
+    ext_modules=[CMakeExtension('_dlr', os.path.join(CURRENT_DIR, '..'))],
+    cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     install_requires=['numpy'],
-
-    # declare your packages
-    packages=find_packages(),
-
-    # include data files
-    include_package_data=True,
-    data_files=[('dlr', LIB_PATH)],
-
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
     long_description=io.open(os.path.join(CURRENT_DIR, '../README.md'), encoding='utf-8').read(),
