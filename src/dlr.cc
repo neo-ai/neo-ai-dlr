@@ -135,7 +135,6 @@ extern "C" int GetDLROutputName(DLRModelHandle* handle, const int index, const c
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  *name = model->GetOutputName(index);
   try {
     *name = model->GetOutputName(index);
   } catch (dmlc::Error& e) {
