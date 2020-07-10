@@ -32,6 +32,8 @@ class DLRModel {
       : paths_(paths), ctx_(ctx), backend_(backend) {}
   virtual ~DLRModel() {}
 
+  static DLRModel *create_model(std::string path, std::string device_type, int device_id);
+  static DLRModel *create_model(std::string path, const DLContext &ctx);
   static DLRModel *create_model(std::string path, int device_type, int device_id);
   static DLRModel *create_model(std::vector<std::string> paths, int device_type, int device_id);
   static DLRModel *create_model(std::vector<std::string> paths, const DLContext &ctx);

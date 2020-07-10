@@ -7,7 +7,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(_dlr, m) {
     py::class_<dlr::DLRModel>(m, "DLRModel")
-        .def(py::init([](std::string path, int device_type, int device_id){
+        .def(py::init([](std::string path, std::string device_type = "cpu", int device_id = 0){
             return std::unique_ptr<dlr::DLRModel>(dlr::DLRModel::create_model(path, device_type, device_id));
         }))
         .def("get_num_inputs", &dlr::DLRModel::GetNumInputs)
