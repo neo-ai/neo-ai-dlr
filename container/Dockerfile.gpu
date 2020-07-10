@@ -33,6 +33,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    python3-dev \
     build-essential \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -53,6 +54,7 @@ RUN \
     cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-7.0.0.11 && \
     make -j15 && cd ../python && \
     python3 setup.py bdist_wheel
+
 
 ### Stage 2: Run
 ### Stage 2-1: Runner base (everything except the APP-specific handler)
