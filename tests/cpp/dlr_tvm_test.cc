@@ -88,34 +88,6 @@ TEST_F(TVMTest, TestGetOutputSize) { EXPECT_EQ(model->GetOutputSize(0), 1); }
 
 TEST_F(TVMTest, TestGetOutputDim) { EXPECT_EQ(model->GetOutputSize(0), 1); }
 
-TEST_F(TVMTest, TestRun) {
-  void* outputs[2];
-  outputs[0] = malloc(sizeof(float) * model->GetOutputSize(0));
-  outputs[1] = malloc(sizeof(float) * model->GetOutputSize(1));
-  EXPECT_NO_THROW(
-      model->DLRModel::Run(1, reinterpret_cast<void**>(&img), outputs));
-  float observed_input_data[img_size];
-  EXPECT_NO_THROW(model->GetInput(0, observed_input_data));
-  EXPECT_EQ(*img, observed_input_data[0]);
-  free(outputs[0]);
-  free(outputs[1]);
-}
-
-TEST_F(TVMTest, TestRunWithInputsAsDict) {
-  std::map<std::string, void*> inputs;
-  inputs.insert(std::make_pair("input_tensor", img));
-  std::vector<void*> outputs(2);
-  outputs[0] = malloc(sizeof(float) * model->GetOutputSize(0));
-  outputs[1] = malloc(sizeof(float) * model->GetOutputSize(1));
-  EXPECT_NO_THROW(
-      model->DLRModel::Run(1, inputs, outputs));
-  float observed_input_data[img_size];
-  EXPECT_NO_THROW(model->GetInput(0, observed_input_data));
-  EXPECT_EQ(*img, observed_input_data[0]);
-  free(outputs[0]);
-  free(outputs[1]);
-}
-
 TEST_F(TVMTest, TestTvmModelApisWithOutputMetadata) {
   EXPECT_EQ(model->HasMetadata(), true);
   EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));

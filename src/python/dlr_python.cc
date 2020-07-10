@@ -28,16 +28,6 @@ PYBIND11_MODULE(pydlr, m) {
         .def("get_output_shape", &dlr::DLRModel::GetOutputShape)
         .def("has_metadata", &dlr::DLRModel::HasMetadata)
         .def("get_backend", &dlr::DLRModel::GetBackend)
-        .def("run_all", [](dlr::DLRModel &model){model.Run();})
-        .def("set_input", [](dlr::DLRModel &model, std::map<std::string, py::buffer> inputs) {
-            size_t batch_size;
-            for (std::pair<std::string, py::buffer> input : inputs) {
-                std::string input_name = input.first;
-                py::buffer_info input_buf = input.second.request();
-                batch_size = input_buf.shape[0];
-                model.SetInput(input_name, batch_size, static_cast<void *>(input_buf.ptr));
-            }
-        })
         .def("run", [](dlr::DLRModel &model, std::map<std::string, py::buffer> inputs) -> std::vector<py::array> {
             size_t batch_size;
             for (std::pair<std::string, py::buffer> input : inputs) {

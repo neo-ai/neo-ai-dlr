@@ -161,23 +161,3 @@ void DLRModel::GetOutputByName(const char* name, void* out) {
 bool DLRModel::HasMetadata() const { return !this->metadata.is_null(); }
 
 void DLRModel::Run() { LOG(ERROR) << "Not Implemented!"; }
-
-void DLRModel::Run(const int64_t batch_size, void** inputs, void** outputs) {
-  for (int index = 0; index < num_inputs_; index++) {
-    SetInput(index, batch_size, *(inputs + index));
-  }
-  Run();
-  for (int index = 0; index < num_outputs_; index++) {
-    GetOutput(index, *(outputs + index));
-  }
-}
-
-void DLRModel::Run(const int64_t batch_size, std::map<std::string, void*>& inputs, std::vector<void*>& outputs) {
-  for (std::pair<std::string, void*> input : inputs) {
-    SetInput(input.first, batch_size, input.second);
-  }
-  Run();
-  for (int index = 0; index < num_outputs_; index++) {
-    GetOutput(index, outputs[index]);
-  }
-}
