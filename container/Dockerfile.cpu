@@ -10,7 +10,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
     python3-distutils \
-	python3-dev \
     wget \
     curl \
     ca-certificates \
@@ -30,6 +29,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     git \
+    python-dev \
+    python3-dev \
+    python3-setuptools \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh \

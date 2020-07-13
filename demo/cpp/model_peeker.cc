@@ -49,15 +49,6 @@ void peek_model(DLRModelHandle model) {
   }
   std::cout << std::endl;
 
-  // weight_names.resize(num_weights);
-  // std::cout << "weight_names: ";
-  // for (int i = 0; i < num_weights; i++) {
-  //   std::cout << " ";
-  //   GetDLRWeightName(&model, i, &weight_names[i]);
-  //   std::cout << weight_names[i] << ", ";
-  // }
-  // std::cout << std::endl;
-
   output_shapes.resize(num_outputs);
   std::cout << "output shapes: " << std::endl;
   for (int i = 0; i < num_outputs; i++) {
