@@ -50,11 +50,14 @@ typedef struct {
   std::string model_json;
   std::string ver_json;
   std::string metadata;
+  std::string relay_executable;
 } ModelPath;
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
 std::string GetBasename(const std::string& path);
+
+bool IsFileEmpty(const std::string& filePath);
 
 std::string GetParentFolder(const std::string& path);
 
@@ -74,7 +77,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON };
+enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON, kRELAYVM };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
@@ -123,7 +126,7 @@ class DLR_DLL DLRModel {
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
   virtual void GetOutput(int index, void* out) = 0;
   virtual void GetOutputByName(const char* name, void* out) {
-    LOG(ERROR) << "GetOutputByName is not supported yet!";
+    throw dmlc::Error("GetOutputByName is not supported yet!");
   }
   
   /* Weights releated functions */

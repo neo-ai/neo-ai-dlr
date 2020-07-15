@@ -3,6 +3,7 @@
 #include "dlr_common.h"
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
+#include "dlr_relayvm.h"
 #ifdef DLR_TFLITE
 #include "dlr_tflite/dlr_tflite.h"
 #endif  // DLR_TFLITE
@@ -260,6 +261,8 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
   DLRModel* model;
   if (backend == DLRBackend::kTVM) {
     model = new TVMModel(path_vec, ctx);
+  } else if (backend == DLRBackend::kRELAYVM) {
+    model = new RelayVMModel(path_vec, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
     model = new TreeliteModel(path_vec, ctx);
 #ifdef DLR_TFLITE
