@@ -55,8 +55,9 @@ TEST_F(TreeliteTest, TestGetInputType) {
 TEST_F(TreeliteTest, TestGetInput) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
   try {
-    float observed_input_data[in_size];
+    float* observed_input_data = new float[in_size];
     model->GetInput("data", observed_input_data);
+    delete[] observed_input_data;
   } catch (std::exception &e) {
     std::string err_msg{e.what()};
     EXPECT_TRUE(err_msg.find("GetInput is not supported by Treelite backend"));

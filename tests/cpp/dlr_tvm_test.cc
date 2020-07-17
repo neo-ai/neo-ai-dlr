@@ -27,7 +27,7 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   img_size *= batch_size;
   int64_t shape[4] = {1, 224, 224, 3};
 
-  int64_t output_size;
+  int64_t output_size = 1;
   int output_dim;
   int index = 0;
   EXPECT_NO_THROW(model.GetOutputSizeDim(index, &output_size, &output_dim));
@@ -35,8 +35,8 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   EXPECT_NO_THROW(model.SetInput("input_tensor", shape, img, 4));
   EXPECT_NO_THROW(model.Run());
 
-  float* output1[output_size];
-  float* output2[output_size];
+  float* output1 = new float[output_size];
+  float* output2 = new float[output_size];
   EXPECT_NO_THROW(model.GetOutput(index, output1));
   EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index), output2));
   EXPECT_EQ(output1[0], output2[0]);
@@ -58,6 +58,8 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   } catch(const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "Output node with index 2 was not found in metadata file!");
   }
+  delete[] output1;
+  delete[] output2;
 }
 
 

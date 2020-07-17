@@ -5,6 +5,12 @@
 #include <tvm/runtime/memory.h>
 #include "dlr_common.h"
 
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
+
 namespace dlr {
 
 /*! \brief Get the paths of the TVM model files.
@@ -13,7 +19,7 @@ ModelPath GetTvmPaths(std::vector<std::string> tar_path);
 
 /*! \brief class TVMModel
  */
-class TVMModel : public DLRModel {
+class DLR_DLL TVMModel : public DLRModel {
  private:
   tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;

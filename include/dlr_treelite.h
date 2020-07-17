@@ -5,6 +5,12 @@
 
 #include "dlr_common.h"
 
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
+
 namespace dlr {
 
 /*! \brief Structure to hold Treelite Input.
@@ -24,7 +30,7 @@ ModelPath GetTreelitePaths(std::vector<std::string> dirname);
 
 /*! \brief class TreeliteModel
  */
-class TreeliteModel : public DLRModel {
+class DLR_DLL TreeliteModel : public DLRModel {
  private:
   // fields for Treelite model
   PredictorHandle treelite_model_;
