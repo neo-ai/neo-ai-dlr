@@ -171,7 +171,6 @@ class DLRModelImpl(IDLRModel):
                                           byref(num_weights)))
         return num_weights.value
 
-
     def _check_call(self, ret):
         """
         Check the return value of C API call
