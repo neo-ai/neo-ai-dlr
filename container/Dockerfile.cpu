@@ -64,7 +64,7 @@ RUN apt-get update && \
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server \
-    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow \
+    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow opencv-python \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 
