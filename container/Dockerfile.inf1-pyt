@@ -1,0 +1,111 @@
+### Multi-stage Docker images. See https://docs.docker.com/develop/develop-images/multistage-build/
+### Run "docker build" at the root directory of neo-ai-dlr
+
+### Stage 0: Base image
+FROM ubuntu:18.04 AS base
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-setuptools \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install wheel \
+    && rm -rf /root/.cache/pip
+
+### Stage 1: Build
+FROM base AS builder
+WORKDIR /workspace
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install -y --reinstall build-essential
+
+COPY CMakeLists.txt /workspace/
+COPY README.md /workspace/
+COPY include/ /workspace/include/
+COPY src/ /workspace/src/
+COPY python/ /workspace/python/
+COPY cmake/ /workspace/cmake/
+COPY 3rdparty/ /workspace/3rdparty/
+COPY container/sagemaker-pytorch-inferentia-serving/ /workspace/sagemaker-pytorch-inferentia-serving
+
+RUN \
+    mkdir /workspace/build && cd /workspace/build && \
+    cmake .. && make -j15 && cd ../python && \
+    python3 setup.py bdist_wheel
+
+RUN \ 
+    cd /workspace/sagemaker-pytorch-inferentia-serving && \
+    python3 setup.py bdist_wheel     
+
+### Stage 2: Run
+### Stage 2-1: Runner base (everything except the APP-specific handler)
+FROM base AS runner_base
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV USE_INF 1
+
+# python3-dev and gcc are required by multi-model-server
+# neuron-cc[tensorflow] needs g++ and python3-venv
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-8-jdk-headless \
+    python3-dev \
+    python3-venv \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
+COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
+
+RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
+    && pip3 install --no-cache-dir sagemaker-inference \
+    && pip3 install --no-cache-dir Pillow==6.2.2 \
+    && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
+    && pip3 install /home/model-server/dlr-*.whl \
+    && rm -rf /root/.cache/pip
+
+RUN pip3 install torchvision==0.4.2 --no-deps
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir neuron-cc[tensorflow]
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron
+
+### Stage 2-2: Runner (APP-specific handler)
+FROM runner_base AS runner
+
+ENV PYTHONUNBUFFERED TRUE
+
+# Disable thread pinning in TVM and Treelite
+ENV TVM_BIND_THREADS 0
+ENV TREELITE_BIND_THREADS 0
+
+RUN useradd -m model-server \
+    && mkdir -p /home/model-server/tmp \
+    && mkdir -p /home/model-server/model
+
+COPY container/config-inf1.properties /home/model-server/config.properties
+COPY container/inf1_pyt_entry.py /usr/local/bin/dockerd-entrypoint.py
+
+RUN pip3 install /home/model-server/sagemaker-*-inferentia-*.whl
+
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
+    && chown -R model-server /home/model-server
+
+EXPOSE 8080 8081
+
+WORKDIR /home/model-server
+ENV TEMP=/home/model-server/tmp
+
+ENTRYPOINT ["python3", "/usr/local/bin/dockerd-entrypoint.py"]
+CMD ["mxnet-model-server", "--start", "--mms-config", "/home/model-server/config.properties"]
+LABEL maintainer="guas@amazon.com"
