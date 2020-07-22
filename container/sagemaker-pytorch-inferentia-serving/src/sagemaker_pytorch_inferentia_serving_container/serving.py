@@ -36,6 +36,7 @@ def _start_model_server():
 
 
 def main():
+<<<<<<< HEAD
     import os
     stream = os.popen('lspci -d 1d0f:7064 | wc -l')
     output = stream.read()
@@ -48,4 +49,6 @@ def main():
     print("neuron ls length {}".format(output))
     print("environ {}".format(os.environ.get('NEURON_DEVICE_SIZES')))
     print("environ {}".format(os.environ.get('NEURONCORE_GROUP_SIZES')))
+=======
+>>>>>>> init inf1 infeence container
     _start_model_server()

@@ -24,13 +24,34 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
+<<<<<<< HEAD
+=======
+    cmake \
+>>>>>>> init inf1 infeence container
     git \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get install -y --reinstall build-essential
 
+<<<<<<< HEAD
 COPY container/sagemaker-pytorch-inferentia-serving/ /workspace/sagemaker-pytorch-inferentia-serving
 
+=======
+COPY CMakeLists.txt /workspace/
+COPY README.md /workspace/
+COPY include/ /workspace/include/
+COPY src/ /workspace/src/
+COPY python/ /workspace/python/
+COPY cmake/ /workspace/cmake/
+COPY 3rdparty/ /workspace/3rdparty/
+COPY container/sagemaker-pytorch-inferentia-serving/ /workspace/sagemaker-pytorch-inferentia-serving
+
+RUN \
+    mkdir /workspace/build && cd /workspace/build && \
+    cmake .. && make -j15 && cd ../python && \
+    python3 setup.py bdist_wheel
+
+>>>>>>> init inf1 infeence container
 RUN \ 
     cd /workspace/sagemaker-pytorch-inferentia-serving && \
     python3 setup.py bdist_wheel     
@@ -51,6 +72,7 @@ RUN apt-get update && \
     python3-venv \
     gcc \
     g++ \
+<<<<<<< HEAD
     pciutils \
     gnupg \
     jq \
@@ -70,13 +92,32 @@ RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
 #COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
 RUN pip3 install --upgrade --force-reinstall sagemaker-inference
 RUN pip3 install torchvision==0.4.2 --no-deps
+=======
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
+COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
+
+RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
+    && pip3 install --no-cache-dir sagemaker-inference \
+    && pip3 install --no-cache-dir Pillow==6.2.2 \
+    && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
+    && pip3 install /home/model-server/dlr-*.whl \
+    && rm -rf /root/.cache/pip
+
+RUN pip3 install torchvision==0.4.2 --no-deps
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir neuron-cc[tensorflow]
+>>>>>>> init inf1 infeence container
 RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron
 
 ### Stage 2-2: Runner (APP-specific handler)
 FROM runner_base AS runner
 
 ENV PYTHONUNBUFFERED TRUE
+<<<<<<< HEAD
 ENV PATH="/opt/aws/neuron/bin:${PATH}"
+=======
+>>>>>>> init inf1 infeence container
 
 # Disable thread pinning in TVM and Treelite
 ENV TVM_BIND_THREADS 0
@@ -89,7 +130,11 @@ RUN useradd -m model-server \
 COPY container/config-inf1.properties /home/model-server/config.properties
 COPY container/inf1_pyt_entry.py /usr/local/bin/dockerd-entrypoint.py
 
+<<<<<<< HEAD
 RUN pip3 install /home/model-server/sagemaker_*_inferentia_*.whl
+=======
+RUN pip3 install /home/model-server/sagemaker-*-inferentia-*.whl
+>>>>>>> init inf1 infeence container
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
     && chown -R model-server /home/model-server
@@ -101,4 +146,8 @@ ENV TEMP=/home/model-server/tmp
 
 ENTRYPOINT ["python3", "/usr/local/bin/dockerd-entrypoint.py"]
 CMD ["mxnet-model-server", "--start", "--mms-config", "/home/model-server/config.properties"]
+<<<<<<< HEAD
 LABEL maintainer="guas@amazon.com"
+=======
+LABEL maintainer="guas@amazon.com"
+>>>>>>> init inf1 infeence container
