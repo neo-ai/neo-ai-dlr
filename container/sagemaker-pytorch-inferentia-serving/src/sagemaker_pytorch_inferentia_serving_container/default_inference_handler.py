@@ -16,6 +16,7 @@ import os
 import textwrap
 
 import torch
+import torch.neuron
 from sagemaker_inference import content_types, decoder, default_inference_handler, encoder
 
 class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceHandler):

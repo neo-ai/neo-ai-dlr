@@ -77,7 +77,6 @@ RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
     && rm -rf /root/.cache/pip
 
 RUN pip3 install torchvision==0.4.2 --no-deps
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir neuron-cc[tensorflow]
 RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron
 
 ### Stage 2-2: Runner (APP-specific handler)
@@ -96,7 +95,7 @@ RUN useradd -m model-server \
 COPY container/config-inf1.properties /home/model-server/config.properties
 COPY container/inf1_pyt_entry.py /usr/local/bin/dockerd-entrypoint.py
 
-RUN pip3 install /home/model-server/sagemaker-*-inferentia-*.whl
+RUN pip3 install /home/model-server/sagemaker_*_inferentia_*.whl
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
     && chown -R model-server /home/model-server
