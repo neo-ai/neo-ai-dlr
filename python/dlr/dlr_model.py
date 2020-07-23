@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 from .api import IDLRModel
-from .compatibility import check_tensorrt_compatibility
 from .libpath import find_lib_path
 from .neologger import create_logger
 
@@ -88,10 +87,9 @@ class DLRModelImpl(IDLRModel):
         
         if not os.path.exists(model_path):
             raise ValueError("model_path %s doesn't exist" % model_path)
-        # Backwards compatibility for .tensorrt artifacts.
         for file_name in os.listdir(model_path):
             if file_name.endswith(".tensorrt"):
-                check_tensorrt_compatibility(os.path.join(model_path, file_name))
+                raise Exception("This model requires DLR release-1.1.0 to run.")
         self.handle = c_void_p()
         device_table = {
             'cpu': 1,
