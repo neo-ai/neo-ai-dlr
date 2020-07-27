@@ -24,25 +24,12 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    cmake \
     git \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get install -y --reinstall build-essential
 
-COPY CMakeLists.txt /workspace/
-COPY README.md /workspace/
-COPY include/ /workspace/include/
-COPY src/ /workspace/src/
-COPY python/ /workspace/python/
-COPY cmake/ /workspace/cmake/
-COPY 3rdparty/ /workspace/3rdparty/
 COPY container/sagemaker-pytorch-inferentia-serving/ /workspace/sagemaker-pytorch-inferentia-serving
-
-RUN \
-    mkdir /workspace/build && cd /workspace/build && \
-    cmake .. && make -j15 && cd ../python && \
-    python3 setup.py bdist_wheel
 
 RUN \ 
     cd /workspace/sagemaker-pytorch-inferentia-serving && \
@@ -66,7 +53,6 @@ RUN apt-get update && \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
