@@ -40,7 +40,7 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
         return torch.jit.load(model_files[0])
 
     def default_input_fn(self, input_data, content_type):
-         """A default input_fn that can handle JSON, CSV and NPZ formats.
+        """A default input_fn that can handle JSON, CSV and NPZ formats.
         Args:
             input_data: the request payload serialized in the content_type format
             content_type: the request content_type
@@ -53,7 +53,7 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
         return torch.tensor(np_array)
 
     def default_predict_fn(self, data, model):
-          """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
+        """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
         Runs prediction on GPU if cuda is available.
         Args:
             data: input data (torch.Tensor) for prediction deserialized by input_fn
