@@ -59,7 +59,6 @@ RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
     && pip3 install --no-cache-dir sagemaker-inference \
     && pip3 install --no-cache-dir Pillow==6.2.2 \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
-    && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 
 RUN pip3 install torchvision==0.4.2 --no-deps
