@@ -1,7 +1,7 @@
 {
-  "dlc_version": "1.2.0",
+  "dlc_version": "1.3.0",
   "commit_ids": {
-    "neo-ai/tvm": "d361502f2c02fbc432ab009fa55aa65c179ded32", 
-    "neo-ai/treelite": "938af7867641fb09a8c93aadb66587ad9cbed9c2"
+    "neo-ai/tvm": "14200c39ee7a61640739a83cb268e6dce3ca4143", 
+    "neo-ai/treelite": "38964865d624048d1a432af2763ee1dcdbe3ce5d"
   } 
 }
