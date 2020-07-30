@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 
 class RelayVMTest : public ::testing::Test {
  protected:
-  int8_t* img;
+  int8_t *img;
   const int batch_size = 1;
   size_t img_size = 512 * 512 * 3;
   const int64_t input_shape[4] = {1, 512, 512, 3};
@@ -39,11 +39,17 @@ class RelayVMTest : public ::testing::Test {
 
 TEST_F(RelayVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
-TEST_F(RelayVMTest, TestGetInputName) { EXPECT_STREQ(model->GetInputName(0), "image_tensor"); }
+TEST_F(RelayVMTest, TestGetInputName) {
+  EXPECT_STREQ(model->GetInputName(0), "image_tensor");
+}
 
-TEST_F(RelayVMTest, TestGetInputType) { EXPECT_STREQ(model->GetInputType(0), "uint8"); }
+TEST_F(RelayVMTest, TestGetInputType) {
+  EXPECT_STREQ(model->GetInputType(0), "uint8");
+}
 
-TEST_F(RelayVMTest, TestSetInput) { EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim)); }
+TEST_F(RelayVMTest, TestSetInput) {
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+}
 
 TEST_F(RelayVMTest, TestGetNumOutputs) { EXPECT_EQ(model->GetNumOutputs(), 3); }
 

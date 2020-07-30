@@ -5,7 +5,6 @@
 #include <fstream>
 using namespace dlr;
 
-
 bool dlr::IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
   return pFile.peek() == std::ifstream::traits_type::eof();
