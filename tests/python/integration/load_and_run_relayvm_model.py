@@ -17,6 +17,11 @@ def test_ssd_mobilenet_v2_model():
   assert outputs[0].shape == (1, 100, 4)
   assert outputs[1].shape == (1, 100)
   assert outputs[2].shape == (1, 100)
+  detections = np.multiply(np.ceil(outputs[1]), outputs[2])
+  expected = np.zeros(detections.shape)
+  expected[:,:6] = np.array([[1., 1., 1., 2., 3., 1]])
+  comparison = detections == expected
+  assert comparison.all()
 
 if __name__ == '__main__':
     test_ssd_mobilenet_v2_model()
