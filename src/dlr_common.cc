@@ -5,6 +5,11 @@
 #include <fstream>
 using namespace dlr;
 
+bool dlr::IsFileEmpty(const std::string& filePath) {
+  std::ifstream pFile(filePath);
+  return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
 std::string dlr::GetParentFolder(const std::string& path) {
   size_t found = path.find_last_of("/\\");
   if (found >= 0) {
@@ -84,6 +89,8 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   for (auto filename : paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
+    } else if (EndsWith(filename, ".ro")) {
+      return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, ".tflite")) {
       return DLRBackend::kTFLITE;
     } else if (EndsWith(filename, ".pb")) {

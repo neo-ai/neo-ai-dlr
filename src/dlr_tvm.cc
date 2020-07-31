@@ -45,11 +45,6 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   return paths;
 }
 
-bool IsFileEmpty(const std::string& filePath) {
-  std::ifstream pFile(filePath);
-  return pFile.peek() == std::ifstream::traits_type::eof();
-}
-
 void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTvmPaths(model_path);
   std::ifstream jstream(paths.model_json);

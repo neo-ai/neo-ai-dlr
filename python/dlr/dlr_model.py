@@ -122,7 +122,8 @@ class DLRModelImpl(IDLRModel):
             self.weight_names.append(self._get_weight_name(i))
 
         self.num_outputs = self._get_num_outputs()
-        self._lazy_init_output_shape()
+        if self.backend != "relayvm":
+            self._lazy_init_output_shape()
         self._fetch_input_names()
         self._fetch_output_names()
         self._fetch_input_dtypes()
@@ -348,6 +349,8 @@ class DLRModelImpl(IDLRModel):
     def _run(self):
         """A light wrapper to call run in the DLR backend."""
         self._check_call(self._lib.RunDLRModel(byref(self.handle)))
+        if self.backend == "relayvm":
+            self._lazy_init_output_shape()
 
     def _get_num_outputs(self):
         """Get the number of outputs of a network"""

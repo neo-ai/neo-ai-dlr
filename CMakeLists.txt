@@ -434,6 +434,16 @@ if(NOT(AAR_BUILD))
   )
   endif()
   
+  set(STREET_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/street_small.npy)
+  if(NOT EXISTS ${STREET_IMAGE})
+  download_file(
+    https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/test-data/street_small.npy
+    ${STREET_IMAGE}
+    SHA1
+    206d1a12646a5fe43d0877d38bd137c70a5adc3b
+  )
+  endif()
+  
   # Download compiled model for unit tests
   set(RESNET_MODEL ${CMAKE_CURRENT_BINARY_DIR}/resnet_v1_5_50)
   if(NOT IS_DIRECTORY ${RESNET_MODEL})
@@ -465,6 +475,23 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/xgboost_test.tar.gz)
   endif()
 
+  set(RELAYVM_MODEL ssd_mobilenet_v2.tar.gz)
+  set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v2)
+  if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
+    file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/${RELAYVM_MODEL}
+      /tmp/${RELAYVM_MODEL}
+      SHA1
+      477a6479fdd510703de9c190bbf4b95cf5f1d22e
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}
+                    WORKING_DIRECTORY ${RELAYVM_MODEL_DIR})
+    file(REMOVE /tmp/${RELAYVM_MODEL})
+  endif()
+
+  
 
   if(WITH_TENSORFLOW_LITE_LIB)
       # Download Test TFLite model
