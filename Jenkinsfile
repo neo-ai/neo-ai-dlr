@@ -95,7 +95,6 @@ def AMD64BuildCPU() {
     unstash name: 'srcs'
     echo "Building universal artifact for AMD64, CPU-only"
     sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh manylinux1_x86_64
     """
     stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
@@ -115,7 +114,6 @@ def AMD64BuildGPU() {
                path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
                force:true)
     sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda10_cudnn7_tensorrt7_x86_64
     """
     stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
