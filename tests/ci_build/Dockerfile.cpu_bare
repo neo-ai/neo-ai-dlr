@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # Install all basic requirements
 RUN \
     yum -y update && \
-    yum install -y python-dev  \
+    yum install -y python3  \
+    yum install -y python3-dev  \
     yum install -y tar unzip wget xz git && \
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7 && \
