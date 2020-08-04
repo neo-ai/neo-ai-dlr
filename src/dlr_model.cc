@@ -28,7 +28,7 @@ void DLRModel::LoadMetadataFromModelArtifact() {
   }
 }
 
-DLRModel *DLRModel::create_model(std::string path, std::string device_type, int device_id) {
+DLRModel *DLRModel::CreateModel(std::string path, std::string device_type, int device_id) {
   auto device_type_str_to_enum = [&device_type]()-> DLDeviceType {
     if (device_type == "cpu") {
       return DLDeviceType::kDLCPU;
@@ -53,16 +53,16 @@ DLRModel *DLRModel::create_model(std::string path, std::string device_type, int 
     }
   };
   DLContext ctx = {device_type_str_to_enum(), device_id};
-  return create_model(path, ctx);
+  return CreateModel(path, ctx);
 }
 
 
-DLRModel *DLRModel::create_model(std::string path, int device_type, int device_id) {
+DLRModel *DLRModel::CreateModel(std::string path, int device_type, int device_id) {
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-  return create_model(path, ctx);
+  return CreateModel(path, ctx);
 }
 
-DLRModel *DLRModel::create_model(std::string path, const DLContext &ctx) {
+DLRModel *DLRModel::CreateModel(std::string path, const DLContext &ctx) {
   /* Logic to handle Windows drive letter */
   std::string model_path_string{path};
   std::string special_prefix{""};
@@ -75,15 +75,15 @@ DLRModel *DLRModel::create_model(std::string path, const DLContext &ctx) {
 
   std::vector<std::string> paths = dmlc::Split(model_path_string, ':');
   paths[0] = special_prefix + paths[0];
-  return create_model(paths, ctx);
+  return CreateModel(paths, ctx);
 }
 
-DLRModel *DLRModel::create_model(std::vector<std::string> paths, int device_type, int device_id) {
+DLRModel *DLRModel::CreateModel(std::vector<std::string> paths, int device_type, int device_id) {
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-  return create_model(paths, ctx);
+  return CreateModel(paths, ctx);
 }
 
-DLRModel *DLRModel::create_model(std::vector<std::string> paths, const DLContext &ctx) {
+DLRModel *DLRModel::CreateModel(std::vector<std::string> paths, const DLContext &ctx) {
   DLRBackend backend = dlr::GetBackend(paths);
   if (backend == DLRBackend::kTVM) {
     return new TVMModel(paths, ctx);

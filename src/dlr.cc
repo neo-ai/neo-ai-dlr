@@ -152,7 +152,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
                               int dev_type, int dev_id) {
   API_BEGIN();
   std::string path(model_path);
-  *handle = DLRModel::create_model(path, dev_type, dev_id);
+  *handle = DLRModel::CreateModel(path, dev_type, dev_id);
   API_END();
 }
 

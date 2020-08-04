@@ -32,7 +32,7 @@ class TreeliteTest : public ::testing::Test {
     int device_type = 1;
     int device_id = 0;
     std::vector<std::string> paths = {"./xgboost_test"};
-    model = dlr::DLRModel::create_model(paths, device_type, device_id);
+    model = dlr::DLRModel::CreateModel(paths, device_type, device_id);
   }
 
   ~TreeliteTest() {
