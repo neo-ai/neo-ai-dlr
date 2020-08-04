@@ -40,8 +40,7 @@ pipeline {
     stage('Jenkins: Build') {
       steps {
         script {
-          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() },
-                      "build-amd64-gpu" : { AMD64BuildGPU() } ])
+          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() } ])
         }
       }
     }

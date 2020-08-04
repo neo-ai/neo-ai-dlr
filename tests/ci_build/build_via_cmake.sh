@@ -4,6 +4,7 @@ set -x
 
 rm -rf build
 mkdir build
-cd python
-python setup.py install
+cd build
+cmake .. "$@"
+make -j
 cd ..
