@@ -40,7 +40,7 @@ class CMakeBuild(build_ext):
             extdir += os.path.sep
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+                      '-DPYBIND11_PYTHON_VERSION=3.6']
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -52,7 +52,7 @@ class CMakeBuild(build_ext):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--', '-j16']
+            build_args += ['--', '-j15']
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -69,7 +69,7 @@ setup(
     ext_modules=[CMakeExtension('_dlr', os.path.join(CURRENT_DIR, '..'))],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
-    install_requires=['numpy<1.19.0'],
+    install_requires=['numpy'],
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
     long_description=io.open(os.path.join(CURRENT_DIR, '../README.md'), encoding='utf-8').read(),
