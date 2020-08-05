@@ -10,20 +10,24 @@ class DLRLibraryNotFound(Exception):
     pass
 
 
-def find_lib_path(model_path=None, use_default_dlr=True, logger=None):
+def find_lib_path(model_path=None, use_default_dlr=True, logger=None, setup=False):
     """Find the path to DLR dynamic library files."""
-    
+
     curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
-    # Prioritize library in system path over the current_path.
-    dll_paths = [os.path.join(sys.prefix, 'dlr'),
-                os.path.join(sys.prefix, 'local', 'dlr'),
-                os.path.join(sys.exec_prefix, 'local', 'dlr'),
-                os.path.join(os.path.expanduser('~'), '.local', 'dlr'),
-                os.path.join(curr_path, '../../lib/'),
-                os.path.join(curr_path, '../../build/lib/'),
-                os.path.join(curr_path, './lib/'),
-                os.path.join(curr_path, './build/lib/'), 
-                curr_path]
+    if setup:
+        # Only look in build directory when installing or building wheel.
+        dll_paths = [os.path.join(curr_path, '../../build/lib/')]
+    else:
+        # Prioritize library in system path over the current_path.
+        dll_paths = [os.path.join(sys.prefix, 'dlr'),
+                     os.path.join(sys.prefix, 'local', 'dlr'),
+                     os.path.join(sys.exec_prefix, 'local', 'dlr'),
+                     os.path.join(os.path.expanduser('~'), '.local', 'dlr'),
+                     os.path.join(curr_path, '../../lib/'),
+                     os.path.join(curr_path, '../../build/lib/'),
+                     os.path.join(curr_path, './lib/'),
+                     os.path.join(curr_path, './build/lib/'), 
+                     curr_path]
     
     if sys.platform == 'win32':
         if platform.architecture()[0] == '64bit':

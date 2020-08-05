@@ -17,8 +17,8 @@ LIBPATH = {'__file__': LIBPATH_PY}
 exec(compile(open(LIBPATH_PY, "rb").read(), LIBPATH_PY, 'exec'),
      LIBPATH, LIBPATH)
 
-CURRENT_DIR = os.path.dirname(__file__)
-LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](), CURRENT_DIR)]
+CURRENT_DIR = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
+LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](setup=True), CURRENT_DIR)]
 
 if not LIB_PATH:
     raise RuntimeError('libdlr.so missing. Please compile first using CMake')
