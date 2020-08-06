@@ -109,14 +109,14 @@ def AMD64BuildGPU() {
   def dockerArgs = ""
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.0, CuDNN 7, TensorRT 7"
-    s3Download(file: 'tests/ci_build/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
+    s3Download(file: 'tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
                bucket: 'neo-ai-dlr-jenkins-artifacts',
-               path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+               path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
                force:true)
     sh """
     tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda10_cudnn7_tensorrt7_x86_64
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda102_cudnn8_tensorrt71_x86_64
     """
     stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
   }
@@ -172,9 +172,9 @@ def BuildInferenceContainer(app, target) {
     echo "Building inference container ${app} for target ${target}"
     if (target == "gpu") {
       // Download TensorRT library
-      s3Download(file: 'container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+      s3Download(file: 'container/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
                  bucket: 'neo-ai-dlr-jenkins-artifacts',
-                 path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz')
+                 path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz')
     }
     sh """
     docker build --build-arg APP=${app} -t ${app}-${target} -f container/Dockerfile.${target} .

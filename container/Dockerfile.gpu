@@ -2,15 +2,15 @@
 ### Run "docker build" at the root directory of neo-ai-dlr
 
 ### Stage 0: Base image
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 AS base
+FROM nvidia/cuda:10.2-cudnn8-devel-ubuntu18.04 AS base
 
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN mkdir -p /packages
-COPY container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz /packages/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
+COPY container/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz /packages/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz
 RUN cd /packages \
-    && tar xzvf TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz
-ENV LD_LIBRARY_PATH=/packages/TensorRT-7.0.0.11/lib:$LD_LIBRARY_PATH
+    && tar xzvf TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz
+ENV LD_LIBRARY_PATH=/packages/TensorRT-7.1.3.4/lib:$LD_LIBRARY_PATH
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -50,7 +50,7 @@ COPY 3rdparty/ /workspace/3rdparty/
 
 RUN \
     mkdir /workspace/build && cd /workspace/build && \
-    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-7.0.0.11 && \
+    cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/packages/TensorRT-7.1.3.4 && \
     make -j15 && cd ../python && \
     python3 setup.py bdist_wheel
 
@@ -72,7 +72,7 @@ RUN apt-get update && \
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server \
-    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet-cu100 tensorflow_gpu opencv-python \
+    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet-cu102 tensorflow_gpu opencv-python \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 
