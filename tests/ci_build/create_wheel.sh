@@ -5,7 +5,7 @@ suffix="$1"
 
 if [[ -z "${PYTHON_COMMAND}" ]]
 then
-  PYTHON_COMMAND=python3
+  PYTHON_COMMAND=python
 fi
 
 cd python

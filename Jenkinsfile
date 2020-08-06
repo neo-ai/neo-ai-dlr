@@ -37,32 +37,24 @@ pipeline {
         milestone label: 'Sources ready', ordinal: 1
       }
     }
-    stage('Jenkins: Build') {
-      steps {
-        script {
-          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() } ])
-        }
-      }
-    }
-    stage('Jenkins: Install & Test') {
-      steps {
-        script {
-          parallel (cloudTargetMatrix.collectEntries{
-            [(it): { CloudInstallAndTest(it) } ]
-          })
-        }
-      }
-    }
-    stage('Jenkins: Build Container') {
+    stage('Build & Test') {
       agent {
-        label 'cpu-build'
+        dockerfile {
+          filename 'Dockerfile.cpu_bare'
+          dir 'tests/ci_build'
+          label 'cpu-build'
+          args '-v ${PWD}:/workspace -w /workspace'
+        }
       }
       steps {
-        script {
-          parallel (inferenceContainerApps.collectEntries{
-            [(it[0] + '-' + it[1]): { BuildInferenceContainer(it[0], it[1]) } ]
-          })
-        }
+        sh """
+        cd python
+        python3 setup.py install --home=/workspace/dlr
+        cd ..
+        python3 tests/python/integration/load_and_run_tvm_model.py
+        python3 tests/python/integration/load_and_run_treelite_model.py
+        python3 -m pytest -v --fulltrace -s tests/python/unittest/test_get_set_input.py
+        """
       }
     }
   }
@@ -82,99 +74,5 @@ def checkoutSrcs() {
       deleteDir()
       error "Failed to fetch source codes"
     }
-  }
-}
-
-// Build for AMD64 CPU target
-def AMD64BuildCPU() {
-  def nodeReq = "ubuntu && amd64 && cpu-build"
-  def dockerTarget = "cpu_bare"
-  def dockerArgs = ""
-  node(nodeReq) {
-    unstash name: 'srcs'
-    echo "Building universal artifact for AMD64, CPU-only"
-    sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh manylinux1_x86_64
-    """
-    stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
-  }
-}
-
-// Build for AMD64 + CUDA target
-def AMD64BuildGPU() {
-  def nodeReq = "ubuntu && amd64 && gpu-build"
-  def dockerTarget = "gpu_bare"
-  def dockerArgs = ""
-  node(nodeReq) {
-    unstash name: 'srcs'
-    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.0, CuDNN 7, TensorRT 7"
-    s3Download(file: 'tests/ci_build/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
-               bucket: 'neo-ai-dlr-jenkins-artifacts',
-               path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
-               force:true)
-    sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda10_cudnn7_tensorrt7_x86_64
-    """
-    stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
-  }
-}
-
-// Install and test DLR for cloud targets
-def CloudInstallAndTest(cloudTarget) {
-  def nodeReq = "ubuntu && amd64 && ${cloudTarget}"
-  node(nodeReq) {
-    echo "Installing DLR package for ${cloudTarget} target"
-    if (cloudTarget == "p2" || cloudTarget == "p3") {
-      unstash 'dlr_gpu_whl'
-    } else {
-      unstash 'dlr_cpu_whl'
-    }
-    sh """
-    ls -lh python/dist/*.whl
-    echo "Updating pip3..."
-    sudo -H pip3 install -U pip setuptools wheel
-    pip3 --version
-    echo "Installing DLR Python package..."
-    pip3 install --prefer-binary python/dist/*.whl
-    """
-    if (cloudTarget == "p2" || cloudTarget == "p3") {
-      sh """
-      sudo -H pip3 install --prefer-binary -U tensorflow_gpu
-      """
-    } else {
-      sh """
-      sudo -H pip3 install --prefer-binary -U tensorflow
-      """
-    }
-    sh """
-    type toco_from_protos
-    """
-    echo "Running integration tests..."
-    unstash name: 'srcs'
-    sh """
-    python3 tests/python/integration/load_and_run_tvm_model.py
-    python3 tests/python/integration/load_and_run_treelite_model.py
-    python3 -m pytest -v --fulltrace -s tests/python/unittest/test_get_set_input.py
-    python3 -m pytest -v --fulltrace -s tests/python/unittest/test_tf_model.py
-    python3 -m pytest -v --fulltrace -s tests/python/unittest/test_tflite_model.py
-    """
-  }
-}
-
-// Build DLR inference containers
-def BuildInferenceContainer(app, target) {
-  def nodeReq = "ubuntu && amd64 && cpu-build"
-  node(nodeReq) {
-    unstash name: 'srcs'
-    echo "Building inference container ${app} for target ${target}"
-    if (target == "gpu") {
-      // Download TensorRT library
-      s3Download(file: 'container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
-                 bucket: 'neo-ai-dlr-jenkins-artifacts',
-                 path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz')
-    }
-    sh """
-    docker build --build-arg APP=${app} -t ${app}-${target} -f container/Dockerfile.${target} .
-    """
   }
 }

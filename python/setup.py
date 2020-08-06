@@ -40,7 +40,7 @@ class CMakeBuild(build_ext):
             extdir += os.path.sep
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYBIND11_PYTHON_VERSION=3.6']
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
