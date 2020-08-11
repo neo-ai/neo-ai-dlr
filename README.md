@@ -7,7 +7,7 @@ On x86_64 CPU targets running Linux, you can install latest release of DLR packa
 
 `pip install dlr`
 
-For installation of DLR on GPU targets, non-x86 edge devices, or building DLR from source, please refer to [Installing DLR](https://neo-ai-dlr.readthedocs.io/en/latest/install.html)
+For installation of DLR on GPU targets or non-x86 edge devices, please refer to [Releases](https://github.com/neo-ai/neo-ai-dlr/releases) for prebuilt binaries, or [Installing DLR](https://neo-ai-dlr.readthedocs.io/en/latest/install.html) for building DLR from source.
 
 ## Usage
 
