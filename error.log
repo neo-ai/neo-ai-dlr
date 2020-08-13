@@ -1,0 +1,1968 @@
+Output Shape: 1
+[21:16:22] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140730053548800,) and data type float32
+Output Shape: 1
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140730053548800,) and data type float32
+Output Shape: 1
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140730053548800,) and data type float32
+Output Shape: 2
+Output Shape: 3
+[21:16:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140730053548800,) and data type float32
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/graph/graph_runtime.cc:93: Warning: cannot find "data3" among input
+Output Shape: 2
+Output Shape: 3
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+RuntimeError: [21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/library_module.cc:78: Check failed: ret == 0 (-1 vs. 0) : Assert fail: (int32(arg2.shape[0]) == 2), Argument arg2.shape[0] has an unsatisfied constraint
+Stack trace:
+  [bt] (0) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9c446) [0x7f7b27adf446]
+  [bt] (1) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9cd43) [0x7f7b27adfd43]
+  [bt] (2) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xca9c7) [0x7f7b27b0d9c7]
+  [bt] (3) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xcaa56) [0x7f7b27b0da56]
+  [bt] (4) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(dlr::TVMModel::Run()+0x20) [0x7f7b27abcbb0]
+  [bt] (5) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x1d1f5) [0x7f7b27dad1f5]
+  [bt] (6) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x18915) [0x7f7b27da8915]
+  [bt] (7) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x107d8) [0x7f7b27da07d8]
+  [bt] (8) python(_PyCFunction_FastCallDict+0x35c) [0x566ddc]
+
+
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/graph/graph_runtime.cc:93: Warning: cannot find "data3" among input
+Output Shape: 2
+Output Shape: 3
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+RuntimeError: [21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/library_module.cc:78: Check failed: ret == 0 (-1 vs. 0) : Assert fail: (int32(arg2.shape[0]) == 2), Argument arg2.shape[0] has an unsatisfied constraint
+Stack trace:
+  [bt] (0) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9c446) [0x7f7b27adf446]
+  [bt] (1) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9cd43) [0x7f7b27adfd43]
+  [bt] (2) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xca9c7) [0x7f7b27b0d9c7]
+  [bt] (3) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xcaa56) [0x7f7b27b0da56]
+  [bt] (4) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(dlr::TVMModel::Run()+0x20) [0x7f7b27abcbb0]
+  [bt] (5) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x1d1f5) [0x7f7b27dad1f5]
+  [bt] (6) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x18915) [0x7f7b27da8915]
+  [bt] (7) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x107d8) [0x7f7b27da07d8]
+  [bt] (8) python(_PyCFunction_FastCallDict+0x35c) [0x566ddc]
+
+
+Output Shape: 1
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/graph/graph_runtime.cc:93: Warning: cannot find "data3" among input
+Output Shape: 2
+Output Shape: 3
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+RuntimeError: [21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/library_module.cc:78: Check failed: ret == 0 (-1 vs. 0) : Assert fail: (int32(arg2.shape[0]) == 2), Argument arg2.shape[0] has an unsatisfied constraint
+Stack trace:
+  [bt] (0) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9c446) [0x7f7b27adf446]
+  [bt] (1) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9cd43) [0x7f7b27adfd43]
+  [bt] (2) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xca9c7) [0x7f7b27b0d9c7]
+  [bt] (3) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xcaa56) [0x7f7b27b0da56]
+  [bt] (4) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(dlr::TVMModel::Run()+0x20) [0x7f7b27abcbb0]
+  [bt] (5) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x1d1f5) [0x7f7b27dad1f5]
+  [bt] (6) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x18915) [0x7f7b27da8915]
+  [bt] (7) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x107d8) [0x7f7b27da07d8]
+  [bt] (8) python(_PyCFunction_FastCallDict+0x35c) [0x566ddc]
+
+
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/graph/graph_runtime.cc:93: Warning: cannot find "data3" among input
+Output Shape: 2
+Output Shape: 3
+[21:19:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+RuntimeError: [21:19:12] /home/ubuntu/TVM/neo-ai-dlr/3rdparty/tvm/src/runtime/library_module.cc:78: Check failed: ret == 0 (-1 vs. 0) : Assert fail: (int32(arg2.shape[0]) == 2), Argument arg2.shape[0] has an unsatisfied constraint
+Stack trace:
+  [bt] (0) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9c446) [0x7f7b27adf446]
+  [bt] (1) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0x9cd43) [0x7f7b27adfd43]
+  [bt] (2) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xca9c7) [0x7f7b27b0d9c7]
+  [bt] (3) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(+0xcaa56) [0x7f7b27b0da56]
+  [bt] (4) /home/ubuntu/TVM/neo-ai-dlr/python/build/temp.linux-x86_64-3.6/lib/libdlr.so(dlr::TVMModel::Run()+0x20) [0x7f7b27abcbb0]
+  [bt] (5) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x1d1f5) [0x7f7b27dad1f5]
+  [bt] (6) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x18915) [0x7f7b27da8915]
+  [bt] (7) /home/ubuntu/.local/share/virtualenvs/TVM-FX75gJBD/lib/python3.6/site-packages/dlr-1.2.0-py3.6-linux-x86_64.egg/_dlr.cpython-36m-x86_64-linux-gnu.so(+0x107d8) [0x7f7b27da07d8]
+  [bt] (8) python(_PyCFunction_FastCallDict+0x35c) [0x566ddc]
+
+
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140722460249328,) and data type float32
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140722460249328,) and data type float32
+Output Shape: 1
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 2
+Output Shape: 3
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140722460249328,) and data type float32
+Output Shape: 2
+Output Shape: 3
+[21:19:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing multi_input/multi_output support...
+Output Shape: 2
+Output Shape: 3
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 108, in <module>
+    test_multi_input_multi_output()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 76, in test_multi_input_multi_output
+    outputs = model.run({})
+MemoryError: Unable to allocate 512. TiB for an array with shape (140722460249328,) and data type float32
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 5
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing _assign() operator...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 115, in <module>
+    test_assign_op()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 98, in test_assign_op
+    model.run({'w': input1})
+RuntimeError: Couldn't find index for input node w!
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 5
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing _assign() operator...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 115, in <module>
+    test_assign_op()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 98, in test_assign_op
+    model.run({'w': input1})
+RuntimeError: Couldn't find index for input node w!
+Output Shape: 1
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+Output Shape: 5
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing _assign() operator...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 115, in <module>
+    test_assign_op()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 98, in test_assign_op
+    model.run({'w': input1})
+RuntimeError: Couldn't find index for input node w!
+Output Shape: 5
+[21:21:06] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing _assign() operator...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 115, in <module>
+    test_assign_op()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 98, in test_assign_op
+    model.run({'w': input1})
+RuntimeError: Couldn't find index for input node w!
+Output Shape: 1
+[21:21:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[21:21:56] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:21:56] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[21:21:56] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[21:21:56] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[21:21:56] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:22:04] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:40:21] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:40:36] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) <21x47 sparse matrix of type '<class 'numpy.float64'>'
+	with 680 stored elements in Compressed Sparse Row format>
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) <21x47 sparse matrix of type '<class 'numpy.float64'>'
+	with 680 stored elements in Compressed Sparse Row format>
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:46:45] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) <21x47 sparse matrix of type '<class 'numpy.float64'>'
+	with 680 stored elements in Compressed Sparse Row format>
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) array([[1.3720338e+00],
+       [0.0000000e+00],
+       [1.3563156e-19],
+       [1.1837555e+33],
+       [1.8523601e+28],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [1.3563156e-19],
+       [2.0196247e-19],
+       [7.2149170e+22],
+       [          nan],
+       [2.8231104e+23],
+       [1.9363069e+31],
+       [2.0617684e-19],
+       [1.7236754e+25],
+       [7.7457193e+31],
+       [1.7418317e+28],
+       [1.4599800e-19],
+       [2.0196247e-19],
+       [1.8916271e+23],
+       [1.8936255e+23]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) *** TypeError: get_input_shape(): incompatible function arguments. The following argument types are supported:
+    1. (self: _dlr.DLRModel, arg0: int) -> List[int]
+
+Invoked with: <dlr.DLRModel object at 0x7f8ef9cead00>
+(Pdb) [-1, 47]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) *** TypeError: get_input_shape(): incompatible function arguments. The following argument types are supported:
+    1. (self: _dlr.DLRModel, arg0: int) -> List[int]
+
+Invoked with: <dlr.DLRModel object at 0x7f8ef9cead00>
+(Pdb) [-1, 47]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[21:55:41] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(47)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) *** TypeError: get_input_shape(): incompatible function arguments. The following argument types are supported:
+    1. (self: _dlr.DLRModel, arg0: int) -> List[int]
+
+Invoked with: <dlr.DLRModel object at 0x7f8ef9cead00>
+(Pdb) [-1, 47]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 58, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:02:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[22:02:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 56, in <module>
+    test_iris()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 31, in test_iris
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[22:02:23] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 56, in <module>
+    test_iris()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 31, in test_iris
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+Output Shape: 1
+[22:02:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_tvm_model.py", line 111, in <module>
+    test_resnet()
+  File "tests/python/integration/load_and_run_tvm_model.py", line 20, in test_resnet
+    assert probabilities[0].argmax() == 151
+AssertionError
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Output Shape: 1
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Output Shape: 1
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[22:03:20] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 57, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 57, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[22:03:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 57, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 47, in test_letor
+    assert np.allclose(model.run(_sparse_to_dense(X))[0], expected)
+AssertionError
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338e+00],
+       [ 0.0000000e+00],
+       [ 7.8003671e-39],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 4.0133188e-42],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 3.1973359e-15],
+       [-7.9263151e-31],
+       [ 1.6763032e+22],
+       [ 1.3009591e+28],
+       [ 1.8264387e+34],
+       [ 7.7135280e+31]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338e+00],
+       [ 0.0000000e+00],
+       [ 7.8003671e-39],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 4.0133188e-42],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 3.1973359e-15],
+       [-7.9263151e-31],
+       [ 1.6763032e+22],
+       [ 1.3009591e+28],
+       [ 1.8264387e+34],
+       [ 7.7135280e+31]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+[22:06:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338e+00],
+       [ 0.0000000e+00],
+       [ 7.8003671e-39],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 4.0133188e-42],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 0.0000000e+00],
+       [ 3.1973359e-15],
+       [-7.9263151e-31],
+       [ 1.6763032e+22],
+       [ 1.3009591e+28],
+       [ 1.8264387e+34],
+       [ 7.7135280e+31]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+[22:10:33] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+[22:11:51] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 1
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:13:10] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 1
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:15:39] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 47]
+(Pdb) [188, 4]
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 47]
+(Pdb) [188, 4]
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 1
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:15:52] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 21
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 47]
+(Pdb) [188, 4]
+(Pdb) [21, 1]
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+Output Shape: 1
+[22:46:35] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Input Size 1
+Output Shape: 1
+Strides: 1000
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_tvm_model.py(21)test_resnet()
+-> assert probabilities[0].argmax() == 151
+(Pdb) [1, 3, 224, 224]
+(Pdb) [602112, 200704, 896, 4]
+(Pdb) Output Shape: 1
+[22:53:30] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001
+Output Shape: 1
+[22:53:30] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[22:53:30] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001
+Output Shape: 1
+[22:53:30] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[22:53:30] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 1
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 1
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 1
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 3
+[22:53:55] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 1
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) *** TypeError: 'tuple' object cannot be interpreted as an integer
+(Pdb) *** SyntaxError: invalid syntax
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) *** TypeError: 'tuple' object cannot be interpreted as an integer
+(Pdb) *** SyntaxError: invalid syntax
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 4 , 4
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:02:32] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) [21, 1]
+(Pdb) *** TypeError: 'tuple' object cannot be interpreted as an integer
+(Pdb) *** SyntaxError: invalid syntax
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_letor()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    print('Testing inference on XGBoost LETOR...')
+AssertionError
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_iris()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    import pdb; pdb.set_trace()
+AssertionError
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_iris()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    import pdb; pdb.set_trace()
+AssertionError
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 4 , 4
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:21:00] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(48)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([ 1.37203383, -2.44880319,  0.85794806,  1.36998558, -0.70586956,
+        0.41349587, -2.24794102, -2.46199536, -2.39492106, -1.19179332,
+        0.09672126,  0.26876712,  1.41767526, -1.83263636, -0.05582005,
+       -0.94977033, -1.21982539,  1.51252186, -0.1179921 , -2.38343072,
+       -0.90945482])
+(Pdb) Testing inference on XGBoost LETOR...
+Traceback (most recent call last):
+  File "tests/python/integration/load_and_run_treelite_model.py", line 59, in <module>
+    test_iris()
+  File "tests/python/integration/load_and_run_treelite_model.py", line 48, in test_letor
+    import pdb; pdb.set_trace()
+AssertionError
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 4 , 4
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(49)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.37203383],
+       [-2.44880319],
+       [ 0.85794806],
+       [ 1.36998558],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.24794102],
+       [-2.46199536],
+       [-2.39492106],
+       [-1.19179332],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.41767526],
+       [-1.83263636],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.21982539],
+       [ 1.51252186],
+       [-0.1179921 ],
+       [-2.38343072],
+       [-0.90945482]])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+All tests passed!
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(49)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.37203383],
+       [-2.44880319],
+       [ 0.85794806],
+       [ 1.36998558],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.24794102],
+       [-2.46199536],
+       [-2.39492106],
+       [-1.19179332],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.41767526],
+       [-1.83263636],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.21982539],
+       [ 1.51252186],
+       [-0.1179921 ],
+       [-2.38343072],
+       [-0.90945482]])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+All tests passed!
+[23:21:29] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Input Size 21
+Strides: 4 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_treelite_model.py(49)test_letor()
+-> print('Testing inference on XGBoost LETOR...')
+(Pdb) array([[ 1.37203383],
+       [-2.44880319],
+       [ 0.85794806],
+       [ 1.36998558],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.24794102],
+       [-2.46199536],
+       [-2.39492106],
+       [-1.19179332],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.41767526],
+       [-1.83263636],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.21982539],
+       [ 1.51252186],
+       [-0.1179921 ],
+       [-2.38343072],
+       [-0.90945482]])
+(Pdb) array([[ 1.3720338 ],
+       [-2.4488032 ],
+       [ 0.85794806],
+       [ 1.3699856 ],
+       [-0.70586956],
+       [ 0.41349587],
+       [-2.247941  ],
+       [-2.4619954 ],
+       [-2.394921  ],
+       [-1.1917933 ],
+       [ 0.09672126],
+       [ 0.26876712],
+       [ 1.4176753 ],
+       [-1.8326364 ],
+       [-0.05582005],
+       [-0.94977033],
+       [-1.2198254 ],
+       [ 1.5125219 ],
+       [-0.1179921 ],
+       [-2.3834307 ],
+       [-0.9094548 ]], dtype=float32)
+(Pdb) Testing inference on XGBoost LETOR...
+All tests passed!
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 4 , 4
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!
+[23:22:08] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!
+Output Shape: 1
+[23:22:12] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Input Size 1
+Output Shape: 1
+Strides: 4000 , 4
+> /home/ubuntu/TVM/neo-ai-dlr/tests/python/integration/load_and_run_tvm_model.py(21)test_resnet()
+-> assert probabilities[0].argmax() == 151
+(Pdb) Output Shape: 1
+[23:22:13] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001 , 1
+Output Shape: 1
+[23:22:13] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[23:22:13] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001 , 1
+Output Shape: 1
+[23:22:13] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[23:22:13] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on resnet18...
+Input Size 1
+Output Shape: 1
+Strides: 4000 , 4
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001 , 1
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant...
+Input Size 1
+Output Shape: 1
+Strides: 1001 , 1
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+Output Shape: 1
+[23:22:31] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on mobilenet_v1_0.75_224_quant with float32 input...
+All tests passed!
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost MNIST...
+Input Size 1
+Strides: 4 , 4
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost Iris...
+Input Size 1
+Strides: 12 , 4
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!
+[23:22:34] /home/ubuntu/TVM/neo-ai-dlr/src/dlr_model.cc:27: No metadata found
+Testing inference on XGBoost LETOR...
+Input Size 21
+Strides: 4 , 4
+All tests passed!

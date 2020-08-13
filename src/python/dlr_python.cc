@@ -59,6 +59,7 @@ std::vector<py::array> Run(dlr::DLRModel &model, std::map<std::string, py::buffe
         }
         model.SetInputStrides(input_name, input_buf.strides);
         batch_size = input_buf.shape[0];
+        std::cout << "Input Size " << batch_size << std::endl;
         model.SetInput(input_name, batch_size, static_cast<void *>(input_buf.ptr));
     }
 
@@ -72,6 +73,7 @@ std::vector<py::array> Run(dlr::DLRModel &model, std::map<std::string, py::buffe
     for (int i = 0; i < num_outputs; i++) {
         output_shapes[i] = model.GetOutputShape(i);
         strides[i] = model.GetOutputShape(i);
+        strides[i][0] = 1;
         for (int j = 1; j < strides[i].size(); j++) {
             strides[i][j] *= strides[i][j-1];
         }
@@ -87,8 +89,9 @@ std::vector<py::array> Run(dlr::DLRModel &model, std::map<std::string, py::buffe
         auto type_size = type_size_and_format_descriptor.first;
         auto format_descriptor = type_size_and_format_descriptor.second;
         auto shape = output_shapes[i];
-        std::transform(strides[i].begin(), strides[i].end(), strides[i].begin(), [&type_size](auto &stride_elem){return stride_elem*type_size;});
         auto stride = strides[i];
+        std::transform(stride.begin(), stride.end(), stride.begin(), [&type_size](auto &stride_elem){return stride_elem*type_size;});
+        std::cout << "Strides: " << stride[0] <<  " , " << stride[1] << std::endl;
         outputs[i] = GetPyArrayFromBuffer(typestr, py::buffer_info(
             nullptr,
             type_size,
@@ -110,6 +113,7 @@ PYBIND11_MODULE(_dlr, m) {
             return std::unique_ptr<dlr::DLRModel>(dlr::DLRModel::CreateModel(path, dev_type, dev_id));
         }), py::arg("path"), py::arg("dev_type") = "cpu", py::arg("dev_id") = 0, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("get_num_inputs", &dlr::DLRModel::GetNumInputs, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
+        .def("get_input_strides", &dlr::DLRModel::GetInputStrides, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("get_input_dim", &dlr::DLRModel::GetInputDim, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("get_input_size", &dlr::DLRModel::GetInputSize, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("get_input_name", &dlr::DLRModel::GetInputName, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
@@ -149,8 +153,9 @@ PYBIND11_MODULE(_dlr, m) {
         }, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("run", &Run, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>())
         .def("run", [](dlr::DLRModel &model, py::buffer input) -> std::vector<py::array> {
+            auto input_name = model.GetInputName(0);
             std::map<std::string, py::buffer> inputs{
-                {"data", input}
+                {input_name, input}
             };
             return Run(model, inputs);
         }, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

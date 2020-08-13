@@ -8,6 +8,6 @@ RUN apt-get update && \
     apt-get install -y gnupg && \
     apt-get install -y git
 
-ENV PYTHONPATH "/workspace/dlr/lib/python/"
+RUN pip3 install sklearn pytest
 
 WORKDIR /workspace

@@ -173,7 +173,6 @@ const int64_t TreeliteModel::GetOutputSize(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   if (input_) {
     return static_cast<int64_t>(input_->num_row * output_size_);
-    ;
   } else {
     // Input is yet unspecified and batch is not known
     return output_size_;
