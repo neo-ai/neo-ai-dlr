@@ -21,6 +21,7 @@ class DLRModel {
   std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<std::vector<int64_t>> output_shapes_;
   std::shared_ptr<ModelArtifact> model_artifact_;
+  std::vector<std::vector<ssize_t>> input_strides_;
 
   virtual void InitModelArtifact() = 0;
   void LoadMetadataFromModelArtifact();
@@ -45,8 +46,11 @@ class DLRModel {
 
   virtual bool HasMetadata() const;
 
+  virtual void SetInputStrides(const std::string& name, const std::vector<ssize_t> strides);
+  virtual const std::vector<ssize_t>& GetInputStrides(int index) const;
   virtual const int GetInputDim(int index) const = 0;
   virtual const int64_t GetInputSize(int index) const = 0;
+  virtual int GetInputIndex(const std::string& name) const;
   virtual const std::string &GetInputName(int index) const;
   virtual const std::vector<std::string> &GetInputNames() const;
   virtual const std::string &GetInputType(int index) const;

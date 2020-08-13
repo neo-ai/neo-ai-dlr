@@ -21,7 +21,7 @@ void TVMModel::InitModelArtifact() {
             [basename](const std::string& s) { return (s != basename); }) &&
         filename != "version.json") {
       artifact->model_json = filename;
-    } else if (filename != LIBDLR && EndsWith(filename, LIBEXT)) {
+    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
       artifact->model_lib = filename;
     } else if (EndsWith(filename, ".tensorrt")) {
       artifact->model_lib = filename;

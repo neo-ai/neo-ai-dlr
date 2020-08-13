@@ -34,7 +34,8 @@ def test_mobilenet_v1_0_75_224_quant():
     # load image (dtype: uint8)
     image = np.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cat_224_uint8.npy'))
     print('Testing inference on mobilenet_v1_0.75_224_quant...')
-    probabilities = model.run({'input': image})
+    input_data = {'input': image}
+    probabilities = model.run(input_data)
     assert probabilities[0].argmax() == 282
     assert model.get_input_names() == ["input"]
     assert model.get_input_dtypes() == ["uint8"]
@@ -60,7 +61,7 @@ def test_mobilenet_v1_0_75_224_quant_wrong_input_type():
         model.run({'input': image})
         assert False, "ValueError is expected"
     except ValueError as e:
-        assert str(e) == "input data with name input should have dtype uint8 but float32 is provided"
+        assert str(e) == "input data with name input should have dtype uint8"
 
 
 def test_multi_input_multi_output():
@@ -69,9 +70,9 @@ def test_multi_input_multi_output():
     device = 'cpu'
     model = DLRModel(model_path, device)
 
-    assert model._impl._get_output_size_dim(0) == (2, 1)
-    assert model._impl._get_output_size_dim(1) == (3, 1)
-
+    assert (model.get_output_size(0), model.get_output_dim(0)) == (2, 1)
+    assert (model.get_output_size(1), model.get_output_dim(1)) == (3, 1)
+    import pdb; pdb.set_trace();
     input1 = np.asarray([1., 2.])
     input2 = np.asarray([3., 4.])
     input3 = np.asarray([5., 6., 7])

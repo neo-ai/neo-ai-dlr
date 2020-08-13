@@ -117,6 +117,28 @@ const std::string DLRModel::GetBackend() const {
   }
 }
 
+void DLRModel::SetInputStrides(const std::string& name, const std::vector<ssize_t> strides) {
+  input_strides_.resize(num_inputs_);
+  int index = GetInputIndex(name);
+  input_strides_[index] = strides;
+}
+
+const std::vector<ssize_t>& DLRModel::GetInputStrides(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_strides_[index];
+}
+
+int DLRModel::GetInputIndex(const std::string& name) const {
+  for (auto i = 0; i < num_inputs_; i++) {
+    if (input_names_[i] == name) {
+      return i;
+    }
+  }
+  std::string msg = "Couldn't find index for input node";
+  msg += " " + std::string{name} + "!";
+  throw dmlc::Error(msg);
+}
+
 const std::string& DLRModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index];
