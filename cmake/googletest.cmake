@@ -4,6 +4,7 @@
 
 macro(fetch_googletest _download_module_path _download_root)
     set(GOOGLETEST_DOWNLOAD_ROOT ${_download_root})
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     configure_file(
         ${_download_module_path}/googletest-download.cmake
         ${_download_root}/CMakeLists.txt
