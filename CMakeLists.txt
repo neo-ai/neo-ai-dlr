@@ -18,6 +18,7 @@ project(dlr)
 
 # The following lines should be after project()
 set_default_configuration_release()
+msvc_use_static_runtime()
 message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -102,11 +103,12 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${JSON_SRC}")
 
 # Add only top level *.cc files (non-RECURSE)
-FILE(GLOB DLR_SRC 
+FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc)
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
+)
 
 if(USE_OPENCL)
     message("USING OpenCL")
@@ -367,17 +369,6 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
-set(NEODLR_SRC ${DLR_SRC})
-
-list(REMOVE_ITEM NEODLR_SRC 
-    ${TVM_SRC}/src/runtime/dso_library.cc
-    ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/runtime/metadata_module.cc
-    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc)
-
-add_library(neodlr STATIC ${NEODLR_SRC})
-set_output_directory(neodlr ${CMAKE_BINARY_DIR}/lib)
-
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -548,8 +539,8 @@ endif()
 # Group sources
 #auto_source_group("${SOURCES}")
 
-set(INSTALL_NEODLR OFF CACHE BOOL "allow users to install neodlr to consume via cmake")
+set(INSTALL_DLR OFF CACHE BOOL "allow users to install dlr to consume via cmake")
 
-if(INSTALL_NEODLR)
-    include(cmake/neodlrInstall.cmake)
+if(INSTALL_DLR)
+    include(cmake/dlrInstall.cmake)
 endif()
