@@ -8,15 +8,55 @@ import subprocess
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+from setuptools.command.install import install
 
 CURRENT_DIR = os.path.dirname(__file__)
+
+
+class InstallCommand(install):
+    user_options = install.user_options + [
+        ('use-cuda', None, ''),
+        ('use-cudnn', None, ''),
+        ('use-tensorrt=', None, '')
+    ]
+
+    def initialize_options(self):
+        install.initialize_options(self)
+        self.use_cuda = None
+        self.use_cudnn = None
+        self.use_tensorrt = None
+
+    def finalize_options(self):
+        install.finalize_options(self)
+
+    def run(self):
+        global USE_CUDA
+        global USE_CUDNN
+        global USE_TENSORRT
+        if self.use_cuda is not None:
+            USE_CUDA = 'ON'
+        else:
+            USE_CUDA = 'OFF'
+        if self.use_cudnn is not None:
+            USE_CUDNN = 'ON'
+        else:
+            USE_CUDNN = 'OFF'
+        if self.use_tensorrt is not None:
+            if type(self.use_tensorrt) == str and len(self.use_tensorrt):
+                USE_TENSORRT = self.use_tensorrt
+            else:
+                USE_TENSORRT = 'ON'
+        else:
+            USE_TENSORRT = 'OFF'
+        install.run(self)
+
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
-
+        
 class CMakeBuild(build_ext):
     def run(self):
         try:
@@ -34,13 +74,20 @@ class CMakeBuild(build_ext):
             self.build_extension(ext)
 
     def build_extension(self, ext):
+        global USE_CUDA
+        global USE_CUDNN
+        global USE_TENSORRT
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         # required for auto-detection of auxiliary "native" libs
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+                      '-DPYTHON_EXECUTABLE=' + sys.executable,
+                      '-DUSE_CUDA=' + USE_CUDA,
+                      '-DUSE_CUDNN=' + USE_CUDNN,
+                      '-DUSE_TENSORRT=' + USE_TENSORRT
+                      ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -67,7 +114,7 @@ setup(
     version="1.2.0",
     packages = find_packages(),
     ext_modules=[CMakeExtension('_dlr', os.path.join(CURRENT_DIR, '..'))],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=dict(install= InstallCommand, build_ext=CMakeBuild),
     zip_safe=False,
     install_requires=['numpy'],
     description = 'Common runtime for machine learning models compiled by \

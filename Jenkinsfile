@@ -38,24 +38,59 @@ pipeline {
       }
     }
     stage('Build & Test') {
-      agent {
-        dockerfile {
-          filename 'Dockerfile.cpu_bare'
-          dir 'tests/ci_build'
-          label 'cpu-build'
-          args '-v ${PWD}:/workspace -w /workspace'
+      parallel {
+        stage('Build & Test On CPU') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.cpu_bare'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && cpu-build'
+              args '-v ${PWD}:/workspace -w /workspace'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            sh """
+            mkdir -p /workspace/dlr/lib/python/
+            export PYTHONPATH=/workspace/dlr/lib/python/
+            cd python
+            python3 setup.py install --home=/workspace/dlr
+            cd ..
+            python3 tests/python/integration/load_and_run_tvm_model.py
+            python3 tests/python/integration/load_and_run_treelite_model.py
+            """
+          }
         }
-      }
-      steps {
-        sh """
-        mkdir -p /workspace/dlr/lib/python/
-        export PYTHONPATH=/workspace/dlr/lib/python/
-        cd python
-        python3 setup.py install --home=/workspace/dlr
-        cd ..
-        python3 tests/python/integration/load_and_run_tvm_model.py
-        python3 tests/python/integration/load_and_run_treelite_model.py
-        """
+        stage('Build & Test On GPU') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.gpu_bare'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && gpu-build'
+              args '-v ${PWD}:/workspace -w /workspace --runtime nvidia'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
+            s3Download(file: 'tests/ci_build/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+                      bucket: 'neo-ai-dlr-jenkins-artifacts',
+                      path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+                      force:true)
+            print(env.PATH)
+            sh """
+            python3 --version
+            mkdir -p /workspace/dlr/lib/python/
+            tar xvzf tests/ci_build/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz -C /workspace/
+            export PYTHONPATH=/workspace/dlr/lib/python/
+            cd python
+            python3 setup.py install --use-cuda --use-cudnn --use-tensorrt=/workspace/TensorRT-7.0.0.11/ --home=/workspace/dlr
+            cd ..
+            python3 tests/python/integration/load_and_run_tvm_model.py
+            python3 tests/python/integration/load_and_run_treelite_model.py
+            """
+          }
+        }
       }
     }
   }
