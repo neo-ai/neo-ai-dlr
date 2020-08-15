@@ -51,16 +51,24 @@ RUN apt-get update && \
     python3-venv \
     gcc \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    pciutils \
+    gnupg \
+    jq \
+    wget && \
+    echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list && \
+    wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add - && \
+    apt-get update && \
+    apt-get install aws-neuron-tools && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.0 \
-    && pip3 install --no-cache-dir sagemaker-inference \
     && pip3 install --no-cache-dir Pillow==6.2.2 \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
     && rm -rf /root/.cache/pip
-
+#COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
+RUN pip3 install --upgrade --force-reinstall sagemaker-inference
 RUN pip3 install torchvision==0.4.2 --no-deps
 RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron
 
@@ -68,6 +76,7 @@ RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-c
 FROM runner_base AS runner
 
 ENV PYTHONUNBUFFERED TRUE
+#ENV PATH="/opt/aws/neuron/bin:${PATH}"
 
 # Disable thread pinning in TVM and Treelite
 ENV TVM_BIND_THREADS 0

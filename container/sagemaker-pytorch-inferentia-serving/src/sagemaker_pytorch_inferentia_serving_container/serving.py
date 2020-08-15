@@ -29,6 +29,18 @@ def _retry_if_error(exception):
 @retry(stop_max_delay=1000 * 30,
        retry_on_exception=_retry_if_error)
 def _start_model_server():
+    import os
+    stream = os.popen('lspci -d 1d0f:7064 | wc -l')
+    output = stream.read()
+    print("lspci {}".format(output))
+    stream = os.popen('neuron-ls --json-output')
+    output = stream.read()
+    print("neuron ls {}".format(output))
+    stream = os.popen('neuron-ls --json-output | jq length')
+    output = stream.read()
+    print("neuron ls length {}".format(output))
+    print("environ {}".format(os.environ.get('NEURON_DEVICE_SIZES')))
+    print("environ {}".format(os.environ.get('NEURONCORE_GROUP_SIZES')))
     # there's a race condition that causes the model server command to
     # sometimes fail with 'bad address'. more investigation needed
     # retry starting mms until it's ready
