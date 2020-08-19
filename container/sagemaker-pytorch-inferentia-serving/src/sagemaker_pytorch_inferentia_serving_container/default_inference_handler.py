@@ -23,8 +23,8 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
     VALID_CONTENT_TYPES = (content_types.JSON, content_types.NPY)
 
     def default_model_fn(self, model_dir):
-        """Loads a model. For PyTorch, a default function to load a model only if Elastic Inference is used.
-        In other cases, users should provide customized model_fn() in script.
+        """Loads a model. Provides a default implementation.
+        Users can provide customized model_fn() in script.
         Args:
             model_dir: a directory where model is saved.
         Returns: A PyTorch model.
@@ -48,9 +48,9 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
             depending if cuda is available.
         """
         np_array = decoder.decode(input_data, content_type)
-        # tensor = torch.FloatTensor(np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
-        # return tensor.to(device)
-        return torch.tensor(np_array)
+        tensor = torch.FloatTensor(np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
+        return tensor
+        #return torch.tensor(np_array)
 
     def default_predict_fn(self, data, model):
         """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
