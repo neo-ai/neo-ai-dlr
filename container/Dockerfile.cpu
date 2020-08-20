@@ -9,12 +9,15 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
-    python3-setuptools \
+    python3-distutils \
+    wget \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
+
+RUN pip3 install -U pip setuptools wheel
 
 ### Stage 1: Build
 FROM base AS builder
@@ -25,9 +28,11 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    cmake \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh \
+    && bash cmake-3.17.2-Linux-x86_64.sh --skip-license --prefix=/usr/local
 
 COPY CMakeLists.txt /workspace/
 COPY README.md /workspace/
@@ -54,12 +59,13 @@ RUN apt-get update && \
     openjdk-8-jdk-headless \
     python3-dev \
     gcc \
+    libgtk2.0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/python/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server \
-    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow \
+    && pip3 install --no-cache-dir --prefer-binary numpy scipy xlrd Pillow boto3 six requests mxnet tensorflow opencv-python \
     && pip3 install /home/model-server/dlr-*.whl \
     && rm -rf /root/.cache/pip
 

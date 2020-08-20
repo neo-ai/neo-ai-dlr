@@ -59,14 +59,15 @@ void RunInference(DLRModelHandle model, const char* data_path,
 
   std::vector<unsigned long> in_shape_ul;
   std::vector<T> in_data;
-  npy::LoadArrayFromNumpy(data_path, in_shape_ul, in_data);
+  bool fortran_order;
+  npy::LoadArrayFromNumpy(data_path, in_shape_ul, fortran_order, in_data);
 
   std::vector<int64_t> in_shape =
       std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
   int64_t in_ndim = in_shape.size();
 
   if (SetDLRInput(&model, input_name.c_str(), in_shape.data(),
-                  (float*)in_data.data(), static_cast<int>(in_ndim)) != 0) {
+                  in_data.data(), static_cast<int>(in_ndim)) != 0) {
     throw std::runtime_error("Could not set input '" + input_name + "'");
   }
   if (RunDLRModel(&model) != 0) {
@@ -74,7 +75,7 @@ void RunInference(DLRModelHandle model, const char* data_path,
     throw std::runtime_error("Could not run");
   }
   for (int i = 0; i < num_outputs; i++) {
-    if (GetDLROutput(&model, i, (float*)outputs[i].data()) != 0) {
+    if (GetDLROutput(&model, i, outputs[i].data()) != 0) {
       throw std::runtime_error("Could not get output" + std::to_string(i));
     }
   }

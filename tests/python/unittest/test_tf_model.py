@@ -2,15 +2,17 @@
 from __future__ import print_function
 from dlr import DLRModel
 import numpy as np
+import tensorflow as tf
+# https://github.com/tensorflow/tensorflow/issues/18165
+tf.compat.v1.disable_eager_execution()
 
 FROZEN_GRAPH_PATH = "/tmp/test_graph.pb"
 
 
 def _generate_frozen_graph():
-    import tensorflow as tf
-    graph = tf.get_default_graph()
-    a = tf.placeholder(tf.float32, shape=[2, 2], name="input1")
-    b = tf.placeholder(tf.float32, shape=[2, 2], name="input2")
+    graph = tf.compat.v1.get_default_graph()
+    a = tf.compat.v1.placeholder(tf.float32, shape=[2, 2], name="input1")
+    b = tf.compat.v1.placeholder(tf.float32, shape=[2, 2], name="input2")
     ab = tf.matmul(a, b)
     mm = tf.matmul(a, ab, name="preproc/mm")
     tf.square(mm, name="preproc/output1")
@@ -18,13 +20,13 @@ def _generate_frozen_graph():
     with graph.control_dependencies([id1]):
         mm_flat = tf.reshape(mm, shape=[-1])
         tf.argmax(mm_flat, name="preproc/output2")
-    with tf.Session() as sess:
-        output_graph_def = tf.graph_util.convert_variables_to_constants(
+    with tf.compat.v1.Session() as sess:
+        output_graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
             sess,
             graph.as_graph_def(),
             ["preproc/output1", "preproc/output2"]
         )
-        with tf.gfile.GFile(FROZEN_GRAPH_PATH, "wb") as f:
+        with tf.io.gfile.GFile(FROZEN_GRAPH_PATH, "wb") as f:
             f.write(output_graph_def.SerializeToString())
 
 

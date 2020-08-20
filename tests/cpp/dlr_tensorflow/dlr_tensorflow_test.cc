@@ -7,30 +7,7 @@
 #include <sstream>
 
 #include "dlr.h"
-
-float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
-                              int batch_size) {
-  std::string line;
-  std::ifstream fp(img_path);
-  float* img = new float[size * batch_size];
-  size_t i = 0;
-  if (fp.is_open()) {
-    while (getline(fp, line) && i < size) {
-      int v = std::stoi(line);
-      float fv = 2.0f / 255.0f * v - 1.0f;
-      img[i++] = fv;
-    }
-    fp.close();
-  }
-
-  EXPECT_EQ(size, i);
-  LOG(INFO) << "Image read - OK, float[" << i << "]";
-
-  for (int j = 1; j < batch_size; j++) {
-    std::memcpy(img + j * size, img, size * sizeof(float));
-  }
-  return img;
-}
+#include "test_utils.hpp"
 
 int ArgMax(float* data, int start, int size) {
   int idx = 0;
@@ -86,32 +63,6 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
   LOG(INFO) << "DLRInputName: " << input_name;
   EXPECT_STREQ("input:0", input_name);
 
-  // GetDLROutputSizeDim
-  int64_t out_size;
-  int out_dim;
-  if (GetDLROutputSizeDim(&handle, 0, &out_size, &out_dim)) {
-    FAIL() << "GetDLROutputSizeDim failed";
-  }
-  LOG(INFO) << "GetDLROutputSizeDim.size: " << out_size;
-  LOG(INFO) << "GetDLROutputSizeDim.dim: " << out_dim;
-  EXPECT_EQ(1001 * batch_size, out_size);
-  EXPECT_EQ(2, out_dim);
-
-  // GetDLROutputShape
-  int64_t shape[out_dim];
-  if (GetDLROutputShape(&handle, 0, shape)) {
-    FAIL() << "GetDLROutputShape failed";
-  }
-  std::stringstream ss;
-  ss << "GetDLROutputShape: (" << shape[0];
-  for (int i = 1; i < out_dim; i++) {
-    ss << "," << shape[i];
-  }
-  ss << ")";
-  LOG(INFO) << ss.str();
-  const int64_t exp_shape[2] = {batch_size, 1001};
-  EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
-
   // Load image
   size_t img_size = 224 * 224 * 3;
   float* img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
@@ -141,6 +92,32 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
     FAIL() << "RunDLRModel failed";
   }
   LOG(INFO) << "RunDLRModel - OK";
+
+  // GetDLROutputSizeDim
+  int64_t out_size;
+  int out_dim;
+  if (GetDLROutputSizeDim(&handle, 0, &out_size, &out_dim)) {
+    FAIL() << "GetDLROutputSizeDim failed";
+  }
+  LOG(INFO) << "GetDLROutputSizeDim.size: " << out_size;
+  LOG(INFO) << "GetDLROutputSizeDim.dim: " << out_dim;
+  EXPECT_EQ(1001 * batch_size, out_size);
+  EXPECT_EQ(2, out_dim);
+
+  // GetDLROutputShape
+  int64_t shape[out_dim];
+  if (GetDLROutputShape(&handle, 0, shape)) {
+    FAIL() << "GetDLROutputShape failed";
+  }
+  std::stringstream ss;
+  ss << "GetDLROutputShape: (" << shape[0];
+  for (int i = 1; i < out_dim; i++) {
+    ss << "," << shape[i];
+  }
+  ss << ")";
+  LOG(INFO) << ss.str();
+  const int64_t exp_shape[2] = {batch_size, 1001};
+  EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
 
   // GetDLROutput (the first and the last item in the batch)
   float* output = new float[out_size];

@@ -5,11 +5,12 @@ RUN apt update
 RUN apt install -y build-essential
 RUN apt install -y llvm-6.0 clang-6.0
 RUN apt install -y cmake git wget curl vim zip
-RUN apt install -y python3 python3-dev
+RUN apt install -y python3 python3-dev python3-distutils
 RUN apt install -y libedit-dev libxml2-dev antlr4
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
 
+RUN pip3 install -U pip setuptools wheel
 RUN pip3 install numpy decorator attrs antlr4-python3-runtime
 
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb

@@ -13,4 +13,5 @@ Contents
   install
   python-api
   c-api
+  tensorrt
   Internal docs <http://neo-ai-dlr.readthedocs.io/en/latest/dev/>

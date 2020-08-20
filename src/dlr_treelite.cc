@@ -34,7 +34,7 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
     ListDir(dir, paths_vec);
   }
   for (auto filename : paths_vec) {
-    if (EndsWith(filename, LIBEXT)) {
+    if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
     } else if (filename == "version.json") {
       paths.ver_json = filename;
@@ -60,6 +60,7 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   num_outputs_ = 1;
   // Give a dummy input name to Treelite model.
   input_names_.push_back("data");
+  input_types_.push_back("float32");
   CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads,
                                  &treelite_model_),
            0)
@@ -101,19 +102,25 @@ const char* TreeliteModel::GetInputName(int index) const {
   return "data";
 }
 
+const char* TreeliteModel::GetInputType(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return "float32";
+}
+
 const char* TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
   return "";  // unreachable
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
-                             float* input, int dim) {
+                             void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
   CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
   // NOTE: If number of columns is less than num_feature, missing columns
   //       will be automatically padded with missing values
   CHECK_LE(static_cast<size_t>(shape[1]), treelite_num_feature_)
-      << "ClientError: Mismatch found in input shape at dimension 1. Value read: "
+      << "ClientError: Mismatch found in input shape at dimension 1. Value "
+         "read: "
       << shape[1] << ", Expected: " << treelite_num_feature_ << " or less";
 
   const size_t batch_size = static_cast<size_t>(shape[0]);
@@ -121,12 +128,13 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   treelite_input_.reset(new TreeliteInput);
   CHECK(treelite_input_);
   treelite_input_->row_ptr.push_back(0);
+  float* input_f = (float*) input;
 
   // NOTE: Assume row-major (C) layout
   for (size_t i = 0; i < batch_size; ++i) {
     for (uint32_t j = 0; j < num_col; ++j) {
-      if (!std::isnan(input[i * num_col + j])) {
-        treelite_input_->data.push_back(input[i * num_col + j]);
+      if (!std::isnan(input_f[i * num_col + j])) {
+        treelite_input_->data.push_back(input_f[i * num_col + j]);
         treelite_input_->col_ind.push_back(j);
       }
     }
@@ -150,7 +158,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
       << TreeliteGetLastError();
 }
 
-void TreeliteModel::GetInput(const char* name, float* input) {
+void TreeliteModel::GetInput(const char* name, void* input) {
   LOG(FATAL) << "GetInput is not supported by Treelite backend";
 }
 
@@ -161,7 +169,7 @@ void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
   shape[1] = static_cast<int64_t>(treelite_output_size_);
 }
 
-void TreeliteModel::GetOutput(int index, float* out) {
+void TreeliteModel::GetOutput(int index, void* out) {
   CHECK(treelite_input_);
   std::memcpy(
       out, treelite_output_.data(),
@@ -177,6 +185,11 @@ void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     *size = treelite_output_size_;
   }
   *dim = 2;
+}
+
+const char* TreeliteModel::GetOutputType(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return "float32";
 }
 
 void TreeliteModel::Run() {

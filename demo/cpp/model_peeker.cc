@@ -20,6 +20,7 @@ void peek_model(DLRModelHandle model) {
   int num_outputs;
   const char* backend;
   std::vector<const char*> input_names;
+  std::vector<const char*> output_names;
   std::vector<const char*> weight_names;
   std::vector<std::vector<int64_t>> output_shapes;
 
@@ -40,6 +41,14 @@ void peek_model(DLRModelHandle model) {
   for (int i = 0; i < num_inputs; i++) {
     GetDLRInputName(&model, i, &input_names[i]);
     std::cout << input_names[i] << ", ";
+  }
+  std::cout << std::endl;
+
+  std::cout << "input_types: ";
+  for (int i = 0; i < num_inputs; i++) {
+    const char* input_type;
+    GetDLRInputType(&model, i, &input_type);
+    std::cout << input_type << ", ";
   }
   std::cout << std::endl;
 
@@ -66,6 +75,31 @@ void peek_model(DLRModelHandle model) {
     }
     std::cout << "]" << std::endl;
   }
+
+  bool has_metadata;
+  GetDLRHasMetadata(&model, &has_metadata);
+  if (has_metadata) {
+    output_names.resize(num_outputs);
+    std::cout << "output_names: ";
+    for (int i = 0; i < num_outputs; i++) {
+      int index;
+      if (GetDLROutputName(&model, i, &output_names[i]) == 0) {
+        GetDLROutputIndex(&model, output_names[i], &index);
+        std::cout << output_names[i] << " (index: " << index << ")" << ", ";
+      } else {
+        std::cout << "<unknown> (index: " << i << ")" << ", ";
+      }
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "output_types: ";
+  for (int i = 0; i < num_outputs; i++) {
+    const char* output_type;
+    GetDLROutputType(&model, i, &output_type);
+    std::cout << output_type << ", ";
+  }
+  std::cout << std::endl;
 }
 
 int main(int argc, char** argv) {

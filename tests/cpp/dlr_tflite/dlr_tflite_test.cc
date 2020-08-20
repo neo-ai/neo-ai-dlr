@@ -80,6 +80,14 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << "DLRInputName: " << input_name;
   EXPECT_STREQ("input", input_name);
 
+  // GetDLRInputType
+  const char* input_type;
+  if (GetDLRInputType(&handle, 0, &input_type)) {
+    FAIL() << "GetDLRInputType failed";
+  }
+  LOG(INFO) << "DLRInputType: " << input_type;
+  EXPECT_STREQ("float32", input_type);
+
   // GetDLROutputSizeDim
   int64_t out_size;
   int out_dim;
@@ -105,6 +113,14 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << ss.str();
   const int64_t exp_shape[2] = {1, 1001};
   EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
+
+  // GetDLROutputType
+  const char* output_type;
+  if (GetDLROutputType(&handle, 0, &output_type)) {
+    FAIL() << "GetDLROutputType failed";
+  }
+  LOG(INFO) << "DLROutputType: " << output_type;
+  EXPECT_STREQ("float32", output_type);
 
   // Load image
   size_t img_size = 224 * 224 * 3;

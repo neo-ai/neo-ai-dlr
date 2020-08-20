@@ -1,0 +1,17 @@
+# Config file for the neodlr package
+# It defines the following variables
+#  neodlr_INCLUDE_DIRS - include directories for neodlr
+#  neodlr_LIBRARIES    - libraries to link against
+
+# Compute paths
+get_filename_component(neodlr_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(neodlr_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET neodlr AND NOT neodlr_BINARY_DIR)
+  include("${neodlr_CMAKE_DIR}/neodlrTargets.cmake")
+endif()
+
+
+# These are IMPORTED targets created by neodlrTargets.cmake
+set(neodlr_LIBRARIES neodlr treelite_runtime_static tvm_runtime_static dmlc)

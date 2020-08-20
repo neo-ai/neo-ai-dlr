@@ -18,7 +18,6 @@ project(dlr)
 
 # The following lines should be after project()
 set_default_configuration_release()
-msvc_use_static_runtime()
 message(STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 set(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -66,9 +65,13 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
 
 # Compiler flags
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (WIN32)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+else()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--exclude-libs,ALL")
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funroll-loops")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
@@ -76,8 +79,13 @@ if(TEST_COVERAGE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage")
 endif()
 set(DLR_LINKER_LIBS "")
+if (MSVC)
+    add_definitions(-DTVM_EXPORTS)
+endif()
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
+set(JSON_SRC "${PROJECT_SOURCE_DIR}/3rdparty/json")
+set(LIBNPY_SRC "${PROJECT_SOURCE_DIR}/3rdparty/libnpy")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
@@ -91,14 +99,15 @@ include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
 include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${JSON_SRC}")
 
 # Add only top level *.cc files (non-RECURSE)
-FILE(GLOB DLR_SRC
+FILE(GLOB DLR_SRC 
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
-)
+    ${TVM_SRC}/src/runtime/metadata_module.cc
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc)
 
 if(USE_OPENCL)
     message("USING OpenCL")
@@ -147,6 +156,19 @@ if(USE_CUDA)
     list(APPEND DLR_LINKER_LIBS ${CUDA_CUDA_LIBRARY})
     list(APPEND DLR_LINKER_LIBS ${CUDA_NVRTC_LIBRARY})
     file(GLOB RUNTIME_CUDA_SRCS ${TVM_SRC}/src/runtime/cuda/*.cc)
+
+    # Thrust is used to improve NMS performance.
+    message(STATUS "Build with Thrust support")
+    cmake_minimum_required(VERSION 3.13) # to compile CUDA code
+    set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
+    if(NOT DEFINED CMAKE_CUDA_STANDARD)
+      set(CMAKE_CUDA_STANDARD 11)
+      set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    endif()
+    enable_language(CUDA)
+    file(GLOB CONTRIB_THRUST_SRC ${TVM_SRC}/src/runtime/contrib/thrust/*.cu)
+    list(APPEND RUNTIME_CUDA_SRCS ${CONTRIB_THRUST_SRC})
+
     list(APPEND DLR_SRC ${RUNTIME_CUDA_SRCS})
     set(USE_CUDA OFF)
 endif()
@@ -196,72 +218,53 @@ if(USE_TENSORRT)
     include_directories("${TVM_SRC}/3rdparty/rang/include")
     include_directories("${TVM_SRC}/3rdparty/compiler-rt")
     include_directories("${TVM_SRC}/topi/include")
-    list(APPEND DLR_SRC
-         # Ops
-         ${TVM_SRC}/src/relay/op/nn/nn.cc
-         ${TVM_SRC}/src/relay/op/nn/pooling.cc
-         ${TVM_SRC}/src/relay/op/nn/convolution.cc
-         ${TVM_SRC}/src/relay/op/nn/pad.cc
-         ${TVM_SRC}/src/relay/op/tensor/binary.cc
-         ${TVM_SRC}/src/relay/op/tensor/unary.cc
-         ${TVM_SRC}/src/relay/op/tensor/transform.cc
-         ${TVM_SRC}/src/relay/op/tensor/reduce.cc
-         ${TVM_SRC}/src/relay/op/image/resize.cc
-
-         ${TVM_SRC}/src/relay/ir/expr_functor.cc
-         ${TVM_SRC}/src/relay/ir/pattern_functor.cc
-         ${TVM_SRC}/src/relay/pass/util.cc
-         ${TVM_SRC}/src/relay/ir/type_functor.cc
-         ${TVM_SRC}/src/relay/ir/type.cc
-         ${TVM_SRC}/src/lang/ir.cc
-         ${TVM_SRC}/src/lang/expr.cc
-         ${TVM_SRC}/src/relay/ir/expr.cc
-         ${TVM_SRC}/src/relay/ir/adt.cc
-         ${TVM_SRC}/src/relay/ir/module.cc
-         ${TVM_SRC}/src/relay/pass/pass_manager.cc
-         ${TVM_SRC}/src/lang/attrs.cc
-         ${TVM_SRC}/src/lang/tensor.cc
-         ${TVM_SRC}/src/relay/pass/eta_expand.cc
-         ${TVM_SRC}/src/relay/pass/kind_check.cc
-         ${TVM_SRC}/src/lang/expr_operator.cc
-         ${TVM_SRC}/src/arithmetic/int_set.cc
-         ${TVM_SRC}/src/arithmetic/analyzer.cc
-         ${TVM_SRC}/src/arithmetic/modular_set.cc
-         ${TVM_SRC}/src/arithmetic/const_int_bound.cc
-         ${TVM_SRC}/src/arithmetic/canonical_simplify.cc
-         ${TVM_SRC}/src/arithmetic/rewrite_simplify.cc
-         ${TVM_SRC}/src/arithmetic/ir_mutator_with_analyzer.cc
-         ${TVM_SRC}/src/pass/ir_mutator.cc
-         ${TVM_SRC}/src/pass/ir_deep_compare.cc
-         ${TVM_SRC}/src/pass/simple_passes.cc
-         ${TVM_SRC}/src/pass/ir_visitor.cc
-         ${TVM_SRC}/src/relay/ir/pretty_printer.cc
-         ${TVM_SRC}/src/relay/ir/doc.cc
-         ${TVM_SRC}/src/relay/pass/dependency_graph.cc
-         ${TVM_SRC}/src/node/reflection.cc
-         ${TVM_SRC}/src/arithmetic/stmt_simplify.cc
-         ${TVM_SRC}/src/relay/pass/type_infer.cc
-         ${TVM_SRC}/src/relay/pass/type_solver.cc
-         ${TVM_SRC}/src/lang/api_registry.cc
-         ${TVM_SRC}/src/relay/pass/match_exhaustion.cc
-         ${TVM_SRC}/src/node/serialization.cc
-         ${TVM_SRC}/src/relay/ir/alpha_equal.cc
-         ${TVM_SRC}/src/relay/ir/error.cc
-         ${TVM_SRC}/src/relay/pass/de_duplicate.cc
-         ${TVM_SRC}/src/relay/pass/well_formed.cc
-         ${TVM_SRC}/src/relay/ir/op.cc
-         ${TVM_SRC}/src/relay/op/type_relations.cc
-         ${TVM_SRC}/src/op/compute_op.cc
-         ${TVM_SRC}/src/schedule/message_passing.cc
-         ${TVM_SRC}/src/op/op_util.cc
-         ${TVM_SRC}/src/pass/ir_util.cc
-         ${TVM_SRC}/src/op/cross_thread_reduction.cc
-         ${TVM_SRC}/src/lang/data_layout.cc
-         ${TVM_SRC}/src/op/tensorize.cc
-         ${TVM_SRC}/src/pass/arg_binder.cc
-         ${TVM_SRC}/src/relay/ir/base.cc
-         ${TVM_SRC}/src/relay/backend/contrib/tensorrt/common_utils.cc
-         )
+    file(GLOB_RECURSE COMPILER_SRCS
+        ${TVM_SRC}/src/node/*.cc
+        ${TVM_SRC}/src/ir/*.cc
+        ${TVM_SRC}/src/arith/*.cc
+        ${TVM_SRC}/src/te/*.cc
+        ${TVM_SRC}/src/autotvm/*.cc
+        ${TVM_SRC}/src/tir/*.cc
+        ${TVM_SRC}/src/driver/*.cc
+        ${TVM_SRC}/src/printer/*.cc
+        ${TVM_SRC}/src/support/*.cc
+    )
+    file(GLOB CODEGEN_SRCS
+      ${TVM_SRC}/src/target/*.cc
+      ${TVM_SRC}/src/target/source/*.cc
+    )
+    list(APPEND COMPILER_SRCS ${CODEGEN_SRCS})
+    file(GLOB_RECURSE RELAY_OP_SRCS
+        ${TVM_SRC}/src/relay/op/*.cc
+    )
+    file(GLOB_RECURSE RELAY_PASS_SRCS
+        ${TVM_SRC}/src/relay/analysis/*.cc
+        ${TVM_SRC}/src/relay/transforms/*.cc
+        ${TVM_SRC}/src/relay/quantize/*.cc
+    )
+    file(GLOB RELAY_BACKEND_SRCS
+        ${TVM_SRC}/src/relay/backend/*.cc
+        ${TVM_SRC}/src/relay/backend/vm/*.cc
+    )
+    file(GLOB_RECURSE RELAY_IR_SRCS
+        ${TVM_SRC}/src/relay/ir/*.cc
+    )
+    file(GLOB_RECURSE RELAY_QNN_SRCS
+        ${TVM_SRC}/src/relay/qnn/*.cc
+    )
+    list(APPEND COMPILER_SRCS ${RELAY_OP_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_PASS_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_BACKEND_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_IR_SRCS})
+    list(APPEND COMPILER_SRCS ${RELAY_QNN_SRCS})
+    file(GLOB DATATYPE_SRCS ${TVM_SRC}/src/target/datatype/*.cc)
+    list(APPEND COMPILER_SRCS ${DATATYPE_SRCS})
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_metal_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_sdaccel_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_aocl_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_opencl_off.cc)
+    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/runtime/container.cc)
+    list(APPEND DLR_SRC ${COMPILER_SRCS})
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW_LITE_LIB)
@@ -340,6 +343,17 @@ add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
 
+set(NEODLR_SRC ${DLR_SRC})
+
+list(REMOVE_ITEM NEODLR_SRC 
+    ${TVM_SRC}/src/runtime/dso_library.cc
+    ${TVM_SRC}/src/runtime/cpu_device_api.cc
+    ${TVM_SRC}/src/runtime/metadata_module.cc
+    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc)
+
+add_library(neodlr STATIC ${NEODLR_SRC})
+set_output_directory(neodlr ${CMAKE_BINARY_DIR}/lib)
+
 #shared_library
 find_package(Threads)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -349,8 +363,10 @@ set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
 if(ANDROID_BUILD)
   target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
+  target_link_libraries(neodlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
 else(ANDROID_BUILD)
   target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+  target_link_libraries(neodlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
 endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
@@ -374,6 +390,7 @@ foreach(__srcpath ${DEMO_SRCS})
   string(REPLACE ".cc" "" __execname ${__srcname})
   list(APPEND DEMO_EXECS ${__execname})
   add_executable(${__execname} ${__srcpath} $<TARGET_OBJECTS:objdlr>)
+  target_include_directories(${__execname} PUBLIC ${LIBNPY_SRC})
   if (ANDROID_BUILD)
     target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -fuse-ld=gold)
   else (ANDROID_BUILD)
@@ -418,6 +435,75 @@ if(NOT(AAR_BUILD))
     message(STATUS "Added Test: " ${__execname})
   endforeach()
 
+  set(CAT_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/cat224-3.txt)
+  if(NOT EXISTS ${CAT_IMAGE})
+  download_file(
+    https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
+    ${CAT_IMAGE}
+    SHA1
+    e35e82f3371bed37caa7ecece417f50876414077
+  )
+  endif()
+  
+  set(STREET_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/street_small.npy)
+  if(NOT EXISTS ${STREET_IMAGE})
+  download_file(
+    https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/test-data/street_small.npy
+    ${STREET_IMAGE}
+    SHA1
+    206d1a12646a5fe43d0877d38bd137c70a5adc3b
+  )
+  endif()
+  
+  # Download compiled model for unit tests
+  set(RESNET_MODEL ${CMAKE_CURRENT_BINARY_DIR}/resnet_v1_5_50)
+  if(NOT IS_DIRECTORY ${RESNET_MODEL})
+    file(MAKE_DIRECTORY ${RESNET_MODEL})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/resnet_v1.5_50-ml_c4.tar.gz
+      /tmp/resnet_v1.5_50-ml_c4.tar.gz
+      SHA1
+      447c22239e63882a2bc754db550131756373d4df
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/resnet_v1.5_50-ml_c4.tar.gz
+                    WORKING_DIRECTORY ${RESNET_MODEL})
+    file(REMOVE /tmp/resnet_v1.5_50-ml_c4.tar.gz)
+  endif()
+
+  set(XGBOOST_TEST_MODEL ${CMAKE_CURRENT_BINARY_DIR}/xgboost_test)
+  if(NOT IS_DIRECTORY ${XGBOOST_TEST_MODEL})
+    file(MAKE_DIRECTORY ${XGBOOST_TEST_MODEL})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/xgboost_test.tar.gz
+      /tmp/xgboost_test.tar.gz
+      SHA1
+      4c8ac5f20db6c7c6d674dd2ac9d9e14ce887281e
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost_test.tar.gz
+                    WORKING_DIRECTORY ${XGBOOST_TEST_MODEL})
+    file(REMOVE /tmp/xgboost_test.tar.gz)
+  endif()
+
+  set(RELAYVM_MODEL ssd_mobilenet_v2.tar.gz)
+  set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v2)
+  if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
+    file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/${RELAYVM_MODEL}
+      /tmp/${RELAYVM_MODEL}
+      SHA1
+      477a6479fdd510703de9c190bbf4b95cf5f1d22e
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}
+                    WORKING_DIRECTORY ${RELAYVM_MODEL_DIR})
+    file(REMOVE /tmp/${RELAYVM_MODEL})
+  endif()
+
+  
+
   if(WITH_TENSORFLOW_LITE_LIB)
       # Download Test TFLite model
       file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
@@ -426,6 +512,12 @@ if(NOT(AAR_BUILD))
         ./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite
         SHA1
         c653a09facaf2dfb5e3910030b3f74ad04259e30
+      )
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v1_0.75_224_quant.tflite
+        ./mobilenet_v1_0.75_224_quant/mobilenet_v1_0.75_224_quant.tflite
+        SHA1
+        0f5e9dae3a41c5b198595bcb5ba50b936ee61527
       )
   endif() # WITH_TENSORFLOW_LITE_LIB
   if(WITH_TENSORFLOW_LIB)
@@ -455,14 +547,12 @@ if(NOT(AAR_BUILD))
         6746c34f54aad3df24d9fc5f632ebd9dfc64ed69
       )
   endif() # WITH_HEXAGON
-  if(WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON)
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/cat224-3.txt
-        ./cat224-3.txt
-        SHA1
-        e35e82f3371bed37caa7ecece417f50876414077
-      )
-  endif() # WITH_TENSORFLOW_LITE_LIB OR WITH_TENSORFLOW_LIB OR WITH_HEXAGON
 endif()
 # Group sources
 #auto_source_group("${SOURCES}")
+
+set(INSTALL_NEODLR OFF CACHE BOOL "allow users to install neodlr to consume via cmake")
+
+if(INSTALL_NEODLR)
+    include(cmake/neodlrInstall.cmake)
+endif()

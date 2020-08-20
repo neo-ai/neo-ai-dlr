@@ -15,17 +15,9 @@ LIBPATH_PY = os.path.abspath('./dlr/libpath.py')
 LIBPATH = {'__file__': LIBPATH_PY}
 exec(compile(open(LIBPATH_PY, "rb").read(), LIBPATH_PY, 'exec'),
      LIBPATH, LIBPATH)
-LIB_PATH = LIBPATH['find_lib_path']()
 
-LIB_PATH = []
-CURRENT_DIR = os.path.dirname(__file__)
-for libfile in LIBPATH['find_lib_path']():
-    try:
-        relpath = os.path.relpath(libfile, CURRENT_DIR)
-        LIB_PATH.append(relpath)
-        break  # need only one
-    except ValueError:
-        continue
+CURRENT_DIR = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
+LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](setup=True), CURRENT_DIR)]
 
 if not LIB_PATH:
     raise RuntimeError('libdlr.so missing. Please compile first using CMake')
@@ -47,6 +39,7 @@ setup(
     description = 'Common runtime for machine learning models compiled by \
         AWS SageMaker Neo, TVM, or TreeLite.',
     long_description=io.open(os.path.join(CURRENT_DIR, '../README.md'), encoding='utf-8').read(),
+    long_description_content_type="text/markdown",
     author = 'AWS Neo',
     author_email = 'aws-neo-ai@amazon.com',
     url='https://github.com/neo-ai/neo-ai-dlr',

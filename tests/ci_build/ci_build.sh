@@ -61,12 +61,8 @@ if [ "$#" -lt 1 ] || [ ! -e "${SCRIPT_DIR}/Dockerfile.${CONTAINER_TYPE}" ]; then
       exit 1
 fi
 
-# Use nvidia-docker if the container is GPU.
-if [[ "${CONTAINER_TYPE}" == *"gpu"* ]]; then
-    DOCKER_BINARY="nvidia-docker"
-else
-    DOCKER_BINARY="docker"
-fi
+# TODO(trevmorr): Use nvidia-docker if the container is GPU when we add tests.
+DOCKER_BINARY="docker"
 
 # Helper function to traverse directories up until given file is found.
 function upsearch () {

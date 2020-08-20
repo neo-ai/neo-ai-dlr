@@ -1,0 +1,44 @@
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 AS base
+LABEL maintainer "Amazon SageMaker Neo <aws-neo-ai@amazon.com>"
+
+# Environment
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install TensorRT
+RUN mkdir -p /packages
+COPY TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz /packages/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz
+RUN cd /packages \
+    && tar xzvf TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz
+ENV LD_LIBRARY_PATH=/packages/TensorRT-7.1.3.4/lib:$LD_LIBRARY_PATH
+
+# Install all basic requirements
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-distutils \
+    wget \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
+    && rm -rf /root/.cache/pip
+
+RUN pip3 install -U pip setuptools wheel
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh \
+    && bash cmake-3.17.2-Linux-x86_64.sh --skip-license --prefix=/usr/local
+
+ENV PYTHON_COMMAND=python3
+
+# Default entry-point to use if running locally
+# It will preserve attributes of created files
+# COPY entrypoint.sh /scripts/
+
+WORKDIR /workspace
+# ENTRYPOINT ["/scripts/entrypoint.sh"]

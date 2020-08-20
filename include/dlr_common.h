@@ -5,6 +5,7 @@
 #include <dmlc/logging.h>
 #include <runtime_base.h>
 #include <sys/types.h>
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <vector>
@@ -18,14 +19,23 @@
 
 #endif
 
-/* OS-specific library file extension */
+/* OS-specific library file extension and the name of the generated dynamic library*/
 #ifdef _WIN32
 #define LIBEXT ".dll"
+#define LIBDLR "dlr.dll"
 #elif __APPLE__
 #define LIBEXT ".dylib"
+#define LIBDLR "libdlr.dylib"
 #else
 #define LIBEXT ".so"
+#define LIBDLR "libdlr.so"
 #endif
+
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
 
 namespace dlr {
 
@@ -39,13 +49,19 @@ typedef struct {
   std::string params;
   std::string model_json;
   std::string ver_json;
+  std::string metadata;
+  std::string relay_executable;
 } ModelPath;
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
 std::string GetBasename(const std::string& path);
 
+bool IsFileEmpty(const std::string& filePath);
+
 std::string GetParentFolder(const std::string& path);
+
+void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() &&
@@ -61,7 +77,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON };
+enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON, kRELAYVM };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
@@ -72,7 +88,7 @@ DLRBackend GetBackend(std::vector<std::string> dirname);
       << (msg) << ". Value read: " << (value) << ", Expected: " << (expected);
 
 // Abstract class
-class DLRModel {
+class DLR_DLL DLRModel {
  protected:
   std::string version_;
   DLRBackend backend_;
@@ -81,33 +97,49 @@ class DLRModel {
   size_t num_outputs_ = 1;
   DLContext ctx_;
   std::vector<std::string> input_names_;
+  std::vector<std::string> input_types_;
 
  public:
   DLRModel(const DLContext& ctx, const DLRBackend& backend)
       : ctx_(ctx), backend_(backend) {}
   virtual ~DLRModel() {}
-  virtual void GetNumInputs(int* num_inputs) const {
-    *num_inputs = num_inputs_;
-  }
-  virtual void GetNumOutputs(int* num_outputs) const {
-    *num_outputs = num_outputs_;
-  }
-  virtual void GetNumWeights(int* num_weights) const {
-    *num_weights = num_weights_;
-  }
+
+  /* Input related functions */
+  virtual int GetNumInputs() const { return num_inputs_; }
   virtual const char* GetInputName(int index) const = 0;
-  virtual const char* GetWeightName(int index) const = 0;
-  virtual std::vector<std::string> GetWeightNames() const = 0;
-  virtual void GetInput(const char* name, float* input) = 0;
-  virtual void SetInput(const char* name, const int64_t* shape, float* input,
-                        int dim) = 0;
-  virtual void Run() = 0;
-  virtual void GetOutput(int index, float* out) = 0;
+  virtual const char* GetInputType(int index) const = 0;
+  virtual void GetInput(const char* name, void* input) = 0;
+  virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) = 0;
+
+  /* Ouput related functions */
+  virtual int GetNumOutputs() { return num_outputs_; }
+  virtual const char* GetOutputName(const int index) const { 
+    LOG(ERROR) << "GetOutputName is not supported yet!";
+    return NULL;
+  }
+  virtual int GetOutputIndex(const char* name) const { 
+    LOG(ERROR) << "GetOutputName is not supported yet!";
+    return -1;
+  }
+  virtual const char* GetOutputType(int index) const = 0;
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
+  virtual void GetOutput(int index, void* out) = 0;
+  virtual void GetOutputByName(const char* name, void* out) {
+    throw dmlc::Error("GetOutputByName is not supported yet!");
+  }
+  
+  /* Weights releated functions */
+  virtual int GetNumWeights() const { return num_weights_; }
+  virtual const char* GetWeightName(int index) const = 0;
+  virtual std::vector<std::string> GetWeightNames() const = 0;
+  
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
+  virtual bool HasMetadata() const {return false; }
   virtual void UseCPUAffinity(bool use) = 0;
+  virtual void Run() = 0;
+  
 };
 
 }  // namespace dlr

@@ -105,12 +105,18 @@ def AMD64BuildCPU() {
 // Build for AMD64 + CUDA target
 def AMD64BuildGPU() {
   def nodeReq = "ubuntu && amd64 && gpu-build"
+  def dockerTarget = "gpu_bare"
+  def dockerArgs = ""
   node(nodeReq) {
     unstash name: 'srcs'
-    echo "Building artifact for AMD64 with GPU capability. Using CUDA 8.0, CuDNN 7, TensorRT 4"
+    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
+    s3Download(file: 'tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
+               bucket: 'neo-ai-dlr-jenkins-artifacts',
+               path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
+               force:true)
     sh """
-    tests/ci_build/build_via_cmake.sh -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/usr/src/tensorrt
-    PYTHON_COMMAND=/opt/python/bin/python tests/ci_build/create_wheel.sh ubuntu1404_cuda80_cudnn7_tensorrt4_amd64
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
+    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda102_cudnn8_tensorrt71_x86_64
     """
     stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
   }
@@ -128,15 +134,19 @@ def CloudInstallAndTest(cloudTarget) {
     }
     sh """
     ls -lh python/dist/*.whl
-    pip3 install python/dist/*.whl
+    echo "Updating pip3..."
+    sudo -H pip3 install -U pip setuptools wheel
+    pip3 --version
+    echo "Installing DLR Python package..."
+    pip3 install --prefer-binary python/dist/*.whl
     """
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       sh """
-      sudo pip3 install --upgrade tensorflow_gpu
+      sudo -H pip3 install --prefer-binary -U tensorflow_gpu
       """
     } else {
       sh """
-      sudo pip3 install --upgrade tensorflow
+      sudo -H pip3 install --prefer-binary -U tensorflow
       """
     }
     sh """
@@ -162,9 +172,9 @@ def BuildInferenceContainer(app, target) {
     echo "Building inference container ${app} for target ${target}"
     if (target == "gpu") {
       // Download TensorRT library
-      s3Download(file: 'container/TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz',
+      s3Download(file: 'container/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
                  bucket: 'neo-ai-dlr-jenkins-artifacts',
-                 path: 'TensorRT-7.0.0.11.Ubuntu-18.04.x86_64-gnu.cuda-10.0.cudnn7.6.tar.gz')
+                 path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz')
     }
     sh """
     docker build --build-arg APP=${app} -t ${app}-${target} -f container/Dockerfile.${target} .

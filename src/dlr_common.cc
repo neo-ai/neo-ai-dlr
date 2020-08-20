@@ -2,7 +2,13 @@
 
 #include <dmlc/filesystem.h>
 
+#include <fstream>
 using namespace dlr;
+
+bool dlr::IsFileEmpty(const std::string& filePath) {
+  std::ifstream pFile(filePath);
+  return pFile.peek() == std::ifstream::traits_type::eof();
+}
 
 std::string dlr::GetParentFolder(const std::string& path) {
   size_t found = path.find_last_of("/\\");
@@ -53,6 +59,17 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
+void dlr::LoadJsonFromFile(const std::string& path,
+                           nlohmann::json& jsonObject) {
+  std::ifstream jsonFile(path);
+  try {
+    jsonFile >> jsonObject;
+  } catch (nlohmann::json::exception&) {
+    LOG(INFO) << "Failed to load metadata file";
+    jsonObject = nullptr;
+  }
+}
+
 DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   // Support the case where user provides full path to tflite file.
   if (EndsWith(dir_paths[0], ".tflite")) {
@@ -72,6 +89,8 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   for (auto filename : paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
+    } else if (EndsWith(filename, ".ro")) {
+      return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, ".tflite")) {
       return DLRBackend::kTFLITE;
     } else if (EndsWith(filename, ".pb")) {

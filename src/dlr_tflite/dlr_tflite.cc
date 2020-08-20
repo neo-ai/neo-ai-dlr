@@ -5,6 +5,14 @@
 
 using namespace dlr;
 
+// TFLite Type names
+// https://github.com/tensorflow/tensorflow/blob/master/tensorflow/lite/c/common.h
+static std::string TFLITE_TYPES_STR[12]{
+    /* 0 */ "none",  /* 1 */ "float32",  /* 2 */ "int32",
+    /* 3 */ "uint8", /* 4 */ "int64",    /* 5 */ "string",
+    /* 6 */ "bool",  /* 7 */ "int16",    /* 8 */ "complex64",
+    /* 9 */ "int8",  /* 10 */ "float16", /* 11 */ "float64"};
+
 std::string dlr::GetTFLiteFile(const std::string& dirname) {
   // Support the case where user provides full path to tflite file.
   if (EndsWith(dirname, ".tflite")) {
@@ -141,30 +149,50 @@ const char* TFLiteModel::GetInputName(int index) const {
   return input_names_[index].c_str();
 }
 
+const char* TFLiteModel::GetInputType(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  TensorSpec input_tensors_spec = input_tensors_spec_[index];
+  int type_id = input_tensors_spec.type;
+  return TFLITE_TYPES_STR[type_id].c_str();
+}
+
 const char* TFLiteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by TFLite backend";
   return "";  // unreachable
 }
 
-void TFLiteModel::SetInput(const char* name, const int64_t* shape, float* input,
+void TFLiteModel::SetInput(const char* name, const int64_t* shape, void* input,
                            int dim) {
   int index = GetInputId(name);
-
+  TensorSpec input_tensors_spec = input_tensors_spec_[index];
   // Check Size and Dim
-  CHECK_EQ(dim, input_tensors_spec_[index].dim) << "Incorrect input dim";
+  CHECK_EQ(dim, input_tensors_spec.dim) << "Incorrect input dim";
   for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
-        << "Incorrect input shape";
+    CHECK_EQ(shape[i], input_tensors_spec.shape[i]) << "Incorrect input shape";
   }
-
-  float* in_t_data = interpreter_->typed_input_tensor<float>(index);
+  void* in_t_data;
+  if (input_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    in_t_data = interpreter_->typed_input_tensor<float>(index);
+  } else if (input_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    in_t_data = interpreter_->typed_input_tensor<uint8_t>(index);
+  } else {
+    LOG(FATAL) << "Input tensor type is not supported by TFLite backend";
+  }
   std::memcpy(in_t_data, input, input_tensors_spec_[index].bytes);
 }
 
-void TFLiteModel::GetInput(const char* name, float* input) {
+void TFLiteModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
-  const float* in_t_data = interpreter_->typed_input_tensor<float>(index);
-  std::memcpy(input, in_t_data, input_tensors_spec_[index].bytes);
+  TensorSpec input_tensors_spec = input_tensors_spec_[index];
+  void* in_t_data;
+  if (input_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    in_t_data = interpreter_->typed_input_tensor<float>(index);
+  } else if (input_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    in_t_data = interpreter_->typed_input_tensor<uint8_t>(index);
+  } else {
+    LOG(FATAL) << "Input tensor type is not supported by TFLite backend";
+  }
+  std::memcpy(input, in_t_data, input_tensors_spec.bytes);
 }
 
 void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
@@ -174,9 +202,17 @@ void TFLiteModel::GetOutputShape(int index, int64_t* shape) const {
   }
 }
 
-void TFLiteModel::GetOutput(int index, float* out) {
+void TFLiteModel::GetOutput(int index, void* out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  const float* out_t_data = interpreter_->typed_output_tensor<float>(index);
+  TensorSpec output_tensors_spec = output_tensors_spec_[index];
+  void* out_t_data;
+  if (output_tensors_spec.type == TfLiteType::kTfLiteFloat32) {
+    out_t_data = interpreter_->typed_output_tensor<float>(index);
+  } else if (output_tensors_spec.type == TfLiteType::kTfLiteUInt8) {
+    out_t_data = interpreter_->typed_output_tensor<uint8_t>(index);
+  } else {
+    LOG(FATAL) << "Output tensor type is not supported by TFLite backend";
+  }
   std::memcpy(out, out_t_data, output_tensors_spec_[index].bytes);
 }
 
@@ -184,6 +220,13 @@ void TFLiteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   *size = output_tensors_spec_[index].size;
   *dim = output_tensors_spec_[index].dim;
+}
+
+const char* TFLiteModel::GetOutputType(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  TensorSpec output_tensors_spec = output_tensors_spec_[index];
+  int type_id = output_tensors_spec.type;
+  return TFLITE_TYPES_STR[type_id].c_str();
 }
 
 void TFLiteModel::Run() {
