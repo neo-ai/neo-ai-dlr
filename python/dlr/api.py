@@ -12,7 +12,7 @@ try:
 except Exception as ex:
     print(str(ex))
 
-from .counter.counter_mgr_lite import call_home_lite
+from .counter import phone_home
 
 
 # Interface
@@ -60,7 +60,7 @@ def _is_module_found(name):
 # Wrapper class
 class DLRModel(IDLRModel):
     
-    @call_home_lite
+    @phone_home
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
         """
         Load a Neo-compiled model.
@@ -114,7 +114,6 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
 
-    @call_home_lite
     def run(self, input_values):
         """
         Run inference with given input(s)
