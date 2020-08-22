@@ -1,38 +1,76 @@
+import time
 import os
 import json
-import pdb
-from dlr.counter.phone_home import phone_home, PhoneHome
+
+from dlr.counter.phone_home import call_phone_home, PhoneHome, ENABLE_PHONE_HOME_CONFIG
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, mock_open
 
 
 class TestPhoneHome(unittest.TestCase):
-    def tearDown(self):
+    # def tearDown(self):
+    #     self.clean_config()
+
+    def clean_config(self):
         config_path = PhoneHome.get_config_path()
-        os.remove(config_path)
+        if os.path.isfile(config_path):
+            os.remove(config_path)
 
     def mock_func(self):
-        func = MagicMock()
-        func.return_value = MagicMock()
+        func = MagicMock(return_vaule=MagicMock())
         return func
 
-    def test_phone_home_enable(self):
+    def check_enable_by_default(self):
         func = self.mock_func()
-        phone_home(func)
-        
+        call_phone_home(func)
 
         config_path = PhoneHome.get_config_path()
-        with open(config_path, "r") as config_file:
-            data = json.load(config_file)
-            assert data.get("phone_home") == False
+        config_file = open(config_path, "r")
+        data = json.loads(config_file.read())
+        config_file.close()
 
+        assert data[ENABLE_PHONE_HOME_CONFIG] == True
+        self.clean_config()
 
-    # def test_phone_home_disable():
-    #     # phone_home.callback()
-    #     pass
+    def check_disable_by_default(self):
+        config = {ENABLE_PHONE_HOME_CONFIG: False}
 
-    # def test_phone_home_disable():
-    #     # phone_home.callback()
-    #     pass
+        config_path = PhoneHome.get_config_path()
+        config_file = open(config_path, "w")
+        config_file.write(json.dumps(config))
+        config_file.close()
+
+        func = self.mock_func()
+        call_phone_home(func)
+        assert PhoneHome.get_instance() == None
+        self.clean_config()
+
+    def check_is_enable_false(self):
+        PhoneHome.disable_feature()
+        func = self.mock_func()
+        call_phone_home(func)
+        assert PhoneHome.get_instance() == None
+
+        config_path = PhoneHome.get_config_path()
+        config_file = open(config_path, "r")
+        data = json.loads(config_file.read())
+        assert data[ENABLE_PHONE_HOME_CONFIG] == False
+        config_file.close()
+        
+        self.clean_config()
+
+    def check_is_enable_true(self):
+        PhoneHome.enable_feature()
+        func = self.mock_func()
+        call_phone_home(func)
+        assert PhoneHome.get_instance() == None
+
+        self.clean_config()
+
+    def test_sync(self):
+        self.check_enable_by_default()
+        self.check_disable_by_default()
+        self.check_is_enable_false()
+        self.check_is_enable_true()
 

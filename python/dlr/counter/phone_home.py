@@ -3,6 +3,7 @@ import json
 import platform
 import logging
 import os
+import pdb
 
 from .config import (
     CALL_HOME_USR_NOTIFICATION,
@@ -15,8 +16,8 @@ from .utils.helper import get_hash_string
 from .utils import resturlutils
 from .system import Factory
 
-DEVICE_INFO_CONFIG = "device_info"
-PHONE_HOME_CONFIG = "phone_home"
+DEVICE_INFO_CONFIG = "enable_device_info"
+ENABLE_PHONE_HOME_CONFIG = "enable_phone_home"
 
 
 def exception_handler(func):
@@ -24,8 +25,9 @@ def exception_handler(func):
         try:
             func(*args, **kwargs)
         except Excpetion:
-            logger.debug("phone home failure, disable feature")
+            logging.debug("phone home failure, disable feature")
             PhoneHome.disable_feature()
+
     return callback
 
 
@@ -34,7 +36,7 @@ class PhoneHome:
     Phone home client
     """
 
-    __instance = None
+    instance = None
     _enable_feature = None
     _resp_err_count = 0
     RUNTIME_LOAD = 1
@@ -56,9 +58,10 @@ class PhoneHome:
         try:
             config_path = PhoneHome.get_config_path()
             if os.path.isfile(config_path):
-                with open(config_path, "r") as config_file:
-                    data = json.load(config_file)
-                    feature_enb = data.get(PHONE_HOME_CONFIG, False)
+                config_file = open(config_path, "r")
+                data = json.loads(config_file.read())
+                feature_enb = data.get(ENABLE_PHONE_HOME_CONFIG, False)
+                config_file.close()
         except Exception:
             logging.exception("error reading config file")
 
@@ -66,20 +69,40 @@ class PhoneHome:
         return feature_enb
 
     @staticmethod
-    def disable_feature() -> None:
-        if PhoneHome.is_enabled():
-            config_path = PhoneHome.get_config_path()
-            os.remove(config_path)
-            PhoneHome.__instance = None
+    def get_config() -> {}:
+        config = {}
+        config_path = PhoneHome.get_config_path()
+        if os.path.isfile(config_path):
+            with open(config_path, "r") as config_file:
+                config = json.loads(config_file.read())
+        return config
+
+    @staticmethod
+    def disable_feature():
+        config = PhoneHome.get_config()
+        config_path = PhoneHome.get_config_path()
+        # pdb.set_trace()
+        with open(config_path, "w") as config_file:
+            config[ENABLE_PHONE_HOME_CONFIG] = False
+            config_file.write(json.dumps(config))
+        PhoneHome.instance = None
 
     @staticmethod
     def enable_feature():
-        if not PhoneHome.is_enabled():
-            config_path = PhoneHome.get_config_path()
-            with open(config_path, "w") as config_file:
-                config = {PHONE_HOME_CONFIG: False}
-                config_file.write(json.dumps(config))
-            PhoneHome()
+        config_path = PhoneHome.get_config_path()
+        config = PhoneHome.get_config()
+        with open(config_path, "w") as config_file:
+            config[ENABLE_PHONE_HOME_CONFIG] = True
+            config_file.write(json.dumps(config))
+        PhoneHome()
+
+    @staticmethod
+    def should_enable():
+        config_path = PhoneHome.get_config_path()
+        if os.path.isfile(config_path):
+            return PhoneHome.is_enabled()
+        else:
+            return True
 
     @staticmethod
     def get_instance():
@@ -87,17 +110,17 @@ class PhoneHome:
         singleton instance getter function
         """
         try:
-            if not PhoneHome.__instance:
+            # pdb.set_trace()
+            if not PhoneHome.instance and PhoneHome.should_enable():
                 PhoneHome.enable_feature()
         except Exception:
             logging.debug("unsupported system for call home feature")
         finally:
-            return PhoneHome.__instance
+            return PhoneHome.instance
 
     def __init__(self):
         try:
             self.client = resturlutils.RestUrlUtils()
-            self.enable_feature = None
 
             machine_type = platform.machine()
             os_name = platform.system()
@@ -120,7 +143,7 @@ class PhoneHome:
         """
         is_sent = False
         try:
-            config_file = PhoneHome.get_config_path()
+            config_path = PhoneHome.get_config_path()
             with open(config_path, "wr") as config_file:
                 config = json.loads(config_file.read())
                 device_info = config.get(DEVICE_INFO_CONFIG, False)
@@ -133,7 +156,7 @@ class PhoneHome:
         finally:
             return is_sent
 
-    # @self.exception_handler
+    @exception_handler
     def send_runtime_loaded(self):
         """ Push device information on DLR library load
         """
@@ -149,7 +172,7 @@ class PhoneHome:
         data = {"record_type": self.MODEL_LOAD, "model": model_name}
         if self.system:
             data["uuid"] = self.system.get_device_uuid()
-        self.msgs.append(json.dumps(data))
+        self._send_message(json.dumps(data))
 
     def get_model_hash(self, model):
         """get hash string of model"""
@@ -161,7 +184,7 @@ class PhoneHome:
 MGR = PhoneHome.get_instance()
 
 
-def phone_home(func):
+def call_phone_home(func):
     def callback(*args, **kwargs):
         resp = func(*args, **kwargs)
         try:
@@ -170,7 +193,7 @@ def phone_home(func):
             elif func.__name__ == "__init__":
                 MGR.send_model_loaded()
         except Exception:
-            logger.debug("phone home error")
+            logging.debug("phone home error")
         finally:
             return resp
 

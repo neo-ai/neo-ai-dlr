@@ -1,1 +1,1 @@
-from .phone_home import phone_home
+from .phone_home import call_phone_home
