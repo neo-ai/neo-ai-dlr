@@ -180,8 +180,6 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in getting output names {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
-    def get_model_name(self):
-        return self._model
     
     def get_version(self):
         """
