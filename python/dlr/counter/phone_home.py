@@ -2,7 +2,6 @@ import json
 import platform
 import logging
 import os
-import pdb
 
 from .config import (
     CALL_HOME_USR_NOTIFICATION,
@@ -23,7 +22,7 @@ def exception_handler(func):
         try:
             func(*args, **kwargs)
         except Exception:
-            logging.debug("phone home failure, disable feature")
+            logging.exception("phone home failure, disable feature")
             PhoneHome.disable_feature()
 
     return callback
@@ -75,7 +74,6 @@ class PhoneHome:
     def disable_feature():
         config = PhoneHome.get_config()
         config_path = PhoneHome.get_config_path()
-        # pdb.set_trace()
         with open(config_path, "w") as config_file:
             config[ENABLE_PHONE_HOME_CONFIG] = False
             config_file.write(json.dumps(config))
@@ -114,7 +112,6 @@ class PhoneHome:
 
     def __init__(self):
         try:
-            # pdb.set_trace()
             self.client = resturlutils.RestUrlUtils()
 
             machine_type = platform.machine()
@@ -126,6 +123,8 @@ class PhoneHome:
                 raise Exception("system is not supported")
 
             self.send_runtime_loaded()
+            print(CALL_HOME_USR_NOTIFICATION)
+        
         except Exception as ex:
             logging.debug("phone init error")
 
@@ -195,7 +194,8 @@ def call_phone_home(func):
             if not MGR:
                 return resp
             elif func.__name__ == "__init__":
-                MGR.send_model_loaded()
+                model = str(args[1])
+                MGR.send_model_loaded(model)
         except Exception:
             logging.debug("phone home error")
         finally:
