@@ -53,13 +53,17 @@ By default, Amazon will collect and store the following information from your de
 If you wish to opt-out of this data collection feature, please follow the steps below: 
     
     1. Create a config file, ccm_config.json inside your DLR target directory path, i.e. python3.6/site-packages/dlr/counter/ccm_config.json 
-    2. Added below format content in it, 
-      {       "ccm" : "false"      } 
+    2. Added below format content in it, ```{ "enable_phone_home" : false } ``` or disable through code: 
+      ``` 
+      from dlr.counter.phone_home import PhoneHome
+      PhoneHome.disable_feature()
+      ```
     3. Restart DLR application. 
     4. Validate this feature is disabled by verifying this notification is no longer displayed, or programmatically with following command: 
-        
-        from dlr.counter.counter_mgr_lite import CounterMgrLite 
-        CounterMgrLite.is_feature_enabled() # false if disabled 
+        ```
+        from dlr.counter.phone_home import PhoneHome 
+        PhoneHome.is_enabled() # false if disabled 
+        ```
 
 ## Examples
 We prepared several examples demonstrating how to use DLR API on different platforms

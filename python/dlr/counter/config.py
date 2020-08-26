@@ -14,11 +14,11 @@ CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
                             \n machine: <string, retuns the machine type, eg. x86_64 or i386>, \
                             \n model: <string, one-way non-identifable hashed model name, eg. 36f613e00f707dbe53a64b1d9625ae7d> \
                             \n\n If you wish to opt-out of this data collection feature, please follow the steps below: \
-                            \n\t1. Create a config file, ccm_config.json inside your DLR target directory path, i.e. python3.6/site-packages/dlr/counter/ccm_config.json \
-                            \n\t2. Added below format content in it, \
-                            \n\t\t{\n\t\t\t"ccm" : "false"\n\t\t} \
+                            \n\t1. Disable it with through code: \
+                            \n\t\t from dlr.counter.phone_home import PhoneHome \
+                            \n\t\t PhoneHome.disable_feature()\
+                            \n\t2. Or, create a config file, ccm_config.json inside your DLR target directory path, i.e. python3.6/site-packages/dlr/counter/ccm_config.json. Then added below format content in it, {"enable_phone_home" : false} \
                             \n\t3. Restart DLR application. \
                             \n\t4. Validate this feature is disabled by verifying this notification is no longer displayed, or programmatically with following command: \
-                            \n\t\tfrom dlr.counter.counter_mgr_lite import CounterMgrLite \
-                            \n\t\tCounterMgrLite.is_feature_enabled() # false as disabled """
-
+                            \n\t\tfrom dlr.counter.phone_home import PhoneHome \
+                            \n\t\tPhoneHome.is_enabled() # false as disabled """

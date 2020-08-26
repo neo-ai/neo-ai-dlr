@@ -80,7 +80,7 @@ class TestPhoneHome(unittest.TestCase):
         call_phone_home(func)(mock_dlr, mock_path)
         assert PhoneHome.get_instance() is not None
 
-    def test_sync(self):
+    def test_phone_home(self):
         self.check_send_model_loaded()
         self.check_enable_by_default()
         self.check_disable_by_default()
