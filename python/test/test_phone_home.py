@@ -70,17 +70,20 @@ class TestPhoneHome(unittest.TestCase):
 
         self.clean_config()
 
-    def check_model_load(self):
+    def check_send_model_loaded(self):
         PhoneHome.enable_feature()
         func = self.mock_func()
         func.__name__ = "__init__"
-        call_phone_home(func)
+        mock_dlr = MagicMock()
+        mock_path = "/path/to/model"
+        
+        call_phone_home(func)(mock_dlr, mock_path)
         assert PhoneHome.get_instance() is not None
 
     def test_sync(self):
-        self.check_model_load()
-        # self.check_enable_by_default()
-        # self.check_disable_by_default()
-        # self.check_is_enable_false()
-        # self.check_is_enable_true()
+        self.check_send_model_loaded()
+        self.check_enable_by_default()
+        self.check_disable_by_default()
+        self.check_is_enable_false()
+        self.check_is_enable_true()
 
