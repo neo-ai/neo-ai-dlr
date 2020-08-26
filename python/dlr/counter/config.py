@@ -1,7 +1,6 @@
 """configuration keys related to Call Home Feature"""
-CALL_HOME_URL = 'https://api.neo-dlr.amazonaws.com'
-CALL_HOME_RECORD_FILE = 'ccm_record.txt'
-CALL_HOME_USER_CONFIG_FILE = 'ccm_config.json'
+CALL_HOME_URL = "https://api.neo-dlr.amazonaws.com"
+CALL_HOME_USER_CONFIG_FILE = "ccm_config.json"
 CALL_HOME_MODEL_RUN_COUNT_TIME_SECS = 300
 CALL_HOME_REQ_STOP_MAX_COUNT = 3
 CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
@@ -22,5 +21,4 @@ CALL_HOME_USR_NOTIFICATION = """\n CALL HOME FEATURE ENABLED
                             \n\t4. Validate this feature is disabled by verifying this notification is no longer displayed, or programmatically with following command: \
                             \n\t\tfrom dlr.counter.counter_mgr_lite import CounterMgrLite \
                             \n\t\tCounterMgrLite.is_feature_enabled() # false as disabled """
-
 

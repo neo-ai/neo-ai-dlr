@@ -1,7 +1,7 @@
 import time
 import os
 import json
-
+import pdb
 from dlr.counter.phone_home import call_phone_home, PhoneHome, ENABLE_PHONE_HOME_CONFIG
 
 import unittest
@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch, mock_open
 
 
 class TestPhoneHome(unittest.TestCase):
-    # def tearDown(self):
-    #     self.clean_config()
+    def tearDown(self):
+        self.clean_config()
 
     def clean_config(self):
         config_path = PhoneHome.get_config_path()
@@ -56,19 +56,29 @@ class TestPhoneHome(unittest.TestCase):
         config_file = open(config_path, "r")
         data = json.loads(config_file.read())
         assert data[ENABLE_PHONE_HOME_CONFIG] == False
+        assert PhoneHome.get_instance() is None
         config_file.close()
-        
+
         self.clean_config()
 
     def check_is_enable_true(self):
+        # pdb.set_trace()
+        PhoneHome.enable_feature()
+        func = self.mock_func()
+        call_phone_home(func)
+        assert PhoneHome.get_instance() is not None
+
+        self.clean_config()
+
+    def check_model_load(self):
         PhoneHome.enable_feature()
         func = self.mock_func()
         call_phone_home(func)
         assert PhoneHome.get_instance() == None
-
-        self.clean_config()
+        assert PhoneHome.send_model_loaded.assert_called_once()
 
     def test_sync(self):
+        # self.check_model_load()
         self.check_enable_by_default()
         self.check_disable_by_default()
         self.check_is_enable_false()

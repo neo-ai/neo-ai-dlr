@@ -1,4 +1,3 @@
-"""call home feature"""
 import json
 import platform
 import logging
@@ -9,7 +8,6 @@ from .config import (
     CALL_HOME_USR_NOTIFICATION,
     CALL_HOME_USER_CONFIG_FILE,
     CALL_HOME_REQ_STOP_MAX_COUNT,
-    CALL_HOME_RECORD_FILE,
     CALL_HOME_MODEL_RUN_COUNT_TIME_SECS,
 )
 from .utils.helper import get_hash_string
@@ -24,7 +22,7 @@ def exception_handler(func):
     def callback(*args, **kwargs):
         try:
             func(*args, **kwargs)
-        except Excpetion:
+        except Exception:
             logging.debug("phone home failure, disable feature")
             PhoneHome.disable_feature()
 
@@ -51,9 +49,6 @@ class PhoneHome:
 
     @staticmethod
     def is_enabled():
-        if PhoneHome._enable_feature is not None:
-            return PhoneHome._enable_feature
-
         feature_enb = False
         try:
             config_path = PhoneHome.get_config_path()
@@ -65,7 +60,6 @@ class PhoneHome:
         except Exception:
             logging.exception("error reading config file")
 
-        PhoneHome._enable_feature = feature_enb
         return feature_enb
 
     @staticmethod
@@ -86,6 +80,7 @@ class PhoneHome:
             config[ENABLE_PHONE_HOME_CONFIG] = False
             config_file.write(json.dumps(config))
         PhoneHome.instance = None
+        PhoneHome._enable_feature = False
 
     @staticmethod
     def enable_feature():
@@ -94,7 +89,8 @@ class PhoneHome:
         with open(config_path, "w") as config_file:
             config[ENABLE_PHONE_HOME_CONFIG] = True
             config_file.write(json.dumps(config))
-        PhoneHome()
+        PhoneHome.instance = PhoneHome()
+        PhoneHome._enable_feature = True
 
     @staticmethod
     def should_enable():
@@ -106,13 +102,11 @@ class PhoneHome:
 
     @staticmethod
     def get_instance():
-        """
-        singleton instance getter function
-        """
         try:
-            # pdb.set_trace()
             if not PhoneHome.instance and PhoneHome.should_enable():
                 PhoneHome.enable_feature()
+            elif PhoneHome.instance and not PhoneHome.should_enable():
+                PhoneHome.disable_feature()
         except Exception:
             logging.debug("unsupported system for call home feature")
         finally:
@@ -120,6 +114,7 @@ class PhoneHome:
 
     def __init__(self):
         try:
+            # pdb.set_trace()
             self.client = resturlutils.RestUrlUtils()
 
             machine_type = platform.machine()
@@ -139,18 +134,20 @@ class PhoneHome:
             create a dummy binary file in DLR installation path to record process state.
 
         Returns:
-            [type]: [description]
+            bool: if device info is already sent
         """
         is_sent = False
         try:
             config_path = PhoneHome.get_config_path()
-            with open(config_path, "wr") as config_file:
-                config = json.loads(config_file.read())
-                device_info = config.get(DEVICE_INFO_CONFIG, False)
-                if not device_info:
+            config = PhoneHome.get_config()
+
+            device_info = config.get(DEVICE_INFO_CONFIG, False)
+            if not device_info:
+                with open(config_path, "w") as config_file:
                     config[DEVICE_INFO_CONFIG] = True
-                config_file.write(json.dumps(config))
-                is_sent = True
+                    config_file.write(json.dumps(config))
+                    is_sent = True
+
         except Exception:
             logging.debug("error when reading device info sent")
         finally:
@@ -164,7 +161,7 @@ class PhoneHome:
             msg = {"record_type": self.RUNTIME_LOAD}
             if self.system:
                 msg.update(self.system.get_device_info())
-            self._send_message(msg)
+            self.client.send(json.dumps(msg))
 
     @exception_handler
     def send_model_loaded(self, model):
@@ -172,10 +169,17 @@ class PhoneHome:
         data = {"record_type": self.MODEL_LOAD, "model": model_name}
         if self.system:
             data["uuid"] = self.system.get_device_uuid()
-        self._send_message(json.dumps(data))
+        self.client.send(json.dumps(data))
 
     def get_model_hash(self, model):
-        """get hash string of model"""
+        """ Get hashsed model name
+
+        Args:
+            model str: name of model
+
+        Returns:
+            str: hased str of model
+        """
         hashed = get_hash_string(model.encode())
         name = str(hashed.hexdigest())
         return name
