@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 from subprocess import check_output
 from setuptools.dist import Distribution
 from platform import system
+from dlr import __version__	
 
 data_files = []
 for path, dirnames, filenames in os.walk('python'):
@@ -24,7 +25,7 @@ if not LIB_PATH:
 
 setup(
     name="dlr",
-    version="1.1.0",
+    version=__version__,
 
     zip_safe=False,
     install_requires=['numpy', 'urllib3', 'certifi'],

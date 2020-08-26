@@ -5,13 +5,6 @@ import abc
 import glob
 import os
 from .neologger import create_logger
-
-neo_logger = None
-try:
-    neo_logger = create_logger()
-except Exception as ex:
-    print(str(ex))
-
 from .counter import call_phone_home
 
 

@@ -1,7 +1,6 @@
 import time
 import os
 import json
-import pdb
 from dlr.counter.phone_home import call_phone_home, PhoneHome, ENABLE_PHONE_HOME_CONFIG
 
 import unittest
@@ -62,7 +61,6 @@ class TestPhoneHome(unittest.TestCase):
         self.clean_config()
 
     def check_is_enable_true(self):
-        # pdb.set_trace()
         PhoneHome.enable_feature()
         func = self.mock_func()
         call_phone_home(func)
