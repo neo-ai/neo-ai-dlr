@@ -116,7 +116,7 @@ class PhoneHome:
 
             machine_type = platform.machine()
             os_name = platform.system()
-            os_supt = f"{os_name}_{machine_type}"
+            os_supt = "{}_{}".format(os_name, machine_type)
 
             self.system = Factory.get_system(os_supt)
             if self.system is None:
