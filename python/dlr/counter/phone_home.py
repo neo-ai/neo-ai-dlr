@@ -62,7 +62,7 @@ class PhoneHome:
         return feature_enb
 
     @staticmethod
-    def get_config() -> {}:
+    def get_config():
         config = {}
         config_path = PhoneHome.get_config_path()
         if os.path.isfile(config_path):
