@@ -23,7 +23,7 @@ RUN apt-get update && \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
 
-RUN pip3 install -U pip setuptools wheel
+RUN pip3 install -U pip setuptools wheel urllib3 certifi
 
 ### Stage 1: Build
 FROM base AS builder
