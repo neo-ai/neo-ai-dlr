@@ -1,5 +1,5 @@
 """configuration keys related to Call Home Feature"""
-CALL_HOME_URL = "https://api.neo-dlr.amazonaws.com"
+CALL_HOME_URL = "api.neo-dlr.amazonaws.com"
 CALL_HOME_USER_CONFIG_FILE = "ccm_config.json"
 CALL_HOME_MODEL_RUN_COUNT_TIME_SECS = 300
 CALL_HOME_REQ_STOP_MAX_COUNT = 3
