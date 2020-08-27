@@ -1,7 +1,7 @@
 """Rest client module"""
 import logging
-import urllib3
-import certifi
+import requests 
+
 from .. import config
 
 
@@ -20,23 +20,16 @@ class RestUrlUtils(object):
         int
             resp_code a response code
         """
-        resp_code = 0
-        req = None
+        status_code = 0
         try:
-            header = {"Content-Type": "application/x-amz-json-1.1"}
+            headers = {"Content-Type": "application/x-amz-json-1.1"}
             data = message.encode("utf-8")
-            req = urllib3.PoolManager(
-                cert_reqs="CERT_REQUIRED", ca_certs=certifi.where()
-            )
-            resp = req.request("POST", config.CALL_HOME_URL, headers=header, body=data)
-            resp_code = resp.status
-        except urllib3.exceptions.HTTPError:
-            logging.exception("rest url http error")
-            resp_code = -1
+            
+            resp = requests.request("POST", config.CALL_HOME_URL, headers=headers, data=data)
+            status_code = resp.status_code
+            
+            return status_code
         except Exception:
             logging.exception("rest api miscellaneous error")
-            resp_code = -1
-        finally:
-            if req is not None:
-                req.clear()
-        return resp_code
+            status_code = -1
+        return status_code

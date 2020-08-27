@@ -28,7 +28,7 @@ setup(
     version=__version__,
 
     zip_safe=False,
-    install_requires=['numpy', 'urllib3', 'certifi'],
+    install_requires=['numpy'],
 
     # declare your packages
     packages=find_packages(),
