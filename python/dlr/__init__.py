@@ -5,9 +5,6 @@ DLR: Compact Runtime for Machine Learning Models
 
 from __future__ import absolute_import as _abs
 
-import sys
-sys.path.append("..")
-
 from .api import DLRModel
 from .metadata import NAME, VERSION
 
