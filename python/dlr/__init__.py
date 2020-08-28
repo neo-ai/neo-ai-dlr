@@ -9,7 +9,7 @@ import sys
 sys.path.append("..")
 
 from .api import DLRModel
-from meta import NAME, VERSION
+from .metadata import NAME, VERSION
 
 __all__ = NAME
 
