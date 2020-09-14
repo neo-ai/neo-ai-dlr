@@ -5,6 +5,8 @@ import abc
 import glob
 import os
 from .neologger import create_logger
+from .counter import call_phone_home
+
 
 # Interface
 class IDLRModel:
@@ -50,6 +52,8 @@ def _is_module_found(name):
 
 # Wrapper class
 class DLRModel(IDLRModel):
+    
+    @call_phone_home
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
         """
         Load a Neo-compiled model.
@@ -72,6 +76,7 @@ class DLRModel(IDLRModel):
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
+            self._model = model_path
             tf_model_path = _find_model_file(model_path, '.pb')
             tflite_model_path = _find_model_file(model_path, '.tflite')
             # Check if found both Tensorflow and TFLite files
@@ -175,6 +180,7 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in getting output names {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
+    
     def get_version(self):
         """
         Get version of loaded DLR library.

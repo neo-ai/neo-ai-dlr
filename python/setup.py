@@ -4,7 +4,6 @@ from setuptools import setup, find_packages
 from subprocess import check_output
 from setuptools.dist import Distribution
 from platform import system
-from dlr import __version__
 
 data_files = []
 for path, dirnames, filenames in os.walk('python'):
@@ -23,12 +22,19 @@ LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](setup=True), CURRENT_DIR)]
 if not LIB_PATH:
     raise RuntimeError('libdlr.so missing. Please compile first using CMake')
 
+# fetch meta data
+METADATA_PY = os.path.abspath("./dlr/metadata.py")
+METADATA_PATH = {"__file__": METADATA_PY}
+METADATA_BIN = open(METADATA_PY, "rb")
+exec(compile(METADATA_BIN.read(), METADATA_PY, 'exec'), METADATA_PATH, METADATA_PATH)
+METADATA_BIN.close()
+
 setup(
     name="dlr",
-    version=__version__,
+    version=METADATA_PATH['VERSION'],
 
     zip_safe=False,
-    install_requires=['numpy'],
+    install_requires=['numpy', 'requests', "distro"],
 
     # declare your packages
     packages=find_packages(),
