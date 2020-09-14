@@ -4,7 +4,7 @@ import os
 import json
 import numpy as np
 from collections import namedtuple
-
+import os
 dtype='float32'
 Batch = namedtuple('Batch', ['data'])
 ctx = mx.neuron()
@@ -29,6 +29,14 @@ def model_fn(model_dir):
   return mod
 
 def transform_fn(mod, img, input_content_type, output_content_type):
+  '''
+  stream = os.popen('/opt/aws/neuron/bin/neuron-cli list-model')
+  output = stream.read()
+  print(output)
+  stream = os.popen('/opt/aws/neuron/bin/neuron-cli list-ncg')
+  output = stream.read()
+  print(output)
+  '''
   image = mx.image.imdecode(img)
   resized = mx.image.resize_short(image, 224)  # minimum 224x224 images
   cropped, crop_info = mx.image.center_crop(resized, (224, 224))
