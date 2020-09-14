@@ -76,7 +76,7 @@ RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-c
 FROM runner_base AS runner
 
 ENV PYTHONUNBUFFERED TRUE
-#ENV PATH="/opt/aws/neuron/bin:${PATH}"
+ENV PATH="/opt/aws/neuron/bin:${PATH}"
 
 # Disable thread pinning in TVM and Treelite
 ENV TVM_BIND_THREADS 0

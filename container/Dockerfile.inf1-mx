@@ -53,6 +53,19 @@ RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSIO
     libgdbm-dev \
     libc6-dev \
     libbz2-dev \
+    pciutils \
+    gnupg \
+    jq \
+    wget \
+ && echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list \
+ && wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add - \
+ && apt-get update  \
+ && apt-get install aws-neuron-tools \
+ && make \
+ && make install \
+ && rm -rf ../Python-$PYTHON_VERSION* \
+ && ln -s /usr/local/bin/pip3 /usr/bin/pip \
+ && rm -rf /var/lib/apt/lists/*
  && make \
  && make install \
  && rm -rf ../Python-$PYTHON_VERSION* \
@@ -84,6 +97,8 @@ RUN ln -s /dev/null /dev/raw1394
 RUN useradd -m model-server \
  && mkdir -p /home/model-server/tmp \
  && chown -R model-server /home/model-server
+
+ENV PATH="/opt/aws/neuron/bin:${PATH}"
 
 COPY container/inf1_mx_entry.py /usr/local/bin/dockerd-entrypoint.py
 COPY container/config-inf1.properties /home/model-server

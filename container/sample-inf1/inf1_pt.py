@@ -16,7 +16,7 @@ import torchvision.transforms as transforms
 import torch.nn.functional as F
 from PIL import Image
 import io
-
+import os
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -36,10 +36,14 @@ def model_fn(model_dir):
   return torch.jit.load(model_files[0])
 
 def input_fn(request_body, request_content_type):
-  import os
-  #stream = os.popen('/opt/aws/neuron/bin/neuron-cli reset')
-  #output = stream.read()
-  #print(output)
+  '''
+  stream = os.popen('/opt/aws/neuron/bin/neuron-cli list-model')
+  output = stream.read()
+  print(output)
+  stream = os.popen('/opt/aws/neuron/bin/neuron-cli list-ncg')
+  output = stream.read()
+  print(output)
+  '''
   f = io.BytesIO(request_body)
   input_image = Image.open(f).convert('RGB')
   preprocess = transforms.Compose([
