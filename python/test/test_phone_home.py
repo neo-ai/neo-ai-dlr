@@ -17,7 +17,7 @@ class TestPhoneHome(unittest.TestCase):
             os.remove(config_path)
 
     def mock_func(self):
-        func = MagicMock(return_vaule=MagicMock())
+        func = MagicMock(return_value=MagicMock())
         return func
 
     def check_enable_by_default(self):

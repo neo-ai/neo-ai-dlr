@@ -34,7 +34,7 @@ setup(
     version=METADATA_PATH['VERSION'],
 
     zip_safe=False,
-    install_requires=['numpy', 'requests'],
+    install_requires=['numpy', 'requests', "distro"],
 
     # declare your packages
     packages=find_packages(),
