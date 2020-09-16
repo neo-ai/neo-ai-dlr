@@ -11,9 +11,28 @@
 #include <tvm/runtime/vm.h>
 #include "dlr_common.h"
 
+
+#ifdef _WIN32
+#define LIBEXT ".dll"
+#define LIBDLR "dlr.dll"
+#elif __APPLE__
+#define LIBEXT ".dylib"
+#define LIBDLR "libdlr.dylib"
+#else
+#define LIBEXT ".so"
+#define LIBDLR "libdlr.so"
+#endif
+
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
+
+
 namespace dlr {
 
-class RelayVMModel : public DLRModel {
+class DLR_DLL RelayVMModel : public DLRModel {
  private:
   static const std::string ENTRY_FUNCTION;
   std::vector<std::string> output_names_;
