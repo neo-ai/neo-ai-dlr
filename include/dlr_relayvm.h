@@ -64,6 +64,8 @@ class DLR_DLL RelayVMModel : public DLRModel {
   }
 
   int GetInputIndex(const char* name) const;
+  virtual const int GetInputDim(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
   virtual const char* GetWeightName(int index) const override;

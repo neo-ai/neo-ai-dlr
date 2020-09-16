@@ -55,9 +55,17 @@ void RelayVMModel::FetchInputNodesData() {
   num_inputs_ = exec->GetFunctionArity(ENTRY_FUNCTION);
   input_names_.resize(num_inputs_);
   input_types_.resize(num_inputs_);
+  input_shapes_.resize(num_inputs_);
   inputs_.resize(num_inputs_);
   for (int i = 0; i < num_inputs_; i++) {
     input_names_[i] = exec->GetFunctionParameterName(ENTRY_FUNCTION, i);
+    for (auto shape : metadata_.at("Model").at("Inputs").at(i).at("shape")) {
+      if (shape == nullptr) {
+        input_shapes_[i].push_back(-1);
+      } else {
+        input_shapes_[i].push_back(shape);
+      }
+    };
   }
   try {
     for (int i = 0; i < num_inputs_; i++) {
@@ -127,6 +135,17 @@ int RelayVMModel::GetInputIndex(const char* name) const {
     }
   }
   throw dmlc::Error("Invalid input node name!");
+}
+
+const int RelayVMModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index].size();
+}
+
+const int64_t RelayVMModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return std::accumulate(input_shapes_[index].begin(), input_shapes_[index].end(), 1,
+                         std::multiplies<int64_t>());
 }
 
 DLDataType RelayVMModel::GetInputDLDataType(int index) {

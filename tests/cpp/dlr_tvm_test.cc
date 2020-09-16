@@ -2,6 +2,59 @@
 #include <gtest/gtest.h>
 #include "test_utils.hpp"
 
+class TVMTest : public ::testing::Test {
+ protected:
+  float* img;
+  const int batch_size = 1;
+  size_t img_size = 224 * 224 * 3;
+  const int64_t input_shape[4] = {1, 224, 224, 3};
+  const int input_dim = 4;
+  const std::string model_path = "./resnet_v1_5_50";
+  const std::string metadata_file = "./resnet_v1_5_50/compiled.meta";
+  const std::string metadata_file_bak = "./resnet_v1_5_50/compiled.meta.bak";
+
+  dlr::TVMModel* model;
+
+  TVMTest() {
+    // Setup input data
+    img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
+
+    // Instantiate model
+    int device_type = 1;
+    int device_id = 0;
+    std::vector<std::string> paths = {model_path};
+    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    model = new dlr::TVMModel(paths, ctx);
+  }
+
+  ~TVMTest() {
+    delete model;
+    delete img;
+  }
+};
+
+TEST_F(TVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
+
+TEST_F(TVMTest, TestGetInput) {
+  EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
+  float observed_input_data[img_size];
+  EXPECT_NO_THROW(model->GetInput("input_tensor", observed_input_data));
+  EXPECT_EQ(*img, observed_input_data[0]);
+}
+
+
+TEST_F(TVMTest, TestGetInputShape) {
+  std::vector<int64_t> in_shape(std::begin(input_shape), std::end(input_shape));
+  EXPECT_EQ(model->GetInputShape(0), in_shape);
+}
+
+TEST_F(TVMTest, TestGetInputSize) {
+  EXPECT_EQ(model->GetInputSize(0), 1 * 224 * 224 * 3);
+}
+
+TEST_F(TVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
+
+
 TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   const int device_type = 1;  // 1 - kDLCPU
   const int device_id = 0;

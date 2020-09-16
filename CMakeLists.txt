@@ -475,15 +475,15 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/xgboost_test.tar.gz)
   endif()
 
-  set(RELAYVM_MODEL ssd_mobilenet_v2.tar.gz)
-  set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v2)
+  set(RELAYVM_MODEL ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03-ml_m4.tar.gz)
+  set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v1)
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
       https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      477a6479fdd510703de9c190bbf4b95cf5f1d22e
+      ed7105a16198adb02946687e068137502c5b53e0
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}

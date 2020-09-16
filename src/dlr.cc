@@ -54,6 +54,26 @@ extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
   API_END();
 }
 
+extern "C" int GetDLRInputShape(DLRModelHandle* handle, int index,
+                                 int64_t* shape) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  std::vector<int64_t> input_shape = model->GetInputShape(index);
+  std::memcpy(shape, input_shape.data(), sizeof(int64_t)*input_shape.size());
+  API_END();
+}
+
+extern "C" int GetDLRInputSizeDim(DLRModelHandle* handle, int index,
+                                   int64_t* size, int* dim) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *size = model->GetInputSize(index);
+  *dim = model->GetInputDim(index);
+  API_END();
+}
+
 extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
                                 const char** weight_name) {
   API_BEGIN();

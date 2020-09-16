@@ -218,6 +218,32 @@ int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
  */
 DLR_DLL
 int GetDLRInput(DLRModelHandle* handle, const char* name, void* input);
+
+/*!
+ \brief Gets the shape of the index-th input.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th input.
+ \param shape The pointer to save the shape of index-thinput. This should be a
+ pointer to an array of size "dim" from GetDLRInputSizeDim(). \return 0 for
+ success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetDLRInputShape(DLRModelHandle* handle, int index, int64_t* shape);
+
+/*!
+ \brief Gets the size and dimension of an input.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th input.
+ \param size The pointer to save the size of the index-th input.
+ \param dim The pointer to save the dimension of the index-th output.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
+ */
+DLR_DLL
+int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
+                        int* dim);
+
+
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().

@@ -101,3 +101,8 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   }
   return DLRBackend::kTREELITE;
 }
+
+const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index];
+}

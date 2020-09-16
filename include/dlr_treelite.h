@@ -32,6 +32,10 @@ ModelPath GetTreelitePaths(std::vector<std::string> dirname);
  */
 class DLR_DLL TreeliteModel : public DLRModel {
  private:
+  static const std::string INPUT_NAME;
+  static const std::string INPUT_TYPE;
+  static const std::string OUTPUT_TYPE;
+  static const int kInputDim = 2;
   // fields for Treelite model
   PredictorHandle treelite_model_;
   size_t treelite_num_feature_;
@@ -42,6 +46,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float> treelite_output_;
   void SetupTreeliteModule(std::vector<std::string> model_path);
+  void UpdateInputShapes();
 
  public:
   /*! \brief Load model files from given folder path.
@@ -52,18 +57,23 @@ class DLR_DLL TreeliteModel : public DLRModel {
     SetupTreeliteModule(model_path);
   }
 
+  virtual const int GetInputDim(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
-  virtual const char* GetWeightName(int index) const override;
-  virtual std::vector<std::string> GetWeightNames() const override;
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, void* input,
                         int dim) override;
-  virtual void Run() override;
+  
   virtual void GetOutput(int index, void* out) override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
+  
+  virtual const char* GetWeightName(int index) const override;
+  virtual std::vector<std::string> GetWeightNames() const override;
+  
+  virtual void Run() override;
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
