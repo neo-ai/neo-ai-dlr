@@ -171,8 +171,8 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input,
 
 void RelayVMModel::UpdateInputs() {
   const int kNumArgs = GetNumInputs() + 1;
-  TVMValue values[kNumArgs];
-  int type_codes[kNumArgs];
+  TVMValue *values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
+  int *type_codes = (int*)malloc(sizeof(int) * kNumArgs);
   auto arg_setter = tvm::runtime::TVMArgsSetter(values, type_codes);
   arg_setter(0, ENTRY_FUNCTION);
   for (int i = 0; i < inputs_.size(); i++) {
@@ -182,6 +182,9 @@ void RelayVMModel::UpdateInputs() {
   tvm::runtime::PackedFunc set_input = vm_module_->GetFunction("set_input");
   tvm::runtime::TVMRetValue rv;
   set_input.CallPacked(tvm::runtime::TVMArgs(values, type_codes, kNumArgs), &rv);
+
+  free(values);
+  free(type_codes);
 }
 
 void RelayVMModel::Run() {
