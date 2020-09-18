@@ -131,7 +131,7 @@ class DLRModelImpl(IDLRModel):
 
     def __del__(self):
         if getattr(self, "handle", None) is not None and self.handle is not None:
-            if getattr(self, "lib", None) is not None:
+            if getattr(self, "_lib", None) is not None:
                 self._check_call(self._lib.DeleteDLRModel(byref(self.handle)))
             self.handle = None
 
