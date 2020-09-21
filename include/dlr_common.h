@@ -111,7 +111,7 @@ class DLR_DLL DLRModel {
   virtual const char* GetInputType(int index) const = 0;
   virtual const int GetInputDim(int index) const = 0;
   virtual const int64_t GetInputSize(int index) const = 0;
-  virtual const std::vector<int64_t> &GetInputShape(int index) const;
+  virtual const std::vector<int64_t>& GetInputShape(int index) const;
   virtual void GetInput(const char* name, void* input) = 0;
   virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) = 0;
 

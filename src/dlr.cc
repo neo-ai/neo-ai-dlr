@@ -59,7 +59,7 @@ extern "C" int GetDLRInputShape(DLRModelHandle* handle, int index,
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
-  std::vector<int64_t> input_shape = model->GetInputShape(index);
+  const std::vector<int64_t>& input_shape = model->GetInputShape(index);
   std::copy(input_shape.begin(), input_shape.end(), shape);
   API_END();
 }

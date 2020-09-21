@@ -251,11 +251,14 @@ void RelayVMModel::GetOutput(int index, void* output) {
 }
 
 void RelayVMModel::GetOutputShape(int index, int64_t* shape) const {
-  CHECK_LT(index, output_shapes_.size()) << "Output index is out of range.";
-  if (index < outputs_.size()) {
-    std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
-  } else {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  if (outputs_.empty()) {
+    // Inference has not been called yet. Get shapes from metadata.
+    CHECK_LT(index, output_shapes_.size()) << "Output index is out of range.";
     std::copy(output_shapes_[index].begin(), output_shapes_[index].end(), shape);
+  } else {
+    CHECK_LT(index, outputs_.size()) << "Output index is out of range.";
+    std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
   }
 }
 
