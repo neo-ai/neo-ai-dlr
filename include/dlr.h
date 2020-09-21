@@ -223,8 +223,9 @@ int GetDLRInput(DLRModelHandle* handle, const char* name, void* input);
  \brief Gets the shape of the index-th input.
  \param handle The model handle returned from CreateDLRModel().
  \param index The index-th input.
- \param shape The pointer to save the shape of index-thinput. This should be a
- pointer to an array of size "dim" from GetDLRInputSizeDim(). \return 0 for
+ \param shape The pointer to save the shape of index-th input. This should be a
+ pointer to an array of size "dim" from GetDLRInputSizeDim(). 
+ \return 0 for
  success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL

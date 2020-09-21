@@ -87,8 +87,12 @@ TEST_F(RelayVMTest, TestRun) {
 }
 
 TEST_F(RelayVMTest, TestGetOutputShape) {
+  int64_t output_shape[2];
+  EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
+  
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
   EXPECT_NO_THROW(model->Run());
+  
   int64_t output_0_shape[2];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_0_shape));
   EXPECT_EQ(output_0_shape[0], 1);
@@ -110,8 +114,13 @@ TEST_F(RelayVMTest, TestGetOutputShape) {
 TEST_F(RelayVMTest, TestGetOutputSizeDim) {
   int64_t size;
   int dim;
+  
+  EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
+  EXPECT_EQ(size, 100);
+  
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
   EXPECT_NO_THROW(model->Run());
+  
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
   EXPECT_EQ(size, 100);
   EXPECT_EQ(dim, 2);

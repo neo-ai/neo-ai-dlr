@@ -86,10 +86,18 @@ void RelayVMModel::FetchOutputNodesData() {
   }
   output_names_.resize(num_outputs_);
   output_types_.resize(num_outputs_);
+  output_shapes_.resize(num_outputs_);
   try {
     for (int i = 0; i < num_outputs_; i++) {
       output_names_[i] = metadata_.at("Model").at("Outputs").at(i).at("name");
       output_types_[i] = metadata_.at("Model").at("Outputs").at(i).at("dtype");
+      for (auto shape : metadata_.at("Model").at("Outputs").at(i).at("shape")) {
+        if (shape == nullptr) {
+          output_shapes_[i].push_back(-1);
+        } else {
+          output_shapes_[i].push_back(shape);
+        }
+      };
     }
   } catch (nlohmann::json::out_of_range& e) {
     LOG(ERROR) << e.what();
@@ -243,16 +251,25 @@ void RelayVMModel::GetOutput(int index, void* output) {
 }
 
 void RelayVMModel::GetOutputShape(int index, int64_t* shape) const {
-  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
+  CHECK_LT(index, output_shapes_.size()) << "Output index is out of range.";
+  if (index < outputs_.size()) {
+    std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
+  } else {
+    std::copy(output_shapes_[index].begin(), output_shapes_[index].end(), shape);
+  }
 }
 
 void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
-  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  CHECK_LT(index, output_shapes_.size()) << "Output index is out of range.";
   *size = 1;
-  auto arr = outputs_[index];
-  *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
-  *dim = arr->ndim;
+  if (index < outputs_.size()) {
+    auto arr = outputs_[index];
+    *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
+    *dim = arr->ndim;
+  } else {
+    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1, std::multiplies<int64_t>());
+    *dim = output_shapes_[index].size();
+  }
 }
 
 const char* RelayVMModel::GetOutputType(int index) const {

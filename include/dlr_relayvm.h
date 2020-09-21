@@ -44,6 +44,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   std::vector<tvm::runtime::NDArray> inputs_;
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
+  std::vector<std::vector<int64_t>> output_shapes_;
   void InitModelPath(std::vector<std::string> paths);
   void SetupVMModule();
   void FetchInputNodesData();
