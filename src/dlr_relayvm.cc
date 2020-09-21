@@ -44,7 +44,7 @@ void RelayVMModel::SetupVMModule() {
   vm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(vm));
 
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
-  init(static_cast<int>(ctx_.device_type), ctx_.device_id);
+  init(static_cast<int>(ctx_.device_type), ctx_.device_id, static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
 }
 
 void RelayVMModel::LoadMetadata() { 

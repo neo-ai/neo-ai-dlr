@@ -164,7 +164,7 @@ if(USE_CUDA)
     cmake_minimum_required(VERSION 3.13) # to compile CUDA code
     set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
     if(NOT DEFINED CMAKE_CUDA_STANDARD)
-      set(CMAKE_CUDA_STANDARD 11)
+      set(CMAKE_CUDA_STANDARD 14)
       set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     endif()
     enable_language(CUDA)
@@ -221,19 +221,22 @@ if(USE_TENSORRT)
     include_directories("${TVM_SRC}/3rdparty/compiler-rt")
     include_directories("${TVM_SRC}/topi/include")
     file(GLOB_RECURSE COMPILER_SRCS
+        ${TVM_SRC}/src/auto_scheduler/*.cc
         ${TVM_SRC}/src/node/*.cc
         ${TVM_SRC}/src/ir/*.cc
         ${TVM_SRC}/src/arith/*.cc
         ${TVM_SRC}/src/te/*.cc
         ${TVM_SRC}/src/autotvm/*.cc
         ${TVM_SRC}/src/tir/*.cc
+        ${TVM_SRC}/src/topi/*.cc
         ${TVM_SRC}/src/driver/*.cc
+        ${TVM_SRC}/src/parser/*.cc
         ${TVM_SRC}/src/printer/*.cc
         ${TVM_SRC}/src/support/*.cc
     )
     file(GLOB CODEGEN_SRCS
-      ${TVM_SRC}/src/target/*.cc
-      ${TVM_SRC}/src/target/source/*.cc
+        ${TVM_SRC}/src/target/*.cc
+        ${TVM_SRC}/src/target/source/*.cc
     )
     list(APPEND COMPILER_SRCS ${CODEGEN_SRCS})
     file(GLOB_RECURSE RELAY_OP_SRCS
