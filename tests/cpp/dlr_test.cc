@@ -65,6 +65,18 @@ TEST(DLR, TestSetDLRInput) {
   free(in_img);
 }
 
+
+TEST(DLR, TestGetDLRInputShape) {
+  auto model = GetDLRModel();
+
+  int64_t input_size;
+  int input_dim;
+  int index = 0;
+  EXPECT_EQ(GetDLRInputSizeDim(&model, 0, &input_size, &input_dim), 0);
+  EXPECT_EQ(input_dim, 4);
+  EXPECT_EQ(input_size, 1*224*224*3);
+}
+
 TEST(DLR, TestGetDLROutputShape) {
   auto model = GetDLRModel();
 

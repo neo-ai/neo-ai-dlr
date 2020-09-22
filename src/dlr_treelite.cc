@@ -6,6 +6,10 @@
 
 using namespace dlr;
 
+const std::string TreeliteModel::INPUT_NAME = "data";
+const std::string TreeliteModel::INPUT_TYPE = "float32";
+const std::string TreeliteModel::OUTPUT_TYPE = "float32";
+
 // not used (was used in SetupTreeliteModule)
 std::string GetVersion(const std::string& json_path) {
   std::ifstream file(json_path);
@@ -59,8 +63,8 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   num_inputs_ = 1;
   num_outputs_ = 1;
   // Give a dummy input name to Treelite model.
-  input_names_.push_back("data");
-  input_types_.push_back("float32");
+  input_names_.push_back(INPUT_NAME);
+  input_types_.push_back(INPUT_TYPE);
   CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads,
                                  &treelite_model_),
            0)
@@ -90,6 +94,16 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
   // version_ = GetVersion(paths.ver_json);
+  UpdateInputShapes();
+}
+
+
+void TreeliteModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  std::vector<int64_t> input_shape(kInputDim);
+  input_shape[0] = treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
+  input_shape[1] = static_cast<int64_t>(treelite_num_feature_);
+  input_shapes_[0] = input_shape;
 }
 
 std::vector<std::string> TreeliteModel::GetWeightNames() const {
@@ -99,23 +113,30 @@ std::vector<std::string> TreeliteModel::GetWeightNames() const {
 
 const char* TreeliteModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return "data";
+  return INPUT_NAME.c_str();
+}
+const int TreeliteModel::GetInputDim(int index) const { return kInputDim; }
+
+const int64_t TreeliteModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  const std::vector<int64_t>& shape = GetInputShape(index);
+  return abs(std::accumulate(shape.begin(), shape.end(), 1,
+                         std::multiplies<int64_t>()));
 }
 
 const char* TreeliteModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return "float32";
+  return INPUT_TYPE.c_str();
 }
 
 const char* TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
-  return "";  // unreachable
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
                              void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
-  CHECK_SHAPE("Mismatch found in input dimension", dim, 2);
+  CHECK_SHAPE("Mismatch found in input dimension", dim, kInputDim);
   // NOTE: If number of columns is less than num_feature, missing columns
   //       will be automatically padded with missing values
   CHECK_LE(static_cast<size_t>(shape[1]), treelite_num_feature_)
@@ -156,6 +177,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
                treelite_num_feature_, &treelite_input_->handle),
            0)
       << TreeliteGetLastError();
+  UpdateInputShapes();
 }
 
 void TreeliteModel::GetInput(const char* name, void* input) {
@@ -189,7 +211,7 @@ void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 
 const char* TreeliteModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
-  return "float32";
+  return OUTPUT_TYPE.c_str();
 }
 
 void TreeliteModel::Run() {

@@ -98,6 +98,7 @@ class DLR_DLL DLRModel {
   DLContext ctx_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
+  std::vector<std::vector<int64_t>> input_shapes_;
 
  public:
   DLRModel(const DLContext& ctx, const DLRBackend& backend)
@@ -108,6 +109,9 @@ class DLR_DLL DLRModel {
   virtual int GetNumInputs() const { return num_inputs_; }
   virtual const char* GetInputName(int index) const = 0;
   virtual const char* GetInputType(int index) const = 0;
+  virtual const int GetInputDim(int index) const = 0;
+  virtual const int64_t GetInputSize(int index) const = 0;
+  virtual const std::vector<int64_t>& GetInputShape(int index) const;
   virtual void GetInput(const char* name, void* input) = 0;
   virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) = 0;
 

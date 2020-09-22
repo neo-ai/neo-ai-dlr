@@ -105,6 +105,17 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     outputs_[i] = output.operator->();
     output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
   }
+  UpdateInputShapes();
+}
+
+void TVMModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  for (int i = 0; i < num_inputs_; i++) {
+    std::vector<int64_t> input_shape;
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(i);
+    input_shape.assign(arr->shape, arr->shape + arr->ndim);
+    input_shapes_[i] = input_shape;
+  }
 }
 
 std::vector<std::string> TVMModel::GetWeightNames() const {
@@ -119,6 +130,19 @@ const char* TVMModel::GetInputName(int index) const {
 const char* TVMModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_types_[index].c_str();
+}
+
+const int TVMModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  return arr->ndim;
+}
+
+const int64_t TVMModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  return std::accumulate(arr->shape, arr->shape + arr->ndim, 1,
+                         std::multiplies<int64_t>());
 }
 
 const char* TVMModel::GetWeightName(int index) const {
@@ -142,6 +166,7 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
   CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
   tvm::runtime::PackedFunc set_input = tvm_module_->GetFunction("set_input");
   set_input(str, &input_tensor);
+  UpdateInputShapes();
 }
 
 void TVMModel::GetInput(const char* name, void* input) {

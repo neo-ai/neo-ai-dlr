@@ -179,7 +179,7 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
   // Save the number of outputs
   GenTensorSpec(false /*isInput*/);
   num_outputs_ = output_tensors_spec_.size();
-
+  UpdateInputShapes();
   LOG(INFO) << "HexagonModel was created";
 }
 
@@ -197,6 +197,14 @@ HexagonModel::~HexagonModel() {
   }
   LOG(INFO) << "HexagonModel was deleted";
 }
+void HexagonModel::UpdateInputShapes() {
+  input_shapes_.resize(num_inputs_);
+  for (auto i = 0; i < num_inputs_; i++) {
+    std::vector<int64_t> input_shape(input_tensors_spec_[i].shape.begin(),
+                                     input_tensors_spec_[i].shape.end());
+    input_shapes_[i] = input_shape;
+  }
+}
 
 std::vector<std::string> HexagonModel::GetWeightNames() const {
   LOG(FATAL) << "GetWeightNames is not supported by Hexagon backend";
@@ -212,6 +220,21 @@ const char* HexagonModel::GetInputType(int index) const {
   LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
   return "";  // unreachable
 }
+
+void HexagonModel::SetInput(const char* name, const int64_t* shape, void* input,
+                            int dim) {
+  int index = GetInputIndex(name);
+  std::string node_name(name);
+
+  // Check Size and Dim
+  CHECK_EQ(dim, GetInputDim(index)) << "Incorrect input dim";
+  for (int i = 0; i < dim; i++) {
+    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
+        << "Incorrect input shape";
+  }
+  SetInput(name, *shape, input);
+}
+
 
 const char* HexagonModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";

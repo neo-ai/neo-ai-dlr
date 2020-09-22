@@ -28,6 +28,7 @@ class HexagonModel : public DLRModel {
   void GenTensorSpec(bool isInput);
   int GetInputId(const char* name);
   void PrintHexagonNNLog();
+  void UpdateInputShapes();
   int graph_id_;
   uint8_t* input_;
   uint8_t* output_;
@@ -49,6 +50,8 @@ class HexagonModel : public DLRModel {
                         const int debug_level);
   ~HexagonModel();
 
+  virtual const int GetInputDim(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
   virtual const char* GetWeightName(int index) const override;

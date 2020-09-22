@@ -52,6 +52,23 @@ TEST_F(TreeliteTest, TestGetInputType) {
   EXPECT_STREQ(model->GetInputType(0), "float32");
 }
 
+TEST_F(TreeliteTest, TestGetInputSize) {
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_EQ(model->GetInputSize(0), in_size);
+}
+
+TEST_F(TreeliteTest, TestGetInputDim) {
+  EXPECT_EQ(model->GetInputDim(0), in_dim);
+}
+
+TEST_F(TreeliteTest, TestGetInputShape) {
+  std::vector<int64_t> shape{-1, in_size};
+  EXPECT_EQ(model->GetInputShape(0), shape);
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  shape.assign(std::begin(in_shape), std::end(in_shape));
+  EXPECT_EQ(model->GetInputShape(0), shape);
+}
+
 TEST_F(TreeliteTest, TestGetInput) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
   try {

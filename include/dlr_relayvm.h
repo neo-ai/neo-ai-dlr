@@ -44,6 +44,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   std::vector<tvm::runtime::NDArray> inputs_;
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
+  std::vector<std::vector<int64_t>> output_shapes_;
   void InitModelPath(std::vector<std::string> paths);
   void SetupVMModule();
   void FetchInputNodesData();
@@ -64,6 +65,8 @@ class DLR_DLL RelayVMModel : public DLRModel {
   }
 
   int GetInputIndex(const char* name) const;
+  virtual const int GetInputDim(int index) const override;
+  virtual const int64_t GetInputSize(int index) const override;
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
   virtual const char* GetWeightName(int index) const override;
