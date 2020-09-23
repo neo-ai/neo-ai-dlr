@@ -1,3 +1,4 @@
+
 # Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
@@ -15,7 +16,6 @@ from __future__ import absolute_import
 import shlex
 import subprocess
 import sys
-<<<<<<< HEAD
 import os
 
 if sys.argv[1] == 'serve':
@@ -32,11 +32,6 @@ if sys.argv[1] == 'serve':
     print("NEURONCORE_GROUP_SIZES {}".format(os.environ.get('NEURONCORE_GROUP_SIZES')))
     print("SAGEMAKER_MODEL_SERVER_WORKERS {}".format(os.environ.get('SAGEMAKER_MODEL_SERVER_WORKERS')))
 
-=======
-
-
-if sys.argv[1] == 'serve':
->>>>>>> init inf1 infeence container
     from sagemaker_pytorch_inferentia_serving_container import serving
     serving.main()
 else:

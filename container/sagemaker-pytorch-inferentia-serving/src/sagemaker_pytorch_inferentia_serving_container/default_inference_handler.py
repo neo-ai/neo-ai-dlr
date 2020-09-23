@@ -16,23 +16,15 @@ import os
 import textwrap
 
 import torch
-<<<<<<< HEAD
 import torch.neuron
-=======
->>>>>>> init inf1 infeence container
 from sagemaker_inference import content_types, decoder, default_inference_handler, encoder
 
 class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceHandler):
     VALID_CONTENT_TYPES = (content_types.JSON, content_types.NPY)
 
     def default_model_fn(self, model_dir):
-<<<<<<< HEAD
         """Loads a model. Provides a default implementation.
         Users can provide customized model_fn() in script.
-=======
-        """Loads a model. For PyTorch, a default function to load a model only if Elastic Inference is used.
-        In other cases, users should provide customized model_fn() in script.
->>>>>>> init inf1 infeence container
         Args:
             model_dir: a directory where model is saved.
         Returns: A PyTorch model.
@@ -48,11 +40,7 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
         return torch.jit.load(model_files[0])
 
     def default_input_fn(self, input_data, content_type):
-<<<<<<< HEAD
         """A default input_fn that can handle JSON, CSV and NPZ formats.
-=======
-         """A default input_fn that can handle JSON, CSV and NPZ formats.
->>>>>>> init inf1 infeence container
         Args:
             input_data: the request payload serialized in the content_type format
             content_type: the request content_type
@@ -60,21 +48,12 @@ class DefaultPytorchInferenceHandler(default_inference_handler.DefaultInferenceH
             depending if cuda is available.
         """
         np_array = decoder.decode(input_data, content_type)
-<<<<<<< HEAD
         tensor = torch.FloatTensor(np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
         return tensor
         #return torch.tensor(np_array)
 
     def default_predict_fn(self, data, model):
         """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
-=======
-        # tensor = torch.FloatTensor(np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
-        # return tensor.to(device)
-        return torch.tensor(np_array)
-
-    def default_predict_fn(self, data, model):
-          """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
->>>>>>> init inf1 infeence container
         Runs prediction on GPU if cuda is available.
         Args:
             data: input data (torch.Tensor) for prediction deserialized by input_fn
