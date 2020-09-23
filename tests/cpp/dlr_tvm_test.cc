@@ -37,9 +37,10 @@ TEST_F(TVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
 TEST_F(TVMTest, TestGetInput) {
   EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
-  float observed_input_data[img_size];
+  float *observed_input_data = new float[img_size];
   EXPECT_NO_THROW(model->GetInput("input_tensor", observed_input_data));
   EXPECT_EQ(*img, observed_input_data[0]);
+  delete[] observed_input_data;
 }
 
 
