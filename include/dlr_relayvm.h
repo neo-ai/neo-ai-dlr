@@ -37,7 +37,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   static const std::string ENTRY_FUNCTION;
   std::vector<std::string> output_names_;
   std::vector<std::string> output_types_;
-  nlohmann::json metadata_;
   std::unique_ptr<ModelPath> path_;
   std::shared_ptr<tvm::runtime::Module> vm_module_;
   std::shared_ptr<tvm::runtime::Module> vm_executable_;
@@ -86,7 +85,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   /*
     Following methods use metadata file to lookup input and output names.
   */
-  virtual bool HasMetadata() const override;
   virtual const char* GetOutputName(const int index) const override;
   virtual int GetOutputIndex(const char* name) const override;
   virtual void GetOutputByName(const char* name, void* out) override;

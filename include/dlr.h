@@ -244,7 +244,6 @@ DLR_DLL
 int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
                         int* dim);
 
-
 /*!
  \brief Gets the shape of the index-th output.
  \param handle The model handle returned from CreateDLRModel().
@@ -350,6 +349,15 @@ const char* DLRGetLastError();
  */
 DLR_DLL
 int GetDLRBackend(DLRModelHandle* handle, const char** name);
+
+/*!
+ \brief Gets the DLDeviceType (DLDeviceType::kDLCPU, DLDeviceType::kDLGPU, etc)
+ \param handle The model handle returned from CreateDLRModel().
+ \return DLDeviceType enum for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
+ */
+DLR_DLL
+int GetDLRDeviceType(DLRModelHandle* handle);
 
 /*!
  \brief Get DLR version

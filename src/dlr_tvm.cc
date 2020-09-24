@@ -60,7 +60,8 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   }
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
     LOG(INFO) << "Loading metadata file: " << paths.metadata;
-    LoadJsonFromFile(paths.metadata, this->metadata);
+    LoadJsonFromFile(paths.metadata, this->metadata_);
+    ValidateDeviceTypeIfExists();
   } else {
     LOG(INFO) << "No metadata found";
   }
@@ -243,14 +244,12 @@ void TVMModel::UseCPUAffinity(bool use) {
   }
 }
 
-bool TVMModel::HasMetadata() const { return !this->metadata.is_null(); }
-
 const char* TVMModel::GetOutputName(const int index) const {
   if (!this->HasMetadata()) {
     throw dmlc::Error("No metadata file was found!");
   }
   try {
-    return this->metadata.at("Model")
+    return this->metadata_.at("Model")
         .at("Outputs")
         .at(index)
         .at("name")

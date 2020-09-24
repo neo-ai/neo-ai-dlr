@@ -83,6 +83,8 @@ enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON, kRELAYV
  */
 DLRBackend GetBackend(std::vector<std::string> dirname);
 
+const DLDeviceType GetDeviceTypeFromString(const std::string& target_backend);
+
 #define CHECK_SHAPE(msg, value, expected) \
   CHECK_EQ(value, expected)               \
       << (msg) << ". Value read: " << (value) << ", Expected: " << (expected);
@@ -99,8 +101,10 @@ class DLR_DLL DLRModel {
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
   std::vector<std::vector<int64_t>> input_shapes_;
+  virtual void ValidateDeviceTypeIfExists();
 
  public:
+  nlohmann::json metadata_ = nullptr;
   DLRModel(const DLContext& ctx, const DLRBackend& backend)
       : ctx_(ctx), backend_(backend) {}
   virtual ~DLRModel() {}
@@ -137,10 +141,11 @@ class DLR_DLL DLRModel {
   virtual int GetNumWeights() const { return num_weights_; }
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
-  
+
+  virtual const DLDeviceType GetDeviceTypeFromMetadata() const;  
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
-  virtual bool HasMetadata() const {return false; }
+  virtual bool HasMetadata() const;
   virtual void UseCPUAffinity(bool use) = 0;
   virtual void Run() = 0;
   

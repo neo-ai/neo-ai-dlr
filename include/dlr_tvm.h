@@ -26,7 +26,6 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  nlohmann::json metadata;
   void SetupTVMModule(std::vector<std::string> model_path);
   void UpdateInputShapes();
 
@@ -62,7 +61,6 @@ class DLR_DLL TVMModel : public DLRModel {
   /*
     Following methods use metadata file to lookup input and output names.
   */
-  virtual bool HasMetadata() const override;
   virtual const char* GetOutputName(const int index) const override;
   virtual int GetOutputIndex(const char* name) const override;
   virtual void GetOutputByName(const char* name, void* out) override;
