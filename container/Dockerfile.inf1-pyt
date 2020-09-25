@@ -31,9 +31,9 @@ RUN apt-get install -y --reinstall build-essential
 
 COPY container/sagemaker-pytorch-inferentia-serving/ /workspace/sagemaker-pytorch-inferentia-serving
 
-RUN \ 
+RUN \
     cd /workspace/sagemaker-pytorch-inferentia-serving && \
-    python3 setup.py bdist_wheel     
+    python3 setup.py bdist_wheel
 
 ### Stage 2: Run
 ### Stage 2-1: Runner base (everything except the APP-specific handler)
