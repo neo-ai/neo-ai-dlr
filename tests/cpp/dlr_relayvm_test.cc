@@ -25,7 +25,7 @@ class RelayVMTest : public ::testing::Test {
     const int device_type = kDLCPU;
     const int device_id = 0;
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-    std::vector<std::string> paths = {"/home/ubuntu/TVM/neo-ai-dlr/build/ssd_mobilenet_v1"};
+    std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
     model = new dlr::RelayVMModel(paths, ctx);
 
     img = new int8_t[img_size];

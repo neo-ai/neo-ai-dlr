@@ -48,6 +48,20 @@ bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {
   return false;
 }
 
+std::string dlr::GetMetadataFile(const std::string& dirname) {
+  // Scan Dir to find libhexagon_nn_skel.so
+  std::vector<std::string> paths_vec;
+  ListDir(dirname, paths_vec);
+  for (auto filename : paths_vec) {
+    if (EndsWith(filename, ".meta")) {
+      return filename;
+    }
+  }
+  LOG(INFO) << "compiled.meta file is not found under folder: "
+            << dirname;
+  return "";
+}
+
 void* dlr::FindSymbol(void* handle, const char* fn_name) {
   LOG(INFO) << "Loading " << fn_name;
   void* fn = dlsym(handle, fn_name);
@@ -181,6 +195,14 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
   num_outputs_ = output_tensors_spec_.size();
   UpdateInputShapes();
   LOG(INFO) << "HexagonModel was created";
+  auto metadata = GetMetadataFile(model_folder)
+  if (!metadata.empty() && !IsFileEmpty(metadata)) {
+    LOG(INFO) << "Loading metadata file: " << metadata;
+    LoadJsonFromFile(metadata, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  } else {
+    LOG(INFO) << "No metadata found";
+  }
 }
 
 // Destructor

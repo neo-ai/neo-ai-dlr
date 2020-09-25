@@ -106,3 +106,53 @@ const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_shapes_[index];
 }
+
+
+bool DLRModel::HasMetadata() const { 
+  return !this->metadata_.is_null(); 
+}
+
+void DLRModel::ValidateDeviceTypeIfExists() {
+  bool throw_input_error = false;
+  try {
+    DLDeviceType device_type = GetDeviceTypeFromMetadata();
+    if (device_type != 0 && ctx_.device_type != device_type) {
+      std::string msg = "Invalid DeviceType parameter!";
+      throw_input_error = true;
+    } 
+  } catch (dmlc::Error& e) {
+    LOG(INFO) << e.what();
+  }
+
+  if (throw_input_error) {
+    std::string msg = "Invalid DeviceType parameter!";
+    throw dmlc::Error(msg);
+  }
+}
+
+const DLDeviceType DLRModel::GetDeviceTypeFromMetadata() const {
+  if (!this->HasMetadata()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  try {
+    const std::string& device_type_string = metadata_.at("Requirements")
+        .at("TargetDeviceType")
+        .get_ref<const std::string&>();
+    return GetDeviceTypeFromString(device_type_string);
+  } catch (nlohmann::json::out_of_range& e) {
+    LOG(ERROR) << e.what();
+    std::string msg = "TargetDeviceType was not found in metadata!";
+    throw dmlc::Error(msg);
+  }
+}
+
+const DLDeviceType dlr::GetDeviceTypeFromString(const std::string& device_type_string) {
+  if (device_type_string == "cpu") {
+    return DLDeviceType::kDLCPU;
+  } else if (device_type_string == "gpu") {
+    return DLDeviceType::kDLGPU;
+  } else if (device_type_string == "opencl") {
+    return DLDeviceType::kDLOpenCL;
+  }
+  return DLDeviceType::kDLExtDev;
+}

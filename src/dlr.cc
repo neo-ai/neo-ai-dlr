@@ -279,50 +279,56 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
 
   DLRBackend backend = dlr::GetBackend(path_vec);
   DLRModel* model;
-  if (backend == DLRBackend::kTVM) {
-    model = new TVMModel(path_vec, ctx);
-  } else if (backend == DLRBackend::kRELAYVM) {
-    model = new RelayVMModel(path_vec, ctx);
-  } else if (backend == DLRBackend::kTREELITE) {
-    model = new TreeliteModel(path_vec, ctx);
-#ifdef DLR_TFLITE
-  } else if (backend == DLRBackend::kTFLITE) {
-    // By default use undefined number of threads - threads=0 and use_nnapi=0
-    DLRModelHandle tf_handle;
-    int errC = CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(tf_handle);
-#endif  // DLR_TFLITE
-#ifdef DLR_TENSORFLOW
-  } else if (backend == DLRBackend::kTENSORFLOW) {
-    // input and output tensor names will be detected automatically.
-    // use undefined number of threads - threads=0
-    // GPUOptions.allow_growth is True
-    // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
-    // share GPU memory. No Performance degradation was detected.
-    DLRModelHandle tf_handle;
-    DLR_TFConfig tf_config = {};
-    tf_config.inter_op_parallelism_threads = 0;
-    tf_config.intra_op_parallelism_threads = 0;
-    tf_config.gpu_options.allow_growth = 1;
-    tf_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
-    int errC = CreateDLRModelFromTensorflow(&tf_handle, model_path, NULL, 0,
-                                            NULL, 0, tf_config);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(tf_handle);
-#endif  // DLR_TENSORFLOW
-#ifdef DLR_HEXAGON
-  } else if (backend == DLRBackend::kHEXAGON) {
-    DLRModelHandle hexagon_handle;
-    int errC = CreateDLRModelFromHexagon(&hexagon_handle, model_path,
-                                         1 /*debug_level*/);
-    if (errC != 0) return errC;
-    model = static_cast<DLRModel*>(hexagon_handle);
-#endif  // DLR_HEXAGON
-  } else {
-    LOG(FATAL) << "Unsupported backend!";
-    return -1;  // unreachable
+  try {
+    if (backend == DLRBackend::kTVM) {
+      model = new TVMModel(path_vec, ctx);
+    } else if (backend == DLRBackend::kRELAYVM) {
+      model = new RelayVMModel(path_vec, ctx);
+    } else if (backend == DLRBackend::kTREELITE) {
+      model = new TreeliteModel(path_vec, ctx);
+  #ifdef DLR_TFLITE
+    } else if (backend == DLRBackend::kTFLITE) {
+      // By default use undefined number of threads - threads=0 and use_nnapi=0
+      DLRModelHandle tf_handle;
+      int errC = CreateDLRModelFromTFLite(&tf_handle, model_path, 0, 0);
+      if (errC != 0) return errC;
+      model = static_cast<DLRModel*>(tf_handle);
+  #endif  // DLR_TFLITE
+  #ifdef DLR_TENSORFLOW
+    } else if (backend == DLRBackend::kTENSORFLOW) {
+      // input and output tensor names will be detected automatically.
+      // use undefined number of threads - threads=0
+      // GPUOptions.allow_growth is True
+      // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
+      // share GPU memory. No Performance degradation was detected.
+      DLRModelHandle tf_handle;
+      DLR_TFConfig tf_config = {};
+      tf_config.inter_op_parallelism_threads = 0;
+      tf_config.intra_op_parallelism_threads = 0;
+      tf_config.gpu_options.allow_growth = 1;
+      tf_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
+      int errC = CreateDLRModelFromTensorflow(&tf_handle, model_path, NULL, 0,
+                                              NULL, 0, tf_config);
+      if (errC != 0) return errC;
+      model = static_cast<DLRModel*>(tf_handle);
+  #endif  // DLR_TENSORFLOW
+  #ifdef DLR_HEXAGON
+    } else if (backend == DLRBackend::kHEXAGON) {
+      DLRModelHandle hexagon_handle;
+      int errC = CreateDLRModelFromHexagon(&hexagon_handle, model_path,
+                                          1 /*debug_level*/);
+      if (errC != 0) return errC;
+      model = static_cast<DLRModel*>(hexagon_handle);
+  #endif  // DLR_HEXAGON
+    } else {
+      LOG(FATAL) << "Unsupported backend!";
+      return -1;  // unreachable
+    }
+  } catch (dmlc::Error& e) {
+    LOG(ERROR) << e.what();
+    return -1;
   }
+  
   *handle = model;
   API_END();
 }
@@ -346,6 +352,19 @@ extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
   *name = static_cast<DLRModel*>(*handle)->GetBackend();
+  API_END();
+}
+
+extern "C" int GetDLRDeviceType(DLRModelHandle* handle) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  try {
+    return model->GetDeviceTypeFromMetadata();
+  } catch (dmlc::Error& e) {
+    LOG(ERROR) << e.what();
+    return -1;
+  }
   API_END();
 }
 

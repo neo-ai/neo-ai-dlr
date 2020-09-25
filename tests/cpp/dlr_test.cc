@@ -13,6 +13,12 @@ DLRModelHandle GetDLRModel() {
   return model;
 }
 
+
+TEST(DLR, TestGetDLRDeviceType) {
+  auto model = GetDLRModel();
+  EXPECT_EQ(GetDLRDeviceType(&model), -1);
+}
+
 TEST(DLR, TestGetDLRNumInputs) {
   auto model = GetDLRModel();
   int num_inputs;

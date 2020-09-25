@@ -47,7 +47,10 @@ void RelayVMModel::SetupVMModule() {
   init(static_cast<int>(ctx_.device_type), ctx_.device_id);
 }
 
-void RelayVMModel::LoadMetadata() { LoadJsonFromFile(path_->metadata, metadata_); }
+void RelayVMModel::LoadMetadata() { 
+  LoadJsonFromFile(path_->metadata, metadata_); 
+  ValidateDeviceTypeIfExists();
+}
 
 void RelayVMModel::FetchInputNodesData() {
   tvm::runtime::vm::Executable* exec = static_cast<tvm::runtime::vm::Executable*>(
@@ -285,8 +288,6 @@ const char* RelayVMModel::GetBackend() const { return "relayvm"; }
 void RelayVMModel::SetNumThreads(int threads) { throw dmlc::Error("Not Implemented!"); }
 
 void RelayVMModel::UseCPUAffinity(bool use) { throw dmlc::Error("Not Implemented!"); }
-
-bool RelayVMModel::HasMetadata() const { return !metadata_.is_null(); }
 
 const char* RelayVMModel::GetOutputName(const int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";

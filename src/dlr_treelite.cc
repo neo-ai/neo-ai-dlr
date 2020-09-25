@@ -42,6 +42,8 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
       paths.model_lib = filename;
     } else if (filename == "version.json") {
       paths.ver_json = filename;
+    } else if (EndsWith(filename, ".meta")) {
+      paths.metadata = filename;
     }
   }
   if (paths.model_lib.empty()) {
@@ -95,8 +97,14 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
   // version_ = GetVersion(paths.ver_json);
   UpdateInputShapes();
+  if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
+    LOG(INFO) << "Loading metadata file: " << paths.metadata;
+    LoadJsonFromFile(paths.metadata, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  } else {
+    LOG(INFO) << "No metadata found";
+  }
 }
-
 
 void TreeliteModel::UpdateInputShapes() {
   input_shapes_.resize(num_inputs_);
@@ -105,6 +113,7 @@ void TreeliteModel::UpdateInputShapes() {
   input_shape[1] = static_cast<int64_t>(treelite_num_feature_);
   input_shapes_[0] = input_shape;
 }
+
 
 std::vector<std::string> TreeliteModel::GetWeightNames() const {
   LOG(FATAL) << "GetWeightNames is not supported by Treelite backend";
