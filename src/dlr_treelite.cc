@@ -140,6 +140,7 @@ const char* TreeliteModel::GetInputType(int index) const {
 
 const char* TreeliteModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
+  return ""; // unreachable
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
