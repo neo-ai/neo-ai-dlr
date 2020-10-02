@@ -355,12 +355,23 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_END();
 }
 
-extern "C" int GetDLRDeviceType(DLRModelHandle* handle) {
+extern "C" int GetDLRDeviceType(const char* model_path) {
   API_BEGIN();
-  DLRModel* model = static_cast<DLRModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
+    /* Logic to handle Windows drive letter */
+  std::string model_path_string{model_path};
+  std::string special_prefix{""};
+  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
+      std::isalpha(model_path_string[0], std::locale("C"))) {
+    // Handle drive letter
+    special_prefix = model_path_string.substr(0, 2);
+    model_path_string = model_path_string.substr(2);
+  }
+
+  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
+  path_vec[0] = special_prefix + path_vec[0];
+
   try {
-    return model->GetDeviceTypeFromMetadata();
+    return dlr::GetDeviceTypeFromMetadata(path_vec);
   } catch (dmlc::Error& e) {
     LOG(ERROR) << e.what();
     return -1;

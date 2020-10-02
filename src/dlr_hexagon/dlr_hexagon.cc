@@ -48,20 +48,6 @@ bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {
   return false;
 }
 
-std::string dlr::GetMetadataFile(const std::string& dirname) {
-  // Scan Dir to find libhexagon_nn_skel.so
-  std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
-  for (auto filename : paths_vec) {
-    if (EndsWith(filename, ".meta")) {
-      return filename;
-    }
-  }
-  LOG(INFO) << "compiled.meta file is not found under folder: "
-            << dirname;
-  return "";
-}
-
 void* dlr::FindSymbol(void* handle, const char* fn_name) {
   LOG(INFO) << "Loading " << fn_name;
   void* fn = dlsym(handle, fn_name);

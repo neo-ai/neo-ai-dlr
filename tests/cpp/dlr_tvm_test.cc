@@ -1,3 +1,4 @@
+#include "dlr.h"
 #include "dlr_tvm.h"
 #include <gtest/gtest.h>
 #include "test_utils.hpp"
@@ -201,6 +202,7 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
   EXPECT_EQ(model.HasMetadata(), true);
+  EXPECT_EQ(GetDLRDeviceType(model_path.data()), 1);
   EXPECT_EQ(model.GetDeviceTypeFromMetadata(), DLDeviceType::kDLCPU);
 
   mocked_metadata.open(metadata_file.c_str());

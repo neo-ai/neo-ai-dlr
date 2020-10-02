@@ -156,3 +156,50 @@ const DLDeviceType dlr::GetDeviceTypeFromString(const std::string& device_type_s
   }
   return DLDeviceType::kDLExtDev;
 }
+
+const std::string dlr::GetMetadataFile(const std::string& dirname) {
+  std::vector<std::string> paths_vec;
+  ListDir(dirname, paths_vec);
+  for (auto filename : paths_vec) {
+    if (EndsWith(filename, ".meta")) {
+      return filename;
+    }
+  }
+  LOG(INFO) << "compiled.meta file is not found under folder: "
+            << dirname;
+  return "";
+}
+
+const DLDeviceType dlr::GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths) {
+  ModelPath paths;
+  std::vector<std::string> paths_vec;
+  for (auto dir : model_paths) {
+    ListDir(dir, paths_vec);
+  }
+  std::string metadata_file = "";
+  for (auto filename : paths_vec) {
+    if (EndsWith(filename, ".meta")) {
+      metadata_file = filename;
+      break;
+    }
+  }
+  if (metadata_file.empty()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  nlohmann::json metadata = nullptr;
+  LoadJsonFromFile(metadata_file, metadata); 
+
+  if (metadata.is_null()) {
+    throw dmlc::Error("No metadata file was found!");
+  }
+  try {
+    const std::string& device_type_string = metadata.at("Requirements")
+        .at("TargetDeviceType")
+        .get_ref<const std::string&>();
+    return GetDeviceTypeFromString(device_type_string);
+  } catch (nlohmann::json::out_of_range& e) {
+    LOG(ERROR) << e.what();
+    std::string msg = "TargetDeviceType was not found in metadata!";
+    throw dmlc::Error(msg);
+  } 
+}

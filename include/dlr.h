@@ -352,12 +352,14 @@ int GetDLRBackend(DLRModelHandle* handle, const char** name);
 
 /*!
  \brief Gets the DLDeviceType (DLDeviceType::kDLCPU, DLDeviceType::kDLGPU, etc)
- \param handle The model handle returned from CreateDLRModel().
+ \param model_path Path to the folder containing the model files,
+                   or colon-separated list of folders (or files) if model files
  \return DLDeviceType enum for success, -1 for error. Call DLRGetLastError() to get the error
  message.
  */
 DLR_DLL
-int GetDLRDeviceType(DLRModelHandle* handle);
+int GetDLRDeviceType(const char* model_path);
+
 
 /*!
  \brief Get DLR version
