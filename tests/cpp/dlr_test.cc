@@ -15,8 +15,8 @@ DLRModelHandle GetDLRModel() {
 
 
 TEST(DLR, TestGetDLRDeviceType) {
-  auto model = GetDLRModel();
-  EXPECT_EQ(GetDLRDeviceType(&model), -1);
+  const char* model_path  = "./resnet_v1_5_50";
+  EXPECT_EQ(GetDLRDeviceType(model_path), -1);
 }
 
 TEST(DLR, TestGetDLRNumInputs) {

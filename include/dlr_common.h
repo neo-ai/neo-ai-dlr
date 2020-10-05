@@ -83,7 +83,11 @@ enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON, kRELAYV
  */
 DLRBackend GetBackend(std::vector<std::string> dirname);
 
+const std::string GetMetadataFile(const std::string& dirname);
+
 const DLDeviceType GetDeviceTypeFromString(const std::string& target_backend);
+
+const DLDeviceType GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths);
 
 #define CHECK_SHAPE(msg, value, expected) \
   CHECK_EQ(value, expected)               \
