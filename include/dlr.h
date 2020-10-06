@@ -1,6 +1,7 @@
 #ifndef DLR_H_
 #define DLR_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* special symbols for DLL library on Windows */
@@ -36,6 +37,18 @@ extern "C" {  // Open extern "C" block
  \brief Handle for DLRModel.
  */
 typedef void* DLRModelHandle;
+
+#ifndef DLR_ALLOC_TYPEDEF
+#define DLR_ALLOC_TYPEDEF
+/*! \brief A pointer to a malloc-like function. */
+typedef void* (*DLRMallocFunctionPtr)(size_t);
+/*! \brief A pointer to a realloc-like function. */
+typedef void* (*DLRReallocFunctionPtr)(void*, size_t);
+/*! \brief A pointer to a free-like function. */
+typedef void (*DLRFreeFunctionPtr)(void*);
+/*! \brief A pointer to a memalign-like function. */
+typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
+#endif
 
 /*!
  \brief Creates a DLR model.
@@ -415,6 +428,21 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  */
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+
+/*!
+ * \brief Set custom allocator functions. This must be called before CreateDLRModel or
+ *        CreateDLRPipeline.
+ * \param custom_malloc_fn Function pointer to malloc-like function.
+ * \param custom_realloc_fn Function pointer to realloc-like function. Can be null.
+ * \param custom_free_fn Function pointer to free-like function.
+ * \param custom_memalign_fn Function pointer to memalign-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocator(DLRMallocFunctionPtr custom_malloc_fn,
+                          DLRReallocFunctionPtr custom_realloc_fn,
+                          DLRFreeFunctionPtr custom_free_fn,
+                          DLRMemalignFunctionPtr custom_memalign_fn);
 
 /*! \} */
 

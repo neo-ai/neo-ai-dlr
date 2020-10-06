@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "dlr_allocator.h"
+
 #define LINE_SIZE 256
 
 #ifndef _WIN32

@@ -1,5 +1,7 @@
 #include "dlr_tvm.h"
 
+#include <tvm/runtime/registry.h>
+
 #include <stdlib.h>
 #include <fstream>
 #include <iterator>
@@ -42,13 +44,25 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
 }
 
 void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
+  // Set custom allocators in TVM.
+  if (dlr::DLRAllocatorFunctions::IsSet()) {
+    auto* pf = tvm::runtime::Registry::Get("runtime.contrib.set_custom_cpu_allocator");
+    if (pf) {
+      (*pf)(reinterpret_cast<void*>(dlr::DLRAllocatorFunctions::GetMemalignFunction()),
+            reinterpret_cast<void*>(dlr::DLRAllocatorFunctions::GetFreeFunction()));
+    } else {
+      LOG(WARNING) << "Custom allocator functions are not available. Using default allocators.";
+    }
+  }
+
   ModelPath paths = GetTvmPaths(model_path);
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
   std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
-  std::stringstream param_blob;
+  DLRStringStream param_blob;
   param_blob << pstream.rdbuf();
+  auto param_data = param_blob.str();
 
   tvm::runtime::Module module;
   if (!IsFileEmpty(paths.model_lib)) {
@@ -59,9 +73,11 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     ValidateDeviceTypeIfExists();
   }
 
+
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
-  tvm_graph_runtime_->LoadParams(param_blob.str());
+  dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
+  tvm_graph_runtime_->LoadParams(&strm);
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(
       tvm::runtime::Module(tvm_graph_runtime_));
