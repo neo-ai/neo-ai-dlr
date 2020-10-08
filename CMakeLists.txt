@@ -483,10 +483,10 @@ if(NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/${RELAYVM_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      ed7105a16198adb02946687e068137502c5b53e0
+      dae8551b9e099059aa59d6974e63c20026632342
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}
