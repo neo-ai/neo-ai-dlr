@@ -52,6 +52,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void UpdateOutputs();
   void UpdateInputs();
   DLDataType GetInputDLDataType(int index);
+  void SetStringInput(int index, const int64_t* shape, void* input, int dim);
 
  public:
   explicit RelayVMModel(std::vector<std::string> paths, const DLContext& ctx)

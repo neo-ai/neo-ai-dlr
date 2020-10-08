@@ -181,6 +181,12 @@ DLDataType RelayVMModel::GetInputDLDataType(int index) {
 
 void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input, int dim) {
   int index = GetInputIndex(name);
+  // Handle string input.
+  if (HasMetadata() && metadata_.count("DataTransform") &&
+      metadata_["DataTransform"].count("InputMappingCategoricalString")) {
+    SetStringInput(index, shape, input, dim);
+    return;
+  }
   DLDataType dtype = GetInputDLDataType(index);
   DLTensor input_tensor;
   input_tensor.data = input;
@@ -317,4 +323,58 @@ int RelayVMModel::GetOutputIndex(const char* name) const {
 void RelayVMModel::GetOutputByName(const char* name, void* out) {
   int output_index = this->GetOutputIndex(name);
   this->GetOutput(output_index, out);
+}
+
+/*! \brief A helper function to transform string input using InputMappingCategoricalString. When
+ * this map is present in the metadata file, the user is expected to provide string inputs to
+ * SetDLRInput as 1-D vector. This function will interpret the user's input as JSON, apply the
+ * mapping to convert strings to numbers, and produce a numeric NDArray which is given to TVM for
+ * the model input.*/
+void RelayVMModel::SetStringInput(int index, const int64_t* shape, void* input, int dim) {
+  auto& mapping = metadata_["DataTransform"]["InputMappingCategoricalString"];
+  CHECK_EQ(dim, 1) << "String input must be 1-D vector.";
+  // Interpret input as json
+  const char* input_str = static_cast<char*>(input);
+  nlohmann::json input_json;
+  try {
+    input_json = nlohmann::json::parse(input_str, input_str + shape[0]);
+  } catch (nlohmann::json::parse_error& e) {
+    LOG(ERROR) << "Invalid JSON input: " << e.what();
+  }
+  CHECK(input_json.is_array() && input_json.size() > 0 && input_json[0].is_array())
+      << "Invalid JSON input: Must be 2-D array.";
+  // Create NDArray for transformed input which will be passed to TVM.
+  std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
+                                    static_cast<int64_t>(input_json[0].size())};
+  CHECK_EQ(arr_shape[1], mapping.size()) << "Number of columns should match, got " << arr_shape[1]
+                                         << " but expected " << mapping.size();
+  DLDataType dtype = GetInputDLDataType(index);
+  CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
+      << "InputMappingCategoricalString is only supported for float32 inputs.";
+  // Writing directly to the DLTensor will only work for CPU context.
+  CHECK_EQ(ctx_.device_type, DLDeviceType::kDLCPU)
+      << "InputMappingCategoricalString is only supported for CPU.";
+  tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
+  DLTensor* input_tensor = const_cast<DLTensor*>(input_arr.operator->());
+  float* data = static_cast<float*>(input_tensor->data);
+
+  // Copy data into input_arr, mapping strings to float along the way.
+  for (size_t r = 0; r < input_json.size(); ++r) {
+    CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
+    for (size_t c = 0; c < input_json[r].size(); ++c) {
+      if (mapping[c].size()) {
+        // Look up in map. If not found, use -1.0f.
+        auto data_str = input_json[r][c].get<std::string>();
+        data[r * arr_shape[0] + c] =
+            mapping[c].count(data_str) ? mapping[c][data_str].get<float>() : -1.0f;
+      } else {
+        // Data is numeric, pass through.
+        CHECK(input_json[r][c].is_number())
+            << "No mapping present in InputMappingCategoricalString for column " << c
+            << ", so the input must be numeric.";
+        data[r * arr_shape[0] + c] = input_json[r][c].get<float>();
+      }
+    }
+  }
+  inputs_[index] = input_arr;
 }
