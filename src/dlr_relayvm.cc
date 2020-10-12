@@ -181,9 +181,12 @@ DLDataType RelayVMModel::GetInputDLDataType(int index) {
 
 void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input, int dim) {
   int index = GetInputIndex(name);
+  auto index_str = std::to_string(index);
   // Handle string input.
   if (HasMetadata() && metadata_.count("DataTransform") &&
-      metadata_["DataTransform"].count("InputMappingCategoricalString")) {
+      metadata_["DataTransform"].count("Input") &&
+      metadata_["DataTransform"]["Input"].count(index_str) &&
+      metadata_["DataTransform"]["Input"][index_str].count("CategoricalString")) {
     SetStringInput(index, shape, input, dim);
     return;
   }
@@ -331,7 +334,7 @@ void RelayVMModel::GetOutputByName(const char* name, void* out) {
  * mapping to convert strings to numbers, and produce a numeric NDArray which is given to TVM for
  * the model input.*/
 void RelayVMModel::SetStringInput(int index, const int64_t* shape, void* input, int dim) {
-  auto& mapping = metadata_["DataTransform"]["InputMappingCategoricalString"];
+  auto& mapping = metadata_["DataTransform"]["Input"][std::to_string(index)]["CategoricalString"];
   CHECK_EQ(dim, 1) << "String input must be 1-D vector.";
   // Interpret input as json
   const char* input_str = static_cast<char*>(input);
