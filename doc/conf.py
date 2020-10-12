@@ -18,6 +18,9 @@ from subprocess import call
 import guzzle_sphinx_theme
 sys.path.insert(0, os.path.abspath('../python'))
 os.environ['DLR_BUILD_DOC'] = '1'  # Do not load libdlr.so when building doc
+# Disable phone home
+with open('../python/dlr/counter/ccm_config.json', 'w') as f:
+    f.write('{"enable_phone_home" : false}')
 
 # -- Project information -----------------------------------------------------
 

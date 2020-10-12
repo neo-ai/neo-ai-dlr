@@ -3,7 +3,6 @@ import platform
 import uuid
 import logging
 import abc
-import distro
 
 
 from .deviceinfo import DeviceInfo
@@ -29,6 +28,7 @@ class Linux:
             _md5uuid = get_hash_string(_uuid.encode())
             self._device.uuid = str(_md5uuid.hexdigest())
             self._device.osname = platform.system()
+            import distro
             dist = distro.linux_distribution()
             self._device.dist = " ".join(x for x in dist)
             self._device.name = platform.node()
