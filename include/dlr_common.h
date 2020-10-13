@@ -77,7 +77,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kTFLITE, kTENSORFLOW, kHEXAGON, kRELAYVM };
+enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */

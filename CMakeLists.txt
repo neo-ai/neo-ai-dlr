@@ -272,67 +272,6 @@ if(USE_TENSORRT)
     list(APPEND DLR_SRC ${COMPILER_SRCS})
     set(USE_TENSORRT OFF)
 endif()
-if(WITH_TENSORFLOW_LITE_LIB)
-    if(NOT WITH_TENSORFLOW_LITE_LIB MATCHES ".*libtensorflow-lite\.a$")
-        message(FATAL_ERROR "WITH_TENSORFLOW_LITE_LIB should point to static library libtensorflow-lite.a")
-    endif()
-    message("Adding libtensorflow-lite.a to DLR shared library")
-
-    # Download Tensorflow and FlatBuffers source code
-    set(TENSORFLOW_VER "1.15.2")
-    set(TENSORFLOW_SHA1 "b9e71bf287a186ceb9d859588671d890c45e51a7")
-    set(FLATBUFFERS_VER "1.11.0")
-    set(FLATBUFFERS_SHA1 "2b2633902c57c6980b3a41b44d8ad933f214d71d")
-    set(TENSORFLOW_URL "https://github.com/tensorflow/tensorflow/archive/v${TENSORFLOW_VER}.tar.gz")
-    set(TENSORFLOW_TGZ "/tmp/tensorflow-${TENSORFLOW_VER}.tar.gz")
-    set(TENSORFLOW_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tensorflow-${TENSORFLOW_VER}")
-    set(FLATBUFFERS_URL "https://github.com/google/flatbuffers/archive/v${FLATBUFFERS_VER}.tar.gz")
-    set(FLATBUFFERS_TGZ "/tmp/flatbuffers-${FLATBUFFERS_VER}.tar.gz")
-    set(FLATBUFFERS_SRC "${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers-${FLATBUFFERS_VER}")
-
-    download_file(${TENSORFLOW_URL} ${TENSORFLOW_TGZ} SHA1 ${TENSORFLOW_SHA1})
-    download_file(${FLATBUFFERS_URL} ${FLATBUFFERS_TGZ} SHA1 ${FLATBUFFERS_SHA1})
-
-    # Extract Tensorflow and FlatBuffers source code
-    message(STATUS "Extracting " ${TENSORFLOW_TGZ} " ...")
-    execute_process(
-        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/tensorflow*
-        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${TENSORFLOW_TGZ}
-        RESULT_VARIABLE tf_ret
-    )
-    if(NOT tf_ret EQUAL "0")
-        message(FATAL_ERROR "Failed to extract " ${TENSORFLOW_TGZ})
-    endif()
-    message(STATUS "Extracting " ${FLATBUFFERS_TGZ} " ...")
-    execute_process(
-        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/3rdparty/flatbuffers*
-        COMMAND tar -C ${PROJECT_SOURCE_DIR}/3rdparty -zxf ${FLATBUFFERS_TGZ}
-        RESULT_VARIABLE fb_ret
-    )
-    if(NOT fb_ret EQUAL "0")
-        message(FATAL_ERROR "Failed to extract " ${FLATBUFFERS_TGZ})
-    endif()
-
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DDLR_TFLITE")
-    include_directories("${TENSORFLOW_SRC}")
-    include_directories("${FLATBUFFERS_SRC}/include")
-    list(APPEND DLR_SRC "src/dlr_tflite/dlr_tflite.cc")
-
-    if(ANDROID_BUILD) # Android build needs additional library liblog
-        list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -llog)
-    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Mac OS linker is different from Linux.
-        # Use -force_load instead of --whole-archive
-        list(APPEND DLR_LINKER_LIBS -Wl,-force_load,${WITH_TENSORFLOW_LITE_LIB})
-    else() # Regulal Linux Build
-        list(APPEND DLR_LINKER_LIBS -Wl,--whole-archive ${WITH_TENSORFLOW_LITE_LIB} -Wl,--no-whole-archive -ldl)
-    endif()
-endif()
-if(WITH_TENSORFLOW_LIB)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW")
-    include_directories("${WITH_TENSORFLOW_LIB}/include")
-    list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
-    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow_framework -ltensorflow)
-endif()
 if(WITH_HEXAGON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
     list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
@@ -405,14 +344,6 @@ if(NOT(AAR_BUILD))
   enable_testing()
 
   file(GLOB TEST_SRCS tests/cpp/*.cc)
-  if(WITH_TENSORFLOW_LITE_LIB)
-    file(GLOB TFLITE_TEST_SRCS tests/cpp/dlr_tflite/*.cc)
-    list(APPEND TEST_SRCS ${TFLITE_TEST_SRCS})
-  endif()
-  if(WITH_TENSORFLOW_LIB)
-    file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
-    list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
-  endif()
   if(WITH_HEXAGON)
     file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
     list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
@@ -494,34 +425,6 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/${RELAYVM_MODEL})
   endif()
 
-  
-
-  if(WITH_TENSORFLOW_LITE_LIB)
-      # Download Test TFLite model
-      file(MAKE_DIRECTORY mobilenet_v2_0.75_224)
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v2_0.75_224.tflite
-        ./mobilenet_v2_0.75_224/mobilenet_v2_0.75_224.tflite
-        SHA1
-        c653a09facaf2dfb5e3910030b3f74ad04259e30
-      )
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tflite-models/mobilenet_v1_0.75_224_quant.tflite
-        ./mobilenet_v1_0.75_224_quant/mobilenet_v1_0.75_224_quant.tflite
-        SHA1
-        0f5e9dae3a41c5b198595bcb5ba50b936ee61527
-      )
-  endif() # WITH_TENSORFLOW_LITE_LIB
-  if(WITH_TENSORFLOW_LIB)
-      # Download Test Tensorflow model
-      file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
-      download_file(
-        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
-        ./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb
-        SHA1
-        4df8525bcf2ec96296098ba7fec0fff1abe32fce
-      )
-  endif() # WITH_TENSORFLOW_LIB
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
