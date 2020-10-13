@@ -11,7 +11,6 @@
 #include <tvm/runtime/vm/vm.h>
 #include "dlr_common.h"
 
-
 #ifdef _WIN32
 #define LIBEXT ".dll"
 #define LIBDLR "dlr.dll"
@@ -28,7 +27,6 @@
 #else
 #define DLR_DLL
 #endif  // defined(_MSC_VER) || defined(_WIN32)
-
 
 namespace dlr {
 
@@ -53,6 +51,13 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void UpdateInputs();
   DLDataType GetInputDLDataType(int index);
   void SetStringInput(int index, const int64_t* shape, void* input, int dim);
+
+  /*! \brief Helper functions for SetStringInput */
+  nlohmann::json StringInputGetAsJson(const int64_t* shape, void* input, int dim);
+  tvm::runtime::NDArray StringInputInitNDArray(int index, const nlohmann::json& input_json,
+                                               const nlohmann::json& mapping);
+  void StringInputMapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
+                               const nlohmann::json& mapping);
 
  public:
   explicit RelayVMModel(std::vector<std::string> paths, const DLContext& ctx)

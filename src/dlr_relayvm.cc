@@ -48,8 +48,8 @@ void RelayVMModel::SetupVMModule() {
        static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
 }
 
-void RelayVMModel::LoadMetadata() { 
-  LoadJsonFromFile(path_->metadata, metadata_); 
+void RelayVMModel::LoadMetadata() {
+  LoadJsonFromFile(path_->metadata, metadata_);
   ValidateDeviceTypeIfExists();
 }
 
@@ -208,8 +208,8 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input,
 
 void RelayVMModel::UpdateInputs() {
   const int kNumArgs = GetNumInputs() + 1;
-  TVMValue *values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
-  int *type_codes = (int*)malloc(sizeof(int) * kNumArgs);
+  TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
+  int* type_codes = (int*)malloc(sizeof(int) * kNumArgs);
   auto arg_setter = tvm::runtime::TVMArgsSetter(values, type_codes);
   arg_setter(0, ENTRY_FUNCTION);
   for (int i = 0; i < inputs_.size(); i++) {
@@ -285,7 +285,8 @@ void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
     *dim = arr->ndim;
   } else {
-    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1, std::multiplies<int64_t>());
+    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1,
+                            std::multiplies<int64_t>());
     *dim = output_shapes_[index].size();
   }
 }
@@ -335,6 +336,12 @@ void RelayVMModel::GetOutputByName(const char* name, void* out) {
  * the model input.*/
 void RelayVMModel::SetStringInput(int index, const int64_t* shape, void* input, int dim) {
   auto& mapping = metadata_["DataTransform"]["Input"][std::to_string(index)]["CategoricalString"];
+  nlohmann::json input_json = StringInputGetAsJson(shape, input, dim);
+  inputs_[index] = StringInputInitNDArray(index, input_json, mapping);
+  StringInputMapToNDArray(input_json, inputs_[index], mapping);
+}
+
+nlohmann::json RelayVMModel::StringInputGetAsJson(const int64_t* shape, void* input, int dim) {
   CHECK_EQ(dim, 1) << "String input must be 1-D vector.";
   // Interpret input as json
   const char* input_str = static_cast<char*>(input);
@@ -346,38 +353,49 @@ void RelayVMModel::SetStringInput(int index, const int64_t* shape, void* input, 
   }
   CHECK(input_json.is_array() && input_json.size() > 0 && input_json[0].is_array())
       << "Invalid JSON input: Must be 2-D array.";
+  return input_json;
+}
+
+tvm::runtime::NDArray RelayVMModel::StringInputInitNDArray(int index,
+                                                           const nlohmann::json& input_json,
+                                                           const nlohmann::json& mapping) {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
-  CHECK_EQ(arr_shape[1], mapping.size()) << "Number of columns should match, got " << arr_shape[1]
-                                         << " but expected " << mapping.size();
   DLDataType dtype = GetInputDLDataType(index);
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
-      << "InputMappingCategoricalString is only supported for float32 inputs.";
-  // Writing directly to the DLTensor will only work for CPU context.
-  CHECK_EQ(ctx_.device_type, DLDeviceType::kDLCPU)
-      << "InputMappingCategoricalString is only supported for CPU.";
-  tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
-  DLTensor* input_tensor = const_cast<DLTensor*>(input_arr.operator->());
-  float* data = static_cast<float*>(input_tensor->data);
+      << "DataTransform CategoricalString is only supported for float32 inputs.";
+  return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
+}
 
-  // Copy data into input_arr, mapping strings to float along the way.
+void RelayVMModel::StringInputMapToNDArray(const nlohmann::json& input_json,
+                                           tvm::runtime::NDArray& input_array,
+                                           const nlohmann::json& mapping) {
+  DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
+  // Writing directly to the DLTensor will only work for CPU context. For other contexts, we would
+  // need to create an intermediate buffer on CPU and copy that to the context.
+  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+      << "DataTransform CategoricalString is only supported for CPU.";
+  float* data = static_cast<float*>(input_tensor->data);
+  CHECK_EQ(input_json[0].size(), mapping.size())
+      << "Number of columns should match, got " << input_json[0].size() << " but expected "
+      << mapping.size();
+  // Copy data into data, mapping strings to float along the way.
   for (size_t r = 0; r < input_json.size(); ++r) {
     CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
     for (size_t c = 0; c < input_json[r].size(); ++c) {
       if (mapping[c].size()) {
         // Look up in map. If not found, use -1.0f.
         auto data_str = input_json[r][c].get<std::string>();
-        data[r * arr_shape[0] + c] =
+        data[r * input_json.size() + c] =
             mapping[c].count(data_str) ? mapping[c][data_str].get<float>() : -1.0f;
       } else {
         // Data is numeric, pass through.
         CHECK(input_json[r][c].is_number())
-            << "No mapping present in InputMappingCategoricalString for column " << c
+            << "No mapping present in DataTransform CategoricalString for column " << c
             << ", so the input must be numeric.";
-        data[r * arr_shape[0] + c] = input_json[r][c].get<float>();
+        data[r * input_json.size() + c] = input_json[r][c].get<float>();
       }
     }
   }
-  inputs_[index] = input_arr;
 }
