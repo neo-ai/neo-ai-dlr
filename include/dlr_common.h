@@ -123,7 +123,7 @@ class DLR_DLL DLRModel {
   virtual void GetInput(const char* name, void* input) = 0;
   virtual void SetInput(const char* name, const int64_t* shape, void* input, int dim) = 0;
 
-  /* Ouput related functions */
+  /* Output related functions */
   virtual int GetNumOutputs() { return num_outputs_; }
   virtual const char* GetOutputName(const int index) const { 
     LOG(ERROR) << "GetOutputName is not supported yet!";
@@ -141,7 +141,7 @@ class DLR_DLL DLRModel {
     throw dmlc::Error("GetOutputByName is not supported yet!");
   }
   
-  /* Weights releated functions */
+  /* Weights related functions */
   virtual int GetNumWeights() const { return num_weights_; }
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
