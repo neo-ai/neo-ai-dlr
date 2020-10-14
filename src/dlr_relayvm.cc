@@ -26,7 +26,7 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
   }
 
   if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
-    LOG(FATAL) << "Invalid model artifact!";
+    throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
   }
 }
 
@@ -76,8 +76,7 @@ void RelayVMModel::FetchInputNodesData() {
       input_types_[i] = metadata_.at("Model").at("Inputs").at(i).at("dtype");
     }
   } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    throw dmlc::Error("No Input types metadata found!");
+    throw dmlc::Error("No input types metadata found.");
   }
 }
 
@@ -85,8 +84,7 @@ void RelayVMModel::FetchOutputNodesData() {
   try {
     num_outputs_ = metadata_.at("Model").at("Outputs").size();
   } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    throw dmlc::Error("No Output metadata found!");
+    throw dmlc::Error("No output metadata found.");
   }
   output_names_.resize(num_outputs_);
   output_types_.resize(num_outputs_);
@@ -104,8 +102,7 @@ void RelayVMModel::FetchOutputNodesData() {
       };
     }
   } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    throw dmlc::Error("No Output metadata found!");
+    throw dmlc::Error("No output metadata found.");
   }
 }
 

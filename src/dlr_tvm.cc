@@ -36,11 +36,7 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   }
   if (paths.model_json.empty() || paths.model_lib.empty() ||
       paths.params.empty()) {
-    LOG(INFO) << "No valid TVM model files found under folder:";
-    for (auto dir : dirname) {
-      LOG(INFO) << dir;
-    }
-    LOG(FATAL);
+    throw dmlc::Error("Invalid TVM model artifact. Must have .so, .json, and .params files.");
   }
   return paths;
 }
@@ -59,11 +55,8 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
   }
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
-    LOG(INFO) << "Loading metadata file: " << paths.metadata;
     LoadJsonFromFile(paths.metadata, this->metadata_);
     ValidateDeviceTypeIfExists();
-  } else {
-    LOG(INFO) << "No metadata found";
   }
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
@@ -256,10 +249,7 @@ const char* TVMModel::GetOutputName(const int index) const {
         .get_ref<const std::string&>()
         .c_str();
   } catch (nlohmann::json::out_of_range& e) {
-    LOG(ERROR) << e.what();
-    std::string msg = "Output node with index";
-    msg += " " + std::to_string(index);
-    msg += " was not found in metadata file!";
+    std::string msg = "Output node with index " + std::to_string(index) + " was not found in metadata file!";
     throw dmlc::Error(msg);
   }
 }
@@ -276,9 +266,8 @@ int TVMModel::GetOutputIndex(const char* name) const {
     }
   }
 
-    std::string msg = "Couldn't find index for output node";
-    msg += " " + std::string{name} + "!";
-    throw dmlc::Error(msg);
+  std::string msg = "Couldn't find index for output node " + std::string(name) + "!";
+  throw dmlc::Error(msg);
 }
 
 void TVMModel::GetOutputByName(const char* name, void* out) {
