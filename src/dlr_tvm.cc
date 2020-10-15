@@ -191,6 +191,15 @@ void TVMModel::GetOutput(int index, void* out) {
   get_output(index, &output_tensor);
 }
 
+const void* TVMModel::GetOutputPtr(int index) const {
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  const DLTensor* tensor = output.operator->();
+  if (tensor->ctx.device_type == kDLCPU) {
+    return tensor->data;
+  }
+  throw dmlc::Error("GetOutputPtr is not supported for non-CPU device types");
+}
+
 void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   const DLTensor* tensor = outputs_[index];

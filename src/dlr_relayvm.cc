@@ -251,6 +251,11 @@ void RelayVMModel::GetOutput(int index, void* output) {
   out_array.CopyTo(&output_tensor);
 }
 
+const void* RelayVMModel::GetOutputPtr(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return outputs_[index]->data;
+}
+
 void RelayVMModel::GetOutputShape(int index, int64_t* shape) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   if (outputs_.empty()) {

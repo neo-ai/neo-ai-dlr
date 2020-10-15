@@ -267,6 +267,16 @@ DLR_DLL
 int GetDLROutput(DLRModelHandle* handle, int index, void* out);
 
 /*!
+ \brief Gets the index-th output from the model.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th output.
+ \param out Storage to save output pointer
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** out);
+
+/*!
  \brief Gets the number of outputs.
  \param handle The model handle returned from CreateDLRModel().
  \param num_outputs The pointer to save the number of outputs.

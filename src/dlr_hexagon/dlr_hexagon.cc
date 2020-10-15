@@ -274,6 +274,11 @@ void HexagonModel::GetOutput(int index, void* out) {
   std::memcpy(out, output_, output_tensors_spec_[index].bytes);
 }
 
+const void* HexagonModel::GetOutputPtr(int index) const {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_;
+}
+
 void HexagonModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   *size = output_tensors_spec_[index].size;

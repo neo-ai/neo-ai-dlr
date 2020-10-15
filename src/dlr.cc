@@ -112,6 +112,14 @@ extern "C" int GetDLROutput(DLRModelHandle* handle, int index, void* out) {
   API_END();
 }
 
+extern "C" int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** out) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  *out = model->GetOutputPtr(index);
+  API_END();
+}
+
 extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
                                    int64_t* size, int* dim) {
   API_BEGIN();

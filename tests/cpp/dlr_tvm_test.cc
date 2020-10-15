@@ -88,9 +88,12 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
 
   float* output1 = new float[output_size];
   float* output2 = new float[output_size];
+  float* output3;
   EXPECT_NO_THROW(model.GetOutput(index, output1));
   EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index), output2));
+  EXPECT_NO_THROW(output3 = (float*) model.GetOutputPtr(index));
   EXPECT_EQ(output1[0], output2[0]);
+  EXPECT_EQ(output1[0], output3[0]);
 
   try {
     model.GetOutputIndex("blah");
