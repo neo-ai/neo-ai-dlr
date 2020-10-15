@@ -181,7 +181,7 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
   num_outputs_ = output_tensors_spec_.size();
   UpdateInputShapes();
   LOG(INFO) << "HexagonModel was created";
-  auto metadata = GetMetadataFile(model_folder)
+  auto metadata = GetMetadataFile(model_folder);
   if (!metadata.empty() && !IsFileEmpty(metadata)) {
     LOG(INFO) << "Loading metadata file: " << metadata;
     LoadJsonFromFile(metadata, this->metadata_);
@@ -223,26 +223,21 @@ const char* HexagonModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index].c_str();
 }
+const int HexagonModel::GetInputDim(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_shapes_[index].size();
+}
+
+const int64_t HexagonModel::GetInputSize(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return std::accumulate(input_shapes_[index].begin(), input_shapes_[index].end(), 1,
+                         std::multiplies<int64_t>());
+}
 
 const char* HexagonModel::GetInputType(int index) const {
   LOG(FATAL) << "GetInputType is not supported by Hexagon backend";
   return "";  // unreachable
 }
-
-void HexagonModel::SetInput(const char* name, const int64_t* shape, void* input,
-                            int dim) {
-  int index = GetInputIndex(name);
-  std::string node_name(name);
-
-  // Check Size and Dim
-  CHECK_EQ(dim, GetInputDim(index)) << "Incorrect input dim";
-  for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
-        << "Incorrect input shape";
-  }
-  SetInput(name, *shape, input);
-}
-
 
 const char* HexagonModel::GetWeightName(int index) const {
   LOG(FATAL) << "GetWeightName is not supported by Hexagon backend";
