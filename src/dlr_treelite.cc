@@ -47,11 +47,7 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
     }
   }
   if (paths.model_lib.empty()) {
-    LOG(INFO) << "No valid Treelite model files found under folder(s):";
-    for (auto dir : dirname) {
-      LOG(INFO) << dir;
-    }
-    LOG(FATAL);
+    throw dmlc::Error("Invalid treelite model artifact. Must have .so file.");
   }
   return paths;
 }
@@ -98,11 +94,8 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   // version_ = GetVersion(paths.ver_json);
   UpdateInputShapes();
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
-    LOG(INFO) << "Loading metadata file: " << paths.metadata;
     LoadJsonFromFile(paths.metadata, this->metadata_);
     ValidateDeviceTypeIfExists();
-  } else {
-    LOG(INFO) << "No metadata found";
   }
 }
 
@@ -116,7 +109,7 @@ void TreeliteModel::UpdateInputShapes() {
 
 
 std::vector<std::string> TreeliteModel::GetWeightNames() const {
-  LOG(FATAL) << "GetWeightNames is not supported by Treelite backend";
+  throw dmlc::Error("GetWeightNames is not supported by Treelite backend.");
   return std::vector<std::string>();  // unreachable
 }
 
@@ -139,7 +132,7 @@ const char* TreeliteModel::GetInputType(int index) const {
 }
 
 const char* TreeliteModel::GetWeightName(int index) const {
-  LOG(FATAL) << "GetWeightName is not supported by Treelite backend";
+  throw dmlc::Error("GetWeightName is not supported by Treelite backend.");
   return ""; // unreachable
 }
 
@@ -191,7 +184,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
 }
 
 void TreeliteModel::GetInput(const char* name, void* input) {
-  LOG(FATAL) << "GetInput is not supported by Treelite backend";
+  throw dmlc::Error("GetInput is not supported by Treelite backend.");
 }
 
 void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
@@ -239,9 +232,9 @@ void TreeliteModel::Run() {
 const char* TreeliteModel::GetBackend() const { return "treelite"; }
 
 void TreeliteModel::SetNumThreads(int threads) {
-  LOG(FATAL) << "SetNumThreads is not supported by Treelite backend";
+  throw dmlc::Error("SetNumThreads is not supported by Treelite backend.");
 }
 
 void TreeliteModel::UseCPUAffinity(bool use) {
-  LOG(FATAL) << "UseCPUAffinity is not supported by Treelite backend";
+  throw dmlc::Error("UseCPUAffinity is not supported by Treelite backend.");
 }

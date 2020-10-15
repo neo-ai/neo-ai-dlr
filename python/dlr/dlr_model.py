@@ -125,7 +125,6 @@ class DLRModelImpl(IDLRModel):
         if self.backend != "relayvm":
             self._lazy_init_output_shape()
         self._fetch_input_names()
-        self._fetch_output_names()
         self._fetch_input_dtypes()
         self._fetch_output_dtypes()
 
@@ -249,7 +248,7 @@ class DLRModelImpl(IDLRModel):
 
     def get_output_names(self):
         if not self.output_names:
-            raise NotImplementedError
+            self._fetch_output_names()
         return self.output_names
 
     def get_input_dtypes(self):

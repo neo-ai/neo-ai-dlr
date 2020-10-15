@@ -83,11 +83,13 @@ enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM };
  */
 DLRBackend GetBackend(std::vector<std::string> dirname);
 
-const std::string GetMetadataFile(const std::string& dirname);
+std::string GetMetadataFile(const std::string& dirname);
 
-const DLDeviceType GetDeviceTypeFromString(const std::string& target_backend);
+DLDeviceType GetDeviceTypeFromString(const std::string& target_backend);
 
-const DLDeviceType GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths);
+std::string GetStringFromDeviceType(DLDeviceType device_type);
+
+DLDeviceType GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths);
 
 #define CHECK_SHAPE(msg, value, expected) \
   CHECK_EQ(value, expected)               \
@@ -125,12 +127,12 @@ class DLR_DLL DLRModel {
 
   /* Output related functions */
   virtual int GetNumOutputs() { return num_outputs_; }
-  virtual const char* GetOutputName(const int index) const { 
-    LOG(ERROR) << "GetOutputName is not supported yet!";
-    return NULL;
+  virtual const char* GetOutputName(const int index) const {
+    throw dmlc::Error("GetOutputName is not supported for this model.");
+    return nullptr;
   }
-  virtual int GetOutputIndex(const char* name) const { 
-    LOG(ERROR) << "GetOutputName is not supported yet!";
+  virtual int GetOutputIndex(const char* name) const {
+    throw dmlc::Error("GetOutputIndex is not supported for this model.");
     return -1;
   }
   virtual const char* GetOutputType(int index) const = 0;
@@ -146,7 +148,7 @@ class DLR_DLL DLRModel {
   virtual const char* GetWeightName(int index) const = 0;
   virtual std::vector<std::string> GetWeightNames() const = 0;
 
-  virtual const DLDeviceType GetDeviceTypeFromMetadata() const;  
+  virtual DLDeviceType GetDeviceTypeFromMetadata() const;  
   virtual const char* GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const;

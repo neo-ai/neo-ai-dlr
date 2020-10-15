@@ -23,6 +23,9 @@ def create_logger(log_level=logging.DEBUG, log_to_console=True, log_file=None):
     logger = logging.getLogger(__name__ + "_logger")
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
     if log_file is not None:
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
