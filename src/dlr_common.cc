@@ -71,13 +71,7 @@ void dlr::LoadJsonFromFile(const std::string& path,
 }
 
 DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
-  // Support the case where user provides full path to tflite file.
-  if (EndsWith(dir_paths[0], ".tflite")) {
-    return DLRBackend::kTFLITE;
-  }
-  if (EndsWith(dir_paths[0], ".pb")) {
-    return DLRBackend::kTENSORFLOW;
-  }
+  // Support the case where user provides full path to hexagon file.
   if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
     return DLRBackend::kHEXAGON;
   }
@@ -91,10 +85,6 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".ro")) {
       return DLRBackend::kRELAYVM;
-    } else if (EndsWith(filename, ".tflite")) {
-      return DLRBackend::kTFLITE;
-    } else if (EndsWith(filename, ".pb")) {
-      return DLRBackend::kTENSORFLOW;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
     }
