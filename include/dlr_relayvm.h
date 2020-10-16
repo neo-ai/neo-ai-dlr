@@ -10,6 +10,7 @@
 #include <tvm/runtime/registry.h>
 #include <tvm/runtime/vm/vm.h>
 #include "dlr_common.h"
+#include "dlr_data_transform.h"
 
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -42,6 +43,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+  DataTransform data_transform_;
   void InitModelPath(std::vector<std::string> paths);
   void SetupVMModule();
   void FetchInputNodesData();
@@ -50,14 +52,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void UpdateOutputs();
   void UpdateInputs();
   DLDataType GetInputDLDataType(int index);
-  void SetStringInput(int index, const int64_t* shape, void* input, int dim);
-
-  /*! \brief Helper functions for SetStringInput */
-  nlohmann::json StringInputGetAsJson(const int64_t* shape, void* input, int dim);
-  tvm::runtime::NDArray StringInputInitNDArray(int index, const nlohmann::json& input_json,
-                                               const nlohmann::json& mapping);
-  void StringInputMapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                               const nlohmann::json& mapping);
 
  public:
   explicit RelayVMModel(std::vector<std::string> paths, const DLContext& ctx)

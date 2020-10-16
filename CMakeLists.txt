@@ -433,7 +433,7 @@ if(NOT(AAR_BUILD))
       https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${ONEHOTENCODER_MODEL}
       /tmp/${ONEHOTENCODER_MODEL}
       SHA1
-      87fe203deea1c1ef58a735d12962d96d1c6c64b9
+      d9490ca854fd89280c84646ab3a8e6f558c0ff6a
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${ONEHOTENCODER_MODEL}
