@@ -48,8 +48,8 @@ void RelayVMModel::SetupVMModule() {
        static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
 }
 
-void RelayVMModel::LoadMetadata() { 
-  LoadJsonFromFile(path_->metadata, metadata_); 
+void RelayVMModel::LoadMetadata() {
+  LoadJsonFromFile(path_->metadata, metadata_);
   ValidateDeviceTypeIfExists();
 }
 
@@ -182,6 +182,11 @@ DLDataType RelayVMModel::GetInputDLDataType(int index) {
 void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input, int dim) {
   int index = GetInputIndex(name);
   DLDataType dtype = GetInputDLDataType(index);
+  // Handle string input.
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_, index)) {
+    inputs_[index] = data_transform_.TransformInput(metadata_, index, shape, input, dim, dtype, ctx_);
+    return;
+  }
   DLTensor input_tensor;
   input_tensor.data = input;
   input_tensor.ctx = ctx_;
@@ -199,8 +204,8 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input,
 
 void RelayVMModel::UpdateInputs() {
   const int kNumArgs = GetNumInputs() + 1;
-  TVMValue *values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
-  int *type_codes = (int*)malloc(sizeof(int) * kNumArgs);
+  TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
+  int* type_codes = (int*)malloc(sizeof(int) * kNumArgs);
   auto arg_setter = tvm::runtime::TVMArgsSetter(values, type_codes);
   arg_setter(0, ENTRY_FUNCTION);
   for (int i = 0; i < inputs_.size(); i++) {
@@ -276,7 +281,8 @@ void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
     *dim = arr->ndim;
   } else {
-    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1, std::multiplies<int64_t>());
+    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1,
+                            std::multiplies<int64_t>());
     *dim = output_shapes_[index].size();
   }
 }

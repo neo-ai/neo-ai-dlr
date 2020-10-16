@@ -425,6 +425,22 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/${RELAYVM_MODEL})
   endif()
 
+  set(ONEHOTENCODER_MODEL onehotencoder-ml_m4.tar.gz)
+  set(ONEHOTENCODER_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/onehotencoder)
+  if(NOT IS_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
+    file(MAKE_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${ONEHOTENCODER_MODEL}
+      /tmp/${ONEHOTENCODER_MODEL}
+      SHA1
+      d9490ca854fd89280c84646ab3a8e6f558c0ff6a
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${ONEHOTENCODER_MODEL}
+                    WORKING_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
+    file(REMOVE /tmp/${ONEHOTENCODER_MODEL})
+  endif()
+
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)

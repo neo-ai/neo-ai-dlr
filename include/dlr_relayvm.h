@@ -10,7 +10,7 @@
 #include <tvm/runtime/registry.h>
 #include <tvm/runtime/vm/vm.h>
 #include "dlr_common.h"
-
+#include "dlr_data_transform.h"
 
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -29,7 +29,6 @@
 #define DLR_DLL
 #endif  // defined(_MSC_VER) || defined(_WIN32)
 
-
 namespace dlr {
 
 class DLR_DLL RelayVMModel : public DLRModel {
@@ -44,6 +43,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+  DataTransform data_transform_;
   void InitModelPath(std::vector<std::string> paths);
   void SetupVMModule();
   void FetchInputNodesData();
