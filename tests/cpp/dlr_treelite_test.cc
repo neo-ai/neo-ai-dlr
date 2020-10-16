@@ -109,4 +109,7 @@ TEST_F(TreeliteTest, TestGetOutput) {
   EXPECT_NO_THROW(model->Run());
   float output[1];
   EXPECT_NO_THROW(model->GetOutput(0, output));
+  float* output_p;
+  EXPECT_NO_THROW(output_p = (float*) model->GetOutputPtr(0));
+  EXPECT_EQ(output_p[0], output[0]);
 }

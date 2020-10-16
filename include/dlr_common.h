@@ -139,6 +139,7 @@ class DLR_DLL DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const = 0;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) = 0;
   virtual void GetOutput(int index, void* out) = 0;
+  virtual const void* GetOutputPtr(int index) const = 0;
   virtual void GetOutputByName(const char* name, void* out) {
     throw dmlc::Error("GetOutputByName is not supported yet!");
   }

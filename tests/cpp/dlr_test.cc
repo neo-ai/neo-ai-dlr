@@ -195,12 +195,21 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   EXPECT_EQ(output0[0], 112);
   EXPECT_EQ(GetDLROutputByName(&model, "ArgMax:0", output0), 0);
   EXPECT_EQ(output0[0], 112);
+  const void* output0_p;
+  EXPECT_EQ(GetDLROutputPtr(&model, 0, &output0_p), 0);
+  EXPECT_EQ(((int*)output0_p)[0], 112);
   // output 1
   float output1[1001];
   EXPECT_EQ(GetDLROutput(&model, 1, output1), 0);
   EXPECT_GT(output1[112], 0.01);
   EXPECT_EQ(GetDLROutputByName(&model, "softmax_tensor:0", output1), 0);
   EXPECT_GT(output1[112], 0.01);
+  float* output1_p;
+  EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**) &output1_p), 0);
+  EXPECT_GT(output1_p[112], 0.01);
+  for (int i = 0; i < 1001; i++) {
+    EXPECT_EQ(output1_p[i], output1[i]);
+  }
   delete [] img;
   DeleteDLRModel(&model);
 }

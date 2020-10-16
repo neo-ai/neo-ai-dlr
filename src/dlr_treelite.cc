@@ -201,6 +201,11 @@ void TreeliteModel::GetOutput(int index, void* out) {
       sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
 }
 
+const void* TreeliteModel::GetOutputPtr(int index) const {
+  CHECK(treelite_input_);
+  return treelite_output_.data();
+}
+
 void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   if (treelite_input_) {
     *size =

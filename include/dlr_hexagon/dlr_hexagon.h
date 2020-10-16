@@ -61,6 +61,7 @@ class HexagonModel : public DLRModel {
                         int dim) override;
   virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;
+  virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
