@@ -37,11 +37,94 @@ pipeline {
         milestone label: 'Sources ready', ordinal: 1
       }
     }
-    stage('Jenkins: Build') {
-      steps {
-        script {
-          parallel ([ "build-amd64-cpu" : { AMD64BuildCPU() },
-                      "build-amd64-gpu" : { AMD64BuildGPU() } ])
+    stage('Build & Test') {
+      parallel {
+        stage('Build for Manylinux') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.manylinux'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && cpu-build'
+              args '-v ${PWD}:/workspace -w /workspace'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            sh """
+            mkdir -p build
+            cd build
+            cmake .. && make -j16
+            cd ..
+            tests/ci_build/create_wheel.sh manylinux1_x86_64
+            """
+            stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
+          }
+        }
+        stage('Build for CPU') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.cpu_bare'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && cpu-build'
+              args '-v ${PWD}:/workspace -w /workspace'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            sh """
+            mkdir -p build
+            cd build
+            cmake .. && make -j16
+            cd ..
+            tests/ci_build/create_wheel.sh manylinux1_x86_64
+            """
+          }
+        }
+        stage('Build for Hexagon') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.cpu_bare'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && cpu-build'
+              args '-v ${PWD}:/workspace -w /workspace'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            sh """
+            mkdir -p build
+            cd build
+            cmake .. -DWITH_HEXAGON=1 && make -j16
+            cd ..
+            tests/ci_build/create_wheel.sh manylinux1_x86_64
+            """
+          }
+        }
+        stage('Build for GPU') {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.gpu_bare'
+              dir 'tests/ci_build'
+              label 'ubuntu && amd64 && gpu-build'
+              args '-v ${PWD}:/workspace -w /workspace'
+            }
+          }
+          steps {
+            unstash name: 'srcs'
+            echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
+            s3Download(file: 'tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
+                      bucket: 'neo-ai-dlr-jenkins-artifacts',
+                      path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
+                      force:true)
+            sh """
+            tar xvzf tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz -C /workspace/
+            mkdir -p build
+            cd build
+            cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/workspace/TensorRT-7.1.3.4/ && make -j4
+            cd ..
+            tests/ci_build/create_wheel.sh ubuntu1804_cuda102_cudnn8_tensorrt71_x86_64
+            """
+          }
         }
       }
     }
@@ -85,43 +168,6 @@ def checkoutSrcs() {
     }
   }
 }
-
-// Build for AMD64 CPU target
-def AMD64BuildCPU() {
-  def nodeReq = "ubuntu && amd64 && cpu-build"
-  def dockerTarget = "cpu_bare"
-  def dockerArgs = ""
-  node(nodeReq) {
-    unstash name: 'srcs'
-    echo "Building universal artifact for AMD64, CPU-only"
-    sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh manylinux1_x86_64
-    """
-    stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
-  }
-}
-
-// Build for AMD64 + CUDA target
-def AMD64BuildGPU() {
-  def nodeReq = "ubuntu && amd64 && gpu-build"
-  def dockerTarget = "gpu_bare"
-  def dockerArgs = ""
-  node(nodeReq) {
-    unstash name: 'srcs'
-    echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
-    s3Download(file: 'tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
-               bucket: 'neo-ai-dlr-jenkins-artifacts',
-               path: 'TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
-               force:true)
-    sh """
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/build_via_cmake.sh
-    tests/ci_build/ci_build.sh ${dockerTarget} ${dockerArgs} tests/ci_build/create_wheel.sh ubuntu1804_cuda102_cudnn8_tensorrt71_x86_64
-    """
-    stash name: 'dlr_gpu_whl', includes: 'python/dist/*.whl'
-  }
-}
-
 // Install and test DLR for cloud targets
 def CloudInstallAndTest(cloudTarget) {
   def nodeReq = "ubuntu && amd64 && ${cloudTarget}"

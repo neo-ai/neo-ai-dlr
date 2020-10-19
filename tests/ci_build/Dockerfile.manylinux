@@ -1,0 +1,26 @@
+FROM quay.io/pypa/manylinux2014_x86_64
+LABEL maintainer "Amazon SageMaker Neo <aws-neo-ai@amazon.com>"
+
+# Install all basic requirements
+RUN yum -y update && \
+    yum install -y tar unzip wget xz git && \
+    yum install -y centos-release-scl && \
+    yum install -y devtoolset-8 && \
+    yum install -y devtoolset-8-gcc devtoolset-8-binutils devtoolset-8-gcc-c++
+
+
+# Python
+RUN yum install -y python3 && \
+    wget https://bootstrap.pypa.io/get-pip.py && \
+    python3 get-pip.py
+
+# CMake
+RUN wget -nv -nc https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4-Linux-x86_64.sh --no-check-certificate && \
+    bash cmake-3.18.4-Linux-x86_64.sh --skip-license --prefix=/usr
+
+# Install Python packages
+RUN pip3 install numpy pytest scipy scikit-learn setuptools wheel
+
+ENV PYTHON_COMMAND=python3
+
+WORKDIR /workspace
