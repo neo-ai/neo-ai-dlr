@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.6)
 include(cmake/Utils.cmake)
+include(3rdparty/tvm/cmake/util/Util.cmake)
 include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
 
 # Option for Android on Arm --- has to come before project() function
