@@ -195,3 +195,7 @@ DLDeviceType dlr::GetDeviceTypeFromMetadata(const std::vector<std::string>& mode
     throw dmlc::Error("TargetDeviceType was not found in metadata!");
   } 
 }
+
+bool dlr::HasNegative(const int64_t* arr, const size_t size) {
+  return std::any_of(arr, arr + size, [](int64_t x) {return x < 0;});
+}
