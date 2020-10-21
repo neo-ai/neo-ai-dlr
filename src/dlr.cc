@@ -1,9 +1,11 @@
 #include "dlr.h"
 
 #include "dlr_common.h"
+#include "dlr_pipeline.h"
+#include "dlr_relayvm.h"
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
-#include "dlr_relayvm.h"
+
 #ifdef DLR_HEXAGON
 #include "dlr_hexagon/dlr_hexagon.h"
 #endif  // DLR_HEXAGON
@@ -188,6 +190,41 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
+std::vector<std::string> MakePathVec(const char* model_path) {
+  /* Logic to handle Windows drive letter */
+  std::string model_path_string{model_path};
+  std::string special_prefix{""};
+  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
+      std::isalpha(model_path_string[0], std::locale("C"))) {
+    // Handle drive letter
+    special_prefix = model_path_string.substr(0, 2);
+    model_path_string = model_path_string.substr(2);
+  }
+
+  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
+  path_vec[0] = special_prefix + path_vec[0];
+  return path_vec;
+}
+
+DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
+  std::vector<std::string> path_vec = MakePathVec(model_path);
+  DLRBackend backend = dlr::GetBackend(path_vec);
+  if (backend == DLRBackend::kTVM) {
+    return std::make_shared<TVMModel>(path_vec, ctx);
+  } else if (backend == DLRBackend::kRELAYVM) {
+    return std::make_shared<RelayVMModel>(path_vec, ctx);
+  } else if (backend == DLRBackend::kTREELITE) {
+    return std::make_shared<TreeliteModel>(path_vec, ctx);
+  #ifdef DLR_HEXAGON
+    } else if (backend == DLRBackend::kHEXAGON) {
+      const std::string model_path_string(model_path);
+      return std::make_shared<HexagonModel>(model_path_string, ctx, 1 /*debug_level*/);
+  #endif  // DLR_HEXAGON
+  } else {
+    throw dmlc::Error("Unsupported backend!");
+  }
+}
+
 #ifdef DLR_HEXAGON
 /*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
  * ctor.
@@ -215,18 +252,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
-  /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
-
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
+  std::vector<std::string> path_vec = MakePathVec(model_path);
 
   DLRBackend backend = dlr::GetBackend(path_vec);
   DLRModel* model;
@@ -239,11 +265,8 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
       model = new TreeliteModel(path_vec, ctx);
   #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
-      DLRModelHandle hexagon_handle;
-      int errC = CreateDLRModelFromHexagon(&hexagon_handle, model_path,
-                                          1 /*debug_level*/);
-      if (errC != 0) return errC;
-      model = static_cast<DLRModel*>(hexagon_handle);
+      const std::string model_path_string(model_path);
+      model = new HexagonModel(model_path_string, ctx, 1 /*debug_level*/);
   #endif  // DLR_HEXAGON
     } else {
       LOG(FATAL) << "Unsupported backend!";
@@ -255,6 +278,30 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
   }
   
   *handle = model;
+  API_END();
+}
+
+/*! \brief Translate c args from ctypes to std types for DLRModel ctor.
+ */
+extern "C" int CreateDLRPipeline(DLRModelHandle* handle,
+                                 int num_models, const char** model_paths,
+                                 int dev_type, int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+  std::vector<DLRModelPtr> dlr_models;
+  for (int i = 0; i < num_models; i++) {
+    try {
+      DLRModelPtr model_ptr = CreateDLRModelPtr(model_paths[i], ctx);
+      dlr_models.push_back(model_ptr);
+    } catch (dmlc::Error& e) {
+      LOG(ERROR) << e.what();
+      return -1;
+    }
+  }
+  DLRModel* pipeline_model = new PipelineModel(dlr_models, ctx);
+  *handle = pipeline_model;
   API_END();
 }
 

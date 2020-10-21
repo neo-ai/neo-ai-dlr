@@ -77,7 +77,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM };
+enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
@@ -157,6 +157,8 @@ class DLR_DLL DLRModel {
   virtual void Run() = 0;
   
 };
+
+typedef std::shared_ptr<DLRModel> DLRModelPtr;
 
 }  // namespace dlr
 
