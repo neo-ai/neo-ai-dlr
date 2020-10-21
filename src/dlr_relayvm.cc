@@ -153,6 +153,7 @@ const int RelayVMModel::GetInputDim(int index) const {
 
 const int64_t RelayVMModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  if (dlr::HasNegative(input_shapes_[index].data(), input_shapes_[index].size())) return -1;
   return std::accumulate(input_shapes_[index].begin(), input_shapes_[index].end(), 1,
                          std::multiplies<int64_t>());
 }
@@ -278,7 +279,11 @@ void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   if (index < outputs_.size()) {
     auto arr = outputs_[index];
-    *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
+    if (dlr::HasNegative(arr -> shape, arr -> ndim)) {
+      *size = -1;
+    } else {
+      *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
+    }
     *dim = arr->ndim;
   } else {
     *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1,

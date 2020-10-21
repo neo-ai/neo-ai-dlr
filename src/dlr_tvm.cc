@@ -135,6 +135,7 @@ const int TVMModel::GetInputDim(int index) const {
 const int64_t TVMModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  if (dlr::HasNegative(arr->shape, arr->ndim)) return -1;
   return std::accumulate(arr->shape, arr->shape + arr->ndim, 1,
                          std::multiplies<int64_t>());
 }
@@ -204,6 +205,10 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   const DLTensor* tensor = outputs_[index];
   for (int i = 0; i < tensor->ndim; ++i) {
+    if (tensor->shape[i] < 0) {
+      *size = -1;
+      break;
+    }
     *size *= tensor->shape[i];
   }
   *dim = tensor->ndim;
