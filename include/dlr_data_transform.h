@@ -12,24 +12,28 @@ namespace dlr {
 /*! \brief Handles transformations of input and output data. */
 class DLR_DLL DataTransform {
  private:
+  /*! \brief When there is no mapping entry for TransformInput, this value is used. */
+  const float kMissingValue = -1.0f;
+
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
-  nlohmann::json GetAsJson(const int64_t* shape, void* input, int dim);
+  nlohmann::json GetAsJson(const int64_t* shape, void* input, int dim) const;
 
   /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
   tvm::runtime::NDArray InitNDArray(int index, const nlohmann::json& input_json,
-                                    const nlohmann::json& mapping, DLDataType dtype, DLContext ctx);
+                                    const nlohmann::json& mapping, DLDataType dtype,
+                                    DLContext ctx) const;
 
   /*! \brief Helper function for TransformInput. Applies mapping and writes transformed input data
    * to input_array. */
   void MapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                    const nlohmann::json& mapping);
+                    const nlohmann::json& mapping) const;
 
  public:
   /*! \brief Returns true if the input requires a data transform */
-  bool HasInputTransform(const nlohmann::json& metadata, int index);
+  bool HasInputTransform(const nlohmann::json& metadata, int index) const;
 
   /*! \brief Returns true if the output requires a data transform */
-  bool HasOutputTransform(const nlohmann::json& metadata, int index);
+  bool HasOutputTransform(const nlohmann::json& metadata, int index) const;
 
   /*! \brief Transform string input using CategoricalString input DataTransform. When
    * this map is present in the metadata file, the user is expected to provide string inputs to
@@ -39,7 +43,7 @@ class DLR_DLL DataTransform {
    */
   tvm::runtime::NDArray TransformInput(const nlohmann::json& metadata, int index,
                                        const int64_t* shape, void* input, int dim, DLDataType dtype,
-                                       DLContext ctx);
+                                       DLContext ctx) const;
 };
 
 }  // namespace dlr

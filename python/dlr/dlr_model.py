@@ -4,6 +4,7 @@ from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
 import numpy as np
 import os
 import sys
+import json
 from pathlib import Path
 
 from .api import IDLRModel
@@ -325,23 +326,31 @@ class DLRModelImpl(IDLRModel):
             The data to be set.
         """
         input_dtype = self._get_input_or_weight_dtype_by_name(name)
-        input_ctype = _get_ctype_from_dtype(input_dtype)
-        # float32 inputs can accept any data (backward compatibility).
-        if input_dtype == "float32":
-            type_match = True
+        if input_dtype == "json":
+            # Special case for DataTransformed inputs. DLR will expect input as a serialized json
+            # string.
+            in_data = json.dumps(data.tolist())
+            in_data_pointer = c_char_p(in_data.encode('utf-8'))
+            shape = np.array([len(in_data)], dtype=np.int64)
         else:
-            type_match = (data.dtype.name == input_dtype)
-        if not type_match:
-            raise ValueError("input data with name {} should have dtype {} but {} is provided".
-                             format(name, input_dtype, data.dtype.name))
-        in_data = np.ascontiguousarray(data, dtype=input_dtype)
-        shape = np.array(in_data.shape, dtype=np.int64)
+            input_ctype = _get_ctype_from_dtype(input_dtype)
+            # float32 inputs can accept any data (backward compatibility).
+            if input_dtype == "float32":
+                type_match = True
+            else:
+                type_match = (data.dtype.name == input_dtype)
+            if not type_match:
+                raise ValueError("input data with name {} should have dtype {} but {} is provided".
+                                format(name, input_dtype, data.dtype.name))
+            in_data = np.ascontiguousarray(data, dtype=input_dtype)
+            in_data_pointer = in_data.ctypes.data_as(POINTER(input_ctype))
+            shape = np.array(in_data.shape, dtype=np.int64)
         self.input_shapes[name] = shape
         self._check_call(self._lib.SetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
-                                     in_data.ctypes.data_as(POINTER(input_ctype)),
-                                     c_int(in_data.ndim)))
+                                     in_data_pointer,
+                                     c_int(shape.ndim)))
         if self.backend == 'treelite':
             self._lazy_init_output_shape()
 

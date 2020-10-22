@@ -2,14 +2,14 @@
 
 using namespace dlr;
 
-bool DataTransform::HasInputTransform(const nlohmann::json& metadata, int index) {
+bool DataTransform::HasInputTransform(const nlohmann::json& metadata, int index) const {
   auto index_str = std::to_string(index);
   return metadata.count("DataTransform") && metadata["DataTransform"].count("Input") &&
          metadata["DataTransform"]["Input"].count(index_str) &&
          metadata["DataTransform"]["Input"][index_str].count("CategoricalString");
 }
 
-bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index) {
+bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index) const {
   auto index_str = std::to_string(index);
   return metadata.count("DataTransform") && metadata["DataTransform"].count("Output") &&
          metadata["DataTransform"]["Output"].count(index_str) &&
@@ -18,7 +18,7 @@ bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index
 
 tvm::runtime::NDArray DataTransform::TransformInput(const nlohmann::json& metadata, int index,
                                                     const int64_t* shape, void* input, int dim,
-                                                    DLDataType dtype, DLContext ctx) {
+                                                    DLDataType dtype, DLContext ctx) const {
   auto& mapping = metadata["DataTransform"]["Input"][std::to_string(index)]["CategoricalString"];
   nlohmann::json input_json = GetAsJson(shape, input, dim);
   tvm::runtime::NDArray input_array = InitNDArray(index, input_json, mapping, dtype, ctx);
@@ -26,7 +26,7 @@ tvm::runtime::NDArray DataTransform::TransformInput(const nlohmann::json& metada
   return input_array;
 }
 
-nlohmann::json DataTransform::GetAsJson(const int64_t* shape, void* input, int dim) {
+nlohmann::json DataTransform::GetAsJson(const int64_t* shape, void* input, int dim) const {
   CHECK_EQ(dim, 1) << "String input must be 1-D vector.";
   // Interpret input as json
   const char* input_str = static_cast<char*>(input);
@@ -43,7 +43,7 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, void* input, int d
 
 tvm::runtime::NDArray DataTransform::InitNDArray(int index, const nlohmann::json& input_json,
                                                  const nlohmann::json& mapping, DLDataType dtype,
-                                                 DLContext ctx) {
+                                                 DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
@@ -54,7 +54,7 @@ tvm::runtime::NDArray DataTransform::InitNDArray(int index, const nlohmann::json
 
 void DataTransform::MapToNDArray(const nlohmann::json& input_json,
                                  tvm::runtime::NDArray& input_array,
-                                 const nlohmann::json& mapping) {
+                                 const nlohmann::json& mapping) const {
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
   // Writing directly to the DLTensor will only work for CPU context. For other contexts, we would
   // need to create an intermediate buffer on CPU and copy that to the context.
@@ -68,17 +68,24 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
   for (size_t r = 0; r < input_json.size(); ++r) {
     CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
     for (size_t c = 0; c < input_json[r].size(); ++c) {
-      if (mapping[c].size()) {
-        // Look up in map. If not found, use -1.0f.
-        auto data_str = input_json[r][c].get<std::string>();
-        data[r * input_json.size() + c] =
-            mapping[c].count(data_str) ? mapping[c][data_str].get<float>() : -1.0f;
-      } else {
-        // Data is numeric, pass through.
-        CHECK(input_json[r][c].is_number())
-            << "No mapping present in DataTransform CategoricalString for column " << c
-            << ", so the input must be numeric.";
-        data[r * input_json.size() + c] = input_json[r][c].get<float>();
+      try {
+        if (mapping[c].size()) {
+          // Look up in map. If not found, use kMissingValue.
+          std::string data_str;
+          input_json[r][c].get_to(data_str);
+          auto it = mapping[c].find(data_str);
+          data[r * input_json.size() + c] =
+              it != mapping[c].end() ? it->operator float() : kMissingValue;
+        } else {
+          // Data is numeric, pass through. Attempt to convert string to float.
+          data[r * input_json.size() + c] = 
+              input_json[r][c].is_number()
+                  ? input_json[r][c].get<float>()
+                  : std::stof(input_json[r][c].get_ref<const std::string&>());
+        }
+      } catch (const std::exception& ex){
+        // Any error will fallback safely to kMissingValue.
+        data[r * input_json.size() + c] = kMissingValue;
       }
     }
   }

@@ -11,18 +11,20 @@ int main(int argc, char** argv) {
   return RUN_ALL_TESTS();
 }
 
-TEST(DLR, RelayVMDataTransform) {
+TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./onehotencoder"};
   dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
 
   const char* data = "[[\"apple\", 1, 7], [\"banana\", 3, 8], [\"squash\", 2, 9]]";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+  EXPECT_STREQ(model->GetInputType(0), "json");
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);
   model->Run();
 
   int64_t size;
   int dim;
+  EXPECT_STREQ(model->GetOutputType(0), "float32");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
   EXPECT_EQ(size, 3 * 8);
   EXPECT_EQ(dim, 2);
