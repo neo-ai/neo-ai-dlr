@@ -1,10 +1,10 @@
 # coding: utf-8
 import ctypes
 from ctypes import c_void_p, c_int, c_char_p, byref, POINTER, c_longlong
+import json
 import numpy as np
 import os
 import sys
-import json
 from pathlib import Path
 
 from .api import IDLRModel
@@ -350,7 +350,7 @@ class DLRModelImpl(IDLRModel):
                                      c_char_p(name.encode('utf-8')),
                                      shape.ctypes.data_as(POINTER(c_longlong)),
                                      in_data_pointer,
-                                     c_int(shape.ndim)))
+                                     c_int(len(shape))))
         if self.backend == 'treelite':
             self._lazy_init_output_shape()
 

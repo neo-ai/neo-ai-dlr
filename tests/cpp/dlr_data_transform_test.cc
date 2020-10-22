@@ -16,7 +16,7 @@ TEST(DLR, RelayVMDataTransformInput) {
   std::vector<std::string> paths = {"./onehotencoder"};
   dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
 
-  const char* data = "[[\"apple\", 1, 7], [\"banana\", 3, 8], [\"squash\", 2, 9]]";
+  const char* data = R"([["apple", 1, 7], ["banana", 3, 8], ["squash", 2, 9]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   EXPECT_STREQ(model->GetInputType(0), "json");
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);

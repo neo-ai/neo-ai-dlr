@@ -78,12 +78,12 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
               it != mapping[c].end() ? it->operator float() : kMissingValue;
         } else {
           // Data is numeric, pass through. Attempt to convert string to float.
-          data[r * input_json.size() + c] = 
+          data[r * input_json.size() + c] =
               input_json[r][c].is_number()
                   ? input_json[r][c].get<float>()
                   : std::stof(input_json[r][c].get_ref<const std::string&>());
         }
-      } catch (const std::exception& ex){
+      } catch (const std::exception& ex) {
         // Any error will fallback safely to kMissingValue.
         data[r * input_json.size() + c] = kMissingValue;
       }
