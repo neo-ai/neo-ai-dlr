@@ -68,24 +68,29 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
   for (size_t r = 0; r < input_json.size(); ++r) {
     CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
     for (size_t c = 0; c < input_json[r].size(); ++c) {
-      try {
-        if (mapping[c].size()) {
-          // Look up in map. If not found, use kMissingValue.
+      if (mapping[c].size()) {
+        // Look up in map. If not found, use kMissingValue.
+        try {
           std::string data_str;
           input_json[r][c].get_to(data_str);
           auto it = mapping[c].find(data_str);
           data[r * input_json.size() + c] =
               it != mapping[c].end() ? it->operator float() : kMissingValue;
-        } else {
-          // Data is numeric, pass through. Attempt to convert string to float.
+        } catch (const std::exception& ex) {
+          // Any error will fallback safely to kMissingValue.
+          data[r * input_json.size() + c] = kMissingValue;
+        }
+      } else {
+        // Data is numeric, pass through. Attempt to convert string to float.
+        try {
           data[r * input_json.size() + c] =
               input_json[r][c].is_number()
                   ? input_json[r][c].get<float>()
                   : std::stof(input_json[r][c].get_ref<const std::string&>());
+        } catch (const std::exception& ex) {
+          // Any error will fallback safely to kBadValue.
+          data[r * input_json.size() + c] = kBadValue;
         }
-      } catch (const std::exception& ex) {
-        // Any error will fallback safely to kMissingValue.
-        data[r * input_json.size() + c] = kMissingValue;
       }
     }
   }
