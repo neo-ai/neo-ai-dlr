@@ -1,5 +1,7 @@
 #include "dlr_relayvm.h"
+
 #include <stdlib.h>
+
 #include <fstream>
 #include <iterator>
 #include <numeric>
@@ -113,6 +115,9 @@ const char* RelayVMModel::GetInputName(int index) const {
 
 const char* RelayVMModel::GetInputType(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_, index)) {
+    return "json";
+  }
   return input_types_[index].c_str();
 }
 
@@ -185,7 +190,8 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input,
   DLDataType dtype = GetInputDLDataType(index);
   // Handle string input.
   if (HasMetadata() && data_transform_.HasInputTransform(metadata_, index)) {
-    inputs_[index] = data_transform_.TransformInput(metadata_, index, shape, input, dim, dtype, ctx_);
+    inputs_[index] =
+        data_transform_.TransformInput(metadata_, index, shape, input, dim, dtype, ctx_);
     return;
   }
   DLTensor input_tensor;
@@ -279,7 +285,7 @@ void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   if (index < outputs_.size()) {
     auto arr = outputs_[index];
-    if (dlr::HasNegative(arr -> shape, arr -> ndim)) {
+    if (dlr::HasNegative(arr->shape, arr->ndim)) {
       *size = -1;
     } else {
       *size = std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
