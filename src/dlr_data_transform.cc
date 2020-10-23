@@ -92,6 +92,7 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
           data[r * input_json.size() + c] = kBadValue;
         }
       }
+      LOG(INFO) <<  data[r * input_json.size() + c];
     }
   }
 }

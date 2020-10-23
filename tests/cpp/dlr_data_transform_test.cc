@@ -1,4 +1,5 @@
 #include "dlr_relayvm.h"
+#include "dlr_data_transform.h"
 
 #include <gtest/gtest.h>
 #include "test_utils.hpp"
@@ -9,6 +10,60 @@ int main(int argc, char** argv) {
   testing::FLAGS_gtest_death_test_style = "threadsafe";
 #endif  // _WIN32
   return RUN_ALL_TESTS();
+}
+
+TEST(DLR, DataTransformCategoricalString) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "0": {
+            "CategoricalString": [
+              { "apple": 0, "banana": 1, "7": 2 }
+            ]
+          }
+        }
+      }
+    })"_json;
+  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
+  EXPECT_FALSE(transform.HasInputTransform(metadata, 1));
+
+  // User input
+  const char* data = R"([["apple"], ["banana"], ["7"], [7], ["walrus"], [-5]])";
+  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+  // Model input
+  DLDataType dtype = DLDataType{kDLFloat, 32, 1};
+  DLContext ctx = DLContext{kDLCPU, 0};
+  tvm::runtime::NDArray transformed_data;
+  EXPECT_NO_THROW(transformed_data = transform.TransformInput(metadata, 0, shape.data(), const_cast<char*>(data), shape.size(), dtype, ctx));
+
+  std::vector<float> expected_output = {0, 1, 2, 2, -1, -1};
+  EXPECT_EQ(transformed_data->ndim, 2);
+  EXPECT_EQ(transformed_data->shape[0], 6);
+  EXPECT_EQ(transformed_data->shape[1], 1);
+  for (size_t i = 0; i < expected_output.size(); ++i) {
+    CHECK_EQ(static_cast<float*>(transformed_data->data)[i], expected_output[i]) << i;
+  }
+}
+
+TEST(DLR, DataTransformCategoricalStringNumericColumn) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "0": {
+            "CategoricalString": [
+              {}
+            ]
+          }
+        }
+      }
+    })"_json;
+  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
+  // tvm::runtime::NDArray transformed;
+  // EXPECT_NO_THROW(transformed, transform.TransformInput());
 }
 
 TEST(DLR, RelayVMDataTransformInput) {
