@@ -69,7 +69,7 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
     CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
     for (size_t c = 0; c < input_json[r].size(); ++c) {
       const int out_index = r * input_json[r].size() + c;
-      if (mapping[c].size()) {
+      if (!mapping[c].empty()) {
         // Look up in map. If not found, use kMissingValue.
         try {
           const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
