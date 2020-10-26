@@ -456,6 +456,21 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/pipeline_model1-LINUX_X86_64.tar.gz)
   endif()
 
+  set(PIPELINE_MODEL2 ${CMAKE_CURRENT_BINARY_DIR}/pipeline_model2)
+  if(NOT IS_DIRECTORY ${PIPELINE_MODEL2})
+    file(MAKE_DIRECTORY ${PIPELINE_MODEL2})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/pipeline_model2-LINUX_X86_64.tar.gz
+      /tmp/pipeline_model2-LINUX_X86_64.tar.gz
+      SHA1
+      94e76f23ccc8d3beb29e620988ae5d02e870bedc
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/pipeline_model2-LINUX_X86_64.tar.gz
+                    WORKING_DIRECTORY ${PIPELINE_MODEL2})
+    file(REMOVE /tmp/pipeline_model2-LINUX_X86_64.tar.gz)
+  endif()
+
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
