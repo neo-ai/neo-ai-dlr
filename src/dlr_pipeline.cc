@@ -134,10 +134,14 @@ void PipelineModel::Run() {
     // for each model input
     for (int j = 0; j < curr_model->GetNumInputs(); j++) {
       const char* input_name = curr_model->GetInputName(j);
-      const std::vector<int64_t> input_shape = curr_model->GetInputShape(j);
-      const int input_dim = curr_model->GetInputDim(j);
+      // Get output shape of previous output.
+      int64_t prev_output_size;
+      int prev_output_dim;
+      prev_model->GetOutputSizeDim(j, &prev_output_size, &prev_output_dim);
+      std::vector<int64_t> prev_output_shape(prev_output_dim, -1);
+      prev_model->GetOutputShape(j, prev_output_shape.data());
       const void* prev_model_output = prev_model->GetOutputPtr(j);
-      curr_model->SetInput(input_name, input_shape.data(), (void*)prev_model_output, input_dim);
+      curr_model->SetInput(input_name, prev_output_shape.data(), (void*)prev_model_output, prev_output_dim);
     }
     curr_model->Run();
   }
