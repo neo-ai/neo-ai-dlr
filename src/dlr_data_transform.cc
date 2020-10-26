@@ -68,24 +68,27 @@ void DataTransform::MapToNDArray(const nlohmann::json& input_json,
   for (size_t r = 0; r < input_json.size(); ++r) {
     CHECK_EQ(input_json[r].size(), mapping.size()) << "Inconsistent number of columns";
     for (size_t c = 0; c < input_json[r].size(); ++c) {
-      try {
-        if (mapping[c].size()) {
-          // Look up in map. If not found, use kMissingValue.
-          std::string data_str;
-          input_json[r][c].get_to(data_str);
+      const int out_index = r * input_json[r].size() + c;
+      if (!mapping[c].empty()) {
+        // Look up in map. If not found, use kMissingValue.
+        try {
+          const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
           auto it = mapping[c].find(data_str);
-          data[r * input_json.size() + c] =
-              it != mapping[c].end() ? it->operator float() : kMissingValue;
-        } else {
-          // Data is numeric, pass through. Attempt to convert string to float.
-          data[r * input_json.size() + c] =
-              input_json[r][c].is_number()
-                  ? input_json[r][c].get<float>()
-                  : std::stof(input_json[r][c].get_ref<const std::string&>());
+          data[out_index] = it != mapping[c].end() ? it->operator float() : kMissingValue;
+        } catch (const std::exception& ex) {
+          // Any error will fallback safely to kMissingValue.
+          data[out_index] = kMissingValue;
         }
-      } catch (const std::exception& ex) {
-        // Any error will fallback safely to kMissingValue.
-        data[r * input_json.size() + c] = kMissingValue;
+      } else {
+        // Data is numeric, pass through. Attempt to convert string to float.
+        try {
+          data[out_index] = input_json[r][c].is_number()
+                                ? input_json[r][c].get<float>()
+                                : std::stof(input_json[r][c].get_ref<const std::string&>());
+        } catch (const std::exception& ex) {
+          // Any error will fallback safely to kBadValue.
+          data[out_index] = kBadValue;
+        }
       }
     }
   }

@@ -14,6 +14,8 @@ class DLR_DLL DataTransform {
  private:
   /*! \brief When there is no mapping entry for TransformInput, this value is used. */
   const float kMissingValue = -1.0f;
+  /*! \brief When there is an invalid float value given to TransformInput, this value is used. */
+  const float kBadValue = std::numeric_limits<float>::quiet_NaN();
 
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
   nlohmann::json GetAsJson(const int64_t* shape, void* input, int dim) const;
