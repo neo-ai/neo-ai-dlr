@@ -292,8 +292,12 @@ void RelayVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
     }
     *dim = arr->ndim;
   } else {
-    *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1,
-                            std::multiplies<int64_t>());
+    if (dlr::HasNegative(output_shapes_[index].data(), output_shapes_[index].size())) {
+      *size = -1;
+    } else {
+      *size = std::accumulate(output_shapes_[index].begin(), output_shapes_[index].end(), 1,
+                              std::multiplies<int64_t>());
+    }
     *dim = output_shapes_[index].size();
   }
 }

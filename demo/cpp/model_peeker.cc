@@ -51,20 +51,19 @@ void peek_model(DLRModelHandle model) {
   }
   std::cout << std::endl;
 
-  std::vector<std::vector<int64_t>> input_shapes(num_inputs);
   std::cout << "input shapes: " << std::endl;
   for (int i = 0; i < num_inputs; i++) {
     int64_t size = 0;
     int dim = 0;
     GetDLRInputSizeDim(&model, i, &size, &dim);
-    input_shapes[i].resize(dim);
-    GetDLRInputShape(&model, i, input_shapes[i].data());
+    std::vector<int64_t> input_shape(dim);
+    GetDLRInputShape(&model, i, input_shape.data());
     std::cout << "[";
     for (int id = 0; id < dim; id++) {
       if (id > 0) std::cout << ", ";
-      std::cout << std::to_string(input_shapes[i][id]);
+      std::cout << std::to_string(input_shape[id]);
     }
-    std::cout << "]" << std::endl;
+    std::cout << "], size: " << size << std::endl;
   }
 
   // weight_names.resize(num_weights);
@@ -101,20 +100,19 @@ void peek_model(DLRModelHandle model) {
   }
   std::cout << std::endl;
 
-  std::vector<std::vector<int64_t>> output_shapes(num_outputs);
   std::cout << "output shapes: " << std::endl;
   for (int i = 0; i < num_outputs; i++) {
     int64_t size = 0;
     int dim = 0;
     GetDLROutputSizeDim(&model, i, &size, &dim);
-    output_shapes[i].resize(dim);
-    GetDLROutputShape(&model, i, output_shapes[i].data());
+    std::vector<int64_t> output_shape(dim);
+    GetDLROutputShape(&model, i, output_shape.data());
     std::cout << "[";
     for (int id = 0; id < dim; id++) {
       if (id > 0) std::cout << ", ";
-      std::cout << std::to_string(output_shapes[i][id]);
+      std::cout << std::to_string(output_shape[id]);
     }
-    std::cout << "]" << std::endl;
+    std::cout << "], size: " << size << std::endl;
   }
 }
 

@@ -89,8 +89,14 @@ TEST_F(TreeliteTest, TestGetOutputType) {
 }
 
 TEST_F(TreeliteTest, TestGetOutputShape) {
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
   int64_t out_shape[2];
+  // input is not set - output batch and size are unknown.
+  EXPECT_NO_THROW(model->GetOutputShape(0, out_shape));
+  EXPECT_EQ(out_shape[0], -1);
+  EXPECT_EQ(out_shape[1], 1);
+  // Set input
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  // Check OutputShape again
   EXPECT_NO_THROW(model->GetOutputShape(0, out_shape));
   EXPECT_EQ(out_shape[0], 1);
   EXPECT_EQ(out_shape[1], 1);
@@ -99,6 +105,13 @@ TEST_F(TreeliteTest, TestGetOutputShape) {
 TEST_F(TreeliteTest, TestGetOutputSizeDim) {
   int64_t output_size;
   int output_dim;
+  EXPECT_NO_THROW(model->GetOutputSizeDim(0, &output_size, &output_dim));
+  // input is not set - output batch and size are unknown.
+  EXPECT_EQ(output_size, -1);
+  EXPECT_EQ(output_dim, out_dim);
+  // Set input
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  // Check OutputSizeDim again
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &output_size, &output_dim));
   EXPECT_EQ(output_size, out_size);
   EXPECT_EQ(output_dim, out_dim);
