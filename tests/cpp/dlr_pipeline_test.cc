@@ -80,13 +80,10 @@ TEST(PipelineTest, TestSetDLRInput) {
   std::vector<float> img(img_size, 0.1);
   int64_t shape[4] = {1, 1, 4, 4};
   const char* input_name = "input_0";
-  float* in_img = (float*) malloc(sizeof(float) * img_size);
+  std::vector<float> img2(img_size);
   EXPECT_EQ(SetDLRInput(&model, input_name, shape, img.data(), 4), 0);
-  EXPECT_EQ(GetDLRInput(&model, input_name, in_img), 0);
-  EXPECT_EQ(img[0], *in_img);
-  EXPECT_EQ(img[4], *(in_img + 4));
-  EXPECT_EQ(img[img_size - 1], *(in_img + img_size - 1));
-  free(in_img);
+  EXPECT_EQ(GetDLRInput(&model, input_name, img2.data()), 0);
+  EXPECT_EQ(img, img2);
   DeleteDLRModel(&model);
 }
 
@@ -95,7 +92,6 @@ TEST(PipelineTest, TestGetDLRInputShape) {
   auto model = GetDLRModel();
   int64_t input_size;
   int input_dim;
-  int index = 0;
   EXPECT_EQ(GetDLRInputSizeDim(&model, 0, &input_size, &input_dim), 0);
   EXPECT_EQ(input_dim, 4);
   EXPECT_EQ(input_size, 16);
@@ -112,7 +108,6 @@ TEST(PipelineTest, TestGetDLROutputShape) {
   auto model = GetDLRModel();
   int64_t output_size;
   int output_dim;
-  int index = 0;
   // output 0
   EXPECT_EQ(GetDLROutputSizeDim(&model, 0, &output_size, &output_dim), 0);
   EXPECT_EQ(output_dim, 4);
@@ -186,20 +181,20 @@ TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   // output 0
   float output0[16];
   EXPECT_EQ(GetDLROutput(&model, 0, output0), 0);
-  EXPECT_LE(output0[0] - 0.442, 1e-6);
+  EXPECT_FLOAT_EQ(output0[0], 0.442);
   float* output0_p;
   EXPECT_EQ(GetDLROutputPtr(&model, 0, (const void**) &output0_p), 0);
-  EXPECT_LE(output0_p[0] - 0.442, 1e-6);
+  EXPECT_FLOAT_EQ(output0_p[0], 0.442);
   for (int i = 0; i < 16; i++) {
     EXPECT_EQ(output0_p[i], output0[i]);
   }
   // output 1
   float output1[16];
   EXPECT_EQ(GetDLROutput(&model, 1, output1), 0);
-  EXPECT_LE(output1[0] - 0.00516, 1e-6);
+  EXPECT_FLOAT_EQ(output1[0], 0.00516);
   float* output1_p;
   EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**) &output1_p), 0);
-  EXPECT_LE(output1_p[0] - 0.00516, 1e-6);
+  EXPECT_FLOAT_EQ(output1_p[0], 0.00516);
   for (int i = 0; i < 16; i++) {
     EXPECT_EQ(output1_p[i], output1[i]);
   }
