@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
 
 class TreeliteTest : public ::testing::Test {
  protected:
-  float *data;
   const int64_t in_size = 69;
+  std::vector<float> data{std::vector<float>(in_size)};
   const int in_dim = 2;
   const int64_t in_shape[2] = {1, 69};
   const int64_t out_size = 1;
@@ -23,7 +23,6 @@ class TreeliteTest : public ::testing::Test {
 
   TreeliteTest() {
     // Setup input data
-    data = new float[in_size];
     for (auto i = 0; i < in_size; i++) {
       data[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
@@ -38,7 +37,6 @@ class TreeliteTest : public ::testing::Test {
 
   ~TreeliteTest() {
     delete model;
-    delete data;
   }
 };
 
@@ -53,7 +51,7 @@ TEST_F(TreeliteTest, TestGetInputType) {
 }
 
 TEST_F(TreeliteTest, TestGetInputSize) {
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   EXPECT_EQ(model->GetInputSize(0), in_size);
 }
 
@@ -64,17 +62,17 @@ TEST_F(TreeliteTest, TestGetInputDim) {
 TEST_F(TreeliteTest, TestGetInputShape) {
   std::vector<int64_t> shape{-1, in_size};
   EXPECT_EQ(model->GetInputShape(0), shape);
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   shape.assign(std::begin(in_shape), std::end(in_shape));
   EXPECT_EQ(model->GetInputShape(0), shape);
 }
 
 TEST_F(TreeliteTest, TestGetInput) {
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   try {
-    float* observed_input_data = new float[in_size];
-    model->GetInput("data", observed_input_data);
-    delete[] observed_input_data;
+    std::vector<float> observed_input_data(in_size);
+    model->GetInput("data", observed_input_data.data());
+    EXPECT_EQ(observed_input_data, data);
   } catch (const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "GetInput is not supported by Treelite backend.");
   }
@@ -95,7 +93,7 @@ TEST_F(TreeliteTest, TestGetOutputShape) {
   EXPECT_EQ(out_shape[0], -1);
   EXPECT_EQ(out_shape[1], 1);
   // Set input
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   // Check OutputShape again
   EXPECT_NO_THROW(model->GetOutputShape(0, out_shape));
   EXPECT_EQ(out_shape[0], 1);
@@ -110,7 +108,7 @@ TEST_F(TreeliteTest, TestGetOutputSizeDim) {
   EXPECT_EQ(output_size, -1);
   EXPECT_EQ(output_dim, out_dim);
   // Set input
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   // Check OutputSizeDim again
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &output_size, &output_dim));
   EXPECT_EQ(output_size, out_size);
@@ -118,7 +116,7 @@ TEST_F(TreeliteTest, TestGetOutputSizeDim) {
 }
 
 TEST_F(TreeliteTest, TestGetOutput) {
-  EXPECT_NO_THROW(model->SetInput("data", in_shape, data, in_dim));
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   EXPECT_NO_THROW(model->Run());
   float output[1];
   EXPECT_NO_THROW(model->GetOutput(0, output));

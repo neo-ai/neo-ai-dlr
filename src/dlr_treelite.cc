@@ -138,7 +138,7 @@ const char* TreeliteModel::GetWeightName(int index) const {
 }
 
 void TreeliteModel::SetInput(const char* name, const int64_t* shape,
-                             void* input, int dim) {
+                             const void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
   CHECK_SHAPE("Mismatch found in input dimension", dim, kInputDim);
   // NOTE: If number of columns is less than num_feature, missing columns

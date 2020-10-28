@@ -145,14 +145,14 @@ const char* TVMModel::GetWeightName(int index) const {
   return weight_names_[index].c_str();
 }
 
-void TVMModel::SetInput(const char* name, const int64_t* shape, void* input,
-                        int dim) {
+void TVMModel::SetInput(const char* name, const int64_t* shape,
+                        const void* input, int dim) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
   input_tensor.ctx = DLContext{kDLCPU, 0};
-  input_tensor.data = input;
+  input_tensor.data = const_cast<void*>(input);
   int64_t read_size =
       std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
   int64_t expected_size = std::accumulate(

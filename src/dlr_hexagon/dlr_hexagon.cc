@@ -245,7 +245,7 @@ const char* HexagonModel::GetWeightName(int index) const {
 }
 
 void HexagonModel::SetInput(const char* name, const int64_t* shape,
-                            void* input, int dim) {
+                            const void* input, int dim) {
   int index = GetInputId(name);
 
   // Check Size and Dim

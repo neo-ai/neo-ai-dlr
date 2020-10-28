@@ -64,17 +64,13 @@ TEST(DLR, TestGetDLRWeightName) {
 TEST(DLR, TestSetDLRInput) {
   auto model = GetDLRModel();
   size_t img_size = 224*224*3;
-  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
+  std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
   int64_t shape[4] = {1, 224, 224, 3};
   const char* input_name = "input_tensor";
-  float* in_img = (float*) malloc(sizeof(float)*224*224*3);
-  EXPECT_EQ(SetDLRInput(&model, input_name, shape, img, 4), 0);
-  EXPECT_EQ(GetDLRInput(&model, input_name, in_img), 0);
-  EXPECT_EQ(*img, *in_img);
-  EXPECT_EQ(*(img + 224*224), *(in_img + 224*224));
-  EXPECT_EQ(*(img + 224*224*3 - 1), *(in_img + 224*224*3 - 1));
-  free(in_img);
-  delete [] img;
+  std::vector<float> img2(img_size);
+  EXPECT_EQ(SetDLRInput(&model, input_name, shape, img.data(), 4), 0);
+  EXPECT_EQ(GetDLRInput(&model, input_name, img2.data()), 0);
+  EXPECT_EQ(img, img2);
   DeleteDLRModel(&model);
 }
 
@@ -184,10 +180,10 @@ TEST(DLR, TestGetDLRBackend) {
 TEST(DLR, TestRunDLRModel_GetDLROutput) {
   auto model = GetDLRModel();
   size_t img_size = 224*224*3;
-  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
+  std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
   int64_t shape[4] = {1, 224, 224, 3};
   const char* input_name = "input_tensor";
-  EXPECT_EQ(SetDLRInput(&model, input_name, shape, img, 4), 0);
+  EXPECT_EQ(SetDLRInput(&model, input_name, shape, img.data(), 4), 0);
   EXPECT_EQ(RunDLRModel(&model), 0);
   // output 0
   int output0[1];
@@ -210,7 +206,6 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   for (int i = 0; i < 1001; i++) {
     EXPECT_EQ(output1_p[i], output1[i]);
   }
-  delete [] img;
   DeleteDLRModel(&model);
 }
 

@@ -54,7 +54,7 @@ TEST(PipelineTest, TestSetDLRInput) {
   int64_t shape[1] = { static_cast<int64_t>(in_data.length()) };
   int ndim = 1;
   const char* input_name = "input";
-  EXPECT_EQ(SetDLRInput(&model, input_name, shape, const_cast<char*>(in_data.c_str()), ndim), 0);
+  EXPECT_EQ(SetDLRInput(&model, input_name, shape, in_data.c_str(), ndim), 0);
   std::vector<float> exp_data = {0.5, 0.6, 0.55, 0.66, 0.73, 0.83};
   std::vector<float> in_data2(6);
   EXPECT_EQ(GetDLRInput(&model, input_name, in_data2.data()), 0);
@@ -129,7 +129,7 @@ TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   int64_t shape[1] = { static_cast<int64_t>(in_data.length()) };
   int ndim = 1;
   const char* input_name = "input";
-  EXPECT_EQ(SetDLRInput(&model, input_name, shape, const_cast<char*>(in_data.c_str()), ndim), 0);
+  EXPECT_EQ(SetDLRInput(&model, input_name, shape, in_data.c_str(), ndim), 0);
   EXPECT_EQ(RunDLRModel(&model), 0);
   // check output metadata
   int64_t output_size;

@@ -18,7 +18,7 @@ class DLR_DLL DataTransform {
   const float kBadValue = std::numeric_limits<float>::quiet_NaN();
 
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
-  nlohmann::json GetAsJson(const int64_t* shape, void* input, int dim) const;
+  nlohmann::json GetAsJson(const int64_t* shape, const void* input, int dim) const;
 
   /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
   tvm::runtime::NDArray InitNDArray(int index, const nlohmann::json& input_json,
@@ -44,7 +44,7 @@ class DLR_DLL DataTransform {
    * for the model input.
    */
   tvm::runtime::NDArray TransformInput(const nlohmann::json& metadata, int index,
-                                       const int64_t* shape, void* input, int dim, DLDataType dtype,
+                                       const int64_t* shape, const void* input, int dim, DLDataType dtype,
                                        DLContext ctx) const;
 };
 
