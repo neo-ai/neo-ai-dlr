@@ -358,6 +358,17 @@ if(NOT(AAR_BUILD))
     message(STATUS "Added Test: " ${__execname})
   endforeach()
 
+  file(GLOB TEST_DLSYM_SRCS tests/cpp/dlsym/*.cc)
+  foreach(__srcpath ${TEST_DLSYM_SRCS})
+    get_filename_component(__srcname ${__srcpath} NAME)
+    string(REPLACE ".cc" "" __execname ${__srcname})
+    add_executable(${__execname} ${__srcpath})
+    target_link_libraries(${__execname} gtest_main dl)
+    set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
+    add_test(NAME ${__execname} COMMAND ${__execname})
+    message(STATUS "Added dlsym Test: " ${__execname})
+  endforeach()
+
   set(CAT_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/cat224-3.txt)
   if(NOT EXISTS ${CAT_IMAGE})
   download_file(
