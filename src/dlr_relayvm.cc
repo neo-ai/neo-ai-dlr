@@ -186,14 +186,14 @@ DLDataType RelayVMModel::GetInputDLDataType(int index) {
 }
 
 void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
-  int index = GetInputIndex(name);
-  DLDataType dtype = GetInputDLDataType(index);
   // Handle string input.
-  if (HasMetadata() && data_transform_.HasInputTransform(metadata_, index)) {
-    inputs_[index] =
-        data_transform_.TransformInput(metadata_, index, shape, input, dim, dtype, ctx_);
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    std::vector<DLDataType> dtypes;
+    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, ctx_, &inputs_);
     return;
   }
+  int index = GetInputIndex(name);
+  DLDataType dtype = GetInputDLDataType(index);
   DLTensor input_tensor;
   input_tensor.data = const_cast<void*>(input);
   input_tensor.ctx = ctx_;

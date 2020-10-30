@@ -13,22 +13,32 @@ int main(int argc, char** argv) {
   return RUN_ALL_TESTS();
 }
 
+void ExpectFloatEq(float value, float expected) {
+  // TODO(trevmorr): NanSensitiveFloatEq from googlemock would be useful here.
+  if (std::isnan(expected)) {
+    EXPECT_TRUE(std::isnan(value));
+  } else {
+    EXPECT_EQ(value, expected);
+  }
+}
+
 TEST(DLR, DataTransformCategoricalString) {
   dlr::DataTransform transform;
   nlohmann::json metadata = R"(
     {
       "DataTransform": {
         "Input": {
-          "0": {
-            "CategoricalString": [
-              { "apple": 0, "banana": 1, "7": 2 }
-            ]
-          }
+          "ColumnTransform": [
+            {
+              "Type": "CategoricalString",
+              "Map": { "apple": 0, "banana": 1, "7": 2 }
+            }
+          ]
         }
       }
     })"_json;
   EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
-  EXPECT_FALSE(transform.HasInputTransform(metadata, 1));
+  // EXPECT_FALSE(transform.HasInputTransform(metadata, 1));
 
   // User input
   const char* data = R"([["apple"], ["banana"], ["7"], [7], ["walrus"], [-5]])";
@@ -36,17 +46,16 @@ TEST(DLR, DataTransformCategoricalString) {
   // Model input
   DLDataType dtype = DLDataType{kDLFloat, 32, 1};
   DLContext ctx = DLContext{kDLCPU, 0};
-  tvm::runtime::NDArray transformed_data;
-  EXPECT_NO_THROW(transformed_data =
-                      transform.TransformInput(metadata, 0, shape.data(), const_cast<char*>(data),
-                                               shape.size(), dtype, ctx));
+  std::vector<tvm::runtime::NDArray> transformed_data(1);
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtype, ctx, &transformed_data));
 
   std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
-  EXPECT_EQ(transformed_data->ndim, 2);
-  EXPECT_EQ(transformed_data->shape[0], 6);
-  EXPECT_EQ(transformed_data->shape[1], 1);
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 6);
+  EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    CHECK_EQ(static_cast<float*>(transformed_data->data)[i], expected_output[i])
+    CHECK_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
         << "Output at index " << i;
     ;
   }
@@ -58,11 +67,12 @@ TEST(DLR, DataTransformCategoricalStringNumericColumn) {
     {
       "DataTransform": {
         "Input": {
-          "0": {
-            "CategoricalString": [
-              {}
-            ]
-          }
+          "ColumnTransform": [
+            {
+              "Type": "float",
+              "Map": {}
+            }
+          ]
         }
       }
     })"_json;
@@ -75,28 +85,71 @@ TEST(DLR, DataTransformCategoricalStringNumericColumn) {
   // Model input
   DLDataType dtype = DLDataType{kDLFloat, 32, 1};
   DLContext ctx = DLContext{kDLCPU, 0};
-  tvm::runtime::NDArray transformed_data;
-  EXPECT_NO_THROW(transformed_data =
-                      transform.TransformInput(metadata, 0, shape.data(), const_cast<char*>(data),
-                                               shape.size(), dtype, ctx));
+  std::vector<tvm::runtime::NDArray> transformed_data(1);
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtype, ctx, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output = {2.345, 7, 7, -9.7, kNan, -kInf, kNan, kInf};
-  EXPECT_EQ(transformed_data->ndim, 2);
-  EXPECT_EQ(transformed_data->shape[0], 8);
-  EXPECT_EQ(transformed_data->shape[1], 1);
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 8);
+  EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    // TODO(trevmorr): NanSensitiveFloatEq from googlemock would be useful here.
-    if (std::isnan(expected_output[i])) {
-      EXPECT_TRUE(std::isnan(static_cast<float*>(transformed_data->data)[i]));
-    } else {
-      EXPECT_EQ(static_cast<float*>(transformed_data->data)[i], expected_output[i])
-          << "Output at index " << i;
-      ;
-    }
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
   }
 }
 
+TEST(DLR, DataTransformMultipleColumn) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "ColumnTransform": [
+            {
+              "Type": "float",
+              "Map": {}
+            },
+            {
+              "Type": "CategoricalString",
+              "Map": { "apple": 0, "banana": 1, "7": 2 }
+            }
+          ]
+        }
+      }
+    })"_json;
+  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
+
+  // User input
+  const char* data =
+      R"([["2.345", "apple"], [7, "7"]])";
+  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+  // Model input
+  DLDataType dtype = DLDataType{kDLFloat, 32, 1};
+  DLContext ctx = DLContext{kDLCPU, 0};
+  std::vector<tvm::runtime::NDArray> transformed_data(2);
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtype, ctx, &transformed_data));
+  const float kNan = std::numeric_limits<float>::quiet_NaN();
+  const float kInf = std::numeric_limits<float>::infinity();
+  std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
+  std::vector<float> expected_output_string = {-1, 0, -1,
+                                               2};  // TODO what should float 7 be ? -1 or 2
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 2);
+  EXPECT_EQ(transformed_data[0]->shape[1], 2);
+  EXPECT_EQ(transformed_data[1]->ndim, 2);
+  EXPECT_EQ(transformed_data[1]->shape[0], 2);
+  EXPECT_EQ(transformed_data[1]->shape[1], 2);
+  for (size_t i = 0; i < expected_output_float.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output_float[i]);
+  }
+  for (size_t i = 0; i < expected_output_string.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[1]->data)[i], expected_output_string[i]);
+  }
+}
+
+/*
 TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./onehotencoder"};
@@ -128,3 +181,4 @@ TEST(DLR, RelayVMDataTransformInput) {
   }
   delete model;
 }
+*/
