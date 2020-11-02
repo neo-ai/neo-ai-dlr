@@ -68,10 +68,11 @@ option(TEST_COVERAGE "C++ test coverage" OFF)
 # Compiler flags
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if (WIN32)
+# --exclude-libs is not available on Windows and macOS. As such, Windows and 
+# Mac do not support the creation of multiple DLRModel instances (in Python) in 
+# case model folders have their own libdlr.so
+if (WIN32 OR APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-elseif (APPLE)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-t")
 else()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--exclude-libs,ALL")
 endif()
