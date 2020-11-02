@@ -70,7 +70,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --exclude-libs is not available on Windows and macOS. As such, Windows and 
 # Mac do not support the creation of multiple DLRModel instances (in Python) in 
-# case model folders have their own libdlr.so
+# case model folders have their own libdlr.so.
 if (WIN32 OR APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 else()
