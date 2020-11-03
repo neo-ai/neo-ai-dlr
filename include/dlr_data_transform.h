@@ -9,10 +9,11 @@
 
 namespace dlr {
 
+/*! \brief Base case for input transformers. */
 class DLR_DLL Transformer {
  public:
-  virtual void MapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                            const nlohmann::json& mapping) const = 0;
+  virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                            tvm::runtime::NDArray& input_array) const = 0;
 };
 
 class DLR_DLL FloatTransformer : public Transformer {
@@ -21,10 +22,8 @@ class DLR_DLL FloatTransformer : public Transformer {
   const float kBadValue = std::numeric_limits<float>::quiet_NaN();
 
  public:
-  void MapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                    const nlohmann::json& mapping) const;
-
-  // bool HasTransform(const nlohmann::json& metadata) const;
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
 };
 
 class DLR_DLL CategoricalStringTransformer : public Transformer {
@@ -33,10 +32,8 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
   const float kMissingValue = -1.0f;
 
  public:
-  void MapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                    const nlohmann::json& mapping) const;
-
-  // bool HasTransform(const nlohmann::json& metadata) const;
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
 };
 
 /*! \brief Handles transformations of input and output data. */
@@ -65,15 +62,9 @@ class DLR_DLL DataTransform {
    * mapping to convert strings to numbers, and produce a numeric NDArray which can be given to TVM
    * for the model input.
    */
-<<<<<<< HEAD
-  tvm::runtime::NDArray TransformInput(const nlohmann::json& metadata, int index,
-                                       const int64_t* shape, const void* input, int dim, DLDataType dtype,
-                                       DLContext ctx) const;
-=======
-  void TransformInput(const nlohmann::json& metadata, const int64_t* shape, void* input, int dim,
-                      DLDataType dtype, DLContext ctx,
+  void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input, int dim,
+                      const std::vector<DLDataType>& dtypes, DLContext ctx,
                       std::vector<tvm::runtime::NDArray>* tvm_inputs) const;
->>>>>>> Use ColumnTransform
 };
 
 }  // namespace dlr

@@ -31,24 +31,23 @@ TEST(DLR, DataTransformCategoricalString) {
           "ColumnTransform": [
             {
               "Type": "CategoricalString",
-              "Map": { "apple": 0, "banana": 1, "7": 2 }
+              "Map": [{ "apple": 0, "banana": 1, "7": 2 }]
             }
           ]
         }
       }
     })"_json;
-  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
-  // EXPECT_FALSE(transform.HasInputTransform(metadata, 1));
+  EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   // User input
   const char* data = R"([["apple"], ["banana"], ["7"], [7], ["walrus"], [-5]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
-  DLDataType dtype = DLDataType{kDLFloat, 32, 1};
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtype, ctx, &transformed_data));
+                                           shape.size(), dtypes, ctx, &transformed_data));
 
   std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
@@ -69,25 +68,24 @@ TEST(DLR, DataTransformCategoricalStringNumericColumn) {
         "Input": {
           "ColumnTransform": [
             {
-              "Type": "float",
-              "Map": {}
+              "Type": "Float"
             }
           ]
         }
       }
     })"_json;
-  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
+  EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   // User input
   const char* data =
       R"([["2.345"], [7], ["7"], [-9.7], ["null"], ["-Inf"], ["NaN"], ["InFinITy"]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
-  DLDataType dtype = DLDataType{kDLFloat, 32, 1};
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtype, ctx, &transformed_data));
+                                           shape.size(), dtypes, ctx, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output = {2.345, 7, 7, -9.7, kNan, -kInf, kNan, kInf};
@@ -107,34 +105,35 @@ TEST(DLR, DataTransformMultipleColumn) {
         "Input": {
           "ColumnTransform": [
             {
-              "Type": "float",
-              "Map": {}
+              "Type": "Float"
             },
             {
               "Type": "CategoricalString",
-              "Map": { "apple": 0, "banana": 1, "7": 2 }
+              "Map": [
+                {},
+                {"apple": 0, "banana": 1, "7": 2}
+              ]
             }
           ]
         }
       }
     })"_json;
-  EXPECT_TRUE(transform.HasInputTransform(metadata, 0));
+  EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   // User input
   const char* data =
       R"([["2.345", "apple"], [7, "7"]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
-  DLDataType dtype = DLDataType{kDLFloat, 32, 1};
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(2);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtype, ctx, &transformed_data));
+                                           shape.size(), dtypes, ctx, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
-  std::vector<float> expected_output_string = {-1, 0, -1,
-                                               2};  // TODO what should float 7 be ? -1 or 2
+  std::vector<float> expected_output_string = {-1, 0, -1, 2};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 2);
   EXPECT_EQ(transformed_data[0]->shape[1], 2);
@@ -149,15 +148,17 @@ TEST(DLR, DataTransformMultipleColumn) {
   }
 }
 
-/*
 TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
-  std::vector<std::string> paths = {"./onehotencoder"};
+  std::vector<std::string> paths = {"./automl"};
   dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
-
-  const char* data = R"([["apple", 1, 7], ["banana", 3, 8], ["squash", 2, 9]])";
-  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+  EXPECT_EQ(model->GetNumInputs(), 1);
   EXPECT_STREQ(model->GetInputType(0), "json");
+  EXPECT_STREQ(model->GetInputName(0), "input");
+
+  const char* data = R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
+                          7.5, 4, 2.03, 0, 94.77387065117672]])";
+  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);
   model->Run();
 
@@ -165,15 +166,17 @@ TEST(DLR, RelayVMDataTransformInput) {
   int dim;
   EXPECT_STREQ(model->GetOutputType(0), "float32");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
-  EXPECT_EQ(size, 3 * 8);
+  EXPECT_EQ(size, 1 * 608);
   EXPECT_EQ(dim, 2);
   int64_t output_shape[2];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
-  EXPECT_EQ(output_shape[0], 3);
-  EXPECT_EQ(output_shape[1], 8);
+  EXPECT_EQ(output_shape[0], 1);
+  EXPECT_EQ(output_shape[1], 608);
 
-  std::vector<float> expected_output = {1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0,
-                                        1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1};
+  // Check first 10 outputs.
+  std::vector<float> expected_output = {-0.6220951, -0.58858633, 1.2049465,  -0.67777526,
+                                        1.204448,   1.0382348,   -0.8542239, 1.0385356,
+                                        0.7477714,  -0.45150468, 0.74640894, -0.9504773};
   std::vector<float> output(size, 0);
   EXPECT_NO_THROW(model->GetOutput(0, output.data()));
   for (size_t i = 0; i < expected_output.size(); ++i) {
@@ -181,4 +184,3 @@ TEST(DLR, RelayVMDataTransformInput) {
   }
   delete model;
 }
-*/

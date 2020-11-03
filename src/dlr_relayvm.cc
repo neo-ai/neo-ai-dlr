@@ -109,15 +109,18 @@ void RelayVMModel::FetchOutputNodesData() {
 }
 
 const char* RelayVMModel::GetInputName(int index) const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return "input";
+  }
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index].c_str();
 }
 
 const char* RelayVMModel::GetInputType(int index) const {
-  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  if (HasMetadata() && data_transform_.HasInputTransform(metadata_, index)) {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
     return "json";
   }
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_types_[index].c_str();
 }
 
@@ -128,6 +131,10 @@ std::vector<std::string> RelayVMModel::GetWeightNames() const {
 }
 
 void RelayVMModel::GetInput(const char* name, void* input) {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    LOG(WARNING) << "GetInput is not supported for this model.";
+    return;
+  }
   int index = GetInputIndex(name);
   auto in_array = inputs_[index];
   DLTensor input_tensor;
@@ -142,6 +149,9 @@ void RelayVMModel::GetInput(const char* name, void* input) {
 }
 
 int RelayVMModel::GetInputIndex(const char* name) const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return 0;
+  }
   std::string input_name(name);
   for (auto i = 0; i < num_inputs_; i++) {
     if (input_name == input_names_[i]) {
@@ -189,6 +199,9 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   // Handle string input.
   if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
     std::vector<DLDataType> dtypes;
+    for (size_t i = 0; i < num_inputs_; ++i) {
+      dtypes.emplace_back(GetInputDLDataType(i));
+    }
     data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, ctx_, &inputs_);
     return;
   }
@@ -210,7 +223,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
 }
 
 void RelayVMModel::UpdateInputs() {
-  const int kNumArgs = GetNumInputs() + 1;
+  const int kNumArgs = num_inputs_ + 1;
   TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
   int* type_codes = (int*)malloc(sizeof(int) * kNumArgs);
   auto arg_setter = tvm::runtime::TVMArgsSetter(values, type_codes);
@@ -338,4 +351,11 @@ int RelayVMModel::GetOutputIndex(const char* name) const {
 void RelayVMModel::GetOutputByName(const char* name, void* out) {
   int output_index = this->GetOutputIndex(name);
   this->GetOutput(output_index, out);
+}
+
+int RelayVMModel::GetNumInputs() const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return 1;
+  }
+  return num_inputs_;
 }

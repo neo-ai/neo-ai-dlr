@@ -21,21 +21,21 @@ bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index
 }
 
 void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t* shape,
-                                   const void* input, int dim, DLDataType dtype, DLContext ctx,
+                                   const void* input, int dim,
+                                   const std::vector<DLDataType>& dtypes, DLContext ctx,
                                    std::vector<tvm::runtime::NDArray>* tvm_inputs) const {
   nlohmann::json input_json = GetAsJson(shape, input, dim);
-  const auto& columns = metadata["DataTransform"]["Input"]["ColumnTransform"];
-  for (int i = 0; i < columns.size(); i++) {
-    // TODO: dtype is index dependent
-    tvm_inputs->at(i) = InitNDArray(input_json, dtype, ctx);
+  const auto& transforms = metadata["DataTransform"]["Input"]["ColumnTransform"];
+  for (int i = 0; i < transforms.size(); i++) {
+    tvm_inputs->at(i) = InitNDArray(input_json, dtypes[i], ctx);
 
-    const std::string& transformer_type = columns[i]["Type"].get_ref<const std::string&>();
+    const std::string& transformer_type = transforms[i]["Type"].get_ref<const std::string&>();
     auto it = GetTransformerMap()->find(transformer_type);
     CHECK(it != GetTransformerMap()->end())
         << transformer_type << " is not a valid DataTransform type.";
     const auto transformer = it->second;
 
-    transformer->MapToNDArray(input_json, tvm_inputs->at(i), columns[i]["Map"]);
+    transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
   }
 }
 
@@ -65,8 +65,8 @@ tvm::runtime::NDArray DataTransform::InitNDArray(const nlohmann::json& input_jso
 }
 
 void FloatTransformer::MapToNDArray(const nlohmann::json& input_json,
-                                    tvm::runtime::NDArray& input_array,
-                                    const nlohmann::json& mapping) const {
+                                    const nlohmann::json& transform,
+                                    tvm::runtime::NDArray& input_array) const {
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
   CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform is only supported for CPU.";
@@ -89,13 +89,16 @@ void FloatTransformer::MapToNDArray(const nlohmann::json& input_json,
 }
 
 void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json,
-                                                tvm::runtime::NDArray& input_array,
-                                                const nlohmann::json& mapping) const {
+                                                const nlohmann::json& transform,
+                                                tvm::runtime::NDArray& input_array) const {
+  const nlohmann::json& mapping = transform["Map"];
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
   // Writing directly to the DLTensor will only work for CPU context. For other contexts, we would
   // need to create an intermediate buffer on CPU and copy that to the context.
   CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
+  CHECK_EQ(input_json[0].size(), mapping.size())
+      << "Input has " << input_json[0].size() << " columns, but model requires " << mapping.size();
   float* data = static_cast<float*>(input_tensor->data);
   // Copy data into data, mapping strings to float along the way.
   for (size_t r = 0; r < input_json.size(); ++r) {
@@ -105,8 +108,8 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
       // Look up in map. If not found, use kMissingValue.
       try {
         const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
-        auto it = mapping.find(data_str);
-        data[out_index] = it != mapping.end() ? it->operator float() : kMissingValue;
+        auto it = mapping[c].find(data_str);
+        data[out_index] = it != mapping[c].end() ? it->operator float() : kMissingValue;
       } catch (const std::exception& ex) {
         // Any error will fallback safely to kMissingValue.
         data[out_index] = kMissingValue;
@@ -120,7 +123,7 @@ DataTransform::GetTransformerMap() const {
   static auto map =
       std::make_shared<std::unordered_map<std::string, std::shared_ptr<Transformer>>>();
   if (!map->empty()) return map;
-  map->emplace("float", std::make_shared<FloatTransformer>());
+  map->emplace("Float", std::make_shared<FloatTransformer>());
   map->emplace("CategoricalString", std::make_shared<CategoricalStringTransformer>());
   return map;
 }
