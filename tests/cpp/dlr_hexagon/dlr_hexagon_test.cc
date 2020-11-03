@@ -9,10 +9,10 @@
 
 #include "dlr.h"
 
-uint8_t* LoadImageAndPreprocess(const std::string& img_path, size_t size) {
+std::vector<uint8_t> LoadImageAndPreprocess(const std::string& img_path, size_t size) {
   std::string line;
   std::ifstream fp(img_path);
-  uint8_t* img = new uint8_t[size];
+  std::vector<uint8_t> img(size);
   size_t i = 0;
   if (fp.is_open()) {
     while (getline(fp, line) && i < size) {
@@ -109,23 +109,23 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
 
   // Load image
   size_t img_size = 224 * 224 * 3;
-  uint8_t* img = LoadImageAndPreprocess("cat224-3.txt", img_size);
+  std::vector<uint8_t> img = LoadImageAndPreprocess("cat224-3.txt", img_size);
   LOG(INFO) << "Input sample: [" << +img[0] << "," << +img[1] << "..."
             << +img[img_size - 1] << "]";
 
   // SetDLRInput
   const int64_t in_shape[4] = {1, 224, 224, 3};
-  if (SetDLRInput(&handle, input_name, in_shape, img, 4)) {
+  if (SetDLRInput(&handle, input_name, in_shape, img.data(), 4)) {
     FAIL() << "SetDLRInput failed";
   }
   LOG(INFO) << "SetDLRInput - OK";
 
   // GetDLRInput
-  uint8_t* input2 = new uint8_t[img_size];
-  if (GetDLRInput(&handle, input_name, input2)) {
+  std::vector<uint8_t> input2(img_size);
+  if (GetDLRInput(&handle, input_name, input2.data())) {
     FAIL() << "GetDLRInput failed";
   }
-  EXPECT_TRUE(std::equal(img, img + img_size, input2));
+  EXPECT_EQ(img, input2);
   LOG(INFO) << "GetDLRInput - OK";
 
   // RunDLRModel
@@ -135,12 +135,12 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   LOG(INFO) << "RunDLRModel - OK";
 
   // GetDLROutput
-  uint8_t* output = new uint8_t[out_size];
-  if (GetDLROutput(&handle, 0, output)) {
+  std::vector<uint8_t> output(out_size);
+  if (GetDLROutput(&handle, 0, output.data())) {
     FAIL() << "GetDLROutput failed";
   }
   LOG(INFO) << "GetDLROutput - OK";
-  size_t max_id = ArgMax(output, out_size);
+  size_t max_id = ArgMax(output.data(), out_size);
   LOG(INFO) << "ArgMax: " << max_id << ", Prop: " << +output[max_id];
   // TFLite class range is 1-1000 (output size 1001)
   // Imagenet1000 class range is 0-999
@@ -148,11 +148,6 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   EXPECT_EQ(282, max_id);  // TFLite 282 maps to Imagenet 281 - tabby, tabby cat
   EXPECT_GE(output[max_id], 150);
   EXPECT_GE(output[283], 80);  // TFLite 283 maps to Imagenet 282 - tiger cat
-
-  // clean up
-  delete[] img;
-  delete[] input2;
-  delete[] output;
 }
 
 TEST(Hexagon, CreateDLRModelFromHexagonFromFile) {

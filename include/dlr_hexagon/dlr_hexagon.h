@@ -57,7 +57,7 @@ class HexagonModel : public DLRModel {
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
   virtual void GetInput(const char* name, void* input) override;
-  virtual void SetInput(const char* name, const int64_t* shape, void* input,
+  virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
   virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;

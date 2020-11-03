@@ -185,7 +185,7 @@ DLDataType RelayVMModel::GetInputDLDataType(int index) {
   return dtype;
 }
 
-void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input, int dim) {
+void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
   int index = GetInputIndex(name);
   DLDataType dtype = GetInputDLDataType(index);
   // Handle string input.
@@ -195,7 +195,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, void* input,
     return;
   }
   DLTensor input_tensor;
-  input_tensor.data = input;
+  input_tensor.data = const_cast<void*>(input);
   input_tensor.ctx = ctx_;
   input_tensor.ndim = dim;
   input_tensor.shape = const_cast<int64_t*>(shape);

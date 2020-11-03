@@ -223,7 +223,7 @@ int GetDLRWeightName(DLRModelHandle* handle, int index,
  */
 DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
-                void* input, int dim);
+                const void* input, int dim);
 /*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().

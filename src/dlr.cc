@@ -80,7 +80,7 @@ extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
 }
 
 extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
-                           const int64_t* shape, void* input, int dim) {
+                           const int64_t* shape, const void* input, int dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";

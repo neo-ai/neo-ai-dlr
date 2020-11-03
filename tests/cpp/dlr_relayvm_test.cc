@@ -13,11 +13,11 @@ int main(int argc, char **argv) {
 
 class RelayVMTest : public ::testing::Test {
  protected:
-  int8_t *img;
   const int batch_size = 1;
   size_t img_size = 512 * 512 * 3;
   const int64_t input_shape[4] = {1, 512, 512, 3};
   const int input_dim = 4;
+  std::vector<int8_t> img{std::vector<int8_t>(img_size)};
 
   dlr::RelayVMModel *model;
 
@@ -27,13 +27,10 @@ class RelayVMTest : public ::testing::Test {
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
     model = new dlr::RelayVMModel(paths, ctx);
-
-    img = new int8_t[img_size];
   }
 
   ~RelayVMTest() {
     delete model;
-    delete img;
   }
 };
 
@@ -61,7 +58,7 @@ TEST_F(RelayVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
 
 
 TEST_F(RelayVMTest, TestSetInput) {
-  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
 }
 
 TEST_F(RelayVMTest, TestGetNumOutputs) { EXPECT_EQ(model->GetNumOutputs(), 4); }
@@ -82,7 +79,7 @@ TEST_F(RelayVMTest, TestGetOutputType) {
 }
 
 TEST_F(RelayVMTest, TestRun) {
-  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   model->Run();
 }
 
@@ -90,7 +87,7 @@ TEST_F(RelayVMTest, TestGetOutputShape) {
   int64_t output_shape[2];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
   
-  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   EXPECT_NO_THROW(model->Run());
   
   int64_t output_0_shape[2];
@@ -118,7 +115,7 @@ TEST_F(RelayVMTest, TestGetOutputSizeDim) {
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
   EXPECT_EQ(size, 100);
 
-  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   EXPECT_NO_THROW(model->Run());
   
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
@@ -136,7 +133,7 @@ TEST_F(RelayVMTest, TestGetOutputSizeDim) {
 }
 
 TEST_F(RelayVMTest, TestGetOutput) {
-  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img, input_dim));
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   EXPECT_NO_THROW(model->Run());
 
   float output3[100];

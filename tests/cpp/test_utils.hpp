@@ -7,11 +7,11 @@
 #include <sstream>
 #include <cstring>
 
-float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
-                              int batch_size) {
+std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t size,
+                                          int batch_size) {
   std::string line;
   std::ifstream fp(img_path);
-  float* img = new float[size * batch_size];
+  std::vector<float> img(size * batch_size);
   size_t i = 0;
   if (fp.is_open()) {
     while (getline(fp, line) && i < size) {
@@ -26,7 +26,7 @@ float* LoadImageAndPreprocess(const std::string& img_path, size_t size,
   LOG(INFO) << "Image read - OK, float[" << i << "]";
 
   for (int j = 1; j < batch_size; j++) {
-    std::memcpy(img + j * size, img, size * sizeof(float));
+    std::copy_n(img.cbegin(), size, img.begin() + j * size);
   }
   return img;
 }

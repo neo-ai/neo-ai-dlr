@@ -62,7 +62,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
   virtual const char* GetInputName(int index) const override;
   virtual const char* GetInputType(int index) const override;
   virtual void GetInput(const char* name, void* input) override;
-  virtual void SetInput(const char* name, const int64_t* shape, void* input,
+  virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
   
   virtual void GetOutput(int index, void* out) override;

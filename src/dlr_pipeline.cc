@@ -97,7 +97,7 @@ const char* PipelineModel::GetWeightName(int index) const {
   return dlr_models_[0]->GetWeightName(index);
 }
 
-void PipelineModel::SetInput(const char* name, const int64_t* shape, void* input, int dim) {
+void PipelineModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
   dlr_models_[0]->SetInput(name, shape, input, dim);
 }
 
@@ -141,7 +141,7 @@ void PipelineModel::Run() {
       std::vector<int64_t> prev_output_shape(prev_output_dim, -1);
       prev_model->GetOutputShape(j, prev_output_shape.data());
       const void* prev_model_output = prev_model->GetOutputPtr(j);
-      curr_model->SetInput(input_name, prev_output_shape.data(), (void*)prev_model_output, prev_output_dim);
+      curr_model->SetInput(input_name, prev_output_shape.data(), prev_model_output, prev_output_dim);
     }
     curr_model->Run();
   }

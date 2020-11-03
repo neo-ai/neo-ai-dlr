@@ -17,7 +17,7 @@ bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index
 }
 
 tvm::runtime::NDArray DataTransform::TransformInput(const nlohmann::json& metadata, int index,
-                                                    const int64_t* shape, void* input, int dim,
+                                                    const int64_t* shape, const void* input, int dim,
                                                     DLDataType dtype, DLContext ctx) const {
   auto& mapping = metadata["DataTransform"]["Input"][std::to_string(index)]["CategoricalString"];
   nlohmann::json input_json = GetAsJson(shape, input, dim);
@@ -26,10 +26,10 @@ tvm::runtime::NDArray DataTransform::TransformInput(const nlohmann::json& metada
   return input_array;
 }
 
-nlohmann::json DataTransform::GetAsJson(const int64_t* shape, void* input, int dim) const {
+nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input, int dim) const {
   CHECK_EQ(dim, 1) << "String input must be 1-D vector.";
   // Interpret input as json
-  const char* input_str = static_cast<char*>(input);
+  const char* input_str = static_cast<const char*>(input);
   nlohmann::json input_json;
   try {
     input_json = nlohmann::json::parse(input_str, input_str + shape[0]);

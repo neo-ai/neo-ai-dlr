@@ -5,7 +5,7 @@
 
 class TVMTest : public ::testing::Test {
  protected:
-  float* img;
+  std::vector<float> img;
   const int batch_size = 1;
   size_t img_size = 224 * 224 * 3;
   const int64_t input_shape[4] = {1, 224, 224, 3};
@@ -30,18 +30,16 @@ class TVMTest : public ::testing::Test {
 
   ~TVMTest() {
     delete model;
-    delete img;
   }
 };
 
 TEST_F(TVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
 TEST_F(TVMTest, TestGetInput) {
-  EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img, input_dim));
-  float *observed_input_data = new float[img_size];
-  EXPECT_NO_THROW(model->GetInput("input_tensor", observed_input_data));
-  EXPECT_EQ(*img, observed_input_data[0]);
-  delete[] observed_input_data;
+  EXPECT_NO_THROW(model->SetInput("input_tensor", input_shape, img.data(), input_dim));
+  std::vector<float> observed_input_data(img_size);
+  EXPECT_NO_THROW(model->GetInput("input_tensor", observed_input_data.data()));
+  EXPECT_EQ(img, observed_input_data);
 }
 
 
@@ -74,7 +72,7 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
 
   const int batch_size = 1;
   size_t img_size = 224 * 224 * 3;
-  float* img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
+  std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
   img_size *= batch_size;
   int64_t shape[4] = {1, 224, 224, 3};
 
@@ -83,15 +81,15 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   int index = 0;
   EXPECT_NO_THROW(model.GetOutputSizeDim(index, &output_size, &output_dim));
 
-  EXPECT_NO_THROW(model.SetInput("input_tensor", shape, img, 4));
+  EXPECT_NO_THROW(model.SetInput("input_tensor", shape, img.data(), 4));
   EXPECT_NO_THROW(model.Run());
 
-  float* output1 = new float[output_size];
-  float* output2 = new float[output_size];
-  float* output3;
-  EXPECT_NO_THROW(model.GetOutput(index, output1));
-  EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index), output2));
-  EXPECT_NO_THROW(output3 = (float*) model.GetOutputPtr(index));
+  std::vector<float> output1(output_size);
+  std::vector<float> output2(output_size);
+  const float* output3;
+  EXPECT_NO_THROW(model.GetOutput(index, output1.data()));
+  EXPECT_NO_THROW(model.GetOutputByName(model.GetOutputName(index), output2.data()));
+  EXPECT_NO_THROW(output3 = static_cast<const float*>(model.GetOutputPtr(index)));
   EXPECT_EQ(output1[0], output2[0]);
   EXPECT_EQ(output1[0], output3[0]);
 
@@ -102,7 +100,7 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   }
 
   try {
-    model.GetOutputByName("blah", output1);
+    model.GetOutputByName("blah", output1.data());
   } catch (const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "Couldn't find index for output node blah!");
   }
@@ -112,8 +110,6 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   } catch (const dmlc::Error& e) {
     EXPECT_STREQ(e.what(), "Output node with index 2 was not found in metadata file!");
   }
-  delete[] output1;
-  delete[] output2;
 }
 
 TEST(TVM, TestTvmModelApisWithoutMetadata) {
