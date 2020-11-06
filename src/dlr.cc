@@ -201,7 +201,7 @@ extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dlten
 
 std::vector<std::string> MakePathVec(std::string model_path) {
   std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
-  path_vec[0] = pathFix(path_vec[0]);
+  path_vec[0] = FixWindowsDriveLetter(path_vec[0]);
   return path_vec;
 }
 
@@ -322,7 +322,7 @@ extern "C" int CreateTVMModel(DLRModelHandle* handle, const char* graph, const c
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
   ModelPath paths;
-  paths.model_lib = pathFix(lib_path);
+  paths.model_lib = FixWindowsDriveLetter(lib_path);
   std::string param_str(params, params_len);
   *handle = new TVMModel(graph, param_str, paths, ctx);
   API_END();

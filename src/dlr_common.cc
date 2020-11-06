@@ -59,7 +59,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
-std::string dlr::pathFix(std::string path) {
+std::string dlr::FixWindowsDriveLetter(std::string path) {
   std::string path_string{path};
   std::string special_prefix{""};
   if (path_string.length() >= 2 && path_string[1] == ':' &&
