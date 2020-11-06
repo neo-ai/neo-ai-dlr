@@ -208,7 +208,17 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
   mocked_metadata << "{\"Requirements\": { \"TargetDevice\": \"ML_C4\", \"TargetDeviceType\": \"gpu\"}}\n";
   mocked_metadata.close();
 
-  EXPECT_THROW(dlr::TVMModel(paths, ctx), dmlc::Error);
+  EXPECT_THROW(
+      ({
+        try {
+          dlr::TVMModel(paths, ctx);
+        } catch (const dmlc::Error& e) {
+          EXPECT_STREQ(e.what(),
+                       "Compiled model requires device type \"gpu\" but user gave \"cpu\".");
+          throw;
+        }
+      }),
+      dmlc::Error);
 
   // put it back
   std::rename(metadata_file_bak.c_str(), metadata_file.c_str());
