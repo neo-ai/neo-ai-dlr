@@ -440,20 +440,20 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/${RELAYVM_MODEL})
   endif()
 
-  set(ONEHOTENCODER_MODEL onehotencoder-ml_m4.tar.gz)
-  set(ONEHOTENCODER_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/onehotencoder)
-  if(NOT IS_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
-    file(MAKE_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
+  set(AUTOML_MODEL automl-ml_m4.tar.gz)
+  set(AUTOML_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/automl)
+  if(NOT IS_DIRECTORY ${AUTOML_MODEL_DIR})
+    file(MAKE_DIRECTORY ${AUTOML_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${ONEHOTENCODER_MODEL}
-      /tmp/${ONEHOTENCODER_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${AUTOML_MODEL}
+      /tmp/${AUTOML_MODEL}
       SHA1
-      d9490ca854fd89280c84646ab3a8e6f558c0ff6a
+      6d0fdda6b3d5040507ac321adb69cd644ed39f66
     )
     # this is OS-agnostic
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${ONEHOTENCODER_MODEL}
-                    WORKING_DIRECTORY ${ONEHOTENCODER_MODEL_DIR})
-    file(REMOVE /tmp/${ONEHOTENCODER_MODEL})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${AUTOML_MODEL}
+                    WORKING_DIRECTORY ${AUTOML_MODEL_DIR})
+    file(REMOVE /tmp/${AUTOML_MODEL})
   endif()
 
   set(PIPELINE_MODEL1 ${CMAKE_CURRENT_BINARY_DIR}/pipeline_model1)
