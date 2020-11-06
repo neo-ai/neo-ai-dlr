@@ -63,22 +63,19 @@ void RelayVMModel::FetchInputNodesData() {
   input_types_.resize(num_inputs_);
   input_shapes_.resize(num_inputs_);
   inputs_.resize(num_inputs_);
-  for (int i = 0; i < num_inputs_; i++) {
-    input_names_[i] = exec->GetFunctionParameterName(ENTRY_FUNCTION, i);
-    for (auto shape : metadata_.at("Model").at("Inputs").at(i).at("shape")) {
-      if (shape == nullptr) {
-        input_shapes_[i].push_back(-1);
-      } else {
-        input_shapes_[i].push_back(shape);
-      }
-    };
-  }
+
   try {
+    for (int i = 0; i < num_inputs_; i++) {
+      input_names_[i] = exec->GetFunctionParameterName(ENTRY_FUNCTION, i);
+      for (auto shape : metadata_.at("Model").at("Inputs").at(i).at("shape")) {
+        input_shapes_[i].push_back(shape.is_number() ? shape.get<int>() : -1);
+      }
+    }
     for (int i = 0; i < num_inputs_; i++) {
       input_types_[i] = metadata_.at("Model").at("Inputs").at(i).at("dtype");
     }
   } catch (nlohmann::json::out_of_range& e) {
-    throw dmlc::Error("No input types metadata found.");
+    throw dmlc::Error(std::string("Invalid or missing input metadata: ") + e.what());
   }
 }
 
