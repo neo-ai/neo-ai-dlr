@@ -40,12 +40,12 @@ typedef void* DLRModelHandle;
 typedef struct DLRPaths_t {
 DLRPaths_t() : model_lib(0), params(0), model_json(0),
     ver_json(0), metadata(0), relay_executable(0) {}
-  char* model_lib;
-  char* params;
-  char* model_json;
-  char* ver_json;
-  char* metadata;
-  char* relay_executable;
+  const char* model_lib;
+  const char* params;
+  const char* model_json;
+  const char* ver_json;
+  const char* metadata;
+  const char* relay_executable;
 } DLRPaths;
   
 /*!
