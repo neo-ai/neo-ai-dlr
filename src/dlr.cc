@@ -319,9 +319,9 @@ extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* p
   
   DLRModel* model;
   try {
-    if (paths->model_lib != NULL and paths->params != NULL and paths->model_json != NULL) {
+    if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
       model = new TVMModel(path, ctx);
-    } else if (paths->model_lib != NULL and paths->relay_executable != NULL) {
+    } else if (paths->model_lib != NULL && paths->relay_executable != NULL) {
       model = new RelayVMModel(path, ctx);
     } else {
       LOG(FATAL) << "Unsupported backend!";
