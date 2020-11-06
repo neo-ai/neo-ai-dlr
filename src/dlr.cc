@@ -32,8 +32,7 @@ extern "C" int GetDLRNumWeights(DLRModelHandle* handle, int* num_weights) {
   API_END();
 }
 
-extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
-                               const char** input_name) {
+extern "C" int GetDLRInputName(DLRModelHandle* handle, int index, const char** input_name) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -41,8 +40,7 @@ extern "C" int GetDLRInputName(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
-                               const char** input_type) {
+extern "C" int GetDLRInputType(DLRModelHandle* handle, int index, const char** input_type) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -50,8 +48,7 @@ extern "C" int GetDLRInputType(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLRInputShape(DLRModelHandle* handle, int index,
-                                 int64_t* shape) {
+extern "C" int GetDLRInputShape(DLRModelHandle* handle, int index, int64_t* shape) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -60,8 +57,7 @@ extern "C" int GetDLRInputShape(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLRInputSizeDim(DLRModelHandle* handle, int index,
-                                   int64_t* size, int* dim) {
+extern "C" int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size, int* dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -70,8 +66,7 @@ extern "C" int GetDLRInputSizeDim(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
-                                const char** weight_name) {
+extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index, const char** weight_name) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -79,8 +74,8 @@ extern "C" int GetDLRWeightName(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
-                           const int64_t* shape, const void* input, int dim) {
+extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
+                           const void* input, int dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -88,18 +83,16 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name,
   API_END();
 }
 
-extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name,
-                                 void* dltensor) {
+extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
   TVMModel* model = static_cast<TVMModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->SetInput(name, tensor);
   API_END();
-}  
+}
 
-extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name,
-                           void* input) {
+extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name, void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -107,8 +100,7 @@ extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name,
   API_END();
 }
 
-extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index,
-                                 int64_t* shape) {
+extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -132,8 +124,7 @@ extern "C" int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** o
   API_END();
 }
 
-extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
-                                   int64_t* size, int* dim) {
+extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size, int* dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -141,8 +132,7 @@ extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int GetDLROutputType(DLRModelHandle* handle, int index,
-                                const char** output_type) {
+extern "C" int GetDLROutputType(DLRModelHandle* handle, int index, const char** output_type) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
@@ -224,11 +214,11 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
     return std::make_shared<RelayVMModel>(path_vec, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
     return std::make_shared<TreeliteModel>(path_vec, ctx);
-  #ifdef DLR_HEXAGON
-    } else if (backend == DLRBackend::kHEXAGON) {
-      const std::string model_path_string(model_path);
-      return std::make_shared<HexagonModel>(model_path_string, ctx, 1 /*debug_level*/);
-  #endif  // DLR_HEXAGON
+#ifdef DLR_HEXAGON
+  } else if (backend == DLRBackend::kHEXAGON) {
+    const std::string model_path_string(model_path);
+    return std::make_shared<HexagonModel>(model_path_string, ctx, 1 /*debug_level*/);
+#endif  // DLR_HEXAGON
   } else {
     throw dmlc::Error("Unsupported backend!");
   }
@@ -238,8 +228,7 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
 /*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
  * ctor.
  */
-int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
-                              int debug_level) {
+int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, int debug_level) {
   API_BEGIN();
   const std::string model_path_string(model_path);
   // HexagonModel class does not use DLContext internally
@@ -254,8 +243,8 @@ int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
-extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
-                              int dev_type, int dev_id) {
+extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
+                              int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
@@ -272,11 +261,11 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
       model = new RelayVMModel(path_vec, ctx);
     } else if (backend == DLRBackend::kTREELITE) {
       model = new TreeliteModel(path_vec, ctx);
-  #ifdef DLR_HEXAGON
+#ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
       const std::string model_path_string(model_path);
       model = new HexagonModel(model_path_string, ctx, 1 /*debug_level*/);
-  #endif  // DLR_HEXAGON
+#endif  // DLR_HEXAGON
     } else {
       LOG(FATAL) << "Unsupported backend!";
       return -1;  // unreachable
@@ -285,15 +274,15 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path,
     LOG(ERROR) << e.what();
     return -1;
   }
-  
+
   *handle = model;
   API_END();
 }
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
-extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths,
-                                       int dev_type, int dev_id) {
+extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int dev_type,
+                                       int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
@@ -306,7 +295,7 @@ extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* p
   path.ver_json = paths->ver_json;
   path.metadata = paths->metadata;
   path.relay_executable = paths->relay_executable;
-  
+
   DLRModel* model;
   try {
     if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
@@ -321,32 +310,27 @@ extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* p
     LOG(ERROR) << e.what();
     return -1;
   }
-  
+
   *handle = model;
   API_END();
 }
 
-extern "C" int CreateTVMModel(DLRModelHandle* handle,
-                              const char* graph,
-                              const char* lib_path,
-                              const char* params,
-                              unsigned params_len,
-                              int dev_type, int dev_id) {
+extern "C" int CreateTVMModel(DLRModelHandle* handle, const char* graph, const char* lib_path,
+                              const char* params, unsigned params_len, int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
   ModelPath paths;
   paths.model_lib = pathFix(lib_path);
-  std::string param_str(params,params_len);
+  std::string param_str(params, params_len);
   *handle = new TVMModel(graph, param_str, paths, ctx);
   API_END();
 }
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
-extern "C" int CreateDLRPipeline(DLRModelHandle* handle,
-                                 int num_models, const char** model_paths,
+extern "C" int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,
                                  int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
@@ -405,9 +389,8 @@ extern "C" int GetDLRDeviceType(const char* model_path) {
 
 extern "C" int GetDLRVersion(const char** out) {
   API_BEGIN();
-  static const std::string version_str = std::to_string(DLR_MAJOR) + "." +
-                                         std::to_string(DLR_MINOR) + "." +
-                                         std::to_string(DLR_PATCH);
+  static const std::string version_str =
+      std::to_string(DLR_MAJOR) + "." + std::to_string(DLR_MINOR) + "." + std::to_string(DLR_PATCH);
   *out = version_str.c_str();
   API_END();
 }

@@ -23,8 +23,7 @@ extern "C" {  // Open extern "C" block
 /*! \brief DLR version */
 #define DLR_VERSION (DLR_MAJOR * 10000 + DLR_MINOR * 100 + DLR_PATCH)
 /*! \brief helper for making version number */
-#define DLR_MAKE_VERSION(major, minor, patch) \
-  ((major)*10000 + (minor)*100 + patch)
+#define DLR_MAKE_VERSION(major, minor, patch) ((major)*10000 + (minor)*100 + patch)
 
 /*!
  * \defgroup c_api
@@ -41,8 +40,8 @@ typedef void* DLRModelHandle;
  \brief Paths for model files
  */
 typedef struct DLRPaths_t {
-DLRPaths_t() : model_lib(0), params(0), model_json(0),
-    ver_json(0), metadata(0), relay_executable(0) {}
+  DLRPaths_t()
+      : model_lib(0), params(0), model_json(0), ver_json(0), metadata(0), relay_executable(0) {}
   const char* model_lib;
   const char* params;
   const char* model_json;
@@ -50,7 +49,7 @@ DLRPaths_t() : model_lib(0), params(0), model_json(0),
   const char* metadata;
   const char* relay_executable;
 } DLRPaths;
-  
+
 /*!
  \brief Creates a DLR model by search in directory path given.
  \param handle The pointer to save the model handle.
@@ -61,8 +60,7 @@ DLRPaths_t() : model_lib(0), params(0), model_json(0),
  success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
-                   int dev_id);
+int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type, int dev_id);
 
 /*!
  * \brief Creates a TVM DLR model.
@@ -71,15 +69,14 @@ int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
  * \param lib_path Path to the TVM lib.so file
  * \param params String of binary data loaded from tvm.params file
  * \param params_len length of the params string
- * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h. 
- * \param dev_id Device ID. 
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateTVMModel(DLRModelHandle* handle, const char* graph,
-                   const char* lib_path, const char* params, unsigned params_len,
-                   int dev_type, int dev_id);
-  
+int CreateTVMModel(DLRModelHandle* handle, const char* graph, const char* lib_path,
+                   const char* params, unsigned params_len, int dev_type, int dev_id);
+
 /*!
  * \brief Creates a DLR model from specified paths
  * \param handle The pointer to save the model handle.
@@ -102,8 +99,8 @@ int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int d
  DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path,
-                             int threads, int use_nnapi);
+int CreateDLRModelFromTFLite(DLRModelHandle* handle, const char* model_path, int threads,
+                             int use_nnapi);
 #endif  // DLR_TFLITE
 
 #ifdef DLR_TENSORFLOW
@@ -161,8 +158,7 @@ int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
-                              int debug_level);
+int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, int debug_level);
 #endif  // DLR_HEXAGON
 
 /*!
@@ -177,8 +173,7 @@ int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path,
  \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateDLRPipeline(DLRModelHandle* handle,
-                      int num_models, const char** model_paths,
+int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,
                       int dev_type, int dev_id);
 
 /*!
@@ -250,8 +245,7 @@ int GetDLRInputType(DLRModelHandle* handle, int index, const char** input_type);
  message.
  */
 DLR_DLL
-int GetDLRWeightName(DLRModelHandle* handle, int index,
-                     const char** weight_name);
+int GetDLRWeightName(DLRModelHandle* handle, int index, const char** weight_name);
 
 /*!
  \brief Sets the input according the node name.
@@ -264,8 +258,8 @@ int GetDLRWeightName(DLRModelHandle* handle, int index,
  message.
  */
 DLR_DLL
-int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
-                const void* input, int dim);
+int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape, const void* input,
+                int dim);
 
 /*!
  * \brief Sets the input according the node name.
@@ -292,7 +286,7 @@ int GetDLRInput(DLRModelHandle* handle, const char* name, void* input);
  \param handle The model handle returned from CreateDLRModel().
  \param index The index-th input.
  \param shape The pointer to save the shape of index-th input. This should be a
- pointer to an array of size "dim" from GetDLRInputSizeDim(). 
+ pointer to an array of size "dim" from GetDLRInputSizeDim().
  \return 0 for
  success, -1 for error. Call DLRGetLastError() to get the error message.
  */
@@ -309,8 +303,7 @@ int GetDLRInputShape(DLRModelHandle* handle, int index, int64_t* shape);
  message.
  */
 DLR_DLL
-int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
-                        int* dim);
+int GetDLRInputSizeDim(DLRModelHandle* handle, int index, int64_t* size, int* dim);
 
 /*!
  \brief Gets the shape of the index-th output.
@@ -364,8 +357,7 @@ int GetDLRNumOutputs(DLRModelHandle* handle, int* num_outputs);
  message.
  */
 DLR_DLL
-int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
-                        int* dim);
+int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size, int* dim);
 
 /*!
  \brief Gets the type of the index-th output.
@@ -376,8 +368,7 @@ int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size,
  message.
  */
 DLR_DLL
-int GetDLROutputType(DLRModelHandle* handle, int index,
-                     const char** output_type);
+int GetDLROutputType(DLRModelHandle* handle, int index, const char** output_type);
 
 /*!
  * \brief Gets the index-th output from the model.
@@ -388,7 +379,7 @@ int GetDLROutputType(DLRModelHandle* handle, int index,
  */
 DLR_DLL
 int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
-  
+
 /*!
  \brief Check if metadata file is found in the compilation artifact
  \param handle The model handle returned from CreateDLRModel().
@@ -447,7 +438,6 @@ int GetDLRBackend(DLRModelHandle* handle, const char** name);
  */
 DLR_DLL
 int GetDLRDeviceType(const char* model_path);
-
 
 /*!
  \brief Get DLR version

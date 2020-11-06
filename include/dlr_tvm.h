@@ -28,7 +28,8 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<std::string> weight_names_;
   void SetupTVMModule(std::vector<std::string> model_path);
   void SetupTVMModule(const ModelPath& paths);
-  void SetupTVMModule(const std::string& json_str, const std::string& param_str, const ModelPath& paths);
+  void SetupTVMModule(const std::string& json_str, const std::string& param_str,
+                      const ModelPath& paths);
   void UpdateInputShapes();
 
  public:
@@ -66,7 +67,7 @@ class DLR_DLL TVMModel : public DLRModel {
 
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
-  
+
   virtual void Run() override;
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
