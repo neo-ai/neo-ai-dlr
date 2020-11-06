@@ -32,6 +32,17 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
   }
 }
 
+void RelayVMModel::InitModelPath(ModelPath path) {
+  path_ = std::make_unique<ModelPath>();
+  path_->model_lib = path.model_lib;
+  path_->relay_executable = path.relay_executable;
+  path_->metadata = path.metadata;
+
+  if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
+    throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
+  }
+}
+
 void RelayVMModel::SetupVMModule() {
   tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(path_->model_lib);
   std::ifstream relay_ob(path_->relay_executable, std::ios::binary);

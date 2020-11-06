@@ -27,6 +27,8 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
   void SetupTVMModule(std::vector<std::string> model_path);
+  void SetupTVMModule(ModelPath paths);
+  void SetupTVMModule(std::string json_str, std::string param_str, ModelPath paths);
   void UpdateInputShapes();
 
  public:
@@ -36,6 +38,15 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
   }
+  explicit TVMModel(ModelPath paths, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTVM) {
+    SetupTVMModule(paths);
+  }
+  explicit TVMModel(std::string json_str, std::string param_str,
+                    ModelPath paths, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTVM) {
+    SetupTVMModule(json_str, param_str, paths);
+  }
 
   virtual const int GetInputDim(int index) const override;
   virtual const int64_t GetInputSize(int index) const override;
@@ -44,12 +55,14 @@ class DLR_DLL TVMModel : public DLRModel {
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
+  void SetInput(const char* name, DLTensor* tensor);
 
   virtual void GetOutput(int index, void* out) override;
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
+  void CopyOutputTensor(int index, DLTensor* out);
 
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;

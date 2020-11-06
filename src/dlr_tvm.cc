@@ -43,13 +43,22 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
 
 void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTvmPaths(model_path);
+  SetupTVMModule(paths);
+}
+
+void TVMModel::SetupTVMModule(ModelPath paths) { 
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
   std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
   std::stringstream param_blob;
   param_blob << pstream.rdbuf();
+  SetupTVMModule(json_blob.str(), param_blob.str(), paths);
+}
 
+void TVMModel::SetupTVMModule(std::string json_str,
+                              std::string param_str,
+                              ModelPath paths) {
   tvm::runtime::Module module;
   if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
@@ -60,8 +69,8 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   }
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
-  tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
-  tvm_graph_runtime_->LoadParams(param_blob.str());
+  tvm_graph_runtime_->Init(json_str, module, {ctx_});
+  tvm_graph_runtime_->LoadParams(param_str);
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(
       tvm::runtime::Module(tvm_graph_runtime_));
@@ -164,6 +173,31 @@ void TVMModel::SetInput(const char* name, const int64_t* shape,
   UpdateInputShapes();
 }
 
+void TVMModel::SetInput(const char* name, DLTensor* tensor) {
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  if(index > -1) {
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+    DLTensor input_tensor = *(arr.operator->());
+    CHECK(tensor->ctx.device_type == input_tensor.ctx.device_type)
+      << "Mismatch found for input context, expected device type "
+      << input_tensor.ctx.device_type << " but found "
+      << tensor->ctx.device_type;
+    CHECK(tensor->ctx.device_id == input_tensor.ctx.device_id)
+      << "Mismatch found for input context, expected device id "
+      << input_tensor.ctx.device_id << " but found "
+      << tensor->ctx.device_id;
+    int64_t read_size =
+      std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1,
+                      std::multiplies<int64_t>());
+    int64_t expected_size =
+      std::accumulate(input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1,
+                      std::multiplies<int64_t>());
+    CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
+    tvm_graph_runtime_->SetInput(index, tensor);
+  }
+}
+
 void TVMModel::GetInput(const char* name, void* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
@@ -217,6 +251,27 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 const char* TVMModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   return output_types_[index].c_str();
+}
+
+void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
+  DLTensor output_tensor = *outputs_[index];
+  CHECK(out->ctx.device_type == output_tensor.ctx.device_type)
+    << "Mismatch found for output context, expected device type "
+    << output_tensor.ctx.device_type << " but found "
+    << out->ctx.device_type;
+  CHECK(out->ctx.device_id == output_tensor.ctx.device_id)
+    << "Mismatch found for output context, expected device id "
+    << output_tensor.ctx.device_id << " but found "
+    << out->ctx.device_id;
+  int64_t read_size =
+    std::accumulate(out->shape, out->shape + out->ndim, 1,
+                    std::multiplies<int64_t>());
+  int64_t expected_size =
+    std::accumulate(output_tensor.shape, output_tensor.shape + output_tensor.ndim, 1,
+                    std::multiplies<int64_t>());
+  CHECK_SHAPE("Mismatch found in output data size", read_size, expected_size);
+  
+  tvm_graph_runtime_->CopyOutputTo(index, out);
 }
 
 void TVMModel::Run() {

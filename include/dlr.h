@@ -37,8 +37,19 @@ extern "C" {  // Open extern "C" block
  */
 typedef void* DLRModelHandle;
 
+typedef struct DLRPaths_t {
+DLRPaths_t() : model_lib(0), params(0), model_json(0),
+    ver_json(0), metadata(0), relay_executable(0) {}
+  char* model_lib;
+  char* params;
+  char* model_json;
+  char* ver_json;
+  char* metadata;
+  char* relay_executable;
+} DLRPaths;
+  
 /*!
- \brief Creates a DLR model.
+ \brief Creates a DLR model by search in directory path given.
  \param handle The pointer to save the model handle.
  \param model_path Path to the folder containing the model files,
                    or colon-separated list of folders (or files) if model files
@@ -49,6 +60,34 @@ typedef void* DLRModelHandle;
 DLR_DLL
 int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
                    int dev_id);
+
+/*!
+ \brief Creates a TVM DLR model.
+ \param handle The pointer to save the model handle.
+ \param graph String of loaded graph.json file
+ \param lib_path Path to the TVM lib.so file
+ \param params String of binary data loaded from tvm.params file
+ \param params_len length of the params string
+ \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h. 
+ \param dev_id Device ID. 
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateTVMModel(DLRModelHandle* handle, const char* graph,
+                   const char* lib_path, const char* params, unsigned params_len,
+                   int dev_type, int dev_id);
+  
+/*!
+ \brief Creates a DLR model from specified paths
+ \param handle The pointer to save the model handle.
+ \param paths Paths to the model files
+ stored in different locations \param dev_type Device type. Valid values are in
+ the DLDeviceType enum in dlpack.h. \param dev_id Device ID. \return 0 for
+ success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int dev_type,
+                            int dev_id);
 
 #ifdef DLR_TFLITE
 /*!
@@ -225,6 +264,16 @@ DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
                 const void* input, int dim);
 /*!
+ \brief Sets the input according the node name.
+ \param handle The model handle returned from CreateDLRModel().
+ \param name The input node name.
+ \param tensor The input DLTensor.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
+ message.
+ */
+DLR_DLL
+int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
+/*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
  \param name The input node name.
@@ -327,6 +376,16 @@ DLR_DLL
 int GetDLROutputType(DLRModelHandle* handle, int index,
                      const char** output_type);
 
+/*!
+ \brief Gets the index-th output from the model.
+ \param handle The model handle returned from CreateDLRModel().
+ \param index The index-th output.
+ \param out The pointer to save the output DLTensor
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
+  
 /*!
  \brief Check if metadata file is found in the compilation artifact
  \param handle The model handle returned from CreateDLRModel().
