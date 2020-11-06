@@ -3,6 +3,7 @@
 
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
+#include <tvm/runtime/registry.h>
 #include "dlr_common.h"
 
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -28,7 +29,7 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<std::string> weight_names_;
   void SetupTVMModule(std::vector<std::string> model_path);
   void SetupTVMModule(const ModelPath& paths);
-  void SetupTVMModule(const std::string& json_str, const std::string& param_str,
+  void SetupTVMModule(const std::string& json_str, dmlc::Stream* param_strm,
                       const ModelPath& paths);
   void UpdateInputShapes();
 
@@ -43,10 +44,11 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(paths);
   }
-  explicit TVMModel(const std::string& json_str, const std::string& param_str,
+  explicit TVMModel(const std::string& json_str, const std::string& param_data,
                     const ModelPath& paths, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
-    SetupTVMModule(json_str, param_str, paths);
+    dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
+    SetupTVMModule(json_str, &strm, paths);
   }
 
   virtual const int GetInputDim(int index) const override;
