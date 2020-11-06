@@ -55,6 +55,9 @@ typedef struct {
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
+/* Logic to handle Windows drive letter */
+std::string pathFix(std::string path);
+ 
 std::string GetBasename(const std::string& path);
 
 bool IsFileEmpty(const std::string& filePath);

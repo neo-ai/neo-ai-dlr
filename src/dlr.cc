@@ -209,19 +209,9 @@ extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dlten
   API_END();
 }
 
-std::vector<std::string> MakePathVec(const char* model_path) {
-  /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
-
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
+std::vector<std::string> MakePathVec(std::string model_path) {
+  std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
+  path_vec[0] = pathFix(path_vec[0]);
   return path_vec;
 }
 
@@ -346,20 +336,8 @@ extern "C" int CreateTVMModel(DLRModelHandle* handle,
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
-  /* Logic to handle Windows drive letter */
-  auto path_fix = [=](auto path) {
-    std::string path_string{path};
-    std::string special_prefix{""};
-    if (path_string.length() >= 2 && path_string[1] == ':' &&
-        std::isalpha(path_string[0], std::locale("C"))) {
-      // Handle drive letter
-      special_prefix = path_string.substr(0, 2);
-      path_string = path_string.substr(2);
-    }
-    return special_prefix + path_string;
-  };
   ModelPath paths;
-  paths.model_lib = path_fix(lib_path);
+  paths.model_lib = pathFix(lib_path);
   std::string param_str(params,params_len);
   *handle = new TVMModel(graph, param_str, paths, ctx);
   API_END();
@@ -413,18 +391,8 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
 
 extern "C" int GetDLRDeviceType(const char* model_path) {
   API_BEGIN();
-    /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
 
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
+  std::vector<std::string> path_vec = MakePathVec(model_path);
 
   try {
     return dlr::GetDeviceTypeFromMetadata(path_vec);

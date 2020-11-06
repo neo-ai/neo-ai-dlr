@@ -59,6 +59,18 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
+std::string dlr::pathFix(std::string path) {
+    std::string path_string{path};
+    std::string special_prefix{""};
+    if (path_string.length() >= 2 && path_string[1] == ':' &&
+        std::isalpha(path_string[0], std::locale("C"))) {
+      // Handle drive letter
+      special_prefix = path_string.substr(0, 2);
+      path_string = path_string.substr(2);
+    }
+    return special_prefix + path_string;
+  };
+
 void dlr::LoadJsonFromFile(const std::string& path,
                            nlohmann::json& jsonObject) {
   std::ifstream jsonFile(path);
