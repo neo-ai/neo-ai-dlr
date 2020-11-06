@@ -127,3 +127,69 @@ DataTransform::GetTransformerMap() const {
   map->emplace("CategoricalString", std::make_shared<CategoricalStringTransformer>());
   return map;
 }
+
+template <typename T>
+nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& mapping, const T* data,
+                                                      const std::vector<int64_t>& shape) const {
+  CHECK_EQ(shape.size(), 1);
+  nlohmann::json output_json = nlohmann::json::array();
+  for (int64_t i = 0; i < shape[0]; ++i) {
+    auto it = mapping.find(std::to_string(data[i]));
+    if (it == mapping.end()) {
+      output_json.push_back(kUnknownLabel);
+    } else {
+      output_json.push_back(*it);
+    }
+  }
+  return output_json;
+}
+
+template <typename T>
+nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& mapping, const T* data,
+                                                      const std::vector<int64_t>& shape) const {
+  CHECK_EQ(shape.size(), 2);
+  nlohmann::json output_json = nlohmann::json::array();
+  for (int64_t i = 0; i < shape[0]; ++i) {
+    output_json.push_back(TransformOutputHelper1D<T>(mapping, data + i * shape[1], {shape[1]}));
+  }
+  return output_json;
+}
+
+void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
+                                    const tvm::runtime::NDArray& output_array) {
+  auto& mapping = metadata["DataTransform"]["Output"][std::to_string(index)]["CategoricalString"];
+  const DLTensor* tensor = output_array.operator->();
+  CHECK_EQ(tensor->ctx.device_type, DLDeviceType::kDLCPU)
+      << "DataTransform CategoricalString is only supported for CPU.";
+  CHECK(tensor->dtype.code == kDLInt && tensor->dtype.bits == 32 && tensor->dtype.lanes == 1)
+      << "DataTransform CategoricalString is only supported for int32 outputs.";
+
+  std::vector<int64_t> shape(output_array->shape, output_array->shape + output_array->ndim);
+  nlohmann::json output_json;
+  if (shape.size() == 1) {
+    output_json = TransformOutputHelper1D<int>(mapping, static_cast<int*>(tensor->data), shape);
+  } else if (shape.size() == 2) {
+    output_json = TransformOutputHelper2D<int>(mapping, static_cast<int*>(tensor->data), shape);
+  } else {
+    throw dmlc::Error("DataTransform CategoricalString is only supported for 1-D or 2-D inputs.");
+  }
+  transformed_outputs_[index] = output_json.dump();
+}
+
+void DataTransform::GetOutputShape(int index, int64_t* shape) const {
+  shape[0] = transformed_outputs_.at(index).size();
+}
+
+void DataTransform::GetOutputSizeDim(int index, int64_t* size, int* dim) const {
+  *size = transformed_outputs_.at(index).size();
+  *dim = 1;
+}
+
+void DataTransform::GetOutput(int index, void* output) const {
+  const std::string& output_str = transformed_outputs_.at(index);
+  std::copy(output_str.begin(), output_str.end(), static_cast<char*>(output));
+}
+
+const void* DataTransform::GetOutputPtr(int index) const {
+  return static_cast<const void*>(transformed_outputs_.at(index).data());
+}

@@ -485,6 +485,22 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/pipeline_model2-LINUX_X86_64.tar.gz)
   endif()
 
+  set(INVERSELABEL_MODEL inverselabel-ml_m4.tar.gz)
+  set(INVERSELABEL_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/inverselabel)
+  if(NOT IS_DIRECTORY ${INVERSELABEL_MODEL_DIR})
+    file(MAKE_DIRECTORY ${INVERSELABEL_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${INVERSELABEL_MODEL}
+      /tmp/${INVERSELABEL_MODEL}
+      SHA1
+      3343b54f1290fcbbccae80c4f03c1b1d9fb0145c
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${INVERSELABEL_MODEL}
+                    WORKING_DIRECTORY ${INVERSELABEL_MODEL_DIR})
+    file(REMOVE /tmp/${INVERSELABEL_MODEL})
+  endif()
+
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
