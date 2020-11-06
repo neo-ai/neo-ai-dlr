@@ -174,12 +174,6 @@ void TVMModel::SetInput(const char* name, DLTensor* tensor) {
   if (index > -1) {
     tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
     DLTensor input_tensor = *(arr.operator->());
-    CHECK(tensor->ctx.device_type == input_tensor.ctx.device_type)
-        << "Mismatch found for input context, expected device type " << input_tensor.ctx.device_type
-        << " but found " << tensor->ctx.device_type;
-    CHECK(tensor->ctx.device_id == input_tensor.ctx.device_id)
-        << "Mismatch found for input context, expected device id " << input_tensor.ctx.device_id
-        << " but found " << tensor->ctx.device_id;
     int64_t read_size =
         std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1, std::multiplies<int64_t>());
     int64_t expected_size = std::accumulate(
