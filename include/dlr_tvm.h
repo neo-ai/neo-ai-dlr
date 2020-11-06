@@ -44,10 +44,10 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(paths);
   }
-  explicit TVMModel(const std::string& json_str, const std::string& param_data,
+  explicit TVMModel(const std::string& json_str, std::string* param_data,
                     const ModelPath& paths, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
-    dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
+    dmlc::MemoryStringStream strm(param_data);
     SetupTVMModule(json_str, &strm, paths);
   }
 

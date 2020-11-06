@@ -324,7 +324,7 @@ extern "C" int CreateTVMModel(DLRModelHandle* handle, const char* graph, const c
   ModelPath paths;
   paths.model_lib = FixWindowsDriveLetter(lib_path);
   std::string param_str(params, params_len);
-  *handle = new TVMModel(graph, param_str, paths, ctx);
+  *handle = new TVMModel(graph, &param_str, paths, ctx);
   API_END();
 }
 
