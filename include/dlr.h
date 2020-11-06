@@ -37,6 +37,9 @@ extern "C" {  // Open extern "C" block
  */
 typedef void* DLRModelHandle;
 
+/*!
+ \brief Paths for model files
+ */
 typedef struct DLRPaths_t {
 DLRPaths_t() : model_lib(0), params(0), model_json(0),
     ver_json(0), metadata(0), relay_executable(0) {}
@@ -62,15 +65,15 @@ int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
                    int dev_id);
 
 /*!
- \brief Creates a TVM DLR model.
- \param handle The pointer to save the model handle.
- \param graph String of loaded graph.json file
- \param lib_path Path to the TVM lib.so file
- \param params String of binary data loaded from tvm.params file
- \param params_len length of the params string
- \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h. 
- \param dev_id Device ID. 
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ * \brief Creates a TVM DLR model.
+ * \param handle The pointer to save the model handle.
+ * \param graph String of loaded graph.json file
+ * \param lib_path Path to the TVM lib.so file
+ * \param params String of binary data loaded from tvm.params file
+ * \param params_len length of the params string
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h. 
+ * \param dev_id Device ID. 
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int CreateTVMModel(DLRModelHandle* handle, const char* graph,
@@ -78,12 +81,12 @@ int CreateTVMModel(DLRModelHandle* handle, const char* graph,
                    int dev_type, int dev_id);
   
 /*!
- \brief Creates a DLR model from specified paths
- \param handle The pointer to save the model handle.
- \param paths Paths to the model files
- stored in different locations \param dev_type Device type. Valid values are in
- the DLDeviceType enum in dlpack.h. \param dev_id Device ID. \return 0 for
- success, -1 for error. Call DLRGetLastError() to get the error message.
+ * \brief Creates a DLR model from specified paths
+ * \param handle The pointer to save the model handle.
+ * \param paths Paths to the model files stored in different locations
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int dev_type,
@@ -263,13 +266,13 @@ int GetDLRWeightName(DLRModelHandle* handle, int index,
 DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape,
                 const void* input, int dim);
+
 /*!
- \brief Sets the input according the node name.
- \param handle The model handle returned from CreateDLRModel().
- \param name The input node name.
- \param tensor The input DLTensor.
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error
- message.
+ * \brief Sets the input according the node name.
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param name The input node name.
+ * \param tensor The input DLTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
@@ -377,11 +380,11 @@ int GetDLROutputType(DLRModelHandle* handle, int index,
                      const char** output_type);
 
 /*!
- \brief Gets the index-th output from the model.
- \param handle The model handle returned from CreateDLRModel().
- \param index The index-th output.
- \param out The pointer to save the output DLTensor
- \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ * \brief Gets the index-th output from the model.
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param out The pointer to save the output DLTensor
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
