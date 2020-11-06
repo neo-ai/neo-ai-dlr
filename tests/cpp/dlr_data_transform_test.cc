@@ -184,3 +184,38 @@ TEST(DLR, RelayVMDataTransformInput) {
   }
   delete model;
 }
+
+TEST(DLR, RelayVMDataTransformOutput) {
+  DLContext ctx = {kDLCPU, 0};
+  std::vector<std::string> paths = {"./inverselabel"};
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
+
+  std::vector<int> input_data = {0, 1, 2, 3, -75};
+  std::vector<int64_t> shape = {5};
+  EXPECT_STREQ(model->GetInputType(0), "int32");
+  model->SetInput("input", shape.data(), input_data.data(), shape.size());
+  model->Run();
+
+  std::string expected_output =
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unknown_label>\",\"<unknown_"
+      "label>\"]";
+  int64_t size;
+  int dim;
+  EXPECT_STREQ(model->GetOutputType(0), "json");
+  EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
+  EXPECT_EQ(size, expected_output.size());
+  EXPECT_EQ(dim, 1);
+  int64_t output_shape[1];
+  EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
+  EXPECT_EQ(output_shape[0], expected_output.size());
+
+  std::vector<char> output(size, 0);
+  EXPECT_NO_THROW(model->GetOutput(0, output.data()));
+  std::string output_string(output.begin(), output.end());
+  EXPECT_EQ(output_string, expected_output);
+  char* output_ptr = nullptr;
+  EXPECT_NO_THROW(output_ptr = (char*)model->GetOutputPtr(0));
+  std::string output_ptr_string(output_ptr, output_ptr + size);
+  EXPECT_EQ(output_ptr_string, expected_output);
+  delete model;
+}
