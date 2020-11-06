@@ -46,7 +46,7 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   SetupTVMModule(paths);
 }
 
-void TVMModel::SetupTVMModule(ModelPath paths) { 
+void TVMModel::SetupTVMModule(const ModelPath& paths) { 
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
@@ -56,9 +56,9 @@ void TVMModel::SetupTVMModule(ModelPath paths) {
   SetupTVMModule(json_blob.str(), param_blob.str(), paths);
 }
 
-void TVMModel::SetupTVMModule(std::string json_str,
-                              std::string param_str,
-                              ModelPath paths) {
+void TVMModel::SetupTVMModule(const std::string& json_str,
+                              const std::string& param_str,
+                              const ModelPath& paths) {
   tvm::runtime::Module module;
   if (!IsFileEmpty(paths.model_lib)) {
     module = tvm::runtime::Module::LoadFromFile(paths.model_lib);

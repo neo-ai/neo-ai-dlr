@@ -27,8 +27,8 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
   void SetupTVMModule(std::vector<std::string> model_path);
-  void SetupTVMModule(ModelPath paths);
-  void SetupTVMModule(std::string json_str, std::string param_str, ModelPath paths);
+  void SetupTVMModule(const ModelPath& paths);
+  void SetupTVMModule(const std::string& json_str, const std::string& param_str, const ModelPath& paths);
   void UpdateInputShapes();
 
  public:
@@ -38,12 +38,12 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
   }
-  explicit TVMModel(ModelPath paths, const DLContext& ctx)
+  explicit TVMModel(const ModelPath& paths, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(paths);
   }
-  explicit TVMModel(std::string json_str, std::string param_str,
-                    ModelPath paths, const DLContext& ctx)
+  explicit TVMModel(const std::string& json_str, const std::string& param_str,
+                    const ModelPath& paths, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(json_str, param_str, paths);
   }

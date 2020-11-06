@@ -32,7 +32,7 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
   }
 }
 
-void RelayVMModel::InitModelPath(ModelPath path) {
+void RelayVMModel::InitModelPath(const ModelPath& path) {
   path_ = std::make_unique<ModelPath>();
   path_->model_lib = path.model_lib;
   path_->relay_executable = path.relay_executable;
