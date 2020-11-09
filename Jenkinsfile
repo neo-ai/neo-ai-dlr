@@ -37,6 +37,24 @@ pipeline {
         milestone label: 'Sources ready', ordinal: 1
       }
     }
+    stage('Lint') {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.manylinux'
+          dir 'tests/ci_build'
+          label 'ubuntu && amd64 && cpu-build'
+          args '-v ${PWD}:/workspace -w /workspace'
+        }
+      }
+      steps {
+        unstash name: 'srcs'
+        sh """
+        tests/ci_build/git-clang-format.sh HEAD~1
+        tests/ci_build/git-clang-format.sh origin/master
+        """
+        stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
+      }
+    }
     stage('Build & Test') {
       parallel {
         stage('Build for Manylinux') {
