@@ -6,7 +6,8 @@ RUN apt-get update && \
     apt-get install -y antlr4 && \
     apt-get install -y python3-pip && \
     apt-get install -y gnupg && \
-    apt-get install -y git
+    apt-get install -y git && \
+    apt-get install -y clang-format-10
 
 RUN pip3 install sklearn pytest
 ENV PYTHON_COMMAND=python3
