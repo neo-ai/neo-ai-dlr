@@ -319,7 +319,8 @@ extern "C" int RunDLRModel(DLRModelHandle* handle) {
   API_END();
 }
 
-extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
+extern "C" const char* DLRGetLastError() {
+  return TVMGetLastError(); }
 
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
