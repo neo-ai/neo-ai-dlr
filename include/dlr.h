@@ -337,16 +337,6 @@ DLR_DLL
 int GetDLROutputType(DLRModelHandle* handle, int index, const char** output_type);
 
 /*!
- * \brief Gets the index-th output from the model.
- * \param handle The model handle returned from CreateDLRModel().
- * \param index The index-th output.
- * \param out The pointer to save the output DLTensor
- * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
- */
-DLR_DLL
-int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
-
-/*!
  \brief Check if metadata file is found in the compilation artifact
  \param handle The model handle returned from CreateDLRModel().
  \param has_metadata The pointer to save boolean value to indicate the presence of metadata file.

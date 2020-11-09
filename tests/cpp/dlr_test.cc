@@ -209,6 +209,68 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   DeleteDLRModel(&model);
 }
 
+TEST(DLR, TestCreateTVMModelFromMemory) {
+  DLRModelHandle model = nullptr;
+  const char* lib_so = "./resnet_v1_5_50/compiled.so";
+  int device_type = 1; // cpu;
+  //load graph.json into a string
+  std::ifstream gstream("./resnet_v1_5_50/compiled_model.json");
+  EXPECT_EQ(gstream.good(), 0); //check that file was found
+  std::string graph_json( (std::istreambuf_iterator<char>(gstream) ),
+                          (std::istreambuf_iterator<char>()));
+  //load params into a string
+  std::ifstream pstream("./resnet_v1_5_50/compiled.params", std::ios::in | std::ios::binary);
+  std::stringstream pstring;
+  pstring << pstream.rdbuf();
+  std::string params = pstring.str();
+  
+  if (CreateTVMModelFromMemory(&model, graph_json.c_str(), lib_so, params.c_str(),
+                               params.length(), device_type, 0) != 0) {
+    LOG(INFO) << DLRGetLastError() << std::endl;
+    throw std::runtime_error("Could not load DLR Model");
+  }
+  DeleteDLRModel(&model);
+}
+
+TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
+  DLRModelHandle model = nullptr;
+  int device_type = 1; // cpu;
+  TVMPaths paths;
+  paths.model_lib = "./resnet_v1_5_50/compiled.so";
+  paths.model_json = "./resnet_v1_5_50/compiled_model.json";
+  paths.params = "./resnet_v1_5_50/compiled.params";
+  
+  if (CreateTVMModelFromPaths(&model, &paths, device_type, 0) != 0) {
+    LOG(INFO) << DLRGetLastError() << std::endl;
+    throw std::runtime_error("Could not load DLR Model");
+  }
+
+  //set input
+  DLTensor input = GetInputDLTensor();
+  const char* input_name = "input_tensor";
+  EXPECT_EQ(SetTVMInputTensor(&model, input_name, &input), 0);
+
+  //run inference
+  EXPECT_EQ(RunDLRModel(&model), 0);
+
+  // output 0
+  int64_t output0_shape[1] = {1};
+  DLTensor output0 = GetOutputDLTensor(1, 1, output0_shape);
+  EXPECT_EQ(GetTVMOutputTensor(&model, 0, &output0), 0);
+  EXPECT_EQ(((float*)(output0.data))[0], 112);
+
+  // output 1
+  int64_t output1_shape[1] = {1001};
+  DLTensor output1 = GetOutputDLTensor(1001, 1, output1_shape);
+  EXPECT_EQ(GetDLROutput(&model, 1, &output1), 0);
+  EXPECT_GT(((float*)(output1.data))[112], 0.01);
+
+  DeleteDLTensor(output0);
+  DeleteDLTensor(output1);
+  DeleteDLTensor(input);
+  DeleteDLRModel(&model);
+}
+
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
