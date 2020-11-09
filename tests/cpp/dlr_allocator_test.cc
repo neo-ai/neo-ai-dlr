@@ -26,9 +26,9 @@ void test_free(void* ptr) { throw dmlc::Error("Using custom free"); }
 void* test_memalign(size_t alignment, size_t size) { throw dmlc::Error("Using custom memalign"); }
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsUnused) {
-  EXPECT_FALSE(dlr::DLRAllocatorFunctions::IsSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AnySet());
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), nullptr);
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetReallocFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), nullptr);
   void* p = nullptr;
@@ -36,22 +36,27 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsUnused) {
   EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::Free(p));
 }
 
-TEST_F(CustomAllocatorTest, CustomAllocatorsMissingFunctions) {
-  EXPECT_FALSE(dlr::DLRAllocatorFunctions::IsSet());
-  EXPECT_THROW(dlr::DLRAllocatorFunctions::Set(test_malloc, nullptr, nullptr, nullptr),
-               dmlc::Error);
-  EXPECT_FALSE(dlr::DLRAllocatorFunctions::IsSet());
+TEST_F(CustomAllocatorTest, CustomAllocatorsOnlyMalloc) {
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AnySet());
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), nullptr);
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetReallocFunction(), nullptr);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), nullptr);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), nullptr);
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
+  EXPECT_TRUE(dlr::DLRAllocatorFunctions::AnySet());
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), nullptr);
 }
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsUsed) {
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::Set(test_malloc, nullptr, test_free, test_memalign));
-  EXPECT_TRUE(dlr::DLRAllocatorFunctions::IsSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign));
+  EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc);
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetReallocFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), test_free);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), test_memalign);
   EXPECT_THROW(
@@ -77,16 +82,18 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsUsed) {
 }
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsSTLUnset) {
-  EXPECT_FALSE(dlr::DLRAllocatorFunctions::IsSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
   std::vector<int, dlr::DLRAllocator<int>>* data;
   EXPECT_NO_THROW((data = new std::vector<int, dlr::DLRAllocator<int>>(1024)));
   EXPECT_NO_THROW((delete data));
 }
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsSTLSet) {
-  EXPECT_FALSE(dlr::DLRAllocatorFunctions::IsSet());
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::Set(test_malloc, nullptr, test_free, test_memalign));
-  EXPECT_TRUE(dlr::DLRAllocatorFunctions::IsSet());
+  EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign));
+  EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
 
   EXPECT_THROW(({
                  std::vector<int, dlr::DLRAllocator<int>>* data;
@@ -167,7 +174,9 @@ void* tracking_memalign(size_t alignment, size_t size) {
 }
 
 TEST_F(CustomAllocatorTrackingTest, CustomAllocatorsTvm) {
-  SetDLRCustomAllocator(tracking_malloc, nullptr, tracking_free, tracking_memalign);
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(tracking_malloc));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(tracking_free));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(tracking_memalign));
   DLRModelHandle model = nullptr;
   EXPECT_EQ(CustomAllocatorTrackingTest::malloc_calls_.size(), 0);
   EXPECT_EQ(CustomAllocatorTrackingTest::free_calls_.size(), 0);

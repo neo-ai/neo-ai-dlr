@@ -45,7 +45,8 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
 
 void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   // Set custom allocators in TVM.
-  if (dlr::DLRAllocatorFunctions::IsSet()) {
+  if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
+      dlr::DLRAllocatorFunctions::GetFreeFunction()) {
     auto* pf = tvm::runtime::Registry::Get("runtime.contrib.set_custom_cpu_allocator");
     if (pf) {
       (*pf)(reinterpret_cast<void*>(dlr::DLRAllocatorFunctions::GetMemalignFunction()),
@@ -53,6 +54,9 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     } else {
       LOG(WARNING) << "Custom allocator functions are not available. Using default allocators.";
     }
+  } else if (dlr::DLRAllocatorFunctions::AnySet()) {
+    LOG(WARNING) << "SetDLRCustomAllocatorFree() and SetDLRCustomAllocatorMemalign() must be set "
+                    "to override TVM allocations. Using default allocators.";
   }
 
   ModelPath paths = GetTvmPaths(model_path);

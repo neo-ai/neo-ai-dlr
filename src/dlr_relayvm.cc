@@ -34,7 +34,8 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
 
 void RelayVMModel::SetupVMModule() {
   // Set custom allocators in TVM.
-  if (dlr::DLRAllocatorFunctions::IsSet()) {
+  if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
+      dlr::DLRAllocatorFunctions::GetFreeFunction()) {
     auto* pf = tvm::runtime::Registry::Get("runtime.contrib.set_custom_cpu_allocator");
     if (pf) {
       (*pf)(reinterpret_cast<void*>(dlr::DLRAllocatorFunctions::GetMemalignFunction()),
@@ -42,6 +43,9 @@ void RelayVMModel::SetupVMModule() {
     } else {
       LOG(WARNING) << "Custom allocator functions are not available. Using default allocators.";
     }
+  } else if (dlr::DLRAllocatorFunctions::AnySet()) {
+    LOG(WARNING) << "SetDLRCustomAllocatorFree() and SetDLRCustomAllocatorMemalign() must be set "
+                    "to override TVM allocations. Using default allocators.";
   }
 
   tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(path_->model_lib);

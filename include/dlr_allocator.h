@@ -8,8 +8,6 @@
 #define DLR_ALLOC_TYPEDEF
 /*! \brief A pointer to a malloc-like function. */
 typedef void* (*DLRMallocFunctionPtr)(size_t);
-/*! \brief A pointer to a realloc-like function. */
-typedef void* (*DLRReallocFunctionPtr)(void*, size_t);
 /*! \brief A pointer to a free-like function. */
 typedef void (*DLRFreeFunctionPtr)(void*);
 /*! \brief A pointer to a memalign-like function. */
@@ -24,9 +22,6 @@ class DLRAllocatorFunctions {
   /*! \brief Custom malloc-like function, nullptr if not set. */
   static DLRMallocFunctionPtr malloc_fn_;
 
-  /*! \brief Custom realloac-like function, nullptr if not set. Not currently used. */
-  static DLRReallocFunctionPtr realloc_fn_;
-
   /*! \brief Custom free-like function, nullptr if not set. */
   static DLRFreeFunctionPtr free_fn_;
 
@@ -34,15 +29,17 @@ class DLRAllocatorFunctions {
   static DLRMemalignFunctionPtr memalign_fn_;
 
  public:
-  /*! \brief Set global allocator functions. */
-  static void Set(DLRMallocFunctionPtr malloc_fn, DLRReallocFunctionPtr realloc_fn,
-                  DLRFreeFunctionPtr free_fn, DLRMemalignFunctionPtr memalign_fn);
+  /*! \brief Set global allocator malloc function. */
+  static void SetMallocFunction(DLRMallocFunctionPtr malloc_fn);
+
+  /*! \brief Set global allocator free function. */
+  static void SetFreeFunction(DLRFreeFunctionPtr free_fn);
+
+  /*! \brief Set global allocator memalign function. */
+  static void SetMemalignFunction(DLRMemalignFunctionPtr memalign_fn);
 
   /*! \brief Get current malloc function pointer, returns nullptr if not set. */
   static DLRMallocFunctionPtr GetMallocFunction();
-
-  /*! \brief Get current realloc function pointer, returns nullptr if not set. */
-  static DLRReallocFunctionPtr GetReallocFunction();
 
   /*! \brief Get current free function pointer, returns nullptr if not set. */
   static DLRFreeFunctionPtr GetFreeFunction();
@@ -53,8 +50,11 @@ class DLRAllocatorFunctions {
   /*! \brief Clear global allocator functions. */
   static void Clear();
 
-  /*! \brief Check if global allocator functions are set. */
-  static bool IsSet();
+  /*! \brief Check if all global allocator functions are set. */
+  static bool AllSet();
+
+  /*! \brief Check if any global allocator functions are set. */
+  static bool AnySet();
 
   /*! \brief Allocate data, using custom allocator if set, otherwise use malloc. */
   static void* Malloc(size_t size);
@@ -83,14 +83,14 @@ class DLRAllocator : public std::allocator<T> {
   };
 
   Pointer allocate(SizeType n) {
-    if (DLRAllocatorFunctions::IsSet()) {
+    if (DLRAllocatorFunctions::GetMallocFunction()) {
       return static_cast<T*>(DLRAllocatorFunctions::Malloc(n * sizeof(T)));
     }
     return Base::allocate(n);
   }
 
   void deallocate(Pointer p, SizeType n) {
-    if (DLRAllocatorFunctions::IsSet()) {
+    if (DLRAllocatorFunctions::GetFreeFunction()) {
       DLRAllocatorFunctions::Free(p);
       return;
     }
