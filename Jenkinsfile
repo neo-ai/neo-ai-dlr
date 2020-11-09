@@ -40,7 +40,7 @@ pipeline {
     stage('Lint') {
       agent {
         dockerfile {
-          filename 'Dockerfile.manylinux'
+          filename 'Dockerfile.cpu_bare'
           dir 'tests/ci_build'
           label 'ubuntu && amd64 && cpu-build'
           args '-v ${PWD}:/workspace -w /workspace'
@@ -52,7 +52,6 @@ pipeline {
         tests/ci_build/git-clang-format.sh HEAD~1
         tests/ci_build/git-clang-format.sh origin/master
         """
-        stash name: 'dlr_cpu_whl', includes: 'python/dist/*.whl'
       }
     }
     stage('Build & Test') {
