@@ -174,9 +174,9 @@ void* tracking_memalign(size_t alignment, size_t size) {
 }
 
 TEST_F(CustomAllocatorTrackingTest, CustomAllocatorsTvm) {
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(tracking_malloc));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(tracking_free));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(tracking_memalign));
+  EXPECT_EQ(SetDLRCustomAllocatorMalloc(tracking_malloc), 0);
+  EXPECT_EQ(SetDLRCustomAllocatorFree(tracking_free), 0);
+  EXPECT_EQ(SetDLRCustomAllocatorMemalign(tracking_memalign), 0);
   DLRModelHandle model = nullptr;
   EXPECT_EQ(CustomAllocatorTrackingTest::malloc_calls_.size(), 0);
   EXPECT_EQ(CustomAllocatorTrackingTest::free_calls_.size(), 0);
