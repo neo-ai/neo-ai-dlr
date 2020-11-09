@@ -3,10 +3,10 @@
 
 #include <dlpack/dlpack.h>
 #include <dmlc/logging.h>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <cstring>
 
 std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t size,
                                           int batch_size) {
@@ -33,23 +33,22 @@ std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t si
 }
 
 DLTensor GetInputDLTensor() {
-  size_t img_size = 224*224*3;
+  size_t img_size = 224 * 224 * 3;
 
   int64_t shape[4] = {1, 224, 224, 3};
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = 4;
-  dltensor.shape = (int64_t*) malloc(dltensor.ndim * sizeof(int64_t));
+  dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
   dltensor.dtype = {kDLFloat, 32, 1};
   dltensor.data = malloc(img_size * sizeof(float));
 
-  //copy shapes
-  for(int i=0; i<dltensor.ndim; i++)
-    dltensor.shape[i] = shape[i];
+  // copy shapes
+  for (int i = 0; i < dltensor.ndim; i++) dltensor.shape[i] = shape[i];
 
-  //copy data from file
+  // copy data from file
   std::string line;
   std::ifstream fp("cat224-3.txt");
   size_t i = 0;
@@ -65,7 +64,7 @@ DLTensor GetInputDLTensor() {
 
   EXPECT_EQ(img_size, i);
   LOG(INFO) << "Image read - OK, float[" << i << "]";
-  
+
   return dltensor;
 }
 
@@ -73,16 +72,15 @@ DLTensor GetOutputDLTensor(int64_t size, int ndim, int64_t* shape) {
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = ndim;
-  dltensor.shape = (int64_t*) malloc(dltensor.ndim * sizeof(int64_t));
+  dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
   dltensor.dtype = {kDLFloat, 32, 1};
   dltensor.data = malloc(size * sizeof(float));
 
-  //copy shapes
-  for(int i=0; i<dltensor.ndim; i++)
-    dltensor.shape[i] = shape[i];
-  
+  // copy shapes
+  for (int i = 0; i < dltensor.ndim; i++) dltensor.shape[i] = shape[i];
+
   return dltensor;
 }
 
@@ -92,4 +90,3 @@ void DeleteDLTensor(DLTensor& dltensor) {
 }
 
 #endif
-

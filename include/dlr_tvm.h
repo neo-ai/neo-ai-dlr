@@ -44,8 +44,8 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(paths);
   }
-  explicit TVMModel(const std::string& json_str, std::string* param_data,
-                    const ModelPath& paths, const DLContext& ctx)
+  explicit TVMModel(const std::string& json_str, std::string* param_data, const ModelPath& paths,
+                    const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     dmlc::MemoryStringStream strm(param_data);
     SetupTVMModule(json_str, &strm, paths);
@@ -61,6 +61,7 @@ class DLR_DLL TVMModel : public DLRModel {
   void SetInput(const char* name, DLTensor* tensor);
 
   virtual void GetOutput(int index, void* out) override;
+  void GetOutputTensor(int index, const DLTensor** out);
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;

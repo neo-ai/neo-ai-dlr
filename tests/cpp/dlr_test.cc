@@ -1,11 +1,11 @@
-#include <gtest/gtest.h>
 #include "dlr.h"
+#include <gtest/gtest.h>
 #include "test_utils.hpp"
 
 DLRModelHandle GetDLRModel() {
   DLRModelHandle model = nullptr;
-  const char* model_path  = "./resnet_v1_5_50";
-  int device_type = 1; // cpu;
+  const char* model_path = "./resnet_v1_5_50";
+  int device_type = 1;  // cpu;
   if (CreateDLRModel(&model, model_path, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
@@ -13,9 +13,8 @@ DLRModelHandle GetDLRModel() {
   return model;
 }
 
-
 TEST(DLR, TestGetDLRDeviceType) {
-  const char* model_path  = "./resnet_v1_5_50";
+  const char* model_path = "./resnet_v1_5_50";
   EXPECT_EQ(GetDLRDeviceType(model_path), -1);
 }
 
@@ -63,7 +62,7 @@ TEST(DLR, TestGetDLRWeightName) {
 
 TEST(DLR, TestSetDLRInput) {
   auto model = GetDLRModel();
-  size_t img_size = 224*224*3;
+  size_t img_size = 224 * 224 * 3;
   std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
   int64_t shape[4] = {1, 224, 224, 3};
   const char* input_name = "input_tensor";
@@ -74,7 +73,6 @@ TEST(DLR, TestSetDLRInput) {
   DeleteDLRModel(&model);
 }
 
-
 TEST(DLR, TestGetDLRInputShape) {
   auto model = GetDLRModel();
   int64_t input_size;
@@ -82,7 +80,7 @@ TEST(DLR, TestGetDLRInputShape) {
   int index = 0;
   EXPECT_EQ(GetDLRInputSizeDim(&model, 0, &input_size, &input_dim), 0);
   EXPECT_EQ(input_dim, 4);
-  EXPECT_EQ(input_size, 1*224*224*3);
+  EXPECT_EQ(input_size, 1 * 224 * 224 * 3);
   std::vector<int64_t> shape(input_dim);
   EXPECT_EQ(GetDLRInputShape(&model, 0, shape.data()), 0);
   EXPECT_EQ(shape[0], 1);
@@ -179,7 +177,7 @@ TEST(DLR, TestGetDLRBackend) {
 
 TEST(DLR, TestRunDLRModel_GetDLROutput) {
   auto model = GetDLRModel();
-  size_t img_size = 224*224*3;
+  size_t img_size = 224 * 224 * 3;
   std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
   int64_t shape[4] = {1, 224, 224, 3};
   const char* input_name = "input_tensor";
@@ -201,7 +199,7 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   EXPECT_EQ(GetDLROutputByName(&model, "softmax_tensor:0", output1), 0);
   EXPECT_GT(output1[112], 0.01);
   float* output1_p;
-  EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**) &output1_p), 0);
+  EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**)&output1_p), 0);
   EXPECT_GT(output1_p[112], 0.01);
   for (int i = 0; i < 1001; i++) {
     EXPECT_EQ(output1_p[i], output1[i]);
@@ -212,20 +210,20 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
 TEST(DLR, TestCreateTVMModelFromMemory) {
   DLRModelHandle model = nullptr;
   const char* lib_so = "./resnet_v1_5_50/compiled.so";
-  int device_type = 1; // cpu;
-  //load graph.json into a string
+  int device_type = 1;  // cpu;
+  // load graph.json into a string
   std::ifstream gstream("./resnet_v1_5_50/compiled_model.json");
-  EXPECT_EQ(gstream.good(), 0); //check that file was found
-  std::string graph_json( (std::istreambuf_iterator<char>(gstream) ),
-                          (std::istreambuf_iterator<char>()));
-  //load params into a string
+  EXPECT_EQ(gstream.good(), 0);  // check that file was found
+  std::string graph_json((std::istreambuf_iterator<char>(gstream)),
+                         (std::istreambuf_iterator<char>()));
+  // load params into a string
   std::ifstream pstream("./resnet_v1_5_50/compiled.params", std::ios::in | std::ios::binary);
   std::stringstream pstring;
   pstring << pstream.rdbuf();
   std::string params = pstring.str();
-  
-  if (CreateTVMModelFromMemory(&model, graph_json.c_str(), lib_so, params.c_str(),
-                               params.length(), device_type, 0) != 0) {
+
+  if (CreateTVMModelFromMemory(&model, graph_json.c_str(), lib_so, params.c_str(), params.length(),
+                               device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
@@ -234,35 +232,35 @@ TEST(DLR, TestCreateTVMModelFromMemory) {
 
 TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   DLRModelHandle model = nullptr;
-  int device_type = 1; // cpu;
+  int device_type = 1;  // cpu;
   TVMPaths paths;
   paths.model_lib = "./resnet_v1_5_50/compiled.so";
   paths.model_json = "./resnet_v1_5_50/compiled_model.json";
   paths.params = "./resnet_v1_5_50/compiled.params";
-  
+
   if (CreateTVMModelFromPaths(&model, &paths, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
 
-  //set input
+  // set input
   DLTensor input = GetInputDLTensor();
   const char* input_name = "input_tensor";
   EXPECT_EQ(SetTVMInputTensor(&model, input_name, &input), 0);
 
-  //run inference
+  // run inference
   EXPECT_EQ(RunDLRModel(&model), 0);
 
   // output 0
   int64_t output0_shape[1] = {1};
   DLTensor output0 = GetOutputDLTensor(1, 1, output0_shape);
-  EXPECT_EQ(GetTVMOutputTensor(&model, 0, &output0), 0);
+  EXPECT_EQ(CopyTVMOutputTensor(&model, 0, &output0), 0);
   EXPECT_EQ(((float*)(output0.data))[0], 112);
 
   // output 1
   int64_t output1_shape[1] = {1001};
   DLTensor output1 = GetOutputDLTensor(1001, 1, output1_shape);
-  EXPECT_EQ(GetDLROutput(&model, 1, &output1), 0);
+  EXPECT_EQ(CopyTVMOutputTensor(&model, 1, &output1), 0);
   EXPECT_GT(((float*)(output1.data))[112], 0.01);
 
   DeleteDLTensor(output0);
@@ -270,7 +268,6 @@ TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   DeleteDLTensor(input);
   DeleteDLRModel(&model);
 }
-
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

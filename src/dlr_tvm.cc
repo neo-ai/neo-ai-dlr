@@ -237,20 +237,9 @@ const char* TVMModel::GetOutputType(int index) const {
   return output_types_[index].c_str();
 }
 
-void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
-  DLTensor output_tensor = *outputs_[index];
-  CHECK(out->ctx.device_type == output_tensor.ctx.device_type)
-      << "Mismatch found for output context, expected device type " << output_tensor.ctx.device_type
-      << " but found " << out->ctx.device_type;
-  CHECK(out->ctx.device_id == output_tensor.ctx.device_id)
-      << "Mismatch found for output context, expected device id " << output_tensor.ctx.device_id
-      << " but found " << out->ctx.device_id;
-  int64_t read_size =
-      std::accumulate(out->shape, out->shape + out->ndim, 1, std::multiplies<int64_t>());
-  int64_t expected_size = std::accumulate(
-      output_tensor.shape, output_tensor.shape + output_tensor.ndim, 1, std::multiplies<int64_t>());
-  CHECK_SHAPE("Mismatch found in output data size", read_size, expected_size);
+void TVMModel::GetOutputTensor(int index, const DLTensor** out) { *out = outputs_[index]; }
 
+void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
   tvm_graph_runtime_->CopyOutputTo(index, out);
 }
 

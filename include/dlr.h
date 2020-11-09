@@ -1,8 +1,8 @@
 #ifndef DLR_H_
 #define DLR_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
@@ -42,8 +42,12 @@ typedef void* DLRModelHandle;
  */
 typedef struct TVMPaths_t {
   TVMPaths_t()
-      : model_lib(NULL), params(NULL), model_json(NULL), ver_json(NULL),
-    metadata(NULL), relay_executable(NULL) {}
+      : model_lib(NULL),
+        params(NULL),
+        model_json(NULL),
+        ver_json(NULL),
+        metadata(NULL),
+        relay_executable(NULL) {}
   const char* model_lib;         // Required for TVM GraphRuntime & VMRuntime
   const char* params;            // Required for TVM GraphRUntime
   const char* model_json;        // Required for TVM GraphRuntime
@@ -466,7 +470,18 @@ DLR_DLL
 int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
 
 /*!
- * \brief Gets the index-th output from the model and returns it copied into the given DLTensor.
+ * \brief Gets the index-th output from the model and sets the pointer to it.
+ *        Can only be used with TVM models (GraphRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param out The pointer to an DLTensor pointer, will be set pointing to internal DLTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetTVMOutputTensor(DLRModelHandle* handle, int index, const void** dltensor);
+
+/*!
+ * \brief Gets the index-th output from the model and copies it into the given DLTensor.
  *        Can only be used with TVM models (GraphRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
@@ -474,7 +489,7 @@ int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
+int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
 
 /*! \} */
 

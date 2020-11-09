@@ -86,10 +86,9 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64
 extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(),"tvm") == 0) << "model is not a TVMModel. Found '"
-                                                    << dlr_model->GetBackend()
-                                                    << "' but expected 'tvm'";
-  
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
   TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
   CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
@@ -195,12 +194,26 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
+extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, const void** dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(),"tvm") == 0) << "model is not a TVMModel. Found '"
-                                                    << dlr_model->GetBackend()
-                                                    << "' but expected 'tvm'";;  
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  ;
+
+  const DLTensor** tensor = reinterpret_cast<const DLTensor**>(dltensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->GetOutputTensor(index, tensor);
+  API_END();
+}
+
+extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  ;
 
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
   TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
@@ -372,8 +385,9 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   API_END();
 }
 
-extern "C" int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const char* lib_path,
-                                        const char* params, size_t params_len, int dev_type, int dev_id) {
+extern "C" int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph,
+                                        const char* lib_path, const char* params, size_t params_len,
+                                        int dev_type, int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
@@ -393,18 +407,19 @@ extern "C" int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* p
   ctx.device_id = dev_id;
 
   ModelPath path;
-  path.model_lib = paths->model_lib;
-  path.params = paths->params;
-  path.model_json = paths->model_json;
-  path.ver_json = paths->ver_json;
-  path.metadata = paths->metadata;
-  path.relay_executable = paths->relay_executable;
+  if (paths->model_lib) path.model_lib = paths->model_lib;
+  if (paths->params) path.params = paths->params;
+  if (paths->model_json) path.model_json = paths->model_json;
+  if (paths->ver_json) path.ver_json = paths->ver_json;
+  if (paths->metadata) path.metadata = paths->metadata;
+  if (paths->relay_executable) path.relay_executable = paths->relay_executable;
 
   DLRModel* model;
   try {
     if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
       model = new TVMModel(path, ctx);
-    } else if (paths->model_lib != NULL && paths->relay_executable != NULL && paths->metadata != NULL) {
+    } else if (paths->model_lib != NULL && paths->relay_executable != NULL &&
+               paths->metadata != NULL) {
       model = new RelayVMModel(path, ctx);
     } else {
       LOG(FATAL) << "Unsupported backend!";
