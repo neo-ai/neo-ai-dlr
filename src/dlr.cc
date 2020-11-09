@@ -85,10 +85,15 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64
 
 extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(),"tvm") == 0) << "model is not a TVMModel. Found '"
+                                                    << dlr_model->GetBackend()
+                                                    << "' but expected 'tvm'";
+  
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* model = static_cast<TVMModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  model->SetInput(name, tensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->SetInput(name, tensor);
   API_END();
 }
 
@@ -192,10 +197,15 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
 
 extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
   API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(),"tvm") == 0) << "model is not a TVMModel. Found '"
+                                                    << dlr_model->GetBackend()
+                                                    << "' but expected 'tvm'";;  
+
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* model = static_cast<TVMModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  model->CopyOutputTensor(index, tensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->CopyOutputTensor(index, tensor);
   API_END();
 }
 
@@ -281,55 +291,6 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
 
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
-extern "C" int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int dev_type,
-                                       int dev_id) {
-  API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
-
-  ModelPath path;
-  path.model_lib = paths->model_lib;
-  path.params = paths->params;
-  path.model_json = paths->model_json;
-  path.ver_json = paths->ver_json;
-  path.metadata = paths->metadata;
-  path.relay_executable = paths->relay_executable;
-
-  DLRModel* model;
-  try {
-    if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
-      model = new TVMModel(path, ctx);
-    } else if (paths->model_lib != NULL && paths->relay_executable != NULL) {
-      model = new RelayVMModel(path, ctx);
-    } else {
-      LOG(FATAL) << "Unsupported backend!";
-      return -1;  // unreachable
-    }
-  } catch (dmlc::Error& e) {
-    LOG(ERROR) << e.what();
-    return -1;
-  }
-
-  *handle = model;
-  API_END();
-}
-
-extern "C" int CreateTVMModel(DLRModelHandle* handle, const char* graph, const char* lib_path,
-                              const char* params, unsigned params_len, int dev_type, int dev_id) {
-  API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
-  ModelPath paths;
-  paths.model_lib = FixWindowsDriveLetter(lib_path);
-  std::string param_str(params, params_len);
-  *handle = new TVMModel(graph, &param_str, paths, ctx);
-  API_END();
-}
-
-/*! \brief Translate c args from ctypes to std types for DLRModel ctor.
- */
 extern "C" int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,
                                  int dev_type, int dev_id) {
   API_BEGIN();
@@ -408,5 +369,52 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->UseCPUAffinity(use);
+  API_END();
+}
+
+extern "C" int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const char* lib_path,
+                                        const char* params, size_t params_len, int dev_type, int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+  ModelPath paths;
+  paths.model_lib = FixWindowsDriveLetter(lib_path);
+  std::string param_str(params, params_len);
+  *handle = new TVMModel(graph, &param_str, paths, ctx);
+  API_END();
+}
+
+extern "C" int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* paths, int dev_type,
+                                       int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+
+  ModelPath path;
+  path.model_lib = paths->model_lib;
+  path.params = paths->params;
+  path.model_json = paths->model_json;
+  path.ver_json = paths->ver_json;
+  path.metadata = paths->metadata;
+  path.relay_executable = paths->relay_executable;
+
+  DLRModel* model;
+  try {
+    if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
+      model = new TVMModel(path, ctx);
+    } else if (paths->model_lib != NULL && paths->relay_executable != NULL && paths->metadata != NULL) {
+      model = new RelayVMModel(path, ctx);
+    } else {
+      LOG(FATAL) << "Unsupported backend!";
+      return -1;  // unreachable
+    }
+  } catch (dmlc::Error& e) {
+    LOG(ERROR) << e.what();
+    return -1;
+  }
+
+  *handle = model;
   API_END();
 }

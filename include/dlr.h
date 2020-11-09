@@ -2,6 +2,7 @@
 #define DLR_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* special symbols for DLL library on Windows */
 #ifdef __cplusplus
@@ -37,21 +38,22 @@ extern "C" {  // Open extern "C" block
 typedef void* DLRModelHandle;
 
 /*!
- \brief Paths for model files
+ \brief TVM model file paths for GraphRuntime or VMRuntime
  */
-typedef struct DLRPaths_t {
-  DLRPaths_t()
-      : model_lib(0), params(0), model_json(0), ver_json(0), metadata(0), relay_executable(0) {}
-  const char* model_lib;
-  const char* params;
-  const char* model_json;
-  const char* ver_json;
-  const char* metadata;
-  const char* relay_executable;
-} DLRPaths;
+typedef struct TVMPaths_t {
+  TVMPaths_t()
+      : model_lib(NULL), params(NULL), model_json(NULL), ver_json(NULL),
+    metadata(NULL), relay_executable(NULL) {}
+  const char* model_lib;         // Required for TVM GraphRuntime & VMRuntime
+  const char* params;            // Required for TVM GraphRUntime
+  const char* model_json;        // Required for TVM GraphRuntime
+  const char* ver_json;          // Optional
+  const char* metadata;          // Required for TVM VMRuntime
+  const char* relay_executable;  // Required for TVM VMRuntime
+} TVMPaths;
 
 /*!
- \brief Creates a DLR model by search in directory path given.
+ \brief Creates a DLR model by searching in given directory path.
  \param handle The pointer to save the model handle.
  \param model_path Path to the folder containing the model files,
                    or colon-separated list of folders (or files) if model files
@@ -61,33 +63,6 @@ typedef struct DLRPaths_t {
  */
 DLR_DLL
 int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type, int dev_id);
-
-/*!
- * \brief Creates a TVM DLR model.
- * \param handle The pointer to save the model handle.
- * \param graph String of loaded graph.json file
- * \param lib_path Path to the TVM lib.so file
- * \param params String of binary data loaded from tvm.params file
- * \param params_len length of the params string
- * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
- * \param dev_id Device ID.
- * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
- */
-DLR_DLL
-int CreateTVMModel(DLRModelHandle* handle, const char* graph, const char* lib_path,
-                   const char* params, unsigned params_len, int dev_type, int dev_id);
-
-/*!
- * \brief Creates a DLR model from specified paths
- * \param handle The pointer to save the model handle.
- * \param paths Paths to the model files stored in different locations
- * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
- * \param dev_id Device ID.
- * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
- */
-DLR_DLL
-int CreateDLRModelFromPaths(DLRModelHandle* handle, const DLRPaths* paths, int dev_type,
-                            int dev_id);
 
 #ifdef DLR_TFLITE
 /*!
@@ -261,15 +236,6 @@ DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape, const void* input,
                 int dim);
 
-/*!
- * \brief Sets the input according the node name.
- * \param handle The model handle returned from CreateDLRModel().
- * \param name The input node name.
- * \param tensor The input DLTensor.
- * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
- */
-DLR_DLL
-int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
 /*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
@@ -467,6 +433,58 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  */
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+
+/*!
+ * \brief Creates a DLR model for TVM GraphRuntime models. Accepts graph.json and params data
+ *        from memory rather than loading from files on disk. lib.so must still be on disk
+ *        since dlopen will be used to load it.
+ * \param handle The pointer to save the model handle.
+ * \param graph String of loaded graph.json file
+ * \param lib_path Path to the TVM lib.so file on disk
+ * \param params String of binary data loaded from TVM params file
+ * \param params_len length of the params string
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const char* lib_path,
+                             const char* params, size_t params_len, int dev_type, int dev_id);
+
+/*!
+ * \brief Creates a DLR model for TVM GraphRuntime and VMRuntime models from specified paths
+ *        to individual files rather than a directory.
+ * \param handle The pointer to save the model handle.
+ * \param paths Paths to the model files stored in different locations
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* paths, int dev_type,
+                            int dev_id);
+
+/*!
+ * \brief Sets the input according the node name from existing DLTensor. Can only be
+ *        used with TVM models (GraphRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param name The input node name.
+ * \param tensor The input DLTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
+
+/*!
+ * \brief Gets the index-th output from the model and returns it copied into the given DLTensor.
+ *        Can only be used with TVM models (GraphRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param out The pointer to an existing/allocated DLTensor to copy the output into.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
 
 /*! \} */
 
