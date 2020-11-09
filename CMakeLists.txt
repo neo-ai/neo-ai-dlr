@@ -445,10 +445,10 @@ if(NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${AUTOML_MODEL_DIR})
     file(MAKE_DIRECTORY ${AUTOML_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${AUTOML_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.5.0/${AUTOML_MODEL}
       /tmp/${AUTOML_MODEL}
       SHA1
-      6d0fdda6b3d5040507ac321adb69cd644ed39f66
+      a17df0b2d980051fb39a72dc61265b97ea0e4639
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${AUTOML_MODEL}
@@ -491,10 +491,10 @@ if(NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${INVERSELABEL_MODEL_DIR})
     file(MAKE_DIRECTORY ${INVERSELABEL_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.4.0/${INVERSELABEL_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.5.0/${INVERSELABEL_MODEL}
       /tmp/${INVERSELABEL_MODEL}
       SHA1
-      3343b54f1290fcbbccae80c4f03c1b1d9fb0145c
+      055f9606c97d781f0468ad839ff42b3d41474315
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${INVERSELABEL_MODEL}
