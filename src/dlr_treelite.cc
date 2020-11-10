@@ -156,6 +156,9 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   float* input_f = (float*) input;
 
   // NOTE: Assume row-major (C) layout
+  treelite_input_->data.reserve(batch_size * num_col);
+  treelite_input_->col_ind.reserve(batch_size * num_col);
+  treelite_input_->row_ptr.reserve(batch_size);
   for (size_t i = 0; i < batch_size; ++i) {
     for (uint32_t j = 0; j < num_col; ++j) {
       if (!std::isnan(input_f[i * num_col + j])) {

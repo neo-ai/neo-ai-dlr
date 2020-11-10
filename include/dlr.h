@@ -1,6 +1,7 @@
 #ifndef DLR_H_
 #define DLR_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* special symbols for DLL library on Windows */
@@ -36,6 +37,16 @@ extern "C" {  // Open extern "C" block
  \brief Handle for DLRModel.
  */
 typedef void* DLRModelHandle;
+
+#ifndef DLR_ALLOC_TYPEDEF
+#define DLR_ALLOC_TYPEDEF
+/*! \brief A pointer to a malloc-like function. */
+typedef void* (*DLRMallocFunctionPtr)(size_t);
+/*! \brief A pointer to a free-like function. */
+typedef void (*DLRFreeFunctionPtr)(void*);
+/*! \brief A pointer to a memalign-like function. */
+typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
+#endif
 
 /*!
  \brief Creates a DLR model.
@@ -415,6 +426,36 @@ int SetDLRNumThreads(DLRModelHandle* handle, int threads);
  */
 DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
+
+/*!
+ * \brief Set custom allocator malloc function. Must be called before CreateDLRModel or
+ *        CreateDLRPipeline. It is recommended to use with SetDLRCustomAllocatorFree and
+ *        SetDLRCustomAllocatorMemalign.
+ * \param custom_memalign_fn Function pointer to memalign-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorMalloc(DLRMallocFunctionPtr custom_malloc_fn);
+
+/*!
+ * \brief Set custom allocator free function. Must be called before CreateDLRModel or
+ *        CreateDLRPipeline. It is recommended to use with SetDLRCustomAllocatorMalloc and
+ *        SetDLRCustomAllocatorMemalign.
+ * \param custom_free_fn Function pointer to free-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorFree(DLRFreeFunctionPtr custom_free_fn);
+
+/*!
+ * \brief Set custom allocator memalign function. memalign is used heavily by the TVM and RelayVM
+ *        backends. Must be called before CreateDLRModel or CreateDLRPipeline. It is recommended
+ *        to use with SetDLRCustomAllocatorMalloc and  SetDLRCustomAllocatorFree.
+ * \param custom_memalign_fn Function pointer to memalign-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
 
 /*! \} */
 
