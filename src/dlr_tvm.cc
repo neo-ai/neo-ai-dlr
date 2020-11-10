@@ -1,12 +1,11 @@
 #include "dlr_tvm.h"
 
 #include <stdlib.h>
+#include <tvm/runtime/registry.h>
 
 #include <fstream>
 #include <iterator>
 #include <numeric>
-
-#include <tvm/runtime/registry.h>
 
 using namespace dlr;
 

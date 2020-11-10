@@ -4,6 +4,7 @@
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
 #include <tvm/runtime/registry.h>
+
 #include "dlr_common.h"
 
 #if defined(_MSC_VER) || defined(_WIN32)
