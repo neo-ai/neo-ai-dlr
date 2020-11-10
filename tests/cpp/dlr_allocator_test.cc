@@ -189,7 +189,7 @@ TEST_F(CustomAllocatorTrackingTest, CustomAllocatorsTvm) {
   EXPECT_GT(CustomAllocatorTrackingTest::free_calls_.size(), 0);
   EXPECT_GT(CustomAllocatorTrackingTest::memalign_calls_.size(), 0);
   // Giving some tolerance for platform differences.
-  EXPECT_NEAR(TotalBytesAllocated(), 585280062, 200000);
+  EXPECT_NEAR(TotalBytesAllocated(), 585280062, 300000);
 
   size_t img_size = 224 * 224 * 3;
   std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, 1);
@@ -198,7 +198,7 @@ TEST_F(CustomAllocatorTrackingTest, CustomAllocatorsTvm) {
   EXPECT_EQ(SetDLRInput(&model, input_name, shape, img.data(), 4), 0);
   EXPECT_EQ(RunDLRModel(&model), 0);
   // Input/output buffer was allocated.
-  EXPECT_NEAR(TotalBytesAllocated(), 586181182, 200000);
+  EXPECT_NEAR(TotalBytesAllocated(), 586181182, 300000);
 
   // Check output is correct.
   int output[1];
