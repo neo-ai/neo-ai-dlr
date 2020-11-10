@@ -396,13 +396,21 @@ extern "C" int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* p
 extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
+        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
+      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
+      << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->SetInput(name, tensor);
+  if(strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->SetInput(name, tensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->SetInput(name, tensor);
+  }
   API_END();
 }
 

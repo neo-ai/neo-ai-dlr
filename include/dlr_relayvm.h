@@ -82,14 +82,17 @@ class DLR_DLL RelayVMModel : public DLRModel {
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
+  void SetInput(const char* name, DLTensor* tensor);
   virtual int GetNumInputs() const override;
   virtual void Run() override;
   tvm::runtime::NDArray GetOutput(int index);
   virtual void GetOutput(int index, void* out) override;
+  void GetOutputManagedTensor(int index, DLManagedTensor** out);
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
+  void CopyOutputTensor(int index, DLTensor* out);
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;

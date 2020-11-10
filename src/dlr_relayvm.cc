@@ -233,6 +233,27 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   inputs_[index] = input_arr;
 }
 
+void RelayVMModel::SetInput(const char* name, DLTensor* tensor) {
+  // Handle string input.
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    std::vector<DLDataType> dtypes;
+    for (size_t i = 0; i < num_inputs_; ++i) {
+      dtypes.emplace_back(GetInputDLDataType(i));
+    }
+    data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim,
+                                   dtypes, ctx_, &inputs_);
+    return;
+  }
+
+  int index = GetInputIndex(name);
+  if (index > -1) {
+    std::vector<int64_t> arr_shape(tensor->shape, tensor->shape + tensor->ndim);
+    tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, tensor->dtype, ctx_);
+    input_arr.CopyFrom(tensor);
+    inputs_[index] = input_arr;
+  }
+}
+
 void RelayVMModel::UpdateInputs() {
   const int kNumArgs = num_inputs_ + 1;
   TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
@@ -303,6 +324,27 @@ const void* RelayVMModel::GetOutputPtr(int index) const {
     return data_transform_.GetOutputPtr(index);
   }
   return outputs_[index]->data;
+}
+
+void RelayVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  auto out_array = outputs_[index];
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    //data_transform_.GetOutput(index, output);
+    //HOW DO WE GET A DLMANAGEDTENSOR?
+    return;
+  }
+  *out = out_array.ToDLPack();
+}
+
+void RelayVMModel::CopyOutputTensor(int index, DLTensor* out) {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  auto out_array = outputs_[index];
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    data_transform_.GetOutput(index, out->data);
+    return;
+  }
+  out_array.CopyTo(out);
 }
 
 void RelayVMModel::GetOutputShape(int index, int64_t* shape) const {

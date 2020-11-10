@@ -32,35 +32,34 @@ std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t si
   return img;
 }
 
-DLTensor GetInputDLTensor() {
-  size_t img_size = 224 * 224 * 3;
+DLTensor GetInputDLTensor(int ndim, int64_t* shape, const char* filename) {
+  size_t img_size = 1;
+  for(int i=0; i<ndim; i++) img_size *= shape[i];
 
-  int64_t shape[4] = {1, 224, 224, 3};
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
-  dltensor.ndim = 4;
-  dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
+  dltensor.ndim = ndim;
+  dltensor.shape = (int64_t*)malloc(ndim * sizeof(int64_t));
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
   dltensor.dtype = {kDLFloat, 32, 1};
   dltensor.data = malloc(img_size * sizeof(float));
 
   // copy shapes
-  for (int i = 0; i < dltensor.ndim; i++) dltensor.shape[i] = shape[i];
+  for (int i = 0; i < ndim; i++) dltensor.shape[i] = shape[i];
 
   // copy data from file
   std::string line;
-  std::ifstream fp("cat224-3.txt");
+  std::ifstream fp(filename);
   size_t i = 0;
   float* ptr = (float*)dltensor.data;
-  if (fp.is_open()) {
-    while (getline(fp, line) && i < img_size) {
-      int v = std::stoi(line);
-      float fv = 2.0f / 255.0f * v - 1.0f;
-      ptr[i++] = fv;
-    }
-    fp.close();
+  EXPECT_EQ(fp.is_open(), true);
+  while (getline(fp, line) && i < img_size) {
+    int v = std::stoi(line);
+    float fv = 2.0f / 255.0f * v - 1.0f;
+    ptr[i++] = fv;
   }
+  fp.close();
 
   EXPECT_EQ(img_size, i);
   LOG(INFO) << "Image read - OK, float[" << i << "]";
@@ -68,14 +67,17 @@ DLTensor GetInputDLTensor() {
   return dltensor;
 }
 
-DLTensor GetOutputDLTensor(int64_t size, int ndim, int64_t* shape, uint8_t dtype) {
+DLTensor GetEmptyDLTensor(int ndim, int64_t* shape, uint8_t dtype, uint8_t bits) {
+  int64_t size = 1;
+  for(int i=0; i<ndim; i++) size *= shape[i];
+  
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = ndim;
   dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
-  dltensor.dtype = {dtype, 32, 1};
+  dltensor.dtype = {dtype, bits, 1};
   dltensor.data = malloc(size * sizeof(float));
 
   // copy shapes
