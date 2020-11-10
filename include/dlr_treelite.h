@@ -3,6 +3,7 @@
 
 #include <treelite/c_api_runtime.h>
 
+#include "dlr_allocator.h"
 #include "dlr_common.h"
 
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -16,9 +17,9 @@ namespace dlr {
 /*! \brief Structure to hold Treelite Input.
  */
 struct TreeliteInput {
-  std::vector<float> data;
-  std::vector<uint32_t> col_ind;
-  std::vector<size_t> row_ptr;
+  std::vector<float, DLRAllocator<float>> data;
+  std::vector<uint32_t, DLRAllocator<uint32_t>> col_ind;
+  std::vector<size_t, DLRAllocator<size_t>> row_ptr;
   size_t num_row;
   size_t num_col;
   CSRBatchHandle handle;
@@ -44,7 +45,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
   // size of output per instance
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
-  std::vector<float> treelite_output_;
+  std::vector<float, DLRAllocator<float>> treelite_output_;
   void SetupTreeliteModule(std::vector<std::string> model_path);
   void UpdateInputShapes();
 

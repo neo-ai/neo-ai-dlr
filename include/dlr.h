@@ -37,6 +37,16 @@ extern "C" {  // Open extern "C" block
  */
 typedef void* DLRModelHandle;
 
+#ifndef DLR_ALLOC_TYPEDEF
+#define DLR_ALLOC_TYPEDEF
+/*! \brief A pointer to a malloc-like function. */
+typedef void* (*DLRMallocFunctionPtr)(size_t);
+/*! \brief A pointer to a free-like function. */
+typedef void (*DLRFreeFunctionPtr)(void*);
+/*! \brief A pointer to a memalign-like function. */
+typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
+#endif
+
 /*!
  \brief TVM model file paths for GraphRuntime or VMRuntime
  */
@@ -429,6 +439,36 @@ DLR_DLL
 int UseDLRCPUAffinity(DLRModelHandle* handle, int use);
 
 /*!
+ * \brief Set custom allocator malloc function. Must be called before CreateDLRModel or
+ *        CreateDLRPipeline. It is recommended to use with SetDLRCustomAllocatorFree and
+ *        SetDLRCustomAllocatorMemalign.
+ * \param custom_memalign_fn Function pointer to memalign-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorMalloc(DLRMallocFunctionPtr custom_malloc_fn);
+
+/*!
+ * \brief Set custom allocator free function. Must be called before CreateDLRModel or
+ *        CreateDLRPipeline. It is recommended to use with SetDLRCustomAllocatorMalloc and
+ *        SetDLRCustomAllocatorMemalign.
+ * \param custom_free_fn Function pointer to free-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorFree(DLRFreeFunctionPtr custom_free_fn);
+
+/*!
+ * \brief Set custom allocator memalign function. memalign is used heavily by the TVM and RelayVM
+ *        backends. Must be called before CreateDLRModel or CreateDLRPipeline. It is recommended
+ *        to use with SetDLRCustomAllocatorMalloc and  SetDLRCustomAllocatorFree.
+ * \param custom_memalign_fn Function pointer to memalign-like function.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
+
+/*
  * \brief Creates a DLR model for TVM GraphRuntime models. Accepts graph.json and params data
  *        from memory rather than loading from files on disk. lib.so must still be on disk
  *        since dlopen will be used to load it.
@@ -460,7 +500,7 @@ int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* paths, int d
 
 /*!
  * \brief Sets the input according the node name from existing DLTensor. Can only be
- *        used with TVM models (GraphRuntime)
+ *        used with TVM models (GraphRuntime and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param name The input node name.
  * \param tensor The input DLTensor.
@@ -471,7 +511,7 @@ int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
 
 /*!
  * \brief Gets the index-th output from the model and sets the pointer to it.
- *        Can only be used with TVM models (GraphRuntime)
+ *        Can only be used with TVM models (GraphRuntime and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
  * \param out The pointer to a DLManagedTensor pointer, will be set.
@@ -482,7 +522,7 @@ int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index, void** dlmanage
 
 /*!
  * \brief Gets the index-th output from the model and copies it into the given DLTensor.
- *        Can only be used with TVM models (GraphRuntime)
+ *        Can only be used with TVM models (GraphRuntime and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
  * \param out The pointer to an existing/allocated DLTensor to copy the output into.

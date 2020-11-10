@@ -37,6 +37,23 @@ pipeline {
         milestone label: 'Sources ready', ordinal: 1
       }
     }
+    stage('Lint') {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.cpu_bare'
+          dir 'tests/ci_build'
+          label 'ubuntu && amd64 && cpu-build'
+          args '-v ${PWD}:/workspace -w /workspace'
+        }
+      }
+      steps {
+        unstash name: 'srcs'
+        sh """
+        tests/ci_build/git-clang-format.sh HEAD~1
+        tests/ci_build/git-clang-format.sh origin/master
+        """
+      }
+    }
     stage('Build & Test') {
       parallel {
         stage('Build for Manylinux') {
@@ -75,7 +92,7 @@ pipeline {
             mkdir -p build
             cd build
             cmake .. && make -j16
-            make test
+            CTEST_OUTPUT_ON_FAILURE=TRUE make test
             cd ..
             tests/ci_build/create_wheel.sh manylinux1_x86_64
             """
