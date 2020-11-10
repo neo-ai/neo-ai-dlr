@@ -1,9 +1,9 @@
 #include "dlr_allocator.h"
-#include "dlr.h"
-#include "dlr_tvm.h"
 
 #include <gtest/gtest.h>
 
+#include "dlr.h"
+#include "dlr_tvm.h"
 #include "test_utils.hpp"
 
 int main(int argc, char** argv) {

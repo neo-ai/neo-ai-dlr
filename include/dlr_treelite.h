@@ -3,8 +3,8 @@
 
 #include <treelite/c_api_runtime.h>
 
-#include "dlr_common.h"
 #include "dlr_allocator.h"
+#include "dlr_common.h"
 
 #if defined(_MSC_VER) || defined(_WIN32)
 #define DLR_DLL __declspec(dllexport)

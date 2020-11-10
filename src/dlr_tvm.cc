@@ -1,8 +1,8 @@
 #include "dlr_tvm.h"
 
+#include <stdlib.h>
 #include <tvm/runtime/registry.h>
 
-#include <stdlib.h>
 #include <fstream>
 #include <iterator>
 #include <numeric>
@@ -76,7 +76,6 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
     LoadJsonFromFile(paths.metadata, this->metadata_);
     ValidateDeviceTypeIfExists();
   }
-
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(json_blob.str(), module, {ctx_});
