@@ -256,12 +256,20 @@ TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   DLTensor output0 = GetOutputDLTensor(1, 1, output0_shape);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 0, &output0), 0);
   EXPECT_EQ(((float*)(output0.data))[0], 112);
-
+  const DLTensor* output0_p;
+  EXPECT_EQ(GetTVMOutputTensor(&model, 0, (const void**)&output0_p), 0);
+  EXPECT_EQ(((float*)(output0_p->data))[0], 112);
+  
   // output 1
   int64_t output1_shape[1] = {1001};
   DLTensor output1 = GetOutputDLTensor(1001, 1, output1_shape);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 1, &output1), 0);
   EXPECT_GT(((float*)(output1.data))[112], 0.01);
+  const DLTensor* output1_p;
+  EXPECT_EQ(GetTVMOutputTensor(&model, 1, (const void**)&output1_p), 0);
+  for (int i = 0; i < 1001; i++) {
+    EXPECT_EQ(((float*)(output1.data))[i], ((float*)(output1_p->data))[i]);
+  }
 
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
