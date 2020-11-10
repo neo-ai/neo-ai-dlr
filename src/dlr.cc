@@ -418,9 +418,10 @@ extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
                                          void** dlmanagedtensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
-  ;
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
+        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
+      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
+      << "' but expected 'tvm' or 'relayvm'";
 
   DLManagedTensor** tensor = reinterpret_cast<DLManagedTensor**>(dlmanagedtensor);
   TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
@@ -432,13 +433,20 @@ extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
 extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
-  ;
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
+        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
+    << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
+    << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->CopyOutputTensor(index, tensor);
+  if(strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->CopyOutputTensor(index, tensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->CopyOutputTensor(index, tensor);
+  }
   API_END();
 }

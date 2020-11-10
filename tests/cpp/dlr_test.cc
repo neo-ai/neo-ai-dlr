@@ -296,7 +296,7 @@ TEST(DLR, TestCreateTVMModelFromPaths_VMRuntime) {
 
   // set input
   int64_t input_shape[4] = {1, 512, 512, 3};
-  DLTensor input = GetEmptyDLTensor(4, input_shape, kDLInt, 8);
+  DLTensor input = GetEmptyDLTensor(4, input_shape, kDLUInt, 8);
   const char* input_name = "image_tensor";
   EXPECT_EQ(SetTVMInputTensor(&model, input_name, &input), 0);
 
@@ -313,6 +313,7 @@ TEST(DLR, TestCreateTVMModelFromPaths_VMRuntime) {
   EXPECT_EQ(GetDLROutputShape(&model, 3, output3_shape.data()), 0);
   DLTensor output3 = GetEmptyDLTensor(output3_dim, output3_shape.data(), kDLFloat, 32);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 3, &output3), 0);
+    LOG(INFO) << DLRGetLastError() << std::endl;
   for (int i = 0; i < output3_size; i++) {
     EXPECT_EQ(((float*)(output3.data))[i], output3_d[i]);
   }  
