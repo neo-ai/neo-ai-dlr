@@ -82,6 +82,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
+  virtual int GetNumInputs() const override;
   virtual void Run() override;
   tvm::runtime::NDArray GetOutput(int index);
   virtual void GetOutput(int index, void* out) override;

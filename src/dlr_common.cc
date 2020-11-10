@@ -119,8 +119,8 @@ void DLRModel::ValidateDeviceTypeIfExists() {
   }
   if (device_type != 0 && ctx_.device_type != device_type) {
     std::string msg = "Compiled model requires device type \"";
-    msg += GetStringFromDeviceType(ctx_.device_type) + "\" but user gave \"";
-    msg += GetStringFromDeviceType(device_type) + "\".";
+    msg += GetStringFromDeviceType(device_type) + "\" but user gave \"";
+    msg += GetStringFromDeviceType(ctx_.device_type) + "\".";
     throw dmlc::Error(msg);
   }
 }

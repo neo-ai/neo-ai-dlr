@@ -9,30 +9,63 @@
 
 namespace dlr {
 
-/*! \brief Handles transformations of input and output data. */
-class DLR_DLL DataTransform {
+/*! \brief Base case for input transformers. */
+class DLR_DLL Transformer {
+ public:
+  virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                            tvm::runtime::NDArray& input_array) const = 0;
+};
+
+class DLR_DLL FloatTransformer : public Transformer {
+ private:
+  /*! \brief When there is a value stof cannot convert to float, this value is used. */
+  const float kBadValue = std::numeric_limits<float>::quiet_NaN();
+
+ public:
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
+};
+
+class DLR_DLL CategoricalStringTransformer : public Transformer {
  private:
   /*! \brief When there is no mapping entry for TransformInput, this value is used. */
   const float kMissingValue = -1.0f;
-  /*! \brief When there is an invalid float value given to TransformInput, this value is used. */
-  const float kBadValue = std::numeric_limits<float>::quiet_NaN();
+
+ public:
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
+};
+
+/*! \brief Handles transformations of input and output data. */
+class DLR_DLL DataTransform {
+ private:
+  /*! \brief When there is no mapping entry for TransformOutput, this value is used. */
+  const char* kUnknownLabel = "<unknown_label>";
+
+  /*! \brief Buffers to store transformed outputs. Maps output index to transformed data. */
+  std::unordered_map<int, std::string> transformed_outputs_;
 
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
   nlohmann::json GetAsJson(const int64_t* shape, const void* input, int dim) const;
 
   /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
-  tvm::runtime::NDArray InitNDArray(int index, const nlohmann::json& input_json,
-                                    const nlohmann::json& mapping, DLDataType dtype,
+  tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
                                     DLContext ctx) const;
 
-  /*! \brief Helper function for TransformInput. Applies mapping and writes transformed input data
-   * to input_array. */
-  void MapToNDArray(const nlohmann::json& input_json, tvm::runtime::NDArray& input_array,
-                    const nlohmann::json& mapping) const;
+  const std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<Transformer>>>
+  GetTransformerMap() const;
+
+  template <typename T>
+  nlohmann::json TransformOutputHelper1D(const nlohmann::json& mapping, const T* data,
+                                         const std::vector<int64_t>& shape) const;
+
+  template <typename T>
+  nlohmann::json TransformOutputHelper2D(const nlohmann::json& mapping, const T* data,
+                                         const std::vector<int64_t>& shape) const;
 
  public:
   /*! \brief Returns true if the input requires a data transform */
-  bool HasInputTransform(const nlohmann::json& metadata, int index) const;
+  bool HasInputTransform(const nlohmann::json& metadata) const;
 
   /*! \brief Returns true if the output requires a data transform */
   bool HasOutputTransform(const nlohmann::json& metadata, int index) const;
@@ -43,9 +76,30 @@ class DLR_DLL DataTransform {
    * mapping to convert strings to numbers, and produce a numeric NDArray which can be given to TVM
    * for the model input.
    */
-  tvm::runtime::NDArray TransformInput(const nlohmann::json& metadata, int index,
-                                       const int64_t* shape, const void* input, int dim, DLDataType dtype,
-                                       DLContext ctx) const;
+  void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input, int dim,
+                      const std::vector<DLDataType>& dtypes, DLContext ctx,
+                      std::vector<tvm::runtime::NDArray>* tvm_inputs) const;
+
+  /*! \brief Transform integer output using CategoricalString output DataTransform. When this map is
+   * present in the metadata file, the model's output will be converted from an integer array to a
+   * JSON string, where numbers are mapped back to strings according to the CategoricalString map in
+   * the metadata file. A buffer is created to store the transformed output, and it's contents can
+   * be accessed using the GetOutputShape, GetOutputSizeDim, GetOutput and GetOutputPtr methods.
+   */
+  void TransformOutput(const nlohmann::json& metadata, int index,
+                       const tvm::runtime::NDArray& output_array);
+
+  /*! \brief Get shape of transformed output. */
+  void GetOutputShape(int index, int64_t* shape) const;
+
+  /*! \brief Get size and dims of transformed output. */
+  void GetOutputSizeDim(int index, int64_t* size, int* dim) const;
+
+  /*! \brief Copy transformed output to a buffer. */
+  void GetOutput(int index, void* output) const;
+
+  /*! \brief Get pointer to transformed output data. */
+  const void* GetOutputPtr(int index) const;
 };
 
 }  // namespace dlr
