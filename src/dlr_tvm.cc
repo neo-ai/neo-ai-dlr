@@ -66,10 +66,10 @@ void TVMModel::SetupTVMModule(const ModelPath& paths) {
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
   std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
-  std::stringstream param_blob;
+  DLRStringStream param_blob;
   param_blob << pstream.rdbuf();
-  std::string param_data = param_blob.str();
-  dmlc::MemoryStringStream strm(&param_data);
+  auto param_data = param_blob.str();
+  dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
   SetupTVMModule(json_blob.str(), &strm, paths);
 }
 
