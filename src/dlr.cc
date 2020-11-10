@@ -83,19 +83,6 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64
   API_END();
 }
 
-extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
-  API_BEGIN();
-  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
-
-  DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->SetInput(name, tensor);
-  API_END();
-}
-
 extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name, void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
@@ -191,34 +178,6 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutputByName(name, out);
-  API_END();
-}
-
-extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, const void** dltensor) {
-  API_BEGIN();
-  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
-  ;
-
-  const DLTensor** tensor = reinterpret_cast<const DLTensor**>(dltensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->GetOutputTensor(index, tensor);
-  API_END();
-}
-
-extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
-  API_BEGIN();
-  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
-      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
-  ;
-
-  DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->CopyOutputTensor(index, tensor);
   API_END();
 }
 
@@ -431,5 +390,61 @@ extern "C" int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* p
   }
 
   *handle = model;
+  API_END();
+}
+
+extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+
+  DLTensor* tensor = static_cast<DLTensor*>(dltensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->SetInput(name, tensor);
+  API_END();
+}
+
+extern "C" int GetTVMOutputTensor(DLRModelHandle* handle, int index, const void** dltensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  ;
+
+  const DLTensor** tensor = reinterpret_cast<const DLTensor**>(dltensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->GetOutputTensor(index, tensor);
+  API_END();
+}
+
+extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
+                                         void** dlmanagedtensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  ;
+
+  DLManagedTensor** tensor = reinterpret_cast<DLManagedTensor**>(dlmanagedtensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->GetOutputManagedTensor(index, tensor);
+  API_END();
+}
+
+extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0)
+      << "model is not a TVMModel. Found '" << dlr_model->GetBackend() << "' but expected 'tvm'";
+  ;
+
+  DLTensor* tensor = static_cast<DLTensor*>(dltensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->CopyOutputTensor(index, tensor);
   API_END();
 }

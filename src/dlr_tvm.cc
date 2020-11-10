@@ -239,6 +239,11 @@ const char* TVMModel::GetOutputType(int index) const {
 
 void TVMModel::GetOutputTensor(int index, const DLTensor** out) { *out = outputs_[index]; }
 
+void TVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  *out = output.ToDLPack();
+}
+
 void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
   tvm_graph_runtime_->CopyOutputTo(index, out);
 }

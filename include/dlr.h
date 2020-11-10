@@ -474,11 +474,22 @@ int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
  *        Can only be used with TVM models (GraphRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
- * \param out The pointer to an DLTensor pointer, will be set pointing to internal DLTensor.
+ * \param out The pointer to a DLTensor pointer, will be set pointing to internal DLTensor.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int GetTVMOutputTensor(DLRModelHandle* handle, int index, const void** dltensor);
+
+/*!
+ * \brief Gets the index-th output from the model and sets the pointer to it.
+ *        Can only be used with TVM models (GraphRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param out The pointer to a DLManagedTensor pointer, will be set.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index, void** dlmanagedtensor);
 
 /*!
  * \brief Gets the index-th output from the model and copies it into the given DLTensor.
