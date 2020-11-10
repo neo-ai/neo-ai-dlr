@@ -1,8 +1,7 @@
 #ifndef DLR_ALLOCATOR_H_
 #define DLR_ALLOCATOR_H_
 
-#include <dmlc/common.h>
-#include <dmlc/logging.h>
+#include <memory>
 
 #ifndef DLR_ALLOC_TYPEDEF
 #define DLR_ALLOC_TYPEDEF
