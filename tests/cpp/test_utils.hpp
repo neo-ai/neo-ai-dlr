@@ -34,7 +34,7 @@ std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t si
 
 DLTensor GetInputDLTensor(int ndim, int64_t* shape, const char* filename) {
   size_t img_size = 1;
-  for(int i=0; i<ndim; i++) img_size *= shape[i];
+  for (int i = 0; i < ndim; i++) img_size *= shape[i];
 
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
@@ -69,8 +69,8 @@ DLTensor GetInputDLTensor(int ndim, int64_t* shape, const char* filename) {
 
 DLTensor GetEmptyDLTensor(int ndim, int64_t* shape, uint8_t dtype, uint8_t bits) {
   int64_t size = 1;
-  for(int i=0; i<ndim; i++) size *= shape[i];
-  
+  for (int i = 0; i < ndim; i++) size *= shape[i];
+
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = ndim;

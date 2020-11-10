@@ -240,8 +240,8 @@ void RelayVMModel::SetInput(const char* name, DLTensor* tensor) {
     for (size_t i = 0; i < num_inputs_; ++i) {
       dtypes.emplace_back(GetInputDLDataType(i));
     }
-    data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim,
-                                   dtypes, ctx_, &inputs_);
+    data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim, dtypes,
+                                   ctx_, &inputs_);
     return;
   }
 
@@ -329,8 +329,8 @@ const void* RelayVMModel::GetOutputPtr(int index) const {
 void RelayVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   auto out_array = outputs_[index];
-  CHECK(HasMetadata() && data_transform_.HasOutputTransform(metadata_, index))
-    << "Output transforms are not supported with GetOutputManagedTensor.";
+  CHECK(!(HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)))
+      << "Output transforms are not supported with GetOutputManagedTensor.";
   *out = out_array.ToDLPack();
 }
 

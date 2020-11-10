@@ -273,8 +273,8 @@ TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   EXPECT_GT(((float*)(output1_p->dl_tensor.data))[112], 0.01);
   for (int i = 0; i < 1001; i++) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
-  }  
-  
+  }
+
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
   DeleteDLTensor(input);
@@ -313,11 +313,15 @@ TEST(DLR, TestCreateTVMModelFromPaths_VMRuntime) {
   EXPECT_EQ(GetDLROutputShape(&model, 3, output3_shape.data()), 0);
   DLTensor output3 = GetEmptyDLTensor(output3_dim, output3_shape.data(), kDLFloat, 32);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 3, &output3), 0);
-    LOG(INFO) << DLRGetLastError() << std::endl;
   for (int i = 0; i < output3_size; i++) {
     EXPECT_EQ(((float*)(output3.data))[i], output3_d[i]);
-  }  
-  
+  }
+  DLManagedTensor* output3_p;
+  EXPECT_EQ(GetTVMOutputManagedTensor(&model, 3, (void**)&output3_p), 0);
+  for (int i = 0; i < output3_size; i++) {
+    EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
+  }
+
   DeleteDLTensor(output3);
   DeleteDLTensor(input);
   DeleteDLRModel(&model);

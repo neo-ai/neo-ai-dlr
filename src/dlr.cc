@@ -402,7 +402,7 @@ extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void*
       << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  if(strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->SetInput(name, tensor);
@@ -424,9 +424,15 @@ extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
       << "' but expected 'tvm' or 'relayvm'";
 
   DLManagedTensor** tensor = reinterpret_cast<DLManagedTensor**>(dlmanagedtensor);
-  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-  tvm_model->GetOutputManagedTensor(index, tensor);
+  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->GetOutputManagedTensor(index, tensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->GetOutputManagedTensor(index, tensor);
+  }
   API_END();
 }
 
@@ -435,11 +441,11 @@ extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dlte
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
   CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
         strcmp(dlr_model->GetBackend(), "relayvm") == 0)
-    << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
-    << "' but expected 'tvm' or 'relayvm'";
+      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
+      << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* tensor = static_cast<DLTensor*>(dltensor);
-  if(strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->CopyOutputTensor(index, tensor);
