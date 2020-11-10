@@ -375,3 +375,21 @@ extern "C" int UseDLRCPUAffinity(DLRModelHandle* handle, int use) {
   model->UseCPUAffinity(use);
   API_END();
 }
+
+extern "C" int SetDLRCustomAllocatorMalloc(DLRMallocFunctionPtr custom_malloc_fn) {
+  API_BEGIN();
+  DLRAllocatorFunctions::SetMallocFunction(custom_malloc_fn);
+  API_END();
+}
+
+extern "C" int SetDLRCustomAllocatorFree(DLRFreeFunctionPtr custom_free_fn) {
+  API_BEGIN();
+  DLRAllocatorFunctions::SetFreeFunction(custom_free_fn);
+  API_END();
+}
+
+extern "C" int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn) {
+  API_BEGIN();
+  DLRAllocatorFunctions::SetMemalignFunction(custom_memalign_fn);
+  API_END();
+}
