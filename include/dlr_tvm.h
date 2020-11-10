@@ -61,7 +61,6 @@ class DLR_DLL TVMModel : public DLRModel {
   void SetInput(const char* name, DLTensor* tensor);
 
   virtual void GetOutput(int index, void* out) override;
-  void GetOutputTensor(int index, const DLTensor** out);
   void GetOutputManagedTensor(int index, DLManagedTensor** out);
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;

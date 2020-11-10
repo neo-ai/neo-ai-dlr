@@ -68,14 +68,14 @@ DLTensor GetInputDLTensor() {
   return dltensor;
 }
 
-DLTensor GetOutputDLTensor(int64_t size, int ndim, int64_t* shape) {
+DLTensor GetOutputDLTensor(int64_t size, int ndim, int64_t* shape, uint8_t dtype) {
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = ndim;
   dltensor.shape = (int64_t*)malloc(dltensor.ndim * sizeof(int64_t));
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
-  dltensor.dtype = {kDLFloat, 32, 1};
+  dltensor.dtype = {dtype, 32, 1};
   dltensor.data = malloc(size * sizeof(float));
 
   // copy shapes

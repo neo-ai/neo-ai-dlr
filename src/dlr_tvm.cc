@@ -219,6 +219,16 @@ const void* TVMModel::GetOutputPtr(int index) const {
   throw dmlc::Error("GetOutputPtr is not supported for non-CPU device types");
 }
 
+void TVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  *out = output.ToDLPack();
+}
+
+void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
+  tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
+  get_output(index, out);
+}
+
 void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   const DLTensor* tensor = outputs_[index];
@@ -235,17 +245,6 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 const char* TVMModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   return output_types_[index].c_str();
-}
-
-void TVMModel::GetOutputTensor(int index, const DLTensor** out) { *out = outputs_[index]; }
-
-void TVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
-  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
-  *out = output.ToDLPack();
-}
-
-void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
-  tvm_graph_runtime_->CopyOutputTo(index, out);
 }
 
 void TVMModel::Run() {

@@ -213,7 +213,7 @@ TEST(DLR, TestCreateTVMModelFromMemory) {
   int device_type = 1;  // cpu;
   // load graph.json into a string
   std::ifstream gstream("./resnet_v1_5_50/compiled_model.json");
-  EXPECT_EQ(gstream.good(), 0);  // check that file was found
+  EXPECT_EQ(gstream.good(), true);  // check that file was found
   std::string graph_json((std::istreambuf_iterator<char>(gstream)),
                          (std::istreambuf_iterator<char>()));
   // load params into a string
@@ -252,24 +252,22 @@ TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   EXPECT_EQ(RunDLRModel(&model), 0);
 
   // output 0
+  int output0_d[1];
+  EXPECT_EQ(GetDLROutput(&model, 0, output0_d), 0);
+  EXPECT_EQ(output0_d[0], 112);
   int64_t output0_shape[1] = {1};
-  DLTensor output0 = GetOutputDLTensor(1, 1, output0_shape);
+  DLTensor output0 = GetOutputDLTensor(1, 1, output0_shape, kDLInt);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 0, &output0), 0);
-  EXPECT_EQ(((float*)(output0.data))[0], 112);
-  const DLTensor* output0_p;
-  EXPECT_EQ(GetTVMOutputTensor(&model, 0, (const void**)&output0_p), 0);
-  EXPECT_EQ(((float*)(output0_p->data))[0], 112);
-  
+  EXPECT_EQ(((int*)(output0.data))[0], 112);
+
   // output 1
-  int64_t output1_shape[1] = {1001};
-  DLTensor output1 = GetOutputDLTensor(1001, 1, output1_shape);
+  float output1_d[1001];
+  EXPECT_EQ(GetDLROutput(&model, 1, output1_d), 0);
+  EXPECT_GT(output1_d[112], 0.01);
+  int64_t output1_shape[2] = {1, 1001};
+  DLTensor output1 = GetOutputDLTensor(1001, 2, output1_shape, kDLFloat);
   EXPECT_EQ(CopyTVMOutputTensor(&model, 1, &output1), 0);
   EXPECT_GT(((float*)(output1.data))[112], 0.01);
-  const DLTensor* output1_p;
-  EXPECT_EQ(GetTVMOutputTensor(&model, 1, (const void**)&output1_p), 0);
-  for (int i = 0; i < 1001; i++) {
-    EXPECT_EQ(((float*)(output1.data))[i], ((float*)(output1_p->data))[i]);
-  }
 
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
