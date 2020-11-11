@@ -1,6 +1,8 @@
-#include "dlr.h"
 #include "dlr_tvm.h"
+
 #include <gtest/gtest.h>
+
+#include "dlr.h"
 #include "test_utils.hpp"
 
 class TVMTest : public ::testing::Test {
@@ -25,12 +27,11 @@ class TVMTest : public ::testing::Test {
     int device_id = 0;
     std::vector<std::string> paths = {model_path};
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-    model = new dlr::TVMModel(paths, ctx);
+    std::vector<std::string> files = dlr::FindFiles(paths);
+    model = new dlr::TVMModel(files, ctx);
   }
 
-  ~TVMTest() {
-    delete model;
-  }
+  ~TVMTest() { delete model; }
 };
 
 TEST_F(TVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
@@ -42,25 +43,22 @@ TEST_F(TVMTest, TestGetInput) {
   EXPECT_EQ(img, observed_input_data);
 }
 
-
 TEST_F(TVMTest, TestGetInputShape) {
   std::vector<int64_t> in_shape(std::begin(input_shape), std::end(input_shape));
   EXPECT_EQ(model->GetInputShape(0), in_shape);
 }
 
-TEST_F(TVMTest, TestGetInputSize) {
-  EXPECT_EQ(model->GetInputSize(0), 1 * 224 * 224 * 3);
-}
+TEST_F(TVMTest, TestGetInputSize) { EXPECT_EQ(model->GetInputSize(0), 1 * 224 * 224 * 3); }
 
 TEST_F(TVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
-
 
 TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   const int device_type = 1;  // 1 - kDLCPU
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {"./resnet_v1_5_50"};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -124,7 +122,8 @@ TEST(TVM, TestTvmModelApisWithoutMetadata) {
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -160,7 +159,8 @@ TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -181,7 +181,6 @@ TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
   std::rename(metadata_file_bak.c_str(), metadata_file.c_str());
 }
 
-
 TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
   // rename metadata file such that metadata file is not found.
   std::string model_path = "./resnet_v1_5_50";
@@ -191,12 +190,14 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
   std::rename(metadata_file.c_str(), metadata_file_bak.c_str());
   std::ofstream mocked_metadata;
   mocked_metadata.open(metadata_file.c_str());
-  mocked_metadata << "{\"Requirements\": { \"TargetDevice\": \"ML_C4\", \"TargetDeviceType\": \"cpu\"}}\n";
+  mocked_metadata
+      << "{\"Requirements\": { \"TargetDevice\": \"ML_C4\", \"TargetDeviceType\": \"cpu\"}}\n";
   mocked_metadata.close();
 
   DLContext ctx = {DLDeviceType::kDLCPU, 0};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -205,25 +206,25 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
   EXPECT_EQ(model.GetDeviceTypeFromMetadata(), DLDeviceType::kDLCPU);
 
   mocked_metadata.open(metadata_file.c_str());
-  mocked_metadata << "{\"Requirements\": { \"TargetDevice\": \"ML_C4\", \"TargetDeviceType\": \"gpu\"}}\n";
+  mocked_metadata
+      << "{\"Requirements\": { \"TargetDevice\": \"ML_C4\", \"TargetDeviceType\": \"gpu\"}}\n";
   mocked_metadata.close();
 
-  EXPECT_THROW(
-      ({
-        try {
-          dlr::TVMModel(paths, ctx);
-        } catch (const dmlc::Error& e) {
-          EXPECT_STREQ(e.what(),
+  EXPECT_THROW(({
+                 try {
+                   dlr::TVMModel(files, ctx);
+                 } catch (const dmlc::Error& e) {
+                   EXPECT_STREQ(
+                       e.what(),
                        "Compiled model requires device type \"gpu\" but user gave \"cpu\".");
-          throw;
-        }
-      }),
-      dmlc::Error);
+                   throw;
+                 }
+               }),
+               dmlc::Error);
 
   // put it back
   std::rename(metadata_file_bak.c_str(), metadata_file.c_str());
 }
-
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

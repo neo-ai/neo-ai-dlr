@@ -48,25 +48,6 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 #endif
 
 /*!
- \brief TVM model file paths for GraphRuntime or VMRuntime
- */
-typedef struct TVMPaths_t {
-  TVMPaths_t()
-      : model_lib(NULL),
-        params(NULL),
-        model_json(NULL),
-        ver_json(NULL),
-        metadata(NULL),
-        relay_executable(NULL) {}
-  const char* model_lib;         // Required for TVM GraphRuntime & VMRuntime
-  const char* params;            // Required for TVM GraphRUntime
-  const char* model_json;        // Required for TVM GraphRuntime
-  const char* ver_json;          // Optional
-  const char* metadata;          // Required for TVM VMRuntime
-  const char* relay_executable;  // Required for TVM VMRuntime
-} TVMPaths;
-
-/*!
  \brief Creates a DLR model by searching in given directory path.
  \param handle The pointer to save the model handle.
  \param model_path Path to the folder containing the model files,
@@ -484,19 +465,6 @@ int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
 DLR_DLL
 int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const char* lib_path,
                              const char* params, size_t params_len, int dev_type, int dev_id);
-
-/*!
- * \brief Creates a DLR model for TVM GraphRuntime and VMRuntime models from specified paths
- *        to individual files rather than a directory.
- * \param handle The pointer to save the model handle.
- * \param paths Paths to the model files stored in different locations
- * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
- * \param dev_id Device ID.
- * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
- */
-DLR_DLL
-int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* paths, int dev_type,
-                            int dev_id);
 
 /*!
  * \brief Sets the input according the node name from existing DLTensor. Can only be

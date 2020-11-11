@@ -56,6 +56,8 @@ typedef struct {
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
+std::vector<std::string> FindFiles(std::vector<std::string> paths);
+
 /* Logic to handle Windows drive letter */
 std::string FixWindowsDriveLetter(std::string path);
 
@@ -79,11 +81,11 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE };
+enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
-DLRBackend GetBackend(std::vector<std::string> dirname);
+DLRBackend GetBackend(const std::vector<std::string>& files);
 
 std::string GetMetadataFile(const std::string& dirname);
 

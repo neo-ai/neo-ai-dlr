@@ -15,9 +15,9 @@
 
 namespace dlr {
 
-/*! \brief Get the paths of the TVM model files.
+/*! \brief Set the paths of the TVM model files.
  */
-ModelPath GetTvmPaths(std::vector<std::string> tar_path);
+ModelPath SetTvmPaths(const std::vector<std::string>& files);
 
 /*! \brief class TVMModel
  */
@@ -28,8 +28,7 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  void SetupTVMModule(std::vector<std::string> model_path);
-  void SetupTVMModule(const ModelPath& paths);
+  void SetupTVMModule(const std::vector<std::string>& files);
   void SetupTVMModule(const std::string& json_str, dmlc::Stream* param_strm,
                       const ModelPath& paths);
   void UpdateInputShapes();
@@ -37,13 +36,9 @@ class DLR_DLL TVMModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(std::vector<std::string> model_path, const DLContext& ctx)
+  explicit TVMModel(const std::vector<std::string>& files, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
-    SetupTVMModule(model_path);
-  }
-  explicit TVMModel(const ModelPath& paths, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
-    SetupTVMModule(paths);
+    SetupTVMModule(files);
   }
   explicit TVMModel(const std::string& json_str, std::string* param_data, const ModelPath& paths,
                     const DLContext& ctx)

@@ -232,15 +232,13 @@ TEST(DLR, TestCreateTVMModelFromMemory) {
   DeleteDLRModel(&model);
 }
 
-TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
+TEST(DLR, TestCreateFromPaths_TVM) {
   DLRModelHandle model = nullptr;
+  const char* model_paths =
+      "./resnet_v1_5_50/compiled.so:./resnet_v1_5_50/compiled_model.json:./resnet_v1_5_50/"
+      "compiled.params";
   int device_type = 1;  // cpu;
-  TVMPaths paths;
-  paths.model_lib = "./resnet_v1_5_50/compiled.so";
-  paths.model_json = "./resnet_v1_5_50/compiled_model.json";
-  paths.params = "./resnet_v1_5_50/compiled.params";
-
-  if (CreateTVMModelFromPaths(&model, &paths, device_type, 0) != 0) {
+  if (CreateDLRModel(&model, model_paths, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
@@ -283,15 +281,12 @@ TEST(DLR, TestCreateTVMModelFromPaths_GraphRuntime) {
   DeleteDLRModel(&model);
 }
 
-TEST(DLR, TestCreateTVMModelFromPaths_VMRuntime) {
+TEST(DLR, TestCreateFromPaths_RelayVM) {
   DLRModelHandle model = nullptr;
+  const char* model_paths =
+      "./ssd_mobilenet_v1/compiled.so:./ssd_mobilenet_v1/compiled.meta:./ssd_mobilenet_v1/code.ro";
   int device_type = 1;  // cpu;
-  TVMPaths paths;
-  paths.model_lib = "./ssd_mobilenet_v1/compiled.so";
-  paths.metadata = "./ssd_mobilenet_v1/compiled.meta";
-  paths.relay_executable = "./ssd_mobilenet_v1/code.ro";
-
-  if (CreateTVMModelFromPaths(&model, &paths, device_type, 0) != 0) {
+  if (CreateDLRModel(&model, model_paths, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }

@@ -45,8 +45,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
   DataTransform data_transform_;
-  void InitModelPath(std::vector<std::string> paths);
-  void InitModelPath(const ModelPath& paths);
+  void InitModelPath(const std::vector<std::string>& files);
   void SetupVMModule();
   void FetchInputNodesData();
   void LoadMetadata();
@@ -56,17 +55,9 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DLDataType GetInputDLDataType(int index);
 
  public:
-  explicit RelayVMModel(std::vector<std::string> paths, const DLContext& ctx)
+  explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kRELAYVM) {
-    InitModelPath(paths);
-    LoadMetadata();
-    SetupVMModule();
-    FetchInputNodesData();
-    FetchOutputNodesData();
-  }
-  explicit RelayVMModel(const ModelPath& paths, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
-    InitModelPath(paths);
+    InitModelPath(files);
     LoadMetadata();
     SetupVMModule();
     FetchInputNodesData();

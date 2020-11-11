@@ -1,9 +1,10 @@
 #include "dlr_relayvm.h"
 
 #include <gtest/gtest.h>
+
 #include "test_utils.hpp"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 #ifndef _WIN32
   testing::FLAGS_gtest_death_test_style = "threadsafe";
@@ -19,43 +20,34 @@ class RelayVMTest : public ::testing::Test {
   const int input_dim = 4;
   std::vector<int8_t> img{std::vector<int8_t>(img_size)};
 
-  dlr::RelayVMModel *model;
+  dlr::RelayVMModel* model;
 
   RelayVMTest() {
     const int device_type = kDLCPU;
     const int device_id = 0;
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
-    model = new dlr::RelayVMModel(paths, ctx);
+    std::vector<std::string> files = dlr::FindFiles(paths);
+    model = new dlr::RelayVMModel(files, ctx);
   }
 
-  ~RelayVMTest() {
-    delete model;
-  }
+  ~RelayVMTest() { delete model; }
 };
 
 TEST_F(RelayVMTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
-TEST_F(RelayVMTest, TestGetInputName) {
-  EXPECT_STREQ(model->GetInputName(0), "image_tensor");
-}
+TEST_F(RelayVMTest, TestGetInputName) { EXPECT_STREQ(model->GetInputName(0), "image_tensor"); }
 
-TEST_F(RelayVMTest, TestGetInputType) {
-  EXPECT_STREQ(model->GetInputType(0), "uint8");
-}
+TEST_F(RelayVMTest, TestGetInputType) { EXPECT_STREQ(model->GetInputType(0), "uint8"); }
 
 TEST_F(RelayVMTest, TestGetInputShape) {
   std::vector<int64_t> in_shape(std::begin(input_shape), std::end(input_shape));
   EXPECT_EQ(model->GetInputShape(0), in_shape);
 }
 
-
-TEST_F(RelayVMTest, TestGetInputSize) {
-  EXPECT_EQ(model->GetInputSize(0), 1 * 512 * 512 * 3);
-}
+TEST_F(RelayVMTest, TestGetInputSize) { EXPECT_EQ(model->GetInputSize(0), 1 * 512 * 512 * 3); }
 
 TEST_F(RelayVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
-
 
 TEST_F(RelayVMTest, TestSetInput) {
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
@@ -68,7 +60,6 @@ TEST_F(RelayVMTest, TestGetOutputName) {
   EXPECT_STREQ(model->GetOutputName(1), "num_detections:0");
   EXPECT_STREQ(model->GetOutputName(2), "detection_boxes:0");
   EXPECT_STREQ(model->GetOutputName(3), "detection_scores:0");
-  
 }
 
 TEST_F(RelayVMTest, TestGetOutputType) {
@@ -86,10 +77,10 @@ TEST_F(RelayVMTest, TestRun) {
 TEST_F(RelayVMTest, TestGetOutputShape) {
   int64_t output_shape[2];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
-  
+
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   EXPECT_NO_THROW(model->Run());
-  
+
   int64_t output_0_shape[2];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_0_shape));
   EXPECT_EQ(output_0_shape[0], 1);
@@ -117,7 +108,7 @@ TEST_F(RelayVMTest, TestGetOutputSizeDim) {
 
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
   EXPECT_NO_THROW(model->Run());
-  
+
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
   EXPECT_EQ(size, 100);
   EXPECT_EQ(dim, 2);
@@ -139,7 +130,7 @@ TEST_F(RelayVMTest, TestGetOutput) {
   float output3[100];
   EXPECT_NO_THROW(model->GetOutput(3, output3));
   float* output3_p;
-  EXPECT_NO_THROW(output3_p = (float*) model->GetOutputPtr(3));
+  EXPECT_NO_THROW(output3_p = (float*)model->GetOutputPtr(3));
   for (int i = 0; i < 100; i++) {
     EXPECT_EQ(output3_p[i], output3[i]);
   }

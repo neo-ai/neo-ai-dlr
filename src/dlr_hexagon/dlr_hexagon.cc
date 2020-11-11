@@ -7,23 +7,16 @@
 
 using namespace dlr;
 
-std::string dlr::GetHexagonModelFile(const std::string& dirname) {
-  // Support the case where user provides full path to _hexagon_model.so file.
-  if (EndsWith(dirname, "_hexagon_model.so")) {
-    return dirname;
-  }
-  // Scan Dir to find _hexagon_model.so file
+std::string dlr::GetHexagonModelFile(const std::vector<std::string>& files) {
+  // Scan to find _hexagon_model.so file
   std::string hexagon_model_so_file;
-  std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
-  for (auto filename : paths_vec) {
+  for (auto filename : files) {
     std::string basename = GetBasename(filename);
     if (EndsWith(basename, "_hexagon_model.so")) {
       if (hexagon_model_so_file.empty()) {
         hexagon_model_so_file = filename;
       } else {
-        LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: "
-                   << dirname;
+        LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: " << dirname;
       }
     }
   }
@@ -43,8 +36,7 @@ bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {
       return true;
     }
   }
-  LOG(INFO) << "libhexagon_nn_skel.so file is not found under folder: "
-            << dirname;
+  LOG(INFO) << "libhexagon_nn_skel.so file is not found under folder: " << dirname;
   return false;
 }
 
@@ -58,8 +50,7 @@ void* dlr::FindSymbol(void* handle, const char* fn_name) {
 }
 
 void HexagonModel::PrintHexagonNNLog() {
-  int err = (*dlr_hexagon_nn_getlog)(graph_id_, (unsigned char*)log_buf_,
-                                     log_buf_size_);
+  int err = (*dlr_hexagon_nn_getlog)(graph_id_, (unsigned char*)log_buf_, log_buf_size_);
   if (err == 0) {
     LOG(INFO) << log_buf_;
   }
@@ -78,8 +69,7 @@ void HexagonModel::GenTensorSpec(bool isInput) {
     if (isInput) {
       err = (*dlr_hexagon_input_spec)(id, &name, &dim, &shape, &length, &bytes);
     } else {
-      err =
-          (*dlr_hexagon_output_spec)(id, &name, &dim, &shape, &length, &bytes);
+      err = (*dlr_hexagon_output_spec)(id, &name, &dim, &shape, &length, &bytes);
     }
     if (err != 0) break;
     HexagonTensorSpec t_spec;
@@ -115,10 +105,10 @@ int HexagonModel::GetInputId(const char* name) {
 }
 
 // Constructor
-HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
+HexagonModel::HexagonModel(const std::vector<std::string>& files, const DLContext& ctx,
                            const int debug_level)
     : DLRModel(ctx, DLRBackend::kHEXAGON) {
-  const std::string model_so_file = GetHexagonModelFile(model_path);
+  const std::string model_so_file = GetHexagonModelFile(files);
   LOG(INFO) << "Model: " << model_so_file;
   const std::string model_folder = GetParentFolder(model_so_file);
   if (FindHexagonNNSkelFile(model_folder)) {
@@ -127,9 +117,8 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
     setenv("ADSP_LIBRARY_PATH", model_folder_abs, 1);
     free(model_folder_abs);
   } else {
-    LOG(INFO)
-        << "libhexagon_nn_skel.so file is not found. User needs to set "
-           "ADSP_LIBRARY_PATH to point to libhexagon_nn_skel.so file folder";
+    LOG(INFO) << "libhexagon_nn_skel.so file is not found. User needs to set "
+                 "ADSP_LIBRARY_PATH to point to libhexagon_nn_skel.so file folder";
   }
 
   void* handle = dlopen(model_so_file.c_str(), RTLD_NOW | RTLD_LOCAL);
@@ -138,18 +127,12 @@ HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
     return;  // unreachable
   }
 
-  *(void**)(&dlr_hexagon_model_init) =
-      FindSymbol(handle, "dlr_hexagon_model_init");
-  *(void**)(&dlr_hexagon_model_exec) =
-      FindSymbol(handle, "dlr_hexagon_model_exec");
-  *(void**)(&dlr_hexagon_model_close) =
-      FindSymbol(handle, "dlr_hexagon_model_close");
-  *(void**)(&dlr_hexagon_nn_getlog) =
-      FindSymbol(handle, "dlr_hexagon_nn_getlog");
-  *(void**)(&dlr_hexagon_input_spec) =
-      FindSymbol(handle, "dlr_hexagon_input_spec");
-  *(void**)(&dlr_hexagon_output_spec) =
-      FindSymbol(handle, "dlr_hexagon_output_spec");
+  *(void**)(&dlr_hexagon_model_init) = FindSymbol(handle, "dlr_hexagon_model_init");
+  *(void**)(&dlr_hexagon_model_exec) = FindSymbol(handle, "dlr_hexagon_model_exec");
+  *(void**)(&dlr_hexagon_model_close) = FindSymbol(handle, "dlr_hexagon_model_close");
+  *(void**)(&dlr_hexagon_nn_getlog) = FindSymbol(handle, "dlr_hexagon_nn_getlog");
+  *(void**)(&dlr_hexagon_input_spec) = FindSymbol(handle, "dlr_hexagon_input_spec");
+  *(void**)(&dlr_hexagon_output_spec) = FindSymbol(handle, "dlr_hexagon_output_spec");
 
   graph_id_ = 0;
   input_ = NULL;
@@ -244,15 +227,13 @@ const char* HexagonModel::GetWeightName(int index) const {
   return "";  // unreachable
 }
 
-void HexagonModel::SetInput(const char* name, const int64_t* shape,
-                            const void* input, int dim) {
+void HexagonModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
   int index = GetInputId(name);
 
   // Check Size and Dim
   CHECK_EQ(dim, input_tensors_spec_[index].dim) << "Incorrect input dim";
   for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i])
-        << "Incorrect input shape";
+    CHECK_EQ(shape[i], input_tensors_spec_[index].shape[i]) << "Incorrect input shape";
   }
   std::memcpy(input_, input, input_tensors_spec_[index].bytes);
 }

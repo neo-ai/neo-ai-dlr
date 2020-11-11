@@ -183,26 +183,27 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
 
 std::vector<std::string> MakePathVec(std::string model_path) {
   std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
-  path_vec[0] = FixWindowsDriveLetter(path_vec[0]);
+  for (int i = 0; i < path_vec.size(); i++) path_vec[i] = FixWindowsDriveLetter(path_vec[i]);
   return path_vec;
 }
 
 DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
   std::vector<std::string> path_vec = MakePathVec(model_path);
-  DLRBackend backend = dlr::GetBackend(path_vec);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
   if (backend == DLRBackend::kTVM) {
-    return std::make_shared<TVMModel>(path_vec, ctx);
+    return std::make_shared<TVMModel>(files, ctx);
   } else if (backend == DLRBackend::kRELAYVM) {
-    return std::make_shared<RelayVMModel>(path_vec, ctx);
+    return std::make_shared<RelayVMModel>(files, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
-    return std::make_shared<TreeliteModel>(path_vec, ctx);
+    return std::make_shared<TreeliteModel>(files, ctx);
 #ifdef DLR_HEXAGON
   } else if (backend == DLRBackend::kHEXAGON) {
-    const std::string model_path_string(model_path);
-    return std::make_shared<HexagonModel>(model_path_string, ctx, 1 /*debug_level*/);
+    return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
   } else {
-    throw dmlc::Error("Unsupported backend!");
+    LOG(ERROR) << "Unable to determine backend from path: '" << model_path << "'.";
+    return nullptr;  // unreachable
   }
 }
 
@@ -233,23 +234,23 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   ctx.device_id = dev_id;
 
   std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
 
-  DLRBackend backend = dlr::GetBackend(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
   DLRModel* model;
   try {
     if (backend == DLRBackend::kTVM) {
-      model = new TVMModel(path_vec, ctx);
+      model = new TVMModel(files, ctx);
     } else if (backend == DLRBackend::kRELAYVM) {
-      model = new RelayVMModel(path_vec, ctx);
+      model = new RelayVMModel(files, ctx);
     } else if (backend == DLRBackend::kTREELITE) {
-      model = new TreeliteModel(path_vec, ctx);
+      model = new TreeliteModel(files, ctx);
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
-      const std::string model_path_string(model_path);
-      model = new HexagonModel(model_path_string, ctx, 1 /*debug_level*/);
+      model = new HexagonModel(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
     } else {
-      LOG(FATAL) << "Unsupported backend!";
+      LOG(ERROR) << "Unable to determine backend from path: '" << model_path << "'.";
       return -1;  // unreachable
     }
   } catch (dmlc::Error& e) {
@@ -373,41 +374,6 @@ extern "C" int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* grap
   paths.model_lib = FixWindowsDriveLetter(lib_path);
   std::string param_str(params, params_len);
   *handle = new TVMModel(graph, &param_str, paths, ctx);
-  API_END();
-}
-
-extern "C" int CreateTVMModelFromPaths(DLRModelHandle* handle, const TVMPaths* paths, int dev_type,
-                                       int dev_id) {
-  API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
-
-  ModelPath path;
-  if (paths->model_lib) path.model_lib = paths->model_lib;
-  if (paths->params) path.params = paths->params;
-  if (paths->model_json) path.model_json = paths->model_json;
-  if (paths->ver_json) path.ver_json = paths->ver_json;
-  if (paths->metadata) path.metadata = paths->metadata;
-  if (paths->relay_executable) path.relay_executable = paths->relay_executable;
-
-  DLRModel* model;
-  try {
-    if (paths->model_lib != NULL && paths->params != NULL && paths->model_json != NULL) {
-      model = new TVMModel(path, ctx);
-    } else if (paths->model_lib != NULL && paths->relay_executable != NULL &&
-               paths->metadata != NULL) {
-      model = new RelayVMModel(path, ctx);
-    } else {
-      LOG(FATAL) << "Unsupported backend!";
-      return -1;  // unreachable
-    }
-  } catch (dmlc::Error& e) {
-    LOG(ERROR) << e.what();
-    return -1;
-  }
-
-  *handle = model;
   API_END();
 }
 

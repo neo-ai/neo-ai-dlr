@@ -9,13 +9,9 @@
 
 using namespace dlr;
 
-ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
+ModelPath dlr::SetTvmPaths(const std::vector<std::string>& files) {
   ModelPath paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
+  for (auto filename : files) {
     std::string basename = GetBasename(filename);
     if (EndsWith(filename, ".json") &&
         std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
@@ -41,7 +37,7 @@ ModelPath dlr::GetTvmPaths(std::vector<std::string> dirname) {
   return paths;
 }
 
-void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
+void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
   // Set custom allocators in TVM.
   if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
       dlr::DLRAllocatorFunctions::GetFreeFunction()) {
@@ -57,11 +53,8 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
                     "to override TVM allocations. Using default allocators.";
   }
 
-  ModelPath paths = GetTvmPaths(model_path);
-  SetupTVMModule(paths);
-}
+  ModelPath paths = SetTvmPaths(files);
 
-void TVMModel::SetupTVMModule(const ModelPath& paths) {
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
@@ -70,6 +63,7 @@ void TVMModel::SetupTVMModule(const ModelPath& paths) {
   param_blob << pstream.rdbuf();
   auto param_data = param_blob.str();
   dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
+
   SetupTVMModule(json_blob.str(), &strm, paths);
 }
 

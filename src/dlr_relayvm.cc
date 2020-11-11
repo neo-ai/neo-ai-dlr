@@ -10,14 +10,9 @@ using namespace dlr;
 
 const std::string RelayVMModel::ENTRY_FUNCTION = "main";
 
-void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
+void RelayVMModel::InitModelPath(const std::vector<std::string>& files) {
   path_ = std::make_unique<ModelPath>();
-  std::vector<std::string> paths_vec;
-  for (auto path : paths) {
-    ListDir(path, paths_vec);
-  }
-
-  for (auto path : paths_vec) {
+  for (auto path : files) {
     if (!EndsWith(path, LIBDLR) && EndsWith(path, ".so")) {
       path_->model_lib = path;
     } else if (EndsWith(path, ".ro")) {
@@ -26,17 +21,6 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
       path_->metadata = path;
     }
   }
-
-  if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
-    throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
-  }
-}
-
-void RelayVMModel::InitModelPath(const ModelPath& path) {
-  path_ = std::make_unique<ModelPath>();
-  path_->model_lib = path.model_lib;
-  path_->relay_executable = path.relay_executable;
-  path_->metadata = path.metadata;
 
   if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
     throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");

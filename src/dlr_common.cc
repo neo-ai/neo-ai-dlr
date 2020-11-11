@@ -50,12 +50,16 @@ std::string dlr::GetBasename(const std::string& path) {
 void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   dmlc::io::URI uri(dirname.c_str());
   dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
-  std::vector<dmlc::io::FileInfo> file_list;
-  fs->ListDirectory(uri, &file_list);
-  for (dmlc::io::FileInfo info : file_list) {
-    if (info.type != dmlc::io::FileType::kDirectory) {
-      paths.push_back(info.path.name);
+  if (fs->GetPathInfo(uri).type == dmlc::io::FileType::kDirectory) {
+    std::vector<dmlc::io::FileInfo> file_list;
+    fs->ListDirectory(uri, &file_list);
+    for (dmlc::io::FileInfo info : file_list) {
+      if (info.type != dmlc::io::FileType::kDirectory) {
+        paths.push_back(info.path.name);
+      }
     }
+  } else {
+    paths.push_back(dirname);
   }
 }
 
@@ -80,26 +84,30 @@ void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) 
   }
 }
 
-DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
-  // Support the case where user provides full path to hexagon file.
-  if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
-    return DLRBackend::kHEXAGON;
+std::vector<std::string> dlr::FindFiles(std::vector<std::string> paths) {
+  std::vector<std::string> files;
+  for (auto path : paths) {
+    dlr::ListDir(path, files);
   }
-  // Scan Directory content to guess the backend.
-  std::vector<std::string> paths;
-  for (auto dir : dir_paths) {
-    dlr::ListDir(dir, paths);
-  }
-  for (auto filename : paths) {
+  return files;
+}
+
+DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
+  // Scan files to guess the backend.
+  bool hasSO = false;
+  for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".ro")) {
       return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
+    } else if (EndsWith(filename, ".so")) {
+      hasSO = true;  // dont return immediately since so could be part of many diff backend types
     }
   }
-  return DLRBackend::kTREELITE;
+  if (hasSO) return DLRBackend::kTREELITE;
+  return DLRBackend::kUNKNOWN;
 }
 
 const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {

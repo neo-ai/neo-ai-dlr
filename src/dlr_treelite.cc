@@ -31,13 +31,9 @@ std::string GetVersion(const std::string& json_path) {
   return version;
 }
 
-ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
+ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
   ModelPath paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
+  for (auto filename : files) {
     if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
     } else if (filename == "version.json") {
@@ -52,8 +48,8 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
   return paths;
 }
 
-void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
-  ModelPath paths = GetTreelitePaths(model_path);
+void TreeliteModel::SetupTreeliteModule(const std::vector<std::string>& model_path) {
+  ModelPath paths = SetTreelitePaths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
   const char* val = std::getenv("OMP_NUM_THREADS");
@@ -63,20 +59,14 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   // Give a dummy input name to Treelite model.
   input_names_.push_back(INPUT_NAME);
   input_types_.push_back(INPUT_TYPE);
-  CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads,
-                                 &treelite_model_),
-           0)
+  CHECK_EQ(TreelitePredictorLoad(paths.model_lib.c_str(), num_worker_threads, &treelite_model_), 0)
       << TreeliteGetLastError();
-  CHECK_EQ(
-      TreelitePredictorQueryNumFeature(treelite_model_, &treelite_num_feature_),
-      0)
+  CHECK_EQ(TreelitePredictorQueryNumFeature(treelite_model_, &treelite_num_feature_), 0)
       << TreeliteGetLastError();
   treelite_input_.reset(nullptr);
 
   size_t num_output_class;  // > 1 for multi-class classification; 1 otherwise
-  CHECK_EQ(
-      TreelitePredictorQueryNumOutputGroup(treelite_model_, &num_output_class),
-      0)
+  CHECK_EQ(TreelitePredictorQueryNumOutputGroup(treelite_model_, &num_output_class), 0)
       << TreeliteGetLastError();
   treelite_output_buffer_size_ = num_output_class;
   treelite_output_.empty();
@@ -86,8 +76,8 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   //       once.
   std::vector<TreelitePredictorEntry> tmp_in(treelite_num_feature_);
   std::vector<float> tmp_out(num_output_class);
-  CHECK_EQ(TreelitePredictorPredictInst(treelite_model_, tmp_in.data(), 0,
-                                        tmp_out.data(), &treelite_output_size_),
+  CHECK_EQ(TreelitePredictorPredictInst(treelite_model_, tmp_in.data(), 0, tmp_out.data(),
+                                        &treelite_output_size_),
            0)
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
@@ -107,7 +97,6 @@ void TreeliteModel::UpdateInputShapes() {
   input_shapes_[0] = input_shape;
 }
 
-
 std::vector<std::string> TreeliteModel::GetWeightNames() const {
   throw dmlc::Error("GetWeightNames is not supported by Treelite backend.");
   return std::vector<std::string>();  // unreachable
@@ -123,8 +112,7 @@ const int64_t TreeliteModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   const std::vector<int64_t>& shape = GetInputShape(index);
   if (dlr::HasNegative(shape.data(), shape.size())) return -1;
-  return abs(std::accumulate(shape.begin(), shape.end(), 1,
-                         std::multiplies<int64_t>()));
+  return abs(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
 }
 
 const char* TreeliteModel::GetInputType(int index) const {
@@ -134,11 +122,10 @@ const char* TreeliteModel::GetInputType(int index) const {
 
 const char* TreeliteModel::GetWeightName(int index) const {
   throw dmlc::Error("GetWeightName is not supported by Treelite backend.");
-  return ""; // unreachable
+  return "";  // unreachable
 }
 
-void TreeliteModel::SetInput(const char* name, const int64_t* shape,
-                             const void* input, int dim) {
+void TreeliteModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
   // NOTE: Assume that missing values are represented by NAN
   CHECK_SHAPE("Mismatch found in input dimension", dim, kInputDim);
   // NOTE: If number of columns is less than num_feature, missing columns
@@ -153,7 +140,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   treelite_input_.reset(new TreeliteInput);
   CHECK(treelite_input_);
   treelite_input_->row_ptr.push_back(0);
-  float* input_f = (float*) input;
+  float* input_f = (float*)input;
 
   // NOTE: Assume row-major (C) layout
   treelite_input_->data.reserve(batch_size * num_col);
@@ -178,11 +165,11 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape,
   treelite_input_->num_col = treelite_num_feature_;
 
   // Register CSR matrix with Treelite backend
-  CHECK_EQ(TreeliteAssembleSparseBatch(
-               treelite_input_->data.data(), treelite_input_->col_ind.data(),
-               treelite_input_->row_ptr.data(), batch_size,
-               treelite_num_feature_, &treelite_input_->handle),
-           0)
+  CHECK_EQ(
+      TreeliteAssembleSparseBatch(treelite_input_->data.data(), treelite_input_->col_ind.data(),
+                                  treelite_input_->row_ptr.data(), batch_size,
+                                  treelite_num_feature_, &treelite_input_->handle),
+      0)
       << TreeliteGetLastError();
   UpdateInputShapes();
 }
@@ -193,16 +180,14 @@ void TreeliteModel::GetInput(const char* name, void* input) {
 
 void TreeliteModel::GetOutputShape(int index, int64_t* shape) const {
   // Use -1 if input is yet unspecified and batch size is not known
-  shape[0] =
-      treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
+  shape[0] = treelite_input_ ? static_cast<int64_t>(treelite_input_->num_row) : -1;
   shape[1] = static_cast<int64_t>(treelite_output_size_);
 }
 
 void TreeliteModel::GetOutput(int index, void* out) {
   CHECK(treelite_input_);
-  std::memcpy(
-      out, treelite_output_.data(),
-      sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
+  std::memcpy(out, treelite_output_.data(),
+              sizeof(float) * (treelite_input_->num_row) * treelite_output_size_);
 }
 
 const void* TreeliteModel::GetOutputPtr(int index) const {
@@ -212,8 +197,7 @@ const void* TreeliteModel::GetOutputPtr(int index) const {
 
 void TreeliteModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   if (treelite_input_) {
-    *size =
-        static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
+    *size = static_cast<int64_t>(treelite_input_->num_row * treelite_output_size_);
   } else {
     // Input is yet unspecified and batch is not known
     *size = -1;
@@ -229,11 +213,9 @@ const char* TreeliteModel::GetOutputType(int index) const {
 void TreeliteModel::Run() {
   size_t out_result_size;
   CHECK(treelite_input_);
-  treelite_output_.resize(treelite_input_->num_row *
-                          treelite_output_buffer_size_);
-  CHECK_EQ(TreelitePredictorPredictBatch(
-               treelite_model_, treelite_input_->handle, 1, 0, 0,
-               treelite_output_.data(), &out_result_size),
+  treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
+  CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle, 1, 0, 0,
+                                         treelite_output_.data(), &out_result_size),
            0)
       << TreeliteGetLastError();
 }
