@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
+
 #include "../test_utils.hpp"
 
 typedef void* DLRModelHandle;

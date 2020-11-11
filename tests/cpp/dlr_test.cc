@@ -1,5 +1,7 @@
 #include "dlr.h"
+
 #include <gtest/gtest.h>
+
 #include "test_utils.hpp"
 
 DLRModelHandle GetDLRModel() {
