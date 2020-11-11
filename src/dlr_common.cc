@@ -63,7 +63,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
-std::string dlr::FixWindowsDriveLetter(std::string path) {
+std::string dlr::FixWindowsDriveLetter(const std::string& path) {
   std::string path_string{path};
   std::string special_prefix{""};
   if (path_string.length() >= 2 && path_string[1] == ':' &&
@@ -84,7 +84,7 @@ void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) 
   }
 }
 
-std::vector<std::string> dlr::FindFiles(std::vector<std::string> paths) {
+std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
   std::vector<std::string> files;
   for (auto path : paths) {
     dlr::ListDir(path, files);
@@ -94,7 +94,7 @@ std::vector<std::string> dlr::FindFiles(std::vector<std::string> paths) {
 
 DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
   // Scan files to guess the backend.
-  bool hasSO = false;
+  bool has_so = false;
   for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
@@ -103,10 +103,10 @@ DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
     } else if (EndsWith(filename, ".so")) {
-      hasSO = true;  // dont return immediately since so could be part of many diff backend types
+      has_so = true;  // dont return immediately since so could be part of many diff backend types
     }
   }
-  if (hasSO) return DLRBackend::kTREELITE;
+  if (has_so) return DLRBackend::kTREELITE;
   return DLRBackend::kUNKNOWN;
 }
 

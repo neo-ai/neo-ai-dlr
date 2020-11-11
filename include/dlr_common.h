@@ -56,10 +56,10 @@ typedef struct {
 
 void ListDir(const std::string& dirname, std::vector<std::string>& paths);
 
-std::vector<std::string> FindFiles(std::vector<std::string> paths);
+std::vector<std::string> FindFiles(const std::vector<std::string>& paths);
 
 /* Logic to handle Windows drive letter */
-std::string FixWindowsDriveLetter(std::string path);
+std::string FixWindowsDriveLetter(const std::string& path);
 
 std::string GetBasename(const std::string& path);
 

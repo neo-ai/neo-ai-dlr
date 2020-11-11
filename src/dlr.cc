@@ -202,7 +202,9 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
     return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
   } else {
-    LOG(ERROR) << "Unable to determine backend from path: '" << model_path << "'.";
+    std::string err = "Unable to determine backend from path: '";
+    err = err + model_path + "'.";
+    throw dmlc::Error(err);
     return nullptr;  // unreachable
   }
 }
@@ -251,7 +253,9 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
       model = new HexagonModel(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
     } else {
-      LOG(ERROR) << "Unable to determine backend from path: '" << model_path << "'.";
+      std::string err = "Unable to determine backend from path: '";
+      err = err + model_path + "'.";
+      throw dmlc::Error(err);
       return -1;  // unreachable
     }
   } catch (dmlc::Error& e) {
