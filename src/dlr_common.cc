@@ -35,8 +35,8 @@ std::string dlr::GetBasename(const std::string& path) {
   }
   std::vector<char> fname(path_.length() + 1);
   std::vector<char> ext(path_.length() + 1);
-  _splitpath_s(path_.c_str(), NULL, 0, NULL, 0, &fname[0], path_.length() + 1,
-               &ext[0], path_.length() + 1);
+  _splitpath_s(path_.c_str(), NULL, 0, NULL, 0, &fname[0], path_.length() + 1, &ext[0],
+               path_.length() + 1);
   return std::string(&fname[0]) + std::string(&ext[0]);
 #else
   char* path_ = strdup(path.c_str());
@@ -59,8 +59,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
   }
 }
 
-void dlr::LoadJsonFromFile(const std::string& path,
-                           nlohmann::json& jsonObject) {
+void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) {
   std::ifstream jsonFile(path);
   try {
     jsonFile >> jsonObject;
@@ -96,10 +95,7 @@ const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
   return input_shapes_[index];
 }
 
-
-bool DLRModel::HasMetadata() const { 
-  return !this->metadata_.is_null(); 
-}
+bool DLRModel::HasMetadata() const { return !this->metadata_.is_null(); }
 
 void DLRModel::ValidateDeviceTypeIfExists() {
   DLDeviceType device_type;
@@ -122,9 +118,8 @@ DLDeviceType DLRModel::GetDeviceTypeFromMetadata() const {
     throw dmlc::Error("No metadata file was found!");
   }
   try {
-    const std::string& device_type_string = metadata_.at("Requirements")
-        .at("TargetDeviceType")
-        .get_ref<const std::string&>();
+    const std::string& device_type_string =
+        metadata_.at("Requirements").at("TargetDeviceType").get_ref<const std::string&>();
     return GetDeviceTypeFromString(device_type_string);
   } catch (nlohmann::json::out_of_range& e) {
     throw dmlc::Error("TargetDeviceType was not found in metadata!");
@@ -181,21 +176,20 @@ DLDeviceType dlr::GetDeviceTypeFromMetadata(const std::vector<std::string>& mode
     throw dmlc::Error("No metadata file was found!");
   }
   nlohmann::json metadata = nullptr;
-  LoadJsonFromFile(metadata_file, metadata); 
+  LoadJsonFromFile(metadata_file, metadata);
 
   if (metadata.is_null()) {
     throw dmlc::Error("No metadata file was found!");
   }
   try {
-    const std::string& device_type_string = metadata.at("Requirements")
-        .at("TargetDeviceType")
-        .get_ref<const std::string&>();
+    const std::string& device_type_string =
+        metadata.at("Requirements").at("TargetDeviceType").get_ref<const std::string&>();
     return GetDeviceTypeFromString(device_type_string);
   } catch (nlohmann::json::out_of_range& e) {
     throw dmlc::Error("TargetDeviceType was not found in metadata!");
-  } 
+  }
 }
 
 bool dlr::HasNegative(const int64_t* arr, const size_t size) {
-  return std::any_of(arr, arr + size, [](int64_t x) {return x < 0;});
+  return std::any_of(arr, arr + size, [](int64_t x) { return x < 0; });
 }

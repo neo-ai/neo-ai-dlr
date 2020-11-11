@@ -84,9 +84,11 @@ void peek_model(DLRModelHandle model) {
       int index;
       if (GetDLROutputName(&model, i, &output_names[i]) == 0) {
         GetDLROutputIndex(&model, output_names[i], &index);
-        std::cout << output_names[i] << " (index: " << index << ")" << ", ";
+        std::cout << output_names[i] << " (index: " << index << ")"
+                  << ", ";
       } else {
-        std::cout << "<unknown> (index: " << i << ")" << ", ";
+        std::cout << "<unknown> (index: " << i << ")"
+                  << ", ";
       }
     }
     std::cout << std::endl;

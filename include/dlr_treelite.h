@@ -52,8 +52,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(std::vector<std::string> model_path,
-                         const DLContext& ctx)
+  explicit TreeliteModel(std::vector<std::string> model_path, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTREELITE) {
     SetupTreeliteModule(model_path);
   }
@@ -65,16 +64,16 @@ class DLR_DLL TreeliteModel : public DLRModel {
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
-  
+
   virtual void GetOutput(int index, void* out) override;
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  
+
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
-  
+
   virtual void Run() override;
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;

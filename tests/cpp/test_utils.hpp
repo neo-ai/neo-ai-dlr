@@ -2,10 +2,10 @@
 #define INCLUDE_TEST_UTILS_HPP
 
 #include <dmlc/logging.h>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <cstring>
 
 std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t size,
                                           int batch_size) {
@@ -32,4 +32,3 @@ std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t si
 }
 
 #endif
-

@@ -76,8 +76,8 @@ class DLR_DLL DataTransform {
    * mapping to convert strings to numbers, and produce a numeric NDArray which can be given to TVM
    * for the model input.
    */
-  void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input, int dim,
-                      const std::vector<DLDataType>& dtypes, DLContext ctx,
+  void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input,
+                      int dim, const std::vector<DLDataType>& dtypes, DLContext ctx,
                       std::vector<tvm::runtime::NDArray>* tvm_inputs) const;
 
   /*! \brief Transform integer output using CategoricalString output DataTransform. When this map is
