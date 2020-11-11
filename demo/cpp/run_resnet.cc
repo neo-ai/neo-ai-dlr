@@ -19,8 +19,7 @@ bool is_big_endian();
 template <typename T>
 void argmax(int& argmax, T& max_pred);
 template <typename T>
-void RunInference(DLRModelHandle model, const char* data_path,
-                  const std::string& input_name,
+void RunInference(DLRModelHandle model, const char* data_path, const std::string& input_name,
                   std::vector<std::vector<T>>& outputs);
 
 bool is_big_endian() {
@@ -44,8 +43,7 @@ void argmax(std::vector<T>& data, int& max_id, T& max_pred) {
 /*! \brief A generic inference function using C-API.
  */
 template <typename T>
-void RunInference(DLRModelHandle model, const char* data_path,
-                  const std::string& input_name,
+void RunInference(DLRModelHandle model, const char* data_path, const std::string& input_name,
                   std::vector<std::vector<T>>& outputs) {
   int num_outputs;
   GetDLRNumOutputs(&model, &num_outputs);
@@ -62,12 +60,11 @@ void RunInference(DLRModelHandle model, const char* data_path,
   bool fortran_order;
   npy::LoadArrayFromNumpy(data_path, in_shape_ul, fortran_order, in_data);
 
-  std::vector<int64_t> in_shape =
-      std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
+  std::vector<int64_t> in_shape = std::vector<int64_t>(in_shape_ul.begin(), in_shape_ul.end());
   int64_t in_ndim = in_shape.size();
 
-  if (SetDLRInput(&model, input_name.c_str(), in_shape.data(),
-                  in_data.data(), static_cast<int>(in_ndim)) != 0) {
+  if (SetDLRInput(&model, input_name.c_str(), in_shape.data(), in_data.data(),
+                  static_cast<int>(in_ndim)) != 0) {
     throw std::runtime_error("Could not set input '" + input_name + "'");
   }
   if (RunDLRModel(&model) != 0) {
@@ -90,10 +87,8 @@ int main(int argc, char** argv) {
   std::string input_name = "data";
   std::string input_type = "float32";
   if (argc < 3) {
-    std::cerr
-        << "Usage: " << argv[0]
-        << " <model dir> <ndarray file> [device] [input name] [input type]"
-        << std::endl;
+    std::cerr << "Usage: " << argv[0]
+              << " <model dir> <ndarray file> [device] [input name] [input type]" << std::endl;
     return 1;
   }
   if (argc >= 4) {
@@ -141,7 +136,6 @@ int main(int argc, char** argv) {
     argmax(outputs[0], max_id, max_pred_uint8);
     max_pred = max_pred_uint8;
   }
-  std::cout << "Max probability is " << max_pred << " at index " << max_id
-            << std::endl;
+  std::cout << "Max probability is " << max_pred << " at index " << max_id << std::endl;
   return 0;
 }

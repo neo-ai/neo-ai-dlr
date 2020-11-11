@@ -4,9 +4,9 @@
 
 DLRModelHandle GetDLRModel() {
   DLRModelHandle model = NULL;
-  const char* model_path0  = "./pipeline_model2/sklearn-preproc";
-  const char* model_path1  = "./pipeline_model2/xgboost-sm";
-  int device_type = 1; // cpu;
+  const char* model_path0 = "./pipeline_model2/sklearn-preproc";
+  const char* model_path1 = "./pipeline_model2/xgboost-sm";
+  int device_type = 1;  // cpu;
   const char* model_paths[2] = {model_path0, model_path1};
   if (CreateDLRPipeline(&model, 2 /*count*/, model_paths, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
@@ -14,7 +14,6 @@ DLRModelHandle GetDLRModel() {
   }
   return model;
 }
-
 
 TEST(PipelineTest, TestGetDLRNumInputs) {
   auto model = GetDLRModel();
@@ -51,7 +50,7 @@ TEST(PipelineTest, TestGetDLRInputType) {
 TEST(PipelineTest, TestSetDLRInput) {
   auto model = GetDLRModel();
   std::string in_data = "[[0.5,0.6],[0.55,0.66],[0.73,0.83]]";
-  int64_t shape[1] = { static_cast<int64_t>(in_data.length()) };
+  int64_t shape[1] = {static_cast<int64_t>(in_data.length())};
   int ndim = 1;
   const char* input_name = "input";
   EXPECT_EQ(SetDLRInput(&model, input_name, shape, in_data.c_str(), ndim), 0);
@@ -122,7 +121,7 @@ TEST(PipelineTest, TestGetDLRBackend) {
 TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   auto model = GetDLRModel();
   std::string in_data = "[[0.3450364,0.3976527],[0.3919772,0.1761725],[0.2091535,0.4263429]]";
-  int64_t shape[1] = { static_cast<int64_t>(in_data.length()) };
+  int64_t shape[1] = {static_cast<int64_t>(in_data.length())};
   int ndim = 1;
   const char* input_name = "input";
   EXPECT_EQ(SetDLRInput(&model, input_name, shape, in_data.c_str(), ndim), 0);
@@ -150,7 +149,6 @@ TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   EXPECT_FLOAT_EQ(output0[2], 0.6209581);
   DeleteDLRModel(&model);
 }
-
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

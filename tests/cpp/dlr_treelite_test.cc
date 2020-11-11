@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 #ifndef _WIN32
   testing::FLAGS_gtest_death_test_style = "threadsafe";
@@ -19,7 +19,7 @@ class TreeliteTest : public ::testing::Test {
   const int64_t out_size = 1;
   const int out_dim = 2;
 
-  dlr::TreeliteModel *model;
+  dlr::TreeliteModel* model;
 
   TreeliteTest() {
     // Setup input data
@@ -35,29 +35,21 @@ class TreeliteTest : public ::testing::Test {
     model = new dlr::TreeliteModel(paths, ctx);
   }
 
-  ~TreeliteTest() {
-    delete model;
-  }
+  ~TreeliteTest() { delete model; }
 };
 
 TEST_F(TreeliteTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 
-TEST_F(TreeliteTest, TestGetInputName) {
-  EXPECT_STREQ(model->GetInputName(0), "data");
-}
+TEST_F(TreeliteTest, TestGetInputName) { EXPECT_STREQ(model->GetInputName(0), "data"); }
 
-TEST_F(TreeliteTest, TestGetInputType) {
-  EXPECT_STREQ(model->GetInputType(0), "float32");
-}
+TEST_F(TreeliteTest, TestGetInputType) { EXPECT_STREQ(model->GetInputType(0), "float32"); }
 
 TEST_F(TreeliteTest, TestGetInputSize) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
   EXPECT_EQ(model->GetInputSize(0), in_size);
 }
 
-TEST_F(TreeliteTest, TestGetInputDim) {
-  EXPECT_EQ(model->GetInputDim(0), in_dim);
-}
+TEST_F(TreeliteTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), in_dim); }
 
 TEST_F(TreeliteTest, TestGetInputShape) {
   std::vector<int64_t> shape{-1, in_size};
@@ -78,13 +70,9 @@ TEST_F(TreeliteTest, TestGetInput) {
   }
 }
 
-TEST_F(TreeliteTest, TestGetNumOutputs) {
-  EXPECT_EQ(model->GetNumOutputs(), 1);
-}
+TEST_F(TreeliteTest, TestGetNumOutputs) { EXPECT_EQ(model->GetNumOutputs(), 1); }
 
-TEST_F(TreeliteTest, TestGetOutputType) {
-  EXPECT_STREQ(model->GetOutputType(0), "float32");
-}
+TEST_F(TreeliteTest, TestGetOutputType) { EXPECT_STREQ(model->GetOutputType(0), "float32"); }
 
 TEST_F(TreeliteTest, TestGetOutputShape) {
   int64_t out_shape[2];
@@ -121,6 +109,6 @@ TEST_F(TreeliteTest, TestGetOutput) {
   float output[1];
   EXPECT_NO_THROW(model->GetOutput(0, output));
   float* output_p;
-  EXPECT_NO_THROW(output_p = (float*) model->GetOutputPtr(0));
+  EXPECT_NO_THROW(output_p = (float*)model->GetOutputPtr(0));
   EXPECT_EQ(output_p[0], output[0]);
 }

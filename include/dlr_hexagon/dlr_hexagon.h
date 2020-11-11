@@ -46,8 +46,7 @@ class HexagonModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit HexagonModel(const std::string& model_path, const DLContext& ctx,
-                        const int debug_level);
+  explicit HexagonModel(const std::string& model_path, const DLContext& ctx, const int debug_level);
   ~HexagonModel();
 
   virtual const int GetInputDim(int index) const override;

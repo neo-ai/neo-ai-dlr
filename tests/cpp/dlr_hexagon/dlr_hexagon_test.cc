@@ -110,8 +110,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
   // Load image
   size_t img_size = 224 * 224 * 3;
   std::vector<uint8_t> img = LoadImageAndPreprocess("cat224-3.txt", img_size);
-  LOG(INFO) << "Input sample: [" << +img[0] << "," << +img[1] << "..."
-            << +img[img_size - 1] << "]";
+  LOG(INFO) << "Input sample: [" << +img[0] << "," << +img[1] << "..." << +img[img_size - 1] << "]";
 
   // SetDLRInput
   const int64_t in_shape[4] = {1, 224, 224, 3};
@@ -152,8 +151,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle) {
 
 TEST(Hexagon, CreateDLRModelFromHexagonFromFile) {
   // CreateDLRModelFromHexagon (use _hexagon_model.so file)
-  const char* model_file =
-      "./dlr_hexagon_model/mobilenet_v1_0.75_224_quant_hexagon_model.so";
+  const char* model_file = "./dlr_hexagon_model/mobilenet_v1_0.75_224_quant_hexagon_model.so";
   int debug_level = 0;
 
   DLRModelHandle handle = NULL;

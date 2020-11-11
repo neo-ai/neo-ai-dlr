@@ -53,7 +53,7 @@ class DLR_DLL TVMModel : public DLRModel {
 
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
-  
+
   virtual void Run() override;
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
