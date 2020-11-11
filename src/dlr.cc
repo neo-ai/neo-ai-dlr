@@ -213,12 +213,13 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
  */
 int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, int debug_level) {
   API_BEGIN();
-  const std::string model_path_string(model_path);
   // HexagonModel class does not use DLContext internally
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  DLRModel* model = new HexagonModel(model_path_string, ctx, debug_level);
+  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRModel* model = new HexagonModel(files, ctx, debug_level);
   *handle = model;
   API_END();
 }
