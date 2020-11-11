@@ -8,13 +8,12 @@
 
 using namespace dlr;
 
-
 void PipelineModel::CheckModelsCompatibility(const DLRModelPtr& m0, const DLRModelPtr& m1,
                                              const int m1_id, const bool is_runtime_check) {
   if (!is_runtime_check) {
     CHECK_EQ(m0->GetNumOutputs(), m1->GetNumInputs())
-      << "Number of outputs/inputs mismatch between models"
-      << m1_id - 1 << " and " << m1_id << std::endl;
+        << "Number of outputs/inputs mismatch between models" << m1_id - 1 << " and " << m1_id
+        << std::endl;
   }
   // Check each model input
   for (int j = 0; j < m1->GetNumInputs(); j++) {
@@ -23,20 +22,20 @@ void PipelineModel::CheckModelsCompatibility(const DLRModelPtr& m0, const DLRMod
     m0->GetOutputSizeDim(j, &out_size, &out_dim);
     if (!is_runtime_check) {
       CHECK_EQ(out_dim, m1->GetInputDim(j))
-        << "Number of dimensions mismatch between output/input #" << j << ", models "
-        << m1_id - 1 << " and " << m1_id << std::endl;
+          << "Number of dimensions mismatch between output/input #" << j << ", models " << m1_id - 1
+          << " and " << m1_id << std::endl;
     }
     const int64_t in_size = m1->GetInputSize(j);
     // Skip the check for dynamic sizes (negative size)
     if (out_size >= 0 && in_size >= 0) {
       CHECK_EQ(out_size, m1->GetInputSize(j))
-        << "Size mismatch between output/input #" << j << ", models "
-        << m1_id - 1 << " and " << m1_id << std::endl;
+          << "Size mismatch between output/input #" << j << ", models " << m1_id - 1 << " and "
+          << m1_id << std::endl;
     }
     if (!is_runtime_check) {
       CHECK_EQ(strcmp(m0->GetOutputType(j), m1->GetInputType(j)), 0)
-        << "Type mismatch between output/input #" << j << ", models "
-        << m1_id - 1 << " and " << m1_id << std::endl;
+          << "Type mismatch between output/input #" << j << ", models " << m1_id - 1 << " and "
+          << m1_id << std::endl;
     }
     std::vector<int64_t> in_shape = m1->GetInputShape(j);
     std::vector<int64_t> out_shape(in_shape.size());
@@ -47,8 +46,8 @@ void PipelineModel::CheckModelsCompatibility(const DLRModelPtr& m0, const DLRMod
       // Skip the check for dynamic shape elements (-1)
       if (in_shape_elem >= 0 && out_shape_elem >= 0) {
         CHECK_EQ(in_shape_elem, out_shape_elem)
-          << "Shape mismatch between output/input #" << j << ", models "
-          << m1_id - 1 << " and " << m1_id << std::endl;
+            << "Shape mismatch between output/input #" << j << ", models " << m1_id - 1 << " and "
+            << m1_id << std::endl;
       }
     }
   }
@@ -85,9 +84,7 @@ const char* PipelineModel::GetInputType(int index) const {
   return dlr_models_[0]->GetInputType(index);
 }
 
-const int PipelineModel::GetInputDim(int index) const {
-  return dlr_models_[0]->GetInputDim(index);
-}
+const int PipelineModel::GetInputDim(int index) const { return dlr_models_[0]->GetInputDim(index); }
 
 const int64_t PipelineModel::GetInputSize(int index) const {
   return dlr_models_[0]->GetInputSize(index);
@@ -109,9 +106,7 @@ void PipelineModel::GetOutputShape(int index, int64_t* shape) const {
   dlr_models_.back()->GetOutputShape(index, shape);
 }
 
-void PipelineModel::GetOutput(int index, void* out) {
-  dlr_models_.back()->GetOutput(index, out);
-}
+void PipelineModel::GetOutput(int index, void* out) { dlr_models_.back()->GetOutput(index, out); }
 
 const void* PipelineModel::GetOutputPtr(int index) const {
   return dlr_models_.back()->GetOutputPtr(index);
@@ -141,7 +136,8 @@ void PipelineModel::Run() {
       std::vector<int64_t> prev_output_shape(prev_output_dim, -1);
       prev_model->GetOutputShape(j, prev_output_shape.data());
       const void* prev_model_output = prev_model->GetOutputPtr(j);
-      curr_model->SetInput(input_name, prev_output_shape.data(), prev_model_output, prev_output_dim);
+      curr_model->SetInput(input_name, prev_output_shape.data(), prev_model_output,
+                           prev_output_dim);
     }
     curr_model->Run();
   }

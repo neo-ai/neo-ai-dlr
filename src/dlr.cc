@@ -309,9 +309,7 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
 
 extern "C" int GetDLRDeviceType(const char* model_path) {
   API_BEGIN();
-
   std::vector<std::string> path_vec = MakePathVec(model_path);
-
   try {
     return dlr::GetDeviceTypeFromMetadata(path_vec);
   } catch (dmlc::Error& e) {

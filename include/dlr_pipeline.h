@@ -19,8 +19,8 @@ class DLR_DLL PipelineModel : public DLRModel {
  private:
   int count_;
   const std::vector<DLRModelPtr> dlr_models_;
-  void CheckModelsCompatibility(const DLRModelPtr& m0, const DLRModelPtr& m1,
-                                const int m1_id, const bool is_runtime_check);
+  void CheckModelsCompatibility(const DLRModelPtr& m0, const DLRModelPtr& m1, const int m1_id,
+                                const bool is_runtime_check);
   void SetupPipelineModel();
 
  public:

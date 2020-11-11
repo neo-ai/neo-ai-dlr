@@ -7,8 +7,9 @@
 // using namespace dlr;
 
 /* DLR C API implementation */
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumInputs(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumInputs(JNIEnv* env,
+                                                                              jobject thiz,
+                                                                              jlong jhandle) {
   int num;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRNumInputs(handle, &num)) {
@@ -17,8 +18,9 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumInputs(
   return num;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumWeights(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumWeights(JNIEnv* env,
+                                                                               jobject thiz,
+                                                                               jlong jhandle) {
   int num;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRNumWeights(handle, &num)) {
@@ -27,9 +29,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumWeights(
   return num;
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_amazon_neo_dlr_DLR_GetDLRInputName(JNIEnv* env, jobject thiz,
-                                            jlong jhandle, jint index) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRInputName(JNIEnv* env,
+                                                                                 jobject thiz,
+                                                                                 jlong jhandle,
+                                                                                 jint index) {
   const char* name;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRInputName(handle, index, &name)) {
@@ -38,9 +41,10 @@ Java_com_amazon_neo_dlr_DLR_GetDLRInputName(JNIEnv* env, jobject thiz,
   return env->NewStringUTF(name);
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_amazon_neo_dlr_DLR_GetDLRWeightName(JNIEnv* env, jobject thiz,
-                                             jlong jhandle, jint index) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRWeightName(JNIEnv* env,
+                                                                                  jobject thiz,
+                                                                                  jlong jhandle,
+                                                                                  jint index) {
   const char* name;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRWeightName(handle, index, &name)) {
@@ -49,9 +53,9 @@ Java_com_amazon_neo_dlr_DLR_GetDLRWeightName(JNIEnv* env, jobject thiz,
   return env->NewStringUTF(name);
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_SetDLRInput(
-    JNIEnv* env, jobject thiz, jlong jhandle, jstring jname, jlongArray shape,
-    jfloatArray input, jint dim) {
+extern "C" JNIEXPORT jint JNICALL
+Java_com_amazon_neo_dlr_DLR_SetDLRInput(JNIEnv* env, jobject thiz, jlong jhandle, jstring jname,
+                                        jlongArray shape, jfloatArray input, jint dim) {
   jboolean isCopy = JNI_FALSE;
   jfloat* input_body = env->GetFloatArrayElements(input, &isCopy);
   jlong* shape_body = env->GetLongArrayElements(shape, &isCopy);
@@ -62,9 +66,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_SetDLRInput(
   return res;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRInput(
-    JNIEnv* env, jobject thiz, jlong jhandle, jstring jname,
-    jfloatArray input) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRInput(JNIEnv* env, jobject thiz,
+                                                                          jlong jhandle,
+                                                                          jstring jname,
+                                                                          jfloatArray input) {
   jboolean isCopy = JNI_FALSE;
   jfloat* arr_body = env->GetFloatArrayElements(input, &isCopy);
   const char* name = env->GetStringUTFChars(jname, &isCopy);
@@ -94,8 +99,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutput(
   return res;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputDim(
-    JNIEnv* env, jobject thiz, jlong jhandle, jint index) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputDim(JNIEnv* env,
+                                                                              jobject thiz,
+                                                                              jlong jhandle,
+                                                                              jint index) {
   int64_t out_size;
   int out_dim;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
@@ -105,8 +112,10 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputDim(
   return out_dim;
 }
 
-extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputSize(
-    JNIEnv* env, jobject thiz, jlong jhandle, jint index) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputSize(JNIEnv* env,
+                                                                                jobject thiz,
+                                                                                jlong jhandle,
+                                                                                jint index) {
   int64_t out_size;
   int out_dim;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
@@ -116,8 +125,9 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_GetDLROutputSize(
   return out_size;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumOutputs(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumOutputs(JNIEnv* env,
+                                                                               jobject thiz,
+                                                                               jlong jhandle) {
   int num;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRNumOutputs(handle, &num)) {
@@ -127,11 +137,8 @@ extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRNumOutputs(
 }
 
 #ifdef DLR_TFLITE
-extern "C" JNIEXPORT jlong JNICALL
-Java_com_amazon_neo_dlr_DLR_CreateDLRModelFromTFLite(JNIEnv* env, jobject thiz,
-                                                     jstring jmodel_path,
-                                                     jint threads,
-                                                     jint use_nnapi) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_CreateDLRModelFromTFLite(
+    JNIEnv* env, jobject thiz, jstring jmodel_path, jint threads, jint use_nnapi) {
   jboolean isCopy = JNI_FALSE;
   const char* model_path = env->GetStringUTFChars(jmodel_path, &isCopy);
   DLRModelHandle* handle = new DLRModelHandle();
@@ -148,8 +155,7 @@ Java_com_amazon_neo_dlr_DLR_CreateDLRModelFromTFLite(JNIEnv* env, jobject thiz,
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
 extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_CreateDLRModel(
-    JNIEnv* env, jobject thiz, jstring jmodel_path, jint dev_type,
-    jint dev_id) {
+    JNIEnv* env, jobject thiz, jstring jmodel_path, jint dev_type, jint dev_id) {
   jboolean isCopy = JNI_FALSE;
   const char* model_path = env->GetStringUTFChars(jmodel_path, &isCopy);
   DLRModelHandle* handle = new DLRModelHandle();
@@ -162,26 +168,28 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_amazon_neo_dlr_DLR_CreateDLRModel(
   return jhandle;
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_DeleteDLRModel(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_DeleteDLRModel(JNIEnv* env,
+                                                                             jobject thiz,
+                                                                             jlong jhandle) {
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   return DeleteDLRModel(handle);
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_RunDLRModel(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_RunDLRModel(JNIEnv* env, jobject thiz,
+                                                                          jlong jhandle) {
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   return RunDLRModel(handle);
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_amazon_neo_dlr_DLR_DLRGetLastError(JNIEnv* env, jobject thiz) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_DLRGetLastError(JNIEnv* env,
+                                                                                 jobject thiz) {
   const char* err = DLRGetLastError();
   return env->NewStringUTF(err);
 }
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRBackend(
-    JNIEnv* env, jobject thiz, jlong jhandle) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRBackend(JNIEnv* env,
+                                                                               jobject thiz,
+                                                                               jlong jhandle) {
   const char* name;
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   if (GetDLRBackend(handle, &name)) {
@@ -190,14 +198,18 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_amazon_neo_dlr_DLR_GetDLRBackend(
   return env->NewStringUTF(name);
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_SetDLRNumThreads(
-    JNIEnv* env, jobject thiz, jlong jhandle, jint threads) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_SetDLRNumThreads(JNIEnv* env,
+                                                                               jobject thiz,
+                                                                               jlong jhandle,
+                                                                               jint threads) {
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   return SetDLRNumThreads(handle, threads);
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_UseDLRCPUAffinity(
-    JNIEnv* env, jobject thiz, jlong jhandle, jboolean use) {
+extern "C" JNIEXPORT jint JNICALL Java_com_amazon_neo_dlr_DLR_UseDLRCPUAffinity(JNIEnv* env,
+                                                                                jobject thiz,
+                                                                                jlong jhandle,
+                                                                                jboolean use) {
   DLRModelHandle* handle = reinterpret_cast<DLRModelHandle*>(jhandle);
   return UseDLRCPUAffinity(handle, use);
 }

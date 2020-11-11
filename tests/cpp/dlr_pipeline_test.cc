@@ -4,26 +4,26 @@
 
 DLRModelHandle GetDLRModel() {
   DLRModelHandle model = NULL;
-/*
-                        --== Test Model Summary ==--
-________________________________________________________________________________
-Layer (type)                    Output Shape         Param #     Connected to
-================================================================================
-input_0 (InputLayer)            [(None, 4, 4, 1)]    0
-________________________________________________________________________________
-input_1 (InputLayer)            [(None, 4, 4, 1)]    0
-________________________________________________________________________________
-output_0 (Add)                  (None, 4, 4, 1)      0           input_0[0][0]
-                                                                 input_1[0][0]
-________________________________________________________________________________
-output_1 (Multiply)             (None, 4, 4, 1)      0           input_0[0][0]
-                                                                 input_1[0][0]
-================================================================================
-*/
-  const char* model_path0  = "./pipeline_model1";
-  const char* model_path1  = "./pipeline_model1";
-  const char* model_path2  = "./pipeline_model1";
-  int device_type = 1; // cpu;
+  /*
+                          --== Test Model Summary ==--
+  ________________________________________________________________________________
+  Layer (type)                    Output Shape         Param #     Connected to
+  ================================================================================
+  input_0 (InputLayer)            [(None, 4, 4, 1)]    0
+  ________________________________________________________________________________
+  input_1 (InputLayer)            [(None, 4, 4, 1)]    0
+  ________________________________________________________________________________
+  output_0 (Add)                  (None, 4, 4, 1)      0           input_0[0][0]
+                                                                   input_1[0][0]
+  ________________________________________________________________________________
+  output_1 (Multiply)             (None, 4, 4, 1)      0           input_0[0][0]
+                                                                   input_1[0][0]
+  ================================================================================
+  */
+  const char* model_path0 = "./pipeline_model1";
+  const char* model_path1 = "./pipeline_model1";
+  const char* model_path2 = "./pipeline_model1";
+  int device_type = 1;  // cpu;
   const char* model_paths[3] = {model_path0, model_path1, model_path2};
   if (CreateDLRPipeline(&model, 3 /*count*/, model_paths, device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
@@ -32,9 +32,8 @@ output_1 (Multiply)             (None, 4, 4, 1)      0           input_0[0][0]
   return model;
 }
 
-
 TEST(PipelineTest, TestGetDLRDeviceType) {
-  const char* model_path  = "./pipeline_model1";
+  const char* model_path = "./pipeline_model1";
   EXPECT_EQ(GetDLRDeviceType(model_path), -1);
 }
 
@@ -76,7 +75,7 @@ TEST(PipelineTest, TestGetDLRInputType) {
 
 TEST(PipelineTest, TestSetDLRInput) {
   auto model = GetDLRModel();
-  size_t img_size = 4*4;
+  size_t img_size = 4 * 4;
   std::vector<float> img(img_size, 0.1);
   int64_t shape[4] = {1, 1, 4, 4};
   const char* input_name = "input_0";
@@ -86,7 +85,6 @@ TEST(PipelineTest, TestSetDLRInput) {
   EXPECT_EQ(img, img2);
   DeleteDLRModel(&model);
 }
-
 
 TEST(PipelineTest, TestGetDLRInputShape) {
   auto model = GetDLRModel();
@@ -169,7 +167,7 @@ TEST(PipelineTest, TestGetDLRBackend) {
 
 TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   auto model = GetDLRModel();
-  size_t img_size = 4*4;
+  size_t img_size = 4 * 4;
   std::vector<float> img0(img_size, 0.1);
   std::vector<float> img1(img_size, 0.3);
   int64_t shape[4] = {1, 1, 4, 4};
@@ -183,7 +181,7 @@ TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   EXPECT_EQ(GetDLROutput(&model, 0, output0), 0);
   EXPECT_FLOAT_EQ(output0[0], 0.442);
   float* output0_p;
-  EXPECT_EQ(GetDLROutputPtr(&model, 0, (const void**) &output0_p), 0);
+  EXPECT_EQ(GetDLROutputPtr(&model, 0, (const void**)&output0_p), 0);
   EXPECT_FLOAT_EQ(output0_p[0], 0.442);
   for (int i = 0; i < 16; i++) {
     EXPECT_EQ(output0_p[i], output0[i]);
@@ -193,14 +191,13 @@ TEST(PipelineTest, TestRunDLRModel_GetDLROutput) {
   EXPECT_EQ(GetDLROutput(&model, 1, output1), 0);
   EXPECT_FLOAT_EQ(output1[0], 0.00516);
   float* output1_p;
-  EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**) &output1_p), 0);
+  EXPECT_EQ(GetDLROutputPtr(&model, 1, (const void**)&output1_p), 0);
   EXPECT_FLOAT_EQ(output1_p[0], 0.00516);
   for (int i = 0; i < 16; i++) {
     EXPECT_EQ(output1_p[i], output1[i]);
   }
   DeleteDLRModel(&model);
 }
-
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
