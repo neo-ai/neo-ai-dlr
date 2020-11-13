@@ -58,28 +58,39 @@ void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
   std::ifstream jstream(paths.model_json);
   std::stringstream json_blob;
   json_blob << jstream.rdbuf();
+
   std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
   DLRStringStream param_blob;
   param_blob << pstream.rdbuf();
   auto param_data = param_blob.str();
   dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
 
-  SetupTVMModule(json_blob.str(), &strm, paths);
-}
-
-void TVMModel::SetupTVMModule(const std::string& json_str, dmlc::Stream* param_strm,
-                              const ModelPath& paths) {
-  tvm::runtime::Module module;
-  if (!IsFileEmpty(paths.model_lib)) {
-    module = tvm::runtime::Module::LoadFromFile(paths.model_lib);
-  }
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
     LoadJsonFromFile(paths.metadata, this->metadata_);
     ValidateDeviceTypeIfExists();
   }
 
+  SetupTVMModule(paths.model_lib, json_blob.str(), &strm);
+}
+
+void TVMModel::SetupTVMModule(const std::string& model_lib, const std::string& graph_str,
+                              std::string* param_data, const std::string& metadata) {
+  if (metadata.size() > 0) {
+    LoadJsonFromString(metadata, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  }
+
+  dmlc::MemoryStringStream param_strm(param_data);
+  SetupTVMModule(model_lib, graph_str, &param_strm);
+}
+
+void TVMModel::SetupTVMModule(const std::string& model_lib, const std::string& graph_str,
+                              dmlc::Stream* param_strm) {
+  tvm::runtime::Module module;
+  module = tvm::runtime::Module::LoadFromFile(model_lib);
+
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
-  tvm_graph_runtime_->Init(json_str, module, {ctx_});
+  tvm_graph_runtime_->Init(graph_str, module, {ctx_});
   tvm_graph_runtime_->LoadParams(param_strm);
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));

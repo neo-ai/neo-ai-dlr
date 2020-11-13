@@ -399,13 +399,16 @@ int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
  * \param lib_path Path to the TVM lib.so file on disk
  * \param params Binary data loaded from TVM params file
  * \param params_len length of the params data
+ * \param metadata file contents
+ * \param version file contents
  * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
  * \param dev_id Device ID.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const char* lib_path,
-                             const char* params, size_t params_len, int dev_type, int dev_id);
+int CreateDLRModelFromGraphRuntime(DLRModelHandle* handle, const char* lib_path, const char* graph,
+                                   const char* params, size_t params_len, const char* metadata,
+                                   int dev_type, int dev_id);
 
 /*!
  * \brief Sets the input according the node name from existing DLTensor. Can only be
@@ -416,18 +419,19 @@ int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph, const ch
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
+int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
 
 /*!
  * \brief Gets the index-th output from the model and sets the pointer to it.
  *        Can only be used with TVM models (GraphRuntime and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
- * \param out The pointer to a DLManagedTensor pointer, will be set.
+ * \param out The pointer to an unallocated DLManagedTensor pointer, will be
+ *            set by this function to point to an internal DLManagedTensor.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index, void** dlmanagedtensor);
+int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index, void** dlmanagedtensor);
 
 /*!
  * \brief Gets the index-th output from the model and copies it into the given DLTensor.
@@ -438,7 +442,7 @@ int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index, void** dlmanage
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor);
+int GetDLROutputTensor(DLRModelHandle* handle, int index, void* dltensor);
 
 /*! \} */
 

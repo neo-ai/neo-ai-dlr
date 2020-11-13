@@ -84,6 +84,15 @@ void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) 
   }
 }
 
+void dlr::LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject) {
+  std::stringstream jsonFile(jsonData);
+  try {
+    jsonFile >> jsonObject;
+  } catch (nlohmann::json::exception&) {
+    jsonObject = nullptr;
+  }
+}
+
 std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
   std::vector<std::string> files;
   for (auto path : paths) {

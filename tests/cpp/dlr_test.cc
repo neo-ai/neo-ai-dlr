@@ -209,7 +209,7 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   DeleteDLRModel(&model);
 }
 
-TEST(DLR, TestCreateTVMModelFromMemory) {
+TEST(DLR, TestCreateDLRModelFromGraphRuntime) {
   DLRModelHandle model = nullptr;
   const char* lib_so = "./resnet_v1_5_50/compiled.so";
   int device_type = 1;  // cpu;
@@ -223,9 +223,14 @@ TEST(DLR, TestCreateTVMModelFromMemory) {
   std::stringstream pstring;
   pstring << pstream.rdbuf();
   std::string params = pstring.str();
+  // load metadata file into string
+  std::ifstream mstream("./resnet_v1_5_50/compiled.meta");
+  EXPECT_EQ(mstream.good(), true);  // check that file was found
+  std::string metadata((std::istreambuf_iterator<char>(mstream)),
+                       (std::istreambuf_iterator<char>()));
 
-  if (CreateTVMModelFromMemory(&model, graph_json.c_str(), lib_so, params.c_str(), params.length(),
-                               device_type, 0) != 0) {
+  if (CreateDLRModelFromGraphRuntime(&model, lib_so, graph_json.c_str(), params.c_str(),
+                                     params.length(), metadata.c_str(), device_type, 0) != 0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
@@ -246,7 +251,7 @@ TEST(DLR, TestCreateFromPaths_TVM) {
   // set input
   int64_t shape[4] = {1, 224, 224, 3};
   DLTensor input = GetInputDLTensor(4, shape, "cat224-3.txt");
-  EXPECT_EQ(SetTVMInputTensor(&model, "input_tensor", &input), 0);
+  EXPECT_EQ(SetDLRInputTensor(&model, "input_tensor", &input), 0);
 
   // run inference
   EXPECT_EQ(RunDLRModel(&model), 0);
@@ -257,7 +262,7 @@ TEST(DLR, TestCreateFromPaths_TVM) {
   EXPECT_EQ(output0_d[0], 112);
   int64_t output0_shape[1] = {1};
   DLTensor output0 = GetEmptyDLTensor(1, output0_shape, kDLInt, 32);
-  EXPECT_EQ(CopyTVMOutputTensor(&model, 0, &output0), 0);
+  EXPECT_EQ(GetDLROutputTensor(&model, 0, &output0), 0);
   EXPECT_EQ(((int*)(output0.data))[0], 112);
 
   // output 1
@@ -266,10 +271,10 @@ TEST(DLR, TestCreateFromPaths_TVM) {
   EXPECT_GT(output1_d[112], 0.01);
   int64_t output1_shape[2] = {1, 1001};
   DLTensor output1 = GetEmptyDLTensor(2, output1_shape, kDLFloat, 32);
-  EXPECT_EQ(CopyTVMOutputTensor(&model, 1, &output1), 0);
+  EXPECT_EQ(GetDLROutputTensor(&model, 1, &output1), 0);
   EXPECT_GT(((float*)(output1.data))[112], 0.01);
   DLManagedTensor* output1_p;
-  EXPECT_EQ(GetTVMOutputManagedTensor(&model, 1, (void**)&output1_p), 0);
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 1, (void**)&output1_p), 0);
   EXPECT_GT(((float*)(output1_p->dl_tensor.data))[112], 0.01);
   for (int i = 0; i < 1001; i++) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
@@ -295,7 +300,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   int64_t input_shape[4] = {1, 512, 512, 3};
   DLTensor input = GetEmptyDLTensor(4, input_shape, kDLUInt, 8);
   const char* input_name = "image_tensor";
-  EXPECT_EQ(SetTVMInputTensor(&model, input_name, &input), 0);
+  EXPECT_EQ(SetDLRInputTensor(&model, input_name, &input), 0);
 
   // run inference
   EXPECT_EQ(RunDLRModel(&model), 0);
@@ -309,12 +314,12 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   std::vector<int64_t> output3_shape(output3_dim);
   EXPECT_EQ(GetDLROutputShape(&model, 3, output3_shape.data()), 0);
   DLTensor output3 = GetEmptyDLTensor(output3_dim, output3_shape.data(), kDLFloat, 32);
-  EXPECT_EQ(CopyTVMOutputTensor(&model, 3, &output3), 0);
+  EXPECT_EQ(GetDLROutputTensor(&model, 3, &output3), 0);
   for (int i = 0; i < output3_size; i++) {
     EXPECT_EQ(((float*)(output3.data))[i], output3_d[i]);
   }
   DLManagedTensor* output3_p;
-  EXPECT_EQ(GetTVMOutputManagedTensor(&model, 3, (void**)&output3_p), 0);
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 3, (void**)&output3_p), 0);
   for (int i = 0; i < output3_size; i++) {
     EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
   }

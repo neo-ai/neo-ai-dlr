@@ -67,6 +67,7 @@ bool IsFileEmpty(const std::string& filePath);
 
 std::string GetParentFolder(const std::string& path);
 
+void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
 void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {

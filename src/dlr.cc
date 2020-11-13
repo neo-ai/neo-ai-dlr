@@ -366,21 +366,21 @@ extern "C" int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memal
   API_END();
 }
 
-extern "C" int CreateTVMModelFromMemory(DLRModelHandle* handle, const char* graph,
-                                        const char* lib_path, const char* params, size_t params_len,
-                                        int dev_type, int dev_id) {
+extern "C" int CreateDLRModelFromGraphRuntime(DLRModelHandle* handle, const char* lib_path,
+                                              const char* graph, const char* params,
+                                              size_t params_len, const char* metadata, int dev_type,
+                                              int dev_id) {
   API_BEGIN();
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
-  ModelPath paths;
-  paths.model_lib = FixWindowsDriveLetter(lib_path);
+  std::string model_lib = FixWindowsDriveLetter(lib_path);
   std::string param_str(params, params_len);
-  *handle = new TVMModel(graph, &param_str, paths, ctx);
+  *handle = new TVMModel(model_lib, graph, &param_str, metadata, ctx);
   API_END();
 }
 
-extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
+extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
   CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
@@ -401,8 +401,8 @@ extern "C" int SetTVMInputTensor(DLRModelHandle* handle, const char* name, void*
   API_END();
 }
 
-extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
-                                         void** dlmanagedtensor) {
+extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
+                                            void** dlmanagedtensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
   CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
@@ -423,7 +423,7 @@ extern "C" int GetTVMOutputManagedTensor(DLRModelHandle* handle, int index,
   API_END();
 }
 
-extern "C" int CopyTVMOutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
+extern "C" int GetDLROutputTensor(DLRModelHandle* handle, int index, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
   CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
