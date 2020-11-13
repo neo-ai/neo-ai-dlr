@@ -1,12 +1,10 @@
-1;
-95;
-0c #include "dlr_treelite.h"
+#include "dlr_treelite.h"
 
 #include <cmath>
 #include <cstring>
 #include <fstream>
 
-    using namespace dlr;
+using namespace dlr;
 
 const std::string TreeliteModel::INPUT_NAME = "data";
 const std::string TreeliteModel::INPUT_TYPE = "float32";
