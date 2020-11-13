@@ -391,9 +391,9 @@ DLR_DLL
 int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
 
 /*
- * \brief Creates a DLR model for TVM GraphRuntime models. Accepts graph.json and params data
- *        from memory rather than loading from files on disk. lib.so must still be on disk
- *        since dlopen will be used to load it.
+ * \brief Creates a DLR model for TVM GraphRuntime models. Accepts graph.json, params data,
+ *        and metadata (optional) from memory rather than loading from files on disk.
+ *        The lib.so must still be on disk since dlopen will be used to load it.
  * \param handle The pointer to save the model handle.
  * \param lib_path Path to the TVM lib.so file on disk
  * \param graph String of loaded graph.json file
