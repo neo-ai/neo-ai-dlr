@@ -399,8 +399,7 @@ int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
  * \param lib_path Path to the TVM lib.so file on disk
  * \param params Binary data loaded from TVM params file
  * \param params_len length of the params data
- * \param metadata file contents
- * \param version file contents
+ * \param metadata file contents, or empty string (cannot be nullptr, 0)
  * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
  * \param dev_id Device ID.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
