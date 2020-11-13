@@ -53,7 +53,7 @@ typedef struct {
   std::string relay_executable;
 } ModelPath;
 
-void ListDir(const std::string& dirname, std::vector<std::string>& paths);
+void ListDir(const std::string& path, std::vector<std::string>& paths);
 
 std::vector<std::string> FindFiles(const std::vector<std::string>& paths);
 

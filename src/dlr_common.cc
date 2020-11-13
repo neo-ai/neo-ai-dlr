@@ -47,8 +47,8 @@ std::string dlr::GetBasename(const std::string& path) {
 #endif
 }
 
-void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
-  dmlc::io::URI uri(dirname.c_str());
+void dlr::ListDir(const std::string& path, std::vector<std::string>& paths) {
+  dmlc::io::URI uri(path.c_str());
   dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
   if (fs->GetPathInfo(uri).type == dmlc::io::FileType::kDirectory) {
     std::vector<dmlc::io::FileInfo> file_list;
@@ -59,7 +59,7 @@ void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
       }
     }
   } else {
-    paths.push_back(dirname);
+    paths.push_back(path);
   }
 }
 
