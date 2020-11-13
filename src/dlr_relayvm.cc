@@ -27,7 +27,25 @@ void RelayVMModel::InitModelPath(const std::vector<std::string>& files) {
   }
 }
 
+void RelayVMModel::LoadMetadata() {
+  LoadJsonFromFile(path_->metadata, metadata_);
+  ValidateDeviceTypeIfExists();
+}
+
+void RelayVMModel::LoadMetadata(const std::string& metadata) {
+  LoadJsonFromString(metadata, metadata_);
+  ValidateDeviceTypeIfExists();
+}
+
 void RelayVMModel::SetupVMModule() {
+  // load relay executable into a string
+  std::ifstream relay_ob(path_->relay_executable, std::ios::binary);
+  std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
+                        std::istreambuf_iterator<char>());
+  SetupVMModule(path_->model_lib, code_data);
+}
+
+void RelayVMModel::SetupVMModule(const std::string& model_lib, const std::string& relay_data) {
   // Set custom allocators in TVM.
   if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
       dlr::DLRAllocatorFunctions::GetFreeFunction()) {
@@ -43,13 +61,10 @@ void RelayVMModel::SetupVMModule() {
                     "to override TVM allocations. Using default allocators.";
   }
 
-  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(path_->model_lib);
-  std::ifstream relay_ob(path_->relay_executable, std::ios::binary);
-  std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
-                        std::istreambuf_iterator<char>());
+  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib);
 
   vm_executable_ =
-      std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(code_data, lib));
+      std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(relay_data, lib));
   auto vm = tvm::runtime::make_object<tvm::runtime::vm::VirtualMachine>();
   vm->LoadExecutable(static_cast<tvm::runtime::vm::Executable*>(
       const_cast<tvm::runtime::Object*>(vm_executable_->get())));
@@ -58,11 +73,6 @@ void RelayVMModel::SetupVMModule() {
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
   init(static_cast<int>(ctx_.device_type), ctx_.device_id,
        static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
-}
-
-void RelayVMModel::LoadMetadata() {
-  LoadJsonFromFile(path_->metadata, metadata_);
-  ValidateDeviceTypeIfExists();
 }
 
 void RelayVMModel::FetchInputNodesData() {

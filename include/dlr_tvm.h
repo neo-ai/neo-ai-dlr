@@ -43,7 +43,7 @@ class DLR_DLL TVMModel : public DLRModel {
     SetupTVMModule(files);
   }
   explicit TVMModel(const std::string& model_lib, const std::string& json_str,
-                    std::string* param_data, const char* metadata, const DLContext& ctx)
+                    std::string* param_data, const std::string& metadata, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_lib, json_str, param_data, metadata);
   }

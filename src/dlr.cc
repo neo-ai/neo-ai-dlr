@@ -380,6 +380,19 @@ extern "C" int CreateDLRModelFromGraphRuntime(DLRModelHandle* handle, const char
   API_END();
 }
 
+extern "C" int CreateDLRModelFromVMRuntime(DLRModelHandle* handle, const char* lib_path,
+                                           const char* relay_exec, size_t relay_len,
+                                           const char* metadata, int dev_type, int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+  std::string model_lib = FixWindowsDriveLetter(lib_path);
+  std::string relay_str(relay_exec, relay_len);
+  *handle = new RelayVMModel(model_lib, relay_str, metadata, ctx);
+  API_END();
+}
+
 extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* dltensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);

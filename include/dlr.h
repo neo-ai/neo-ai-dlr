@@ -395,8 +395,8 @@ int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
  *        from memory rather than loading from files on disk. lib.so must still be on disk
  *        since dlopen will be used to load it.
  * \param handle The pointer to save the model handle.
- * \param graph String of loaded graph.json file
  * \param lib_path Path to the TVM lib.so file on disk
+ * \param graph String of loaded graph.json file
  * \param params Binary data loaded from TVM params file
  * \param params_len length of the params data
  * \param metadata file contents, or empty string (cannot be nullptr, 0)
@@ -408,6 +408,24 @@ DLR_DLL
 int CreateDLRModelFromGraphRuntime(DLRModelHandle* handle, const char* lib_path, const char* graph,
                                    const char* params, size_t params_len, const char* metadata,
                                    int dev_type, int dev_id);
+
+/*
+ * \brief Creates a DLR model for TVM VMRuntime models. Accepts relay executable and metadata
+ *        from memory rather than loading from files on disk. lib.so must still be on disk
+ *        since dlopen will be used to load it.
+ * \param handle The pointer to save the model handle.
+ * \param lib_path Path to the TVM lib.so file on disk
+ * \param relay_exec Binary data loaded from relay executable file code.ro
+ * \param relay_len length of the relay executable file data
+ * \param metadata file contents, or empty string (cannot be nullptr, 0)
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromVMRuntime(DLRModelHandle* handle, const char* lib_path,
+                                const char* relay_exec, size_t relay_len, const char* metadata,
+                                int dev_type, int dev_id);
 
 /*!
  * \brief Sets the input according the node name from existing DLTensor. Can only be

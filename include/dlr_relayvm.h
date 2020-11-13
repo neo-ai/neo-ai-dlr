@@ -47,8 +47,10 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DataTransform data_transform_;
   void InitModelPath(const std::vector<std::string>& files);
   void SetupVMModule();
+  void SetupVMModule(const std::string& model_lib, const std::string& relay_data);
   void FetchInputNodesData();
   void LoadMetadata();
+  void LoadMetadata(const std::string& metadata);
   void FetchOutputNodesData();
   void UpdateOutputs();
   void UpdateInputs();
@@ -60,6 +62,14 @@ class DLR_DLL RelayVMModel : public DLRModel {
     InitModelPath(files);
     LoadMetadata();
     SetupVMModule();
+    FetchInputNodesData();
+    FetchOutputNodesData();
+  }
+  explicit RelayVMModel(const std::string& model_lib, const std::string& relay_data,
+                        const std::string& metadata, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+    LoadMetadata(metadata);
+    SetupVMModule(model_lib, relay_data);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
