@@ -405,11 +405,11 @@ extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void*
   if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-    tvm_model->SetInput(name, tensor);
+    tvm_model->SetInputTensor(name, tensor);
   } else {
     RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
     CHECK(vm_model != nullptr) << "model is nullptr, create it first";
-    vm_model->SetInput(name, tensor);
+    vm_model->SetInputTensor(name, tensor);
   }
   API_END();
 }

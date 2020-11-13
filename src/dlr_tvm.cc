@@ -186,7 +186,7 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, const void* inpu
   UpdateInputShapes();
 }
 
-void TVMModel::SetInput(const char* name, DLTensor* tensor) {
+void TVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   if (index > -1) {

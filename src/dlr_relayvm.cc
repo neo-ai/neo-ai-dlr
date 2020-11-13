@@ -242,7 +242,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   inputs_[index] = input_arr;
 }
 
-void RelayVMModel::SetInput(const char* name, DLTensor* tensor) {
+void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
   // Handle string input.
   if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
     std::vector<DLDataType> dtypes;
