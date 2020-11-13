@@ -1,10 +1,12 @@
-#include "dlr_treelite.h"
+1;
+95;
+0c #include "dlr_treelite.h"
 
 #include <cmath>
 #include <cstring>
 #include <fstream>
 
-using namespace dlr;
+    using namespace dlr;
 
 const std::string TreeliteModel::INPUT_NAME = "data";
 const std::string TreeliteModel::INPUT_TYPE = "float32";
@@ -36,8 +38,6 @@ ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
   for (auto filename : files) {
     if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
       paths.model_lib = filename;
-    } else if (filename == "version.json") {
-      paths.ver_json = filename;
     } else if (EndsWith(filename, ".meta")) {
       paths.metadata = filename;
     }
@@ -81,7 +81,6 @@ void TreeliteModel::SetupTreeliteModule(const std::vector<std::string>& model_pa
            0)
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
-  // version_ = GetVersion(paths.ver_json);
   UpdateInputShapes();
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
     LoadJsonFromFile(paths.metadata, this->metadata_);

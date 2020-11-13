@@ -25,8 +25,6 @@ ModelPath dlr::SetTvmPaths(const std::vector<std::string>& files) {
       paths.model_lib = filename;
     } else if (EndsWith(filename, ".params")) {
       paths.params = filename;
-    } else if (filename == "version.json") {
-      paths.ver_json = filename;
     } else if (EndsWith(filename, ".meta")) {
       paths.metadata = filename;
     }

@@ -49,7 +49,6 @@ typedef struct {
   std::string model_lib;
   std::string params;
   std::string model_json;
-  std::string ver_json;
   std::string metadata;
   std::string relay_executable;
 } ModelPath;
