@@ -26,7 +26,8 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
                                    std::vector<tvm::runtime::NDArray>* tvm_inputs) const {
   nlohmann::json input_json = GetAsJson(shape, input, dim);
   const auto& transforms = metadata["DataTransform"]["Input"]["ColumnTransform"];
-  for (int i = 0; i < transforms.size(); i++) {
+  CHECK_LE(tvm_inputs->size(), transforms.size());
+  for (int i = 0; i < tvm_inputs->size(); i++) {
     tvm_inputs->at(i) = InitNDArray(input_json, dtypes[i], ctx);
 
     const std::string& transformer_type = transforms[i]["Type"].get_ref<const std::string&>();
