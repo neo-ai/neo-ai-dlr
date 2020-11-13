@@ -397,8 +397,8 @@ int SetDLRCustomAllocatorMemalign(DLRMemalignFunctionPtr custom_memalign_fn);
  * \param handle The pointer to save the model handle.
  * \param graph String of loaded graph.json file
  * \param lib_path Path to the TVM lib.so file on disk
- * \param params String of binary data loaded from TVM params file
- * \param params_len length of the params string
+ * \param params Binary data loaded from TVM params file
+ * \param params_len length of the params data
  * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
  * \param dev_id Device ID.
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
