@@ -402,7 +402,7 @@ extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void*
 }
 
 extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
-                                            void** dlmanagedtensor) {
+                                            const void** dlmanagedtensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
   CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
@@ -410,15 +410,15 @@ extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
       << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
       << "' but expected 'tvm' or 'relayvm'";
 
-  DLManagedTensor** tensor = reinterpret_cast<DLManagedTensor**>(dlmanagedtensor);
+  const DLManagedTensor** tensor = reinterpret_cast<const DLManagedTensor**>(dlmanagedtensor);
   if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-    tvm_model->GetOutputManagedTensor(index, tensor);
+    tvm_model->GetOutputManagedTensorPtr(index, tensor);
   } else {
     RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
     CHECK(vm_model != nullptr) << "model is nullptr, create it first";
-    vm_model->GetOutputManagedTensor(index, tensor);
+    vm_model->GetOutputManagedTensorPtr(index, tensor);
   }
   API_END();
 }
@@ -435,11 +435,11 @@ extern "C" int GetDLROutputTensor(DLRModelHandle* handle, int index, void* dlten
   if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
-    tvm_model->CopyOutputTensor(index, tensor);
+    tvm_model->GetOutputTensor(index, tensor);
   } else {
     RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
     CHECK(vm_model != nullptr) << "model is nullptr, create it first";
-    vm_model->CopyOutputTensor(index, tensor);
+    vm_model->GetOutputTensor(index, tensor);
   }
   API_END();
 }

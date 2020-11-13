@@ -274,7 +274,7 @@ TEST(DLR, TestCreateFromPaths_TVM) {
   EXPECT_EQ(GetDLROutputTensor(&model, 1, &output1), 0);
   EXPECT_GT(((float*)(output1.data))[112], 0.01);
   DLManagedTensor* output1_p;
-  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 1, (void**)&output1_p), 0);
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 1, (const void**)&output1_p), 0);
   EXPECT_GT(((float*)(output1_p->dl_tensor.data))[112], 0.01);
   for (int i = 0; i < 1001; i++) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
@@ -319,7 +319,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
     EXPECT_EQ(((float*)(output3.data))[i], output3_d[i]);
   }
   DLManagedTensor* output3_p;
-  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 3, (void**)&output3_p), 0);
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 3, (const void**)&output3_p), 0);
   for (int i = 0; i < output3_size; i++) {
     EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
   }

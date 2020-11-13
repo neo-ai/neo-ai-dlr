@@ -325,7 +325,7 @@ const void* RelayVMModel::GetOutputPtr(int index) const {
   return outputs_[index]->data;
 }
 
-void RelayVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
+void RelayVMModel::GetOutputManagedTensorPtr(int index, const DLManagedTensor** out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   auto out_array = outputs_[index];
   CHECK(!(HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)))
@@ -333,7 +333,7 @@ void RelayVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
   *out = out_array.ToDLPack();
 }
 
-void RelayVMModel::CopyOutputTensor(int index, DLTensor* out) {
+void RelayVMModel::GetOutputTensor(int index, DLTensor* out) {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   auto out_array = outputs_[index];
   if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {

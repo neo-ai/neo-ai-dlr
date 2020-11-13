@@ -431,7 +431,7 @@ int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* dltensor);
  * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
-int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index, void** dlmanagedtensor);
+int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index, const void** dlmanagedtensor);
 
 /*!
  * \brief Gets the index-th output from the model and copies it into the given DLTensor.

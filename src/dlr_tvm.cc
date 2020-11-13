@@ -239,12 +239,12 @@ const void* TVMModel::GetOutputPtr(int index) const {
   throw dmlc::Error("GetOutputPtr is not supported for non-CPU device types");
 }
 
-void TVMModel::GetOutputManagedTensor(int index, DLManagedTensor** out) {
+void TVMModel::GetOutputManagedTensorPtr(int index, const DLManagedTensor** out) {
   tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
   *out = output.ToDLPack();
 }
 
-void TVMModel::CopyOutputTensor(int index, DLTensor* out) {
+void TVMModel::GetOutputTensor(int index, DLTensor* out) {
   tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
   get_output(index, out);
 }
