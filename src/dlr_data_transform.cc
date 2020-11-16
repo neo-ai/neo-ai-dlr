@@ -178,19 +178,29 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
 }
 
 void DataTransform::GetOutputShape(int index, int64_t* shape) const {
-  shape[0] = transformed_outputs_.at(index).size();
+  auto it = transformed_outputs_.find(index);
+  shape[0] = it == transformed_outputs_.end() ? -1 : it->second.size();
 }
 
 void DataTransform::GetOutputSizeDim(int index, int64_t* size, int* dim) const {
-  *size = transformed_outputs_.at(index).size();
+  auto it = transformed_outputs_.find(index);
+  if (it == transformed_outputs_.end()) {
+    *size = -1;
+    *dim = 1;
+    return;
+  }
+  *size = it->second.size();
   *dim = 1;
 }
 
 void DataTransform::GetOutput(int index, void* output) const {
-  const std::string& output_str = transformed_outputs_.at(index);
-  std::copy(output_str.begin(), output_str.end(), static_cast<char*>(output));
+  auto it = transformed_outputs_.find(index);
+  CHECK(it != transformed_outputs_.end()) << "Inference has not been run or output does not exist.";
+  std::copy(it->second.begin(), it->second.end(), static_cast<char*>(output));
 }
 
 const void* DataTransform::GetOutputPtr(int index) const {
-  return static_cast<const void*>(transformed_outputs_.at(index).data());
+  auto it = transformed_outputs_.find(index);
+  CHECK(it != transformed_outputs_.end()) << "Inference has not been run or output does not exist.";
+  return static_cast<const void*>(it->second.data());
 }
