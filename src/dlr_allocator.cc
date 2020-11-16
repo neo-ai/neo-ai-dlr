@@ -1,5 +1,7 @@
 #include "dlr_allocator.h"
 
+#include <cstdlib>
+
 namespace dlr {
 
 DLRMallocFunctionPtr DLRAllocatorFunctions::malloc_fn_ = nullptr;
