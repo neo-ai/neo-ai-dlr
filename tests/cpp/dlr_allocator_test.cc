@@ -169,7 +169,7 @@ void* tracking_memalign(size_t alignment, size_t size) {
   int ret = posix_memalign(&ptr, alignment, size);
   if (ret != 0) throw std::bad_alloc();
 #endif
-  CustomAllocatorTrackingTest::memalign_calls_.push_back({alignment, size, ptr});
+  CustomAllocatorTrackingTest::memalign_calls_.emplace_back(std::make_tuple(alignment, size, ptr));
   return ptr;
 }
 
