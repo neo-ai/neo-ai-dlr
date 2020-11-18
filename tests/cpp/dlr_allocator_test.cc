@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>
 
 #include "dlr.h"
-#include "dlr_tvm.h"
 #include "test_utils.hpp"
 
 int main(int argc, char** argv) {
@@ -14,16 +13,19 @@ int main(int argc, char** argv) {
   return RUN_ALL_TESTS();
 }
 
-class CustomAllocatorTest : public ::testing::Test {
- protected:
-  CustomAllocatorTest() { dlr::DLRAllocatorFunctions::Clear(); }
-};
-
 void* test_malloc(size_t size) { throw dmlc::Error("Using custom alloc"); }
 
 void test_free(void* ptr) { throw dmlc::Error("Using custom free"); }
 
 void* test_memalign(size_t alignment, size_t size) { throw dmlc::Error("Using custom memalign"); }
+
+class CustomAllocatorTest : public ::testing::Test {
+ protected:
+  CustomAllocatorTest() { dlr::DLRAllocatorFunctions::Clear(); }
+  DLRMallocFunctionPtr test_malloc_fn = test_malloc;
+  DLRFreeFunctionPtr test_free_fn = test_free;
+  DLRMemalignFunctionPtr test_memalign_fn = test_memalign;
+};
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsUnused) {
   EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
@@ -42,23 +44,23 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsOnlyMalloc) {
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), nullptr);
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc_fn));
   EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
   EXPECT_TRUE(dlr::DLRAllocatorFunctions::AnySet());
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc_fn);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), nullptr);
   EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), nullptr);
 }
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsUsed) {
   EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc_fn));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free_fn));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign_fn));
   EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc);
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), test_free);
-  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), test_memalign);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMallocFunction(), test_malloc_fn);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetFreeFunction(), test_free_fn);
+  EXPECT_EQ(dlr::DLRAllocatorFunctions::GetMemalignFunction(), test_memalign_fn);
   EXPECT_THROW(
       {
         try {
@@ -90,9 +92,9 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsSTLUnset) {
 
 TEST_F(CustomAllocatorTest, CustomAllocatorsSTLSet) {
   EXPECT_FALSE(dlr::DLRAllocatorFunctions::AllSet());
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free));
-  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMallocFunction(test_malloc_fn));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetFreeFunction(test_free_fn));
+  EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign_fn));
   EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
 
   EXPECT_THROW(({
