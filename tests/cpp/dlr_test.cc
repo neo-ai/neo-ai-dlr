@@ -209,57 +209,6 @@ TEST(DLR, TestRunDLRModel_GetDLROutput) {
   DeleteDLRModel(&model);
 }
 
-TEST(DLR, TestCreateDLRModelFromGraphRuntime) {
-  DLRModelHandle model = nullptr;
-  const char* lib_so = "./resnet_v1_5_50/compiled.so";
-  int device_type = 1;  // cpu;
-  // load graph.json into a string
-  std::ifstream gstream("./resnet_v1_5_50/compiled_model.json");
-  EXPECT_EQ(gstream.good(), true);  // check that file was found
-  std::string graph_json((std::istreambuf_iterator<char>(gstream)),
-                         (std::istreambuf_iterator<char>()));
-  // load params into a string
-  std::ifstream pstream("./resnet_v1_5_50/compiled.params", std::ios::in | std::ios::binary);
-  std::stringstream pstring;
-  pstring << pstream.rdbuf();
-  std::string params = pstring.str();
-  // load metadata file into string
-  std::ifstream mstream("./resnet_v1_5_50/compiled.meta");
-  EXPECT_EQ(mstream.good(), true);  // check that file was found
-  std::string metadata((std::istreambuf_iterator<char>(mstream)),
-                       (std::istreambuf_iterator<char>()));
-
-  if (CreateDLRModelFromGraphRuntime(&model, lib_so, graph_json.c_str(), params.c_str(),
-                                     params.length(), metadata.c_str(), device_type, 0) != 0) {
-    LOG(INFO) << DLRGetLastError() << std::endl;
-    throw std::runtime_error("Could not load DLR Model");
-  }
-  DeleteDLRModel(&model);
-}
-
-TEST(DLR, TestCreateDLRModelFromVMRuntime) {
-  DLRModelHandle model = nullptr;
-  const char* lib_so = "./ssd_mobilenet_v1/compiled.so";
-  int device_type = 1;  // cpu;
-  // load relay executable into a string
-  std::ifstream rstream("./ssd_mobilenet_v1/code.ro", std::ios::in | std::ios::binary);
-  std::stringstream rstring;
-  rstring << rstream.rdbuf();
-  std::string relay_exec = rstring.str();
-  // load metadata file into string
-  std::ifstream mstream("./ssd_mobilenet_v1/compiled.meta");
-  EXPECT_EQ(mstream.good(), true);  // check that file was found
-  std::string metadata((std::istreambuf_iterator<char>(mstream)),
-                       (std::istreambuf_iterator<char>()));
-
-  if (CreateDLRModelFromVMRuntime(&model, lib_so, relay_exec.c_str(), relay_exec.length(),
-                                  metadata.c_str(), device_type, 0) != 0) {
-    LOG(INFO) << DLRGetLastError() << std::endl;
-    throw std::runtime_error("Could not load DLR Model");
-  }
-  DeleteDLRModel(&model);
-}
-
 TEST(DLR, TestCreateFromPaths_TVM) {
   DLRModelHandle model = nullptr;
   const char* model_paths =
