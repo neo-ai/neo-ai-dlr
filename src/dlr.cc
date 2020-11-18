@@ -331,6 +331,33 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   API_END();
 }
 
+extern "C" int CreateDLRModelFromGraphRuntime(DLRModelHandle* handle, const char* lib_path,
+                                              const char* graph, const char* params,
+                                              size_t params_len, const char* metadata, int dev_type,
+                                              int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+  std::string model_lib = FixWindowsDriveLetter(lib_path);
+  std::string param_str(params, params_len);
+  *handle = new TVMModel(model_lib, graph, &param_str, metadata, ctx);
+  API_END();
+}
+
+extern "C" int CreateDLRModelFromVMRuntime(DLRModelHandle* handle, const char* lib_path,
+                                           const char* relay_exec, size_t relay_len,
+                                           const char* metadata, int dev_type, int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+  std::string model_lib = FixWindowsDriveLetter(lib_path);
+  std::string relay_str(relay_exec, relay_len);
+  *handle = new RelayVMModel(model_lib, relay_str, metadata, ctx);
+  API_END();
+}
+
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
 extern "C" int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,
