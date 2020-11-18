@@ -5,7 +5,7 @@
 #include <fstream>
 using namespace dlr;
 
-const char* dlr::backend2str[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
+const char* dlr::kBackendToStr[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
 
 bool dlr::IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);

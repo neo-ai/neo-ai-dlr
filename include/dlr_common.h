@@ -82,7 +82,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
 }
 
 enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
-extern const char* backend2str[6];
+extern const char* kBackendToStr[6];
 
 /*! \brief Get the backend based on the contents of the model folder.
  */

@@ -89,7 +89,7 @@ extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void*
   DLRBackend backend = dlr_model->GetBackend();
   CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
       << "model is not a TVMModel or RelayVMModel. Found '"
-      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* dltensor = static_cast<DLTensor*>(tensor);
   if (backend == DLRBackend::kTVM) {
@@ -135,7 +135,7 @@ extern "C" int GetDLROutputTensor(DLRModelHandle* handle, int index, void* tenso
   DLRBackend backend = dlr_model->GetBackend();
   CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
       << "model is not a TVMModel or RelayVMModel. Found '"
-      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* dltensor = static_cast<DLTensor*>(tensor);
   if (backend == DLRBackend::kTVM) {
@@ -157,7 +157,7 @@ extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
   DLRBackend backend = dlr_model->GetBackend();
   CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
       << "model is not a TVMModel or RelayVMModel. Found '"
-      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   const DLManagedTensor** dltensor = reinterpret_cast<const DLManagedTensor**>(tensor);
   if (backend == DLRBackend::kTVM) {
@@ -374,7 +374,7 @@ extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
   DLRBackend backend = static_cast<DLRModel*>(*handle)->GetBackend();
-  *name = backend2str[static_cast<int>(backend)];
+  *name = kBackendToStr[static_cast<int>(backend)];
   API_END();
 }
 
