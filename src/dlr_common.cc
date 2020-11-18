@@ -68,7 +68,7 @@ void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) 
   }
 }
 
-DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
+DLRBackend dlr::GetBackend(const std::vector<std::string>& dir_paths) {
   // Support the case where user provides full path to hexagon file.
   if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
     return DLRBackend::kHEXAGON;
@@ -78,6 +78,7 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
   for (auto dir : dir_paths) {
     dlr::ListDir(dir, paths);
   }
+  bool has_so = false;
   for (auto filename : paths) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
@@ -85,9 +86,29 @@ DLRBackend dlr::GetBackend(std::vector<std::string> dir_paths) {
       return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
+    } else if (EndsWith(filename, ".so")) {
+      has_so = true;  // dont return immediately since so could be part of many diff backend types
     }
   }
-  return DLRBackend::kTREELITE;
+  if (has_so) return DLRBackend::kTREELITE;
+  return DLRBackend::kUNKNOWN;
+}
+
+DLRBackend dlr::GetBackend(const std::vector<DLRModelElem>& model_elems) {
+  bool has_tvm_lib = false;
+  for (DLRModelElem el : model_elems) {
+    if (el.type == DLRModelElemType::TVM_PARAMS) {
+      return DLRBackend::kTVM;
+    } else if (el.type == DLRModelElemType::RELAY_EXEC) {
+      return DLRBackend::kRELAYVM;
+    } else if (el.type == DLRModelElemType::HEXAGON_LIB) {
+      return DLRBackend::kHEXAGON;
+    } else if (el.type == DLRModelElemType::TVM_LIB) {
+      has_tvm_lib = true;  // it could be part of many diff backend types
+    }
+  }
+  if (has_tvm_lib) return DLRBackend::kTREELITE;
+  return DLRBackend::kUNKNOWN;
 }
 
 const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
