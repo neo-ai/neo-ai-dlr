@@ -82,6 +82,7 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
 }
 
 enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
+extern const char* backend2str[6];
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
@@ -154,7 +155,7 @@ class DLR_DLL DLRModel {
   virtual std::vector<std::string> GetWeightNames() const = 0;
 
   virtual DLDeviceType GetDeviceTypeFromMetadata() const;
-  virtual const char* GetBackend() const = 0;
+  virtual DLRBackend GetBackend() const = 0;
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const;
   virtual void UseCPUAffinity(bool use) = 0;

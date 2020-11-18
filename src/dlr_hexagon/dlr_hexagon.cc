@@ -280,7 +280,7 @@ void HexagonModel::Run() {
   }
 }
 
-const char* HexagonModel::GetBackend() const { return "hexagon"; }
+DLRBackend HexagonModel::GetBackend() const { return DLRBackend::kHEXAGON; }
 
 void HexagonModel::SetNumThreads(int threads) {
   LOG(FATAL) << "SetNumThreads is not supported by Hexagon backend";

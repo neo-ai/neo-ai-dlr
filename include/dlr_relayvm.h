@@ -95,7 +95,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
   void GetOutputTensor(int index, DLTensor* out);
-  virtual const char* GetBackend() const override;
+  virtual DLRBackend GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 

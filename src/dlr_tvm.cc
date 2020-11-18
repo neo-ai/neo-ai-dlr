@@ -270,7 +270,7 @@ void TVMModel::Run() {
   run();
 }
 
-const char* TVMModel::GetBackend() const { return "tvm"; }
+DLRBackend TVMModel::GetBackend() const { return DLRBackend::kTVM; }
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

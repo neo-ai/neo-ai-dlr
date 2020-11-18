@@ -86,14 +86,15 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64
 extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* tensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
-        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
-      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
-      << "' but expected 'tvm' or 'relayvm'";
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* dltensor = static_cast<DLTensor*>(tensor);
-  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+  if (backend == DLRBackend::kTVM) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    std::cout << "here" << std::endl;
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->SetInputTensor(name, dltensor);
   } else {
@@ -131,13 +132,13 @@ extern "C" int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** o
 extern "C" int GetDLROutputTensor(DLRModelHandle* handle, int index, void* tensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
-        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
-      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
-      << "' but expected 'tvm' or 'relayvm'";
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   DLTensor* dltensor = static_cast<DLTensor*>(tensor);
-  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+  if (backend == DLRBackend::kTVM) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->GetOutputTensor(index, dltensor);
@@ -153,13 +154,13 @@ extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
                                             const void** tensor) {
   API_BEGIN();
   DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
-  CHECK(strcmp(dlr_model->GetBackend(), "tvm") == 0 ||
-        strcmp(dlr_model->GetBackend(), "relayvm") == 0)
-      << "model is not a TVMModel or RelayVMModel. Found '" << dlr_model->GetBackend()
-      << "' but expected 'tvm' or 'relayvm'";
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << backend2str[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
 
   const DLManagedTensor** dltensor = reinterpret_cast<const DLManagedTensor**>(tensor);
-  if (strcmp(dlr_model->GetBackend(), "tvm") == 0) {
+  if (backend == DLRBackend::kTVM) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->GetOutputManagedTensorPtr(index, dltensor);
@@ -399,7 +400,8 @@ extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
-  *name = static_cast<DLRModel*>(*handle)->GetBackend();
+  DLRBackend backend = static_cast<DLRModel*>(*handle)->GetBackend();
+  *name = backend2str[static_cast<int>(backend)];
   API_END();
 }
 

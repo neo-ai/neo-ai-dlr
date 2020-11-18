@@ -403,7 +403,7 @@ const char* RelayVMModel::GetOutputType(int index) const {
   return output_types_[index].c_str();
 }
 
-const char* RelayVMModel::GetBackend() const { return "relayvm"; }
+DLRBackend RelayVMModel::GetBackend() const { return DLRBackend::kRELAYVM; }
 
 void RelayVMModel::SetNumThreads(int threads) { throw dmlc::Error("Not Implemented!"); }
 

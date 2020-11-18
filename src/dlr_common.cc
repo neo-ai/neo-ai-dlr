@@ -5,6 +5,8 @@
 #include <fstream>
 using namespace dlr;
 
+const char* dlr::backend2str[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
+
 bool dlr::IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
   return pFile.peek() == std::ifstream::traits_type::eof();
