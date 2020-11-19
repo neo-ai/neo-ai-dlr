@@ -47,7 +47,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void SetupVMModule(const std::vector<std::string>& paths);
   void SetupVMModule(const std::vector<DLRModelElem>& model_elems);
   void FetchInputNodesData();
-  void LoadMetadata(const std::string& metadata_path);
   void FetchOutputNodesData();
   void UpdateOutputs();
   void UpdateInputs();

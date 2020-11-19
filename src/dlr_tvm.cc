@@ -75,6 +75,7 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   size_t params_size = 0;
   std::string model_lib_path;
   std::string metadata_path;
+  std::string metadata_data;
   for (DLRModelElem el : model_elems) {
     if (el.type == DLRModelElemType::TVM_GRAPH) {
       if (el.path != nullptr) {
@@ -83,8 +84,7 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
         graph_blob << graph_stream.rdbuf();
         graph_str = graph_blob.str();
       } else if (el.data != nullptr) {
-        const char* graph_cstr = static_cast<const char*>(el.data);
-        graph_str = graph_cstr;
+        graph_str = static_cast<const char*>(el.data);
       } else {
         throw dmlc::Error("Invalid TVM model element TVM_GRAPH");
       }
@@ -111,6 +111,8 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {
         metadata_path = el.path;
+      } else if (el.data != nullptr) {
+        metadata_data = static_cast<const char*>(el.data);
       } else {
         throw dmlc::Error("Invalid model element NEO_METADATA");
       }
@@ -123,8 +125,12 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   if (!IsFileEmpty(model_lib_path)) {
     module = tvm::runtime::Module::LoadFromFile(model_lib_path);
   }
+  // Load Metadata from file or String
   if (!metadata_path.empty() && !IsFileEmpty(metadata_path)) {
     LoadJsonFromFile(metadata_path, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  } else if (!metadata_data.empty()) {
+    LoadJsonFromString(metadata_data, this->metadata_);
     ValidateDeviceTypeIfExists();
   }
 

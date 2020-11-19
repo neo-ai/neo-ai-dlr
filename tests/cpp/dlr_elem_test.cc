@@ -22,11 +22,17 @@ DLRModelHandle GetDLRModel() {
   params_blob << pstream.rdbuf();
   std::string params_str = params_blob.str();
 
+  // load metadata json file
+  std::ifstream meta_stream(meta_file);
+  std::stringstream meta_blob;
+  meta_blob << meta_stream.rdbuf();
+  std::string meta_str = meta_blob.str();
+
   std::vector<DLRModelElem> model_elems = {
       {DLRModelElemType::TVM_GRAPH, nullptr, graph_str.c_str(), 0},
       {DLRModelElemType::TVM_PARAMS, nullptr, params_str.data(), params_str.size()},
       {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
-      {DLRModelElemType::NEO_METADATA, meta_file.c_str(), nullptr, 0}};
+      {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), 0}};
 
   int device_type = 1;  // cpu;
   if (CreateDLRModelFromModelElem(&model, model_elems.data(), model_elems.size(), device_type, 0) !=

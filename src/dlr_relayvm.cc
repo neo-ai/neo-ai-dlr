@@ -62,6 +62,7 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   std::string code_data;
   std::string model_lib_path;
   std::string metadata_path;
+  std::string metadata_data;
   for (DLRModelElem el : model_elems) {
     if (el.type == DLRModelElemType::RELAY_EXEC) {
       if (el.path != nullptr) {
@@ -82,17 +83,27 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {
         metadata_path = el.path;
+      } else if (el.data != nullptr) {
+        metadata_data = static_cast<const char*>(el.data);
       } else {
         throw dmlc::Error("Invalid model element NEO_METADATA");
       }
     }
   }
-  if (code_data.empty() || model_lib_path.empty() || metadata_path.empty()) {
+  if (code_data.empty() || model_lib_path.empty() ||
+      (metadata_path.empty() && metadata_data.empty())) {
     throw dmlc::Error(
         "Invalid RelayVM model. Must have RELAY_EXEC, TVM_LIB and NEO_METADATA elements");
   }
 
-  LoadMetadata(metadata_path);
+  // Load Metadata from file or String
+  if (!metadata_path.empty() && !IsFileEmpty(metadata_path)) {
+    LoadJsonFromFile(metadata_path, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  } else if (!metadata_data.empty()) {
+    LoadJsonFromString(metadata_data, this->metadata_);
+    ValidateDeviceTypeIfExists();
+  }
 
   tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
@@ -106,11 +117,6 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
   init(static_cast<int>(ctx_.device_type), ctx_.device_id,
        static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
-}
-
-void RelayVMModel::LoadMetadata(const std::string& metadata_path) {
-  LoadJsonFromFile(metadata_path, metadata_);
-  ValidateDeviceTypeIfExists();
 }
 
 void RelayVMModel::FetchInputNodesData() {

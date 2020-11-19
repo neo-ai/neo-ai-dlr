@@ -28,15 +28,22 @@ class RelayVMElemTest : public ::testing::Test {
     std::string ro_file = "./ssd_mobilenet_v1/code.ro";
     std::string so_file = "./ssd_mobilenet_v1/compiled.so";
     std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
+
     // load ro file
     std::ifstream relay_ob(ro_file, std::ios::binary);
     std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
                           std::istreambuf_iterator<char>());
 
+    // load metadata json file
+    std::ifstream meta_stream(meta_file);
+    std::stringstream meta_blob;
+    meta_blob << meta_stream.rdbuf();
+    std::string meta_str = meta_blob.str();
+
     std::vector<DLRModelElem> model_elems = {
         {DLRModelElemType::RELAY_EXEC, nullptr, code_data.data(), code_data.size()},
         {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
-        {DLRModelElemType::NEO_METADATA, meta_file.c_str(), nullptr, 0}};
+        {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), 0}};
     model = new dlr::RelayVMModel(model_elems, ctx);
   }
 
