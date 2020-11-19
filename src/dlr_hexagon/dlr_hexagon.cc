@@ -9,21 +9,12 @@ using namespace dlr;
 
 std::string dlr::GetHexagonModelFile(const std::vector<std::string>& files) {
   // Scan to find _hexagon_model.so file
-  std::string hexagon_model_so_file;
-  for (auto filename : files) {
-    std::string basename = GetBasename(filename);
-    if (EndsWith(basename, "_hexagon_model.so")) {
-      if (hexagon_model_so_file.empty()) {
-        hexagon_model_so_file = filename;
-      } else {
-        LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: " << dirname;
-      }
-    }
+  ModelPath paths;
+  dlr::InitModelPath(files, &paths);
+  if (paths.model_lib.empty()) {
+    LOG(FATAL) << "Invalid Hexagon model artifat. Must have .so file";
   }
-  if (hexagon_model_so_file.empty()) {
-    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << dirname;
-  }
-  return hexagon_model_so_file;
+  return paths.model_lib;
 }
 
 bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {

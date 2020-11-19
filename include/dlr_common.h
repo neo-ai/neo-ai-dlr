@@ -88,6 +88,8 @@ extern const char* kBackendToStr[6];
  */
 DLRBackend GetBackend(const std::vector<std::string>& files);
 
+void InitModelPath(const std::vector<std::string>& files, ModelPath* paths);
+
 std::string GetMetadataFile(const std::string& dirname);
 
 DLDeviceType GetDeviceTypeFromString(const std::string& target_backend);

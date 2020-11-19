@@ -11,24 +11,7 @@ using namespace dlr;
 
 ModelPath dlr::SetTvmPaths(const std::vector<std::string>& files) {
   ModelPath paths;
-  for (auto filename : files) {
-    std::string basename = GetBasename(filename);
-    if (EndsWith(filename, ".json") &&
-        std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
-                    std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
-                    [basename](const std::string& s) { return (s != basename); }) &&
-        filename != "version.json") {
-      paths.model_json = filename;
-    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
-    } else if (EndsWith(filename, ".tensorrt")) {
-      paths.model_lib = filename;
-    } else if (EndsWith(filename, ".params")) {
-      paths.params = filename;
-    } else if (EndsWith(filename, ".meta")) {
-      paths.metadata = filename;
-    }
-  }
+  dlr::InitModelPath(files, &paths);
   if (paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty()) {
     throw dmlc::Error("Invalid TVM model artifact. Must have .so, .json, and .params files.");
   }

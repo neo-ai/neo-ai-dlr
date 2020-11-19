@@ -105,51 +105,74 @@ std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
 
 DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
   // Scan files to guess the backend.
-  std::string params, relay, hexagon, lib;
+  bool has_so = false;
   for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
-      if (params.length() > 0) {
-        std::string msg = "Found multiple *.params files: ";
-        msg += params + " " + filename;
-        throw dmlc::Error(msg);
-      }
-      params = filename;
+      return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".ro")) {
-      if (relay.length() > 0) {
-        std::string msg = "Found multiple *.ro files: ";
-        msg += relay + " " + filename;
-        throw dmlc::Error(msg);
-      }
-      relay = filename;
       return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
-      if (hexagon.length() > 0) {
-        std::string msg = "Found multiple *_hexagon_model.so files: ";
-        msg += hexagon + " " + filename;
-        throw dmlc::Error(msg);
-      }
-      hexagon = filename;
       return DLRBackend::kHEXAGON;
-    } else if (EndsWith(filename, ".so")) {
-      if (lib.length() > 0) {
-        std::string msg = "Found multiple *.so files: ";
-        msg += lib + " " + filename;
-        throw dmlc::Error(msg);
-      }
-      lib = filename;
+    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
+      has_so = true;  // dont return immediately since so could be part of many diff backend types
     }
   }
 
-  if (params.length() > 0)
-    return DLRBackend::kTVM;
-  else if (relay.length() > 0)
-    return DLRBackend::kRELAYVM;
-  else if (hexagon.length() > 0)
-    return DLRBackend::kHEXAGON;
-  else if (lib.length() > 0)
-    return DLRBackend::kTREELITE;
-  else
-    return DLRBackend::kUNKNOWN;
+  if (has_so) return DLRBackend::kTREELITE;
+  return DLRBackend::kUNKNOWN;
+}
+
+void dlr::InitModelPath(const std::vector<std::string>& files, ModelPath* paths) {
+  for (auto filename : files) {
+    std::string basename = GetBasename(filename);
+    if (EndsWith(filename, ".json") &&
+        std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
+                    std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
+                    [basename](const std::string& s) { return (s != basename); }) &&
+        filename != "version.json") {
+      if (paths->model_json.length() > 0) {
+        std::string msg = "Found multiple *.json files: ";
+        msg += paths->model_json + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_json = filename;
+    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
+      if (paths->model_lib.length() > 0) {
+        std::string msg = "Found multiple model lib files: ";
+        msg += paths->model_lib + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_lib = filename;
+    } else if (EndsWith(filename, ".tensorrt")) {
+      if (paths->model_lib.length() > 0) {
+        std::string msg = "Found multiple model lib files: ";
+        msg += paths->model_lib + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_lib = filename;
+    } else if (EndsWith(filename, ".params")) {
+      if (paths->params.length() > 0) {
+        std::string msg = "Found multiple *.params files: ";
+        msg += paths->params + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->params = filename;
+    } else if (EndsWith(filename, ".meta")) {
+      if (paths->metadata.length() > 0) {
+        std::string msg = "Found multiple *.meta files: ";
+        msg += paths->metadata + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->metadata = filename;
+    } else if (EndsWith(filename, ".ro")) {
+      if (paths->relay_executable.length() > 0) {
+        std::string msg = "Found multiple *.ro files: ";
+        msg += paths->relay_executable + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->relay_executable = filename;
+    }
+  }
 }
 
 const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {

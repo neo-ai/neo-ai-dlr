@@ -33,13 +33,7 @@ std::string GetVersion(const std::string& json_path) {
 
 ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
   ModelPath paths;
-  for (auto filename : files) {
-    if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
-    } else if (EndsWith(filename, ".meta")) {
-      paths.metadata = filename;
-    }
-  }
+  dlr::InitModelPath(files, &paths);
   if (paths.model_lib.empty()) {
     throw dmlc::Error("Invalid treelite model artifact. Must have .so file.");
   }
