@@ -105,20 +105,51 @@ std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
 
 DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
   // Scan files to guess the backend.
-  bool has_so = false;
+  std::string params, relay, hexagon, lib;
   for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
-      return DLRBackend::kTVM;
+      if (params.length() > 0) {
+        std::string msg = "Found multiple *.params files: ";
+        msg += params + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      params = filename;
     } else if (EndsWith(filename, ".ro")) {
+      if (relay.length() > 0) {
+        std::string msg = "Found multiple *.ro files: ";
+        msg += relay + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      relay = filename;
       return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
+      if (hexagon.length() > 0) {
+        std::string msg = "Found multiple *_hexagon_model.so files: ";
+        msg += hexagon + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      hexagon = filename;
       return DLRBackend::kHEXAGON;
     } else if (EndsWith(filename, ".so")) {
-      has_so = true;  // dont return immediately since so could be part of many diff backend types
+      if (lib.length() > 0) {
+        std::string msg = "Found multiple *.so files: ";
+        msg += lib + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      lib = filename;
     }
   }
-  if (has_so) return DLRBackend::kTREELITE;
-  return DLRBackend::kUNKNOWN;
+
+  if (params.length() > 0)
+    return DLRBackend::kTVM;
+  else if (relay.length() > 0)
+    return DLRBackend::kRELAYVM;
+  else if (hexagon.length() > 0)
+    return DLRBackend::kHEXAGON;
+  else if (lib.length() > 0)
+    return DLRBackend::kTREELITE;
+  else
+    return DLRBackend::kUNKNOWN;
 }
 
 const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {
