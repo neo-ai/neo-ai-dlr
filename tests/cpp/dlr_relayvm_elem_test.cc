@@ -18,17 +18,16 @@ class RelayVMElemTest : public ::testing::Test {
   const int64_t input_shape[4] = {1, 512, 512, 3};
   const int input_dim = 4;
   std::vector<int8_t> img{std::vector<int8_t>(img_size)};
+  const int device_type = kDLCPU;
+  const int device_id = 0;
+  DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+  std::string ro_file = "./ssd_mobilenet_v1/code.ro";
+  std::string so_file = "./ssd_mobilenet_v1/compiled.so";
+  std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
 
   dlr::RelayVMModel* model;
 
   RelayVMElemTest() {
-    const int device_type = kDLCPU;
-    const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-    std::string ro_file = "./ssd_mobilenet_v1/code.ro";
-    std::string so_file = "./ssd_mobilenet_v1/compiled.so";
-    std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
-
     std::string code_data = dlr::LoadFileToString(ro_file, std::ios::binary);
     std::string meta_str = dlr::LoadFileToString(meta_file);
 
@@ -41,6 +40,45 @@ class RelayVMElemTest : public ::testing::Test {
 
   ~RelayVMElemTest() { delete model; }
 };
+
+TEST_F(RelayVMElemTest, TestCreateModel_LibTvmIsPointer) {
+  std::string code_data = dlr::LoadFileToString(ro_file, std::ios::binary);
+  std::string so_data = dlr::LoadFileToString(so_file, std::ios::in | std::ios::binary);
+  std::string meta_str = dlr::LoadFileToString(meta_file);
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, nullptr, code_data.data(), code_data.size()},
+      {DLRModelElemType::TVM_LIB, nullptr, so_file.data(), so_file.size()},
+      {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), 0}};
+  EXPECT_THROW(
+      {
+        try {
+          new dlr::RelayVMModel(model_elems, ctx);
+        } catch (const dmlc::Error& e) {
+          EXPECT_STREQ(e.what(), "Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file.");
+          throw;
+        }
+      },
+      dmlc::Error);
+}
+
+TEST_F(RelayVMElemTest, TestCreateModel_MetadataIsMissing) {
+  std::string code_data = dlr::LoadFileToString(ro_file, std::ios::binary);
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, nullptr, code_data.data(), code_data.size()},
+      {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0}};
+  EXPECT_THROW(
+      {
+        try {
+          new dlr::RelayVMModel(model_elems, ctx);
+        } catch (const dmlc::Error& e) {
+          EXPECT_STREQ(
+              e.what(),
+              "Invalid RelayVM model. Must have RELAY_EXEC, TVM_LIB and NEO_METADATA elements");
+          throw;
+        }
+      },
+      dmlc::Error);
+}
 
 TEST_F(RelayVMElemTest, TestGetNumInputs) { EXPECT_EQ(model->GetNumInputs(), 1); }
 

@@ -102,7 +102,7 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
       if (el.path != nullptr) {
         model_lib_path = el.path;
       } else {
-        throw dmlc::Error("Invalid TVM model element TVM_LIB");
+        throw dmlc::Error("Invalid TVM model element TVM_LIB. TVM_LIB must be a file.");
       }
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {

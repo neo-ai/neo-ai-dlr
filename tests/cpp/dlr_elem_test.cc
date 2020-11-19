@@ -4,13 +4,12 @@
 #include "dlr_common.h"
 #include "test_utils.hpp"
 
-DLRModelHandle GetDLRModel() {
-  DLRModelHandle model = nullptr;
-  const std::string graph_file = "./resnet_v1_5_50/compiled_model.json";
-  const std::string params_file = "./resnet_v1_5_50/compiled.params";
-  const std::string so_file = "./resnet_v1_5_50/compiled.so";
-  const std::string meta_file = "./resnet_v1_5_50/compiled.meta";
+const std::string graph_file = "./resnet_v1_5_50/compiled_model.json";
+const std::string params_file = "./resnet_v1_5_50/compiled.params";
+const std::string so_file = "./resnet_v1_5_50/compiled.so";
+const std::string meta_file = "./resnet_v1_5_50/compiled.meta";
 
+DLRModelHandle GetDLRModel() {
   std::string graph_str = dlr::LoadFileToString(graph_file);
   std::string params_str = dlr::LoadFileToString(params_file, std::ios::in | std::ios::binary);
   std::string meta_str = dlr::LoadFileToString(meta_file);
@@ -22,12 +21,40 @@ DLRModelHandle GetDLRModel() {
       {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), 0}};
 
   int device_type = 1;  // cpu;
+  DLRModelHandle model = nullptr;
   if (CreateDLRModelFromModelElem(&model, model_elems.data(), model_elems.size(), device_type, 0) !=
       0) {
     LOG(INFO) << DLRGetLastError() << std::endl;
     throw std::runtime_error("Could not load DLR Model");
   }
   return model;
+}
+
+TEST(DLR, TestCreateDLRModel_LibTvmIsPointer) {
+  DLRModelHandle model = nullptr;
+  int device_type = 1;  // cpu;
+  std::string so_data = dlr::LoadFileToString(so_file, std::ios::in | std::ios::binary);
+  std::string graph_str = dlr::LoadFileToString(graph_file);
+  std::string params_str = dlr::LoadFileToString(params_file, std::ios::in | std::ios::binary);
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::TVM_GRAPH, nullptr, graph_str.c_str(), 0},
+      {DLRModelElemType::TVM_PARAMS, nullptr, params_str.data(), params_str.size()},
+      {DLRModelElemType::TVM_LIB, nullptr, so_file.data(), so_file.size()}};
+  EXPECT_NE(
+      CreateDLRModelFromModelElem(&model, model_elems.data(), model_elems.size(), device_type, 0),
+      0);
+}
+
+TEST(DLR, TestCreateDLRModel_GraphIsMissing) {
+  DLRModelHandle model = nullptr;
+  int device_type = 1;  // cpu;
+  std::string params_str = dlr::LoadFileToString(params_file, std::ios::in | std::ios::binary);
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::TVM_PARAMS, nullptr, params_str.data(), params_str.size()},
+      {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0}};
+  EXPECT_NE(
+      CreateDLRModelFromModelElem(&model, model_elems.data(), model_elems.size(), device_type, 0),
+      0);
 }
 
 TEST(DLR, TestGetDLRDeviceType) {
