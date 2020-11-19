@@ -108,6 +108,13 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
       const int out_index = r * input_json[r].size() + c;
       // Look up in map. If not found, use kMissingValue.
       try {
+        // If there is no items in map, try to pass forward as float.
+        if (mapping[c].empty()) {
+          data[out_index] = input_json[r][c].is_number()
+                              ? input_json[r][c].get<float>()
+                              : std::stof(input_json[r][c].get_ref<const std::string&>());
+          continue;
+        }
         const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
         auto it = mapping[c].find(data_str);
         data[out_index] = it != mapping[c].end() ? it->operator float() : kMissingValue;
