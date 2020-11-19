@@ -10,18 +10,13 @@ using namespace dlr;
 
 const std::string RelayVMModel::ENTRY_FUNCTION = "main";
 
-ModelPath RelayVMModel::GetModelPath(const std::vector<std::string>& files) {
-  ModelPath model_path;
-  dlr::InitModelPath(files, &model_path);
-  if (model_path.model_lib.empty() || model_path.relay_executable.empty() ||
-      model_path.metadata.empty()) {
+void RelayVMModel::SetupVMModule(const std::vector<std::string>& files) {
+  ModelPath path;
+  dlr::InitModelPath(files, &path);
+  if (path.model_lib.empty() || path.relay_executable.empty() || path.metadata.empty()) {
     throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
   }
-  return model_path;
-}
 
-void RelayVMModel::SetupVMModule(const std::vector<std::string>& files) {
-  ModelPath path = GetModelPath(files);
   const std::vector<DLRModelElem> model_elems = {
       {DLRModelElemType::RELAY_EXEC, path.relay_executable.c_str(), nullptr, 0},
       {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0},

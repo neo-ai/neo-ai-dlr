@@ -9,23 +9,19 @@
 
 using namespace dlr;
 
-ModelPath TVMModel::GetModelPath(const std::vector<std::string>& files) {
-  ModelPath paths;
-  dlr::InitModelPath(files, &paths);
-  if (paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty()) {
+void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
+  ModelPath path;
+  dlr::InitModelPath(files, &path);
+  if (path.model_json.empty() || path.model_lib.empty() || path.params.empty()) {
     throw dmlc::Error("Invalid TVM model artifact. Must have .so, .json, and .params files.");
   }
-  return paths;
-}
 
-void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
-  ModelPath paths = GetModelPath(files);
   std::vector<DLRModelElem> model_elems = {
-      {DLRModelElemType::TVM_GRAPH, paths.model_json.c_str(), nullptr, 0},
-      {DLRModelElemType::TVM_PARAMS, paths.params.c_str(), nullptr, 0},
-      {DLRModelElemType::TVM_LIB, paths.model_lib.c_str(), nullptr, 0}};
-  if (!paths.metadata.empty()) {
-    model_elems.push_back({DLRModelElemType::NEO_METADATA, paths.metadata.c_str(), nullptr, 0});
+      {DLRModelElemType::TVM_GRAPH, path.model_json.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_PARAMS, path.params.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0}};
+  if (!path.metadata.empty()) {
+    model_elems.push_back({DLRModelElemType::NEO_METADATA, path.metadata.c_str(), nullptr, 0});
   }
   SetupTVMModule(model_elems);
 }

@@ -24,12 +24,8 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  ModelPath GetModelPath(const std::vector<std::string>& files);
   void SetupTVMModule(const std::vector<std::string>& files);
   void SetupTVMModule(const std::vector<DLRModelElem>& model_elems);
-  void SetupTVMModule(const std::string& model_lib, const std::string& json_str,
-                      dmlc::Stream* param_strm);
-
   void UpdateInputShapes();
 
  public:
