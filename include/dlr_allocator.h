@@ -99,6 +99,8 @@ class DLRAllocator : public std::allocator<T> {
 
 /*! \brief ostringstream which uses the custom allocators. */
 typedef std::basic_ostringstream<char, std::char_traits<char>, DLRAllocator<char>> DLRStringStream;
+/*! \brief basic_string which uses the custom allocators. */
+typedef std::basic_string<char, std::char_traits<char>, dlr::DLRAllocator<char>> DLRString;
 
 }  // namespace dlr
 

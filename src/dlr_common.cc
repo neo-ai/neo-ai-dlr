@@ -87,12 +87,19 @@ void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) 
 }
 
 void dlr::LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject) {
-  std::stringstream jsonFile(jsonData);
+  std::stringstream jsonStrStream(jsonData);
   try {
-    jsonFile >> jsonObject;
+    jsonStrStream >> jsonObject;
   } catch (nlohmann::json::exception&) {
     jsonObject = nullptr;
   }
+}
+
+std::string dlr::LoadFileToString(const std::string& path, std::ios_base::openmode mode) {
+  std::ifstream fstream(path, mode);
+  std::stringstream blob;
+  blob << fstream.rdbuf();
+  return blob.str();
 }
 
 std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
@@ -105,7 +112,7 @@ std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
 
 DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
   // Scan files to guess the backend.
-  bool has_so = false;
+  bool has_tvm_lib = false;
   for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
@@ -114,11 +121,29 @@ DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
     } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
-      has_so = true;  // dont return immediately since so could be part of many diff backend types
+      has_tvm_lib =
+          true;  // dont return immediately since it could be part of many diff backend types
     }
   }
+  if (has_tvm_lib) return DLRBackend::kTREELITE;
+  return DLRBackend::kUNKNOWN;
+}
 
-  if (has_so) return DLRBackend::kTREELITE;
+DLRBackend dlr::GetBackend(const std::vector<DLRModelElem>& model_elems) {
+  bool has_tvm_lib = false;
+  for (DLRModelElem el : model_elems) {
+    if (el.type == DLRModelElemType::TVM_PARAMS) {
+      return DLRBackend::kTVM;
+    } else if (el.type == DLRModelElemType::RELAY_EXEC) {
+      return DLRBackend::kRELAYVM;
+    } else if (el.type == DLRModelElemType::HEXAGON_LIB) {
+      return DLRBackend::kHEXAGON;
+    } else if (el.type == DLRModelElemType::TVM_LIB) {
+      has_tvm_lib =
+          true;  // dont return immediately since it could be part of many diff backend types
+    }
+  }
+  if (has_tvm_lib) return DLRBackend::kTREELITE;
   return DLRBackend::kUNKNOWN;
 }
 

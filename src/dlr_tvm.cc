@@ -9,7 +9,7 @@
 
 using namespace dlr;
 
-ModelPath dlr::SetTvmPaths(const std::vector<std::string>& files) {
+ModelPath TVMModel::GetModelPath(const std::vector<std::string>& files) {
   ModelPath paths;
   dlr::InitModelPath(files, &paths);
   if (paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty()) {
@@ -19,6 +19,18 @@ ModelPath dlr::SetTvmPaths(const std::vector<std::string>& files) {
 }
 
 void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
+  ModelPath paths = GetModelPath(files);
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::TVM_GRAPH, paths.model_json.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_PARAMS, paths.params.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, paths.model_lib.c_str(), nullptr, 0}};
+  if (!paths.metadata.empty()) {
+    model_elems.push_back({DLRModelElemType::NEO_METADATA, paths.metadata.c_str(), nullptr, 0});
+  }
+  SetupTVMModule(model_elems);
+}
+
+void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   // Set custom allocators in TVM.
   if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
       dlr::DLRAllocatorFunctions::GetFreeFunction()) {
@@ -34,45 +46,64 @@ void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
                     "to override TVM allocations. Using default allocators.";
   }
 
-  ModelPath paths = SetTvmPaths(files);
-
-  std::ifstream jstream(paths.model_json);
-  std::stringstream json_blob;
-  json_blob << jstream.rdbuf();
-
-  std::ifstream pstream(paths.params, std::ios::in | std::ios::binary);
-  DLRStringStream param_blob;
-  param_blob << pstream.rdbuf();
-  auto param_data = param_blob.str();
-  dmlc::MemoryFixedSizeStream strm(const_cast<char*>(param_data.data()), param_data.size());
-
-  if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
-    LoadJsonFromFile(paths.metadata, this->metadata_);
+  std::string graph_str;
+  DLRString params_str;
+  const char* params_data = nullptr;
+  size_t params_size = 0;
+  std::string model_lib_path;
+  std::string metadata_data;
+  for (DLRModelElem el : model_elems) {
+    if (el.type == DLRModelElemType::TVM_GRAPH) {
+      if (el.path != nullptr) {
+        graph_str = dlr::LoadFileToString(el.path);
+      } else if (el.data != nullptr) {
+        graph_str = static_cast<const char*>(el.data);
+      } else {
+        throw dmlc::Error("Invalid TVM model element TVM_GRAPH");
+      }
+    } else if (el.type == DLRModelElemType::TVM_PARAMS) {
+      if (el.path != nullptr) {
+        std::ifstream pstream(el.path, std::ios::in | std::ios::binary);
+        DLRStringStream params_blob;
+        params_blob << pstream.rdbuf();
+        params_str = params_blob.str();
+        params_data = params_str.data();
+        params_size = params_str.size();
+      } else if (el.data != nullptr && el.data_size > 0) {
+        params_data = static_cast<const char*>(el.data);
+        params_size = el.data_size;
+      } else {
+        throw dmlc::Error("Invalid TVM model element TVM_PARAMS");
+      }
+    } else if (el.type == DLRModelElemType::TVM_LIB) {
+      if (el.path != nullptr) {
+        model_lib_path = el.path;
+      } else {
+        throw dmlc::Error("Invalid TVM model element TVM_LIB. TVM_LIB must be a file path.");
+      }
+    } else if (el.type == DLRModelElemType::NEO_METADATA) {
+      if (el.path != nullptr) {
+        metadata_data = dlr::LoadFileToString(el.path);
+      } else if (el.data != nullptr) {
+        metadata_data = static_cast<const char*>(el.data);
+      }
+    }
+  }
+  if (graph_str.empty() || params_data == nullptr || params_size <= 0 || model_lib_path.empty()) {
+    throw dmlc::Error("Invalid TVM model. Must have TVM_GRAPH, TVM_PARAMS and TVM_LIB elements");
+  }
+  if (!metadata_data.empty()) {
+    LoadJsonFromString(metadata_data, this->metadata_);
     ValidateDeviceTypeIfExists();
   }
 
-  SetupTVMModule(paths.model_lib, json_blob.str(), &strm);
-}
-
-void TVMModel::SetupTVMModule(const std::string& model_lib, const std::string& graph_str,
-                              std::string* param_data, const std::string& metadata) {
-  if (metadata.size() > 0) {
-    LoadJsonFromString(metadata, this->metadata_);
-    ValidateDeviceTypeIfExists();
-  }
-
-  dmlc::MemoryStringStream param_strm(param_data);
-  SetupTVMModule(model_lib, graph_str, &param_strm);
-}
-
-void TVMModel::SetupTVMModule(const std::string& model_lib, const std::string& graph_str,
-                              dmlc::Stream* param_strm) {
   tvm::runtime::Module module;
-  module = tvm::runtime::Module::LoadFromFile(model_lib);
+  module = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(graph_str, module, {ctx_});
-  tvm_graph_runtime_->LoadParams(param_strm);
+  dmlc::MemoryFixedSizeStream strm(const_cast<char*>(params_data), params_size);
+  tvm_graph_runtime_->LoadParams(&strm);
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));
 

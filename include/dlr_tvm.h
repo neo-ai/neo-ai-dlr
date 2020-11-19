@@ -15,10 +15,6 @@
 
 namespace dlr {
 
-/*! \brief Set the paths of the TVM model files.
- */
-ModelPath SetTvmPaths(const std::vector<std::string>& files);
-
 /*! \brief class TVMModel
  */
 class DLR_DLL TVMModel : public DLRModel {
@@ -28,11 +24,12 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
+  ModelPath GetModelPath(const std::vector<std::string>& files);
   void SetupTVMModule(const std::vector<std::string>& files);
-  void SetupTVMModule(const std::string& model_lib, const std::string& graph_str,
-                      std::string* param_data, const std::string& metadata);
+  void SetupTVMModule(const std::vector<DLRModelElem>& model_elems);
   void SetupTVMModule(const std::string& model_lib, const std::string& json_str,
                       dmlc::Stream* param_strm);
+
   void UpdateInputShapes();
 
  public:
@@ -42,10 +39,9 @@ class DLR_DLL TVMModel : public DLRModel {
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(files);
   }
-  explicit TVMModel(const std::string& model_lib, const std::string& json_str,
-                    std::string* param_data, const std::string& metadata, const DLContext& ctx)
+  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
-    SetupTVMModule(model_lib, json_str, param_data, metadata);
+    SetupTVMModule(model_elems);
   }
 
   virtual const int GetInputDim(int index) const override;

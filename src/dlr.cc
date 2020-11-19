@@ -332,6 +332,35 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   API_END();
 }
 
+extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,
+                                           size_t model_elems_size, int dev_type, int dev_id) {
+  API_BEGIN();
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(dev_type);
+  ctx.device_id = dev_id;
+
+  std::vector<DLRModelElem> model_elem_vec(model_elems, model_elems + model_elems_size);
+
+  DLRBackend backend = dlr::GetBackend(model_elem_vec);
+  DLRModel* model;
+  try {
+    if (backend == DLRBackend::kTVM) {
+      model = new TVMModel(model_elem_vec, ctx);
+    } else if (backend == DLRBackend::kRELAYVM) {
+      model = new RelayVMModel(model_elem_vec, ctx);
+    } else {
+      LOG(FATAL) << "Unsupported backend!";
+      return -1;  // unreachable
+    }
+  } catch (dmlc::Error& e) {
+    LOG(ERROR) << e.what();
+    return -1;
+  }
+
+  *handle = model;
+  API_END();
+}
+
 /*! \brief Translate c args from ctypes to std types for DLRModel ctor.
  */
 extern "C" int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,

@@ -10,33 +10,26 @@ using namespace dlr;
 
 const std::string RelayVMModel::ENTRY_FUNCTION = "main";
 
-void RelayVMModel::InitModelPath(const std::vector<std::string>& files) {
-  path_ = std::make_unique<ModelPath>();
-  dlr::InitModelPath(files, path_.get());
-  if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
+ModelPath RelayVMModel::GetModelPath(const std::vector<std::string>& files) {
+  ModelPath model_path;
+  dlr::InitModelPath(files, &model_path);
+  if (model_path.model_lib.empty() || model_path.relay_executable.empty() ||
+      model_path.metadata.empty()) {
     throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
   }
+  return model_path;
 }
 
-void RelayVMModel::LoadMetadata() {
-  LoadJsonFromFile(path_->metadata, metadata_);
-  ValidateDeviceTypeIfExists();
+void RelayVMModel::SetupVMModule(const std::vector<std::string>& files) {
+  ModelPath path = GetModelPath(files);
+  const std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, path.relay_executable.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0},
+      {DLRModelElemType::NEO_METADATA, path.metadata.c_str(), nullptr, 0}};
+  SetupVMModule(model_elems);
 }
 
-void RelayVMModel::LoadMetadata(const std::string& metadata) {
-  LoadJsonFromString(metadata, metadata_);
-  ValidateDeviceTypeIfExists();
-}
-
-void RelayVMModel::SetupVMModule() {
-  // load relay executable into a string
-  std::ifstream relay_ob(path_->relay_executable, std::ios::binary);
-  std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
-                        std::istreambuf_iterator<char>());
-  SetupVMModule(path_->model_lib, code_data);
-}
-
-void RelayVMModel::SetupVMModule(const std::string& model_lib, const std::string& relay_data) {
+void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   // Set custom allocators in TVM.
   if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
       dlr::DLRAllocatorFunctions::GetFreeFunction()) {
@@ -52,10 +45,46 @@ void RelayVMModel::SetupVMModule(const std::string& model_lib, const std::string
                     "to override TVM allocations. Using default allocators.";
   }
 
-  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib);
+  std::string code_data;
+  std::string model_lib_path;
+  std::string metadata_data;
+  for (DLRModelElem el : model_elems) {
+    if (el.type == DLRModelElemType::RELAY_EXEC) {
+      if (el.path != nullptr) {
+        code_data = dlr::LoadFileToString(el.path, std::ios::binary);
+      } else if (el.data != nullptr && el.data_size > 0) {
+        code_data.assign(static_cast<const char*>(el.data), el.data_size);
+      } else {
+        throw dmlc::Error("Invalid RelayVM model element RELAY_EXEC");
+      }
+    } else if (el.type == DLRModelElemType::TVM_LIB) {
+      if (el.path != nullptr) {
+        model_lib_path = el.path;
+      } else {
+        throw dmlc::Error("Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file path.");
+      }
+    } else if (el.type == DLRModelElemType::NEO_METADATA) {
+      if (el.path != nullptr) {
+        metadata_data = dlr::LoadFileToString(el.path);
+      } else if (el.data != nullptr) {
+        metadata_data = static_cast<const char*>(el.data);
+      } else {
+        throw dmlc::Error("Invalid model element NEO_METADATA");
+      }
+    }
+  }
+  if (code_data.empty() || model_lib_path.empty() || metadata_data.empty()) {
+    throw dmlc::Error(
+        "Invalid RelayVM model. Must have RELAY_EXEC, TVM_LIB and NEO_METADATA elements");
+  }
+
+  LoadJsonFromString(metadata_data, this->metadata_);
+  ValidateDeviceTypeIfExists();
+
+  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
   vm_executable_ =
-      std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(relay_data, lib));
+      std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(code_data, lib));
   auto vm = tvm::runtime::make_object<tvm::runtime::vm::VirtualMachine>();
   vm->LoadExecutable(static_cast<tvm::runtime::vm::Executable*>(
       const_cast<tvm::runtime::Object*>(vm_executable_->get())));

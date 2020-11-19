@@ -37,7 +37,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   static const std::string ENTRY_FUNCTION;
   std::vector<std::string> output_names_;
   std::vector<std::string> output_types_;
-  std::unique_ptr<ModelPath> path_;
   std::shared_ptr<tvm::runtime::Module> vm_module_;
   std::shared_ptr<tvm::runtime::Module> vm_executable_;
   std::vector<tvm::runtime::NDArray> inputs_;
@@ -45,12 +44,10 @@ class DLR_DLL RelayVMModel : public DLRModel {
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
   DataTransform data_transform_;
-  void InitModelPath(const std::vector<std::string>& files);
-  void SetupVMModule();
-  void SetupVMModule(const std::string& model_lib, const std::string& relay_data);
+  ModelPath GetModelPath(const std::vector<std::string>& paths);
+  void SetupVMModule(const std::vector<std::string>& paths);
+  void SetupVMModule(const std::vector<DLRModelElem>& model_elems);
   void FetchInputNodesData();
-  void LoadMetadata();
-  void LoadMetadata(const std::string& metadata);
   void FetchOutputNodesData();
   void UpdateOutputs();
   void UpdateInputs();
@@ -59,17 +56,13 @@ class DLR_DLL RelayVMModel : public DLRModel {
  public:
   explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kRELAYVM) {
-    InitModelPath(files);
-    LoadMetadata();
-    SetupVMModule();
+    SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
-  explicit RelayVMModel(const std::string& model_lib, const std::string& relay_data,
-                        const std::string& metadata, const DLContext& ctx)
+  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kRELAYVM) {
-    LoadMetadata(metadata);
-    SetupVMModule(model_lib, relay_data);
+    SetupVMModule(model_elems);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
