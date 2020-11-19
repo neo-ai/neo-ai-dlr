@@ -39,6 +39,17 @@
 #define DLR_DLL
 #endif  // defined(_MSC_VER) || defined(_WIN32)
 
+#ifndef DLR_MODEL_ELEM
+#define DLR_MODEL_ELEM
+enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
+typedef struct ModelElem {
+  const DLRModelElemType type;
+  const char* path;
+  const void* data;
+  const size_t data_size;
+} DLRModelElem;
+#endif
+
 namespace dlr {
 
 /* The following file names are reserved by SageMaker and should not be used
@@ -64,6 +75,11 @@ std::string GetParentFolder(const std::string& path);
 
 void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
+void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
+
+std::string LoadFileToString(const std::string& path,
+                             std::ios_base::openmode mode = std::ios_base::in);
+
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() && mainStr.compare(0, toMatch.size(), toMatch) == 0;
 }
@@ -76,11 +92,13 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE };
+enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
-DLRBackend GetBackend(std::vector<std::string> dirname);
+DLRBackend GetBackend(const std::vector<std::string>& dirname);
+
+DLRBackend GetBackend(const std::vector<DLRModelElem>& model_elems);
 
 std::string GetMetadataFile(const std::string& dirname);
 

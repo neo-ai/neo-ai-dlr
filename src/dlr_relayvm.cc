@@ -10,8 +10,8 @@ using namespace dlr;
 
 const std::string RelayVMModel::ENTRY_FUNCTION = "main";
 
-void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
-  path_ = std::make_unique<ModelPath>();
+ModelPath RelayVMModel::GetModelPath(const std::vector<std::string>& paths) {
+  ModelPath model_path;
   std::vector<std::string> paths_vec;
   for (auto path : paths) {
     ListDir(path, paths_vec);
@@ -19,20 +19,31 @@ void RelayVMModel::InitModelPath(std::vector<std::string> paths) {
 
   for (auto path : paths_vec) {
     if (!EndsWith(path, LIBDLR) && EndsWith(path, ".so")) {
-      path_->model_lib = path;
+      model_path.model_lib = path;
     } else if (EndsWith(path, ".ro")) {
-      path_->relay_executable = path;
+      model_path.relay_executable = path;
     } else if (EndsWith(path, ".meta")) {
-      path_->metadata = path;
+      model_path.metadata = path;
     }
   }
 
-  if (path_->model_lib.empty() || path_->relay_executable.empty() || path_->metadata.empty()) {
+  if (model_path.model_lib.empty() || model_path.relay_executable.empty() ||
+      model_path.metadata.empty()) {
     throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
   }
+  return model_path;
 }
 
-void RelayVMModel::SetupVMModule() {
+void RelayVMModel::SetupVMModule(const std::vector<std::string>& paths) {
+  ModelPath path = GetModelPath(paths);
+  const std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, path.relay_executable.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0},
+      {DLRModelElemType::NEO_METADATA, path.metadata.c_str(), nullptr, 0}};
+  SetupVMModule(model_elems);
+}
+
+void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   // Set custom allocators in TVM.
   if (dlr::DLRAllocatorFunctions::GetMemalignFunction() &&
       dlr::DLRAllocatorFunctions::GetFreeFunction()) {
@@ -48,10 +59,43 @@ void RelayVMModel::SetupVMModule() {
                     "to override TVM allocations. Using default allocators.";
   }
 
-  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(path_->model_lib);
-  std::ifstream relay_ob(path_->relay_executable, std::ios::binary);
-  std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
-                        std::istreambuf_iterator<char>());
+  std::string code_data;
+  std::string model_lib_path;
+  std::string metadata_data;
+  for (DLRModelElem el : model_elems) {
+    if (el.type == DLRModelElemType::RELAY_EXEC) {
+      if (el.path != nullptr) {
+        code_data = dlr::LoadFileToString(el.path, std::ios::binary);
+      } else if (el.data != nullptr && el.data_size > 0) {
+        code_data.assign(static_cast<const char*>(el.data), el.data_size);
+      } else {
+        throw dmlc::Error("Invalid RelayVM model element RELAY_EXEC");
+      }
+    } else if (el.type == DLRModelElemType::TVM_LIB) {
+      if (el.path != nullptr) {
+        model_lib_path = el.path;
+      } else {
+        throw dmlc::Error("Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file.");
+      }
+    } else if (el.type == DLRModelElemType::NEO_METADATA) {
+      if (el.path != nullptr) {
+        metadata_data = dlr::LoadFileToString(el.path);
+      } else if (el.data != nullptr) {
+        metadata_data = static_cast<const char*>(el.data);
+      } else {
+        throw dmlc::Error("Invalid model element NEO_METADATA");
+      }
+    }
+  }
+  if (code_data.empty() || model_lib_path.empty() || metadata_data.empty()) {
+    throw dmlc::Error(
+        "Invalid RelayVM model. Must have RELAY_EXEC, TVM_LIB and NEO_METADATA elements");
+  }
+
+  LoadJsonFromString(metadata_data, this->metadata_);
+  ValidateDeviceTypeIfExists();
+
+  tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
   vm_executable_ =
       std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(code_data, lib));
@@ -63,11 +107,6 @@ void RelayVMModel::SetupVMModule() {
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
   init(static_cast<int>(ctx_.device_type), ctx_.device_id,
        static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
-}
-
-void RelayVMModel::LoadMetadata() {
-  LoadJsonFromFile(path_->metadata, metadata_);
-  ValidateDeviceTypeIfExists();
 }
 
 void RelayVMModel::FetchInputNodesData() {

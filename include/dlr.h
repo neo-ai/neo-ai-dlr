@@ -47,6 +47,17 @@ typedef void (*DLRFreeFunctionPtr)(void*);
 typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 #endif
 
+#ifndef DLR_MODEL_ELEM
+#define DLR_MODEL_ELEM
+enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
+typedef struct ModelElem {
+  const DLRModelElemType type;
+  const char* path;
+  const void* data;
+  const size_t data_size;
+} DLRModelElem;
+#endif
+
 /*!
  \brief Creates a DLR model.
  \param handle The pointer to save the model handle.
@@ -58,6 +69,18 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
  */
 DLR_DLL
 int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type, int dev_id);
+
+/*!
+ \brief Creates a DLR model from model elements.
+ \param handle The pointer to save the model handle.
+ \param model_elems DLR Model elements. Element can be file path or data pointer in memory.
+ \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ \param dev_id Device ID.
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,
+                                size_t model_elems_size, int dev_type, int dev_id);
 
 #ifdef DLR_HEXAGON
 /*!

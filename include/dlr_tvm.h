@@ -15,7 +15,7 @@ namespace dlr {
 
 /*! \brief Get the paths of the TVM model files.
  */
-ModelPath GetTvmPaths(std::vector<std::string> tar_path);
+ModelPath GetTvmPaths(const std::vector<std::string>& tar_path);
 
 /*! \brief class TVMModel
  */
@@ -26,7 +26,8 @@ class DLR_DLL TVMModel : public DLRModel {
   std::vector<const DLTensor*> outputs_;
   std::vector<std::string> output_types_;
   std::vector<std::string> weight_names_;
-  void SetupTVMModule(std::vector<std::string> model_path);
+  void SetupTVMModule(const std::vector<std::string>& model_path);
+  void SetupTVMModule(const std::vector<DLRModelElem>& model_elems);
   void UpdateInputShapes();
 
  public:
@@ -35,6 +36,10 @@ class DLR_DLL TVMModel : public DLRModel {
   explicit TVMModel(std::vector<std::string> model_path, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTVM) {
     SetupTVMModule(model_path);
+  }
+  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
+      : DLRModel(ctx, DLRBackend::kTVM) {
+    SetupTVMModule(model_elems);
   }
 
   virtual const int GetInputDim(int index) const override;
