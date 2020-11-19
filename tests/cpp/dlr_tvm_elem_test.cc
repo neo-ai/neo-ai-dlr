@@ -19,23 +19,9 @@ class TVMElemTest : public ::testing::Test {
   dlr::TVMModel* model;
 
   TVMElemTest() {
-    // load graph json file
-    std::ifstream graph_stream(graph_file);
-    std::stringstream graph_blob;
-    graph_blob << graph_stream.rdbuf();
-    std::string graph_str = graph_blob.str();
-
-    // load params file
-    std::ifstream pstream(params_file, std::ios::in | std::ios::binary);
-    std::stringstream params_blob;
-    params_blob << pstream.rdbuf();
-    std::string params_str = params_blob.str();
-
-    // load metadata json file
-    std::ifstream meta_stream(meta_file);
-    std::stringstream meta_blob;
-    meta_blob << meta_stream.rdbuf();
-    std::string meta_str = meta_blob.str();
+    std::string graph_str = dlr::LoadFileToString(graph_file);
+    std::string params_str = dlr::LoadFileToString(params_file, std::ios::in | std::ios::binary);
+    std::string meta_str = dlr::LoadFileToString(meta_file);
 
     std::vector<DLRModelElem> model_elems = {
         {DLRModelElemType::TVM_GRAPH, nullptr, graph_str.c_str(), 0},

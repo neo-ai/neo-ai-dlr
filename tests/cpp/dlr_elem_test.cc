@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "dlr.h"
+#include "dlr_common.h"
 #include "test_utils.hpp"
 
 DLRModelHandle GetDLRModel() {
@@ -10,23 +11,9 @@ DLRModelHandle GetDLRModel() {
   const std::string so_file = "./resnet_v1_5_50/compiled.so";
   const std::string meta_file = "./resnet_v1_5_50/compiled.meta";
 
-  // load graph json file
-  std::ifstream graph_stream(graph_file);
-  std::stringstream graph_blob;
-  graph_blob << graph_stream.rdbuf();
-  std::string graph_str = graph_blob.str();
-
-  // load params file
-  std::ifstream pstream(params_file, std::ios::in | std::ios::binary);
-  std::stringstream params_blob;
-  params_blob << pstream.rdbuf();
-  std::string params_str = params_blob.str();
-
-  // load metadata json file
-  std::ifstream meta_stream(meta_file);
-  std::stringstream meta_blob;
-  meta_blob << meta_stream.rdbuf();
-  std::string meta_str = meta_blob.str();
+  std::string graph_str = dlr::LoadFileToString(graph_file);
+  std::string params_str = dlr::LoadFileToString(params_file, std::ios::in | std::ios::binary);
+  std::string meta_str = dlr::LoadFileToString(meta_file);
 
   std::vector<DLRModelElem> model_elems = {
       {DLRModelElemType::TVM_GRAPH, nullptr, graph_str.c_str(), 0},

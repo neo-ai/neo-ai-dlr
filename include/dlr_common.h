@@ -77,6 +77,9 @@ void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
 
+std::string LoadFileToString(const std::string& path,
+                             std::ios_base::openmode mode = std::ios_base::in);
+
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() && mainStr.compare(0, toMatch.size(), toMatch) == 0;
 }

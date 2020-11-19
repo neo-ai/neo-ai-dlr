@@ -61,14 +61,11 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
 
   std::string code_data;
   std::string model_lib_path;
-  std::string metadata_path;
   std::string metadata_data;
   for (DLRModelElem el : model_elems) {
     if (el.type == DLRModelElemType::RELAY_EXEC) {
       if (el.path != nullptr) {
-        std::ifstream relay_ob(el.path, std::ios::binary);
-        code_data.assign((std::istreambuf_iterator<char>(relay_ob)),
-                         std::istreambuf_iterator<char>());
+        code_data = dlr::LoadFileToString(el.path, std::ios::binary);
       } else if (el.data != nullptr && el.data_size > 0) {
         code_data.assign(static_cast<const char*>(el.data), el.data_size);
       } else {
@@ -82,7 +79,7 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
       }
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {
-        metadata_path = el.path;
+        metadata_data = dlr::LoadFileToString(el.path);
       } else if (el.data != nullptr) {
         metadata_data = static_cast<const char*>(el.data);
       } else {
@@ -90,20 +87,13 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
       }
     }
   }
-  if (code_data.empty() || model_lib_path.empty() ||
-      (metadata_path.empty() && metadata_data.empty())) {
+  if (code_data.empty() || model_lib_path.empty() || metadata_data.empty()) {
     throw dmlc::Error(
         "Invalid RelayVM model. Must have RELAY_EXEC, TVM_LIB and NEO_METADATA elements");
   }
 
-  // Load Metadata from file or String
-  if (!metadata_path.empty() && !IsFileEmpty(metadata_path)) {
-    LoadJsonFromFile(metadata_path, this->metadata_);
-    ValidateDeviceTypeIfExists();
-  } else if (!metadata_data.empty()) {
-    LoadJsonFromString(metadata_data, this->metadata_);
-    ValidateDeviceTypeIfExists();
-  }
+  LoadJsonFromString(metadata_data, this->metadata_);
+  ValidateDeviceTypeIfExists();
 
   tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib_path);
 

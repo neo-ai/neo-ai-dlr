@@ -77,6 +77,13 @@ void dlr::LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonOb
   }
 }
 
+std::string dlr::LoadFileToString(const std::string& path, std::ios_base::openmode mode) {
+  std::ifstream fstream(path, mode);
+  std::stringstream blob;
+  blob << fstream.rdbuf();
+  return blob.str();
+}
+
 DLRBackend dlr::GetBackend(const std::vector<std::string>& dir_paths) {
   // Support the case where user provides full path to hexagon file.
   if (EndsWith(dir_paths[0], "_hexagon_model.so")) {

@@ -29,16 +29,8 @@ class RelayVMElemTest : public ::testing::Test {
     std::string so_file = "./ssd_mobilenet_v1/compiled.so";
     std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
 
-    // load ro file
-    std::ifstream relay_ob(ro_file, std::ios::binary);
-    std::string code_data((std::istreambuf_iterator<char>(relay_ob)),
-                          std::istreambuf_iterator<char>());
-
-    // load metadata json file
-    std::ifstream meta_stream(meta_file);
-    std::stringstream meta_blob;
-    meta_blob << meta_stream.rdbuf();
-    std::string meta_str = meta_blob.str();
+    std::string code_data = dlr::LoadFileToString(ro_file, std::ios::binary);
+    std::string meta_str = dlr::LoadFileToString(meta_file);
 
     std::vector<DLRModelElem> model_elems = {
         {DLRModelElemType::RELAY_EXEC, nullptr, code_data.data(), code_data.size()},
