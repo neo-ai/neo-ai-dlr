@@ -80,8 +80,6 @@ std::string GetParentFolder(const std::string& path);
 void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
 void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
-void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
-
 std::string LoadFileToString(const std::string& path,
                              std::ios_base::openmode mode = std::ios_base::in);
 
