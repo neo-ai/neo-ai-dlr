@@ -211,8 +211,6 @@ void TreeliteModel::Run() {
       << TreeliteGetLastError();
 }
 
-DLRBackend TreeliteModel::GetBackend() const { return DLRBackend::kTREELITE; }
-
 void TreeliteModel::SetNumThreads(int threads) {
   throw dmlc::Error("SetNumThreads is not supported by Treelite backend.");
 }

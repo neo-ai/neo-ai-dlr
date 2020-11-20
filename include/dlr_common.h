@@ -172,7 +172,7 @@ class DLR_DLL DLRModel {
   virtual std::vector<std::string> GetWeightNames() const = 0;
 
   virtual DLDeviceType GetDeviceTypeFromMetadata() const;
-  virtual DLRBackend GetBackend() const = 0;
+  virtual DLRBackend GetBackend() { return backend_; }
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const;
   virtual void UseCPUAffinity(bool use) = 0;

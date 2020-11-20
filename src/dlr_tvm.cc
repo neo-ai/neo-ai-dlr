@@ -280,8 +280,6 @@ void TVMModel::Run() {
   run();
 }
 
-DLRBackend TVMModel::GetBackend() const { return DLRBackend::kTVM; }
-
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32
   return static_cast<int>(_putenv_s(key, value));

@@ -418,8 +418,6 @@ const char* RelayVMModel::GetOutputType(int index) const {
   return output_types_[index].c_str();
 }
 
-DLRBackend RelayVMModel::GetBackend() const { return DLRBackend::kRELAYVM; }
-
 void RelayVMModel::SetNumThreads(int threads) { throw dmlc::Error("Not Implemented!"); }
 
 void RelayVMModel::UseCPUAffinity(bool use) { throw dmlc::Error("Not Implemented!"); }

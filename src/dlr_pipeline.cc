@@ -144,8 +144,6 @@ void PipelineModel::Run() {
   }
 }
 
-DLRBackend PipelineModel::GetBackend() const { return DLRBackend::kPIPELINE; }
-
 void PipelineModel::SetNumThreads(int threads) {
   // Try to set Number of Threads to pipeline models
   // Ignore the errors in case some of the models do not support this feature.
