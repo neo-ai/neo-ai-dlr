@@ -9,6 +9,7 @@
 #include <tvm/runtime/packed_func.h>
 #include <tvm/runtime/registry.h>
 #include <tvm/runtime/vm/vm.h>
+
 #include "dlr_common.h"
 #include "dlr_data_transform.h"
 
@@ -43,7 +44,6 @@ class DLR_DLL RelayVMModel : public DLRModel {
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
   DataTransform data_transform_;
-  ModelPath GetModelPath(const std::vector<std::string>& paths);
   void SetupVMModule(const std::vector<std::string>& paths);
   void SetupVMModule(const std::vector<DLRModelElem>& model_elems);
   void FetchInputNodesData();
@@ -53,9 +53,9 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DLDataType GetInputDLDataType(int index);
 
  public:
-  explicit RelayVMModel(std::vector<std::string> paths, const DLContext& ctx)
+  explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kRELAYVM) {
-    SetupVMModule(paths);
+    SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
@@ -76,15 +76,17 @@ class DLR_DLL RelayVMModel : public DLRModel {
   virtual void GetInput(const char* name, void* input) override;
   virtual void SetInput(const char* name, const int64_t* shape, const void* input,
                         int dim) override;
+  void SetInputTensor(const char* name, DLTensor* tensor);
   virtual int GetNumInputs() const override;
   virtual void Run() override;
   tvm::runtime::NDArray GetOutput(int index);
   virtual void GetOutput(int index, void* out) override;
+  void GetOutputManagedTensorPtr(int index, const DLManagedTensor** out);
   virtual const void* GetOutputPtr(int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  virtual const char* GetBackend() const override;
+  void GetOutputTensor(int index, DLTensor* out);
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 

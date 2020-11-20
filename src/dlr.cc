@@ -83,19 +83,33 @@ extern "C" int SetDLRInput(DLRModelHandle* handle, const char* name, const int64
   API_END();
 }
 
+extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* tensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+
+  DLTensor* dltensor = static_cast<DLTensor*>(tensor);
+  if (backend == DLRBackend::kTVM) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    std::cout << "here" << std::endl;
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->SetInputTensor(name, dltensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->SetInputTensor(name, dltensor);
+  }
+  API_END();
+}
+
 extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name, void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetInput(name, input);
-  API_END();
-}
-
-extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape) {
-  API_BEGIN();
-  DLRModel* model = static_cast<DLRModel*>(*handle);
-  CHECK(model != nullptr) << "model is nullptr, create it first";
-  model->GetOutputShape(index, shape);
   API_END();
 }
 
@@ -115,11 +129,62 @@ extern "C" int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** o
   API_END();
 }
 
+extern "C" int GetDLROutputTensor(DLRModelHandle* handle, int index, void* tensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+
+  DLTensor* dltensor = static_cast<DLTensor*>(tensor);
+  if (backend == DLRBackend::kTVM) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->GetOutputTensor(index, dltensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->GetOutputTensor(index, dltensor);
+  }
+  API_END();
+}
+
+extern "C" int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index,
+                                            const void** tensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM || backend == DLRBackend::kRELAYVM)
+      << "model is not a TVMModel or RelayVMModel. Found '"
+      << kBackendToStr[static_cast<int>(backend)] << "' but expected 'tvm' or 'relayvm'";
+
+  const DLManagedTensor** dltensor = reinterpret_cast<const DLManagedTensor**>(tensor);
+  if (backend == DLRBackend::kTVM) {
+    TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+    CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+    tvm_model->GetOutputManagedTensorPtr(index, dltensor);
+  } else {
+    RelayVMModel* vm_model = static_cast<RelayVMModel*>(*handle);
+    CHECK(vm_model != nullptr) << "model is nullptr, create it first";
+    vm_model->GetOutputManagedTensorPtr(index, dltensor);
+  }
+  API_END();
+}
+
 extern "C" int GetDLROutputSizeDim(DLRModelHandle* handle, int index, int64_t* size, int* dim) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);
   CHECK(model != nullptr) << "model is nullptr, create it first";
   model->GetOutputSizeDim(index, size, dim);
+  API_END();
+}
+
+extern "C" int GetDLROutputShape(DLRModelHandle* handle, int index, int64_t* shape) {
+  API_BEGIN();
+  DLRModel* model = static_cast<DLRModel*>(*handle);
+  CHECK(model != nullptr) << "model is nullptr, create it first";
+  model->GetOutputShape(index, shape);
   API_END();
 }
 
@@ -181,38 +246,31 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-std::vector<std::string> MakePathVec(const char* model_path) {
-  /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
-
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
+std::vector<std::string> MakePathVec(std::string model_path) {
+  std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
+  for (int i = 0; i < path_vec.size(); i++) path_vec[i] = FixWindowsDriveLetter(path_vec[i]);
   return path_vec;
 }
 
 DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
   std::vector<std::string> path_vec = MakePathVec(model_path);
-  DLRBackend backend = dlr::GetBackend(path_vec);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
   if (backend == DLRBackend::kTVM) {
-    return std::make_shared<TVMModel>(path_vec, ctx);
+    return std::make_shared<TVMModel>(files, ctx);
   } else if (backend == DLRBackend::kRELAYVM) {
-    return std::make_shared<RelayVMModel>(path_vec, ctx);
+    return std::make_shared<RelayVMModel>(files, ctx);
   } else if (backend == DLRBackend::kTREELITE) {
-    return std::make_shared<TreeliteModel>(path_vec, ctx);
+    return std::make_shared<TreeliteModel>(files, ctx);
 #ifdef DLR_HEXAGON
   } else if (backend == DLRBackend::kHEXAGON) {
-    const std::string model_path_string(model_path);
-    return std::make_shared<HexagonModel>(model_path_string, ctx, 1 /*debug_level*/);
+    return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
   } else {
-    throw dmlc::Error("Unsupported backend!");
+    std::string err = "Unable to determine backend from path: '";
+    err = err + model_path + "'.";
+    throw dmlc::Error(err);
+    return nullptr;  // unreachable
   }
 }
 
@@ -222,12 +280,13 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
  */
 int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, int debug_level) {
   API_BEGIN();
-  const std::string model_path_string(model_path);
   // HexagonModel class does not use DLContext internally
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  DLRModel* model = new HexagonModel(model_path_string, ctx, debug_level);
+  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRModel* model = new HexagonModel(files, ctx, debug_level);
   *handle = model;
   API_END();
 }
@@ -243,23 +302,25 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   ctx.device_id = dev_id;
 
   std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
 
-  DLRBackend backend = dlr::GetBackend(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
   DLRModel* model;
   try {
     if (backend == DLRBackend::kTVM) {
-      model = new TVMModel(path_vec, ctx);
+      model = new TVMModel(files, ctx);
     } else if (backend == DLRBackend::kRELAYVM) {
-      model = new RelayVMModel(path_vec, ctx);
+      model = new RelayVMModel(files, ctx);
     } else if (backend == DLRBackend::kTREELITE) {
-      model = new TreeliteModel(path_vec, ctx);
+      model = new TreeliteModel(files, ctx);
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
-      const std::string model_path_string(model_path);
-      model = new HexagonModel(model_path_string, ctx, 1 /*debug_level*/);
+      model = new HexagonModel(files, ctx, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
     } else {
-      LOG(FATAL) << "Unsupported backend!";
+      std::string err = "Unable to determine backend from path: '";
+      err = err + model_path + "'.";
+      throw dmlc::Error(err);
       return -1;  // unreachable
     }
   } catch (dmlc::Error& e) {
@@ -341,25 +402,14 @@ extern "C" const char* DLRGetLastError() { return TVMGetLastError(); }
 
 extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
   API_BEGIN();
-  *name = static_cast<DLRModel*>(*handle)->GetBackend();
+  DLRBackend backend = static_cast<DLRModel*>(*handle)->GetBackend();
+  *name = kBackendToStr[static_cast<int>(backend)];
   API_END();
 }
 
 extern "C" int GetDLRDeviceType(const char* model_path) {
   API_BEGIN();
-  /* Logic to handle Windows drive letter */
-  std::string model_path_string{model_path};
-  std::string special_prefix{""};
-  if (model_path_string.length() >= 2 && model_path_string[1] == ':' &&
-      std::isalpha(model_path_string[0], std::locale("C"))) {
-    // Handle drive letter
-    special_prefix = model_path_string.substr(0, 2);
-    model_path_string = model_path_string.substr(2);
-  }
-
-  std::vector<std::string> path_vec = dmlc::Split(model_path_string, ':');
-  path_vec[0] = special_prefix + path_vec[0];
-
+  std::vector<std::string> path_vec = MakePathVec(model_path);
   try {
     return dlr::GetDeviceTypeFromMetadata(path_vec);
   } catch (dmlc::Error& e) {

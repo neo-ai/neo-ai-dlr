@@ -1,6 +1,7 @@
 #include "dlr_relayvm.h"
 
 #include <gtest/gtest.h>
+
 #include "test_utils.hpp"
 
 int main(int argc, char** argv) {
@@ -26,7 +27,8 @@ class RelayVMTest : public ::testing::Test {
     const int device_id = 0;
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
-    model = new dlr::RelayVMModel(paths, ctx);
+    std::vector<std::string> files = dlr::FindFiles(paths);
+    model = new dlr::RelayVMModel(files, ctx);
   }
 
   ~RelayVMTest() { delete model; }

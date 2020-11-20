@@ -27,7 +27,7 @@ struct TreeliteInput {
 
 /*! \brief Get the paths of the Treelite model files.
  */
-ModelPath GetTreelitePaths(std::vector<std::string> dirname);
+ModelPath SetTreelitePaths(const std::vector<std::string>& files);
 
 /*! \brief class TreeliteModel
  */
@@ -46,15 +46,15 @@ class DLR_DLL TreeliteModel : public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float, DLRAllocator<float>> treelite_output_;
-  void SetupTreeliteModule(std::vector<std::string> model_path);
+  void SetupTreeliteModule(const std::vector<std::string>& files);
   void UpdateInputShapes();
 
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(std::vector<std::string> model_path, const DLContext& ctx)
+  explicit TreeliteModel(const std::vector<std::string>& files, const DLContext& ctx)
       : DLRModel(ctx, DLRBackend::kTREELITE) {
-    SetupTreeliteModule(model_path);
+    SetupTreeliteModule(files);
   }
 
   virtual const int GetInputDim(int index) const override;
@@ -75,7 +75,6 @@ class DLR_DLL TreeliteModel : public DLRModel {
   virtual std::vector<std::string> GetWeightNames() const override;
 
   virtual void Run() override;
-  virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 };

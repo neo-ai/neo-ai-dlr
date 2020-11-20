@@ -7,7 +7,7 @@ namespace dlr {
 
 /*! \brief Get the paths of the Hexagon model files.
  */
-std::string GetHexagonModelFile(const std::string& dirname);
+std::string GetHexagonModelFile(const std::vector<std::string>& files);
 bool FindHexagonNNSkelFile(const std::string& dirname);
 void* FindSymbol(void* handle, const char* fn_name);
 
@@ -46,7 +46,8 @@ class HexagonModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit HexagonModel(const std::string& model_path, const DLContext& ctx, const int debug_level);
+  explicit HexagonModel(const std::vector<std::string>& files, const DLContext& ctx,
+                        const int debug_level);
   ~HexagonModel();
 
   virtual const int GetInputDim(int index) const override;
@@ -64,7 +65,6 @@ class HexagonModel : public DLRModel {
   virtual void GetOutputShape(int index, int64_t* shape) const override;
   virtual void GetOutputSizeDim(int index, int64_t* size, int* dim) override;
   virtual const char* GetOutputType(int index) const override;
-  virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 };

@@ -31,29 +31,17 @@ std::string GetVersion(const std::string& json_path) {
   return version;
 }
 
-ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
+ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
   ModelPath paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
-    if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
-    } else if (filename == "version.json") {
-      paths.ver_json = filename;
-    } else if (EndsWith(filename, ".meta")) {
-      paths.metadata = filename;
-    }
-  }
+  dlr::InitModelPath(files, &paths);
   if (paths.model_lib.empty()) {
     throw dmlc::Error("Invalid treelite model artifact. Must have .so file.");
   }
   return paths;
 }
 
-void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
-  ModelPath paths = GetTreelitePaths(model_path);
+void TreeliteModel::SetupTreeliteModule(const std::vector<std::string>& model_path) {
+  ModelPath paths = SetTreelitePaths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;
   // if not, use the maximum amount of threads
   const char* val = std::getenv("OMP_NUM_THREADS");
@@ -85,7 +73,6 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
            0)
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
-  // version_ = GetVersion(paths.ver_json);
   UpdateInputShapes();
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
     LoadJsonFromFile(paths.metadata, this->metadata_);
@@ -223,8 +210,6 @@ void TreeliteModel::Run() {
            0)
       << TreeliteGetLastError();
 }
-
-const char* TreeliteModel::GetBackend() const { return "treelite"; }
 
 void TreeliteModel::SetNumThreads(int threads) {
   throw dmlc::Error("SetNumThreads is not supported by Treelite backend.");

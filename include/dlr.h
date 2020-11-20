@@ -59,13 +59,14 @@ typedef struct ModelElem {
 #endif
 
 /*!
- \brief Creates a DLR model.
- \param handle The pointer to save the model handle.
- \param model_path Path to the folder containing the model files,
-                   or colon-separated list of folders (or files) if model files
- stored in different locations \param dev_type Device type. Valid values are in
- the DLDeviceType enum in dlpack.h. \param dev_id Device ID. \return 0 for
- success, -1 for error. Call DLRGetLastError() to get the error message.
+ * \brief Creates a DLR model
+ * \param handle The pointer to save the model handle.
+ * \param model_path Path to the folder containing the model files,
+ *                   or colon-separated list of folders containing model files,
+ *                   or colon-separated list of paths to model files
+ * \param dev_type Device type. Valid values are in the DLDeviceType enum in dlpack.h.
+ * \param dev_id Device ID.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
  */
 DLR_DLL
 int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type, int dev_id);
@@ -193,6 +194,18 @@ int GetDLRWeightName(DLRModelHandle* handle, int index, const char** weight_name
 DLR_DLL
 int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape, const void* input,
                 int dim);
+
+/*!
+ * \brief Sets the input according the node name from existing DLTensor. Can only be
+ *        used with TVM models (GraphRuntime and VMRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param name The input node name.
+ * \param tensor The input DLTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* tensor);
+
 /*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
@@ -259,6 +272,29 @@ int GetDLROutput(DLRModelHandle* handle, int index, void* out);
  */
 DLR_DLL
 int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** out);
+
+/*!
+ * \brief Gets the index-th output from the model and copies it into the given DLTensor.
+ *        Can only be used with TVM models (GraphRuntime and VMRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param tensor The pointer to an existing/allocated DLTensor to copy the output into.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetDLROutputTensor(DLRModelHandle* handle, int index, void* tensor);
+
+/*!
+ * \brief Gets the index-th output from the model and sets the pointer to it.
+ *        Can only be used with TVM models (GraphRuntime and VMRuntime)
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param index The index-th output.
+ * \param tensor The pointer to an unallocated DLManagedTensor pointer, will be
+ *               set by this function to point to an internal DLManagedTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int GetDLROutputManagedTensorPtr(DLRModelHandle* handle, int index, const void** tensor);
 
 /*!
  \brief Gets the number of outputs.

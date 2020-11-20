@@ -7,29 +7,14 @@
 
 using namespace dlr;
 
-std::string dlr::GetHexagonModelFile(const std::string& dirname) {
-  // Support the case where user provides full path to _hexagon_model.so file.
-  if (EndsWith(dirname, "_hexagon_model.so")) {
-    return dirname;
+std::string dlr::GetHexagonModelFile(const std::vector<std::string>& files) {
+  // Scan to find _hexagon_model.so file
+  ModelPath paths;
+  dlr::InitModelPath(files, &paths);
+  if (paths.model_lib.empty()) {
+    LOG(FATAL) << "Invalid Hexagon model artifat. Must have .so file";
   }
-  // Scan Dir to find _hexagon_model.so file
-  std::string hexagon_model_so_file;
-  std::vector<std::string> paths_vec;
-  ListDir(dirname, paths_vec);
-  for (auto filename : paths_vec) {
-    std::string basename = GetBasename(filename);
-    if (EndsWith(basename, "_hexagon_model.so")) {
-      if (hexagon_model_so_file.empty()) {
-        hexagon_model_so_file = filename;
-      } else {
-        LOG(FATAL) << "Multiple _hexagon_model.so files under the folder: " << dirname;
-      }
-    }
-  }
-  if (hexagon_model_so_file.empty()) {
-    LOG(FATAL) << "No _hexagon_model.so file found under folder: " << dirname;
-  }
-  return hexagon_model_so_file;
+  return paths.model_lib;
 }
 
 bool dlr::FindHexagonNNSkelFile(const std::string& dirname) {
@@ -111,10 +96,10 @@ int HexagonModel::GetInputId(const char* name) {
 }
 
 // Constructor
-HexagonModel::HexagonModel(const std::string& model_path, const DLContext& ctx,
+HexagonModel::HexagonModel(const std::vector<std::string>& files, const DLContext& ctx,
                            const int debug_level)
     : DLRModel(ctx, DLRBackend::kHEXAGON) {
-  const std::string model_so_file = GetHexagonModelFile(model_path);
+  const std::string model_so_file = GetHexagonModelFile(files);
   LOG(INFO) << "Model: " << model_so_file;
   const std::string model_folder = GetParentFolder(model_so_file);
   if (FindHexagonNNSkelFile(model_folder)) {
@@ -285,8 +270,6 @@ void HexagonModel::Run() {
     return;  // unreachable
   }
 }
-
-const char* HexagonModel::GetBackend() const { return "hexagon"; }
 
 void HexagonModel::SetNumThreads(int threads) {
   LOG(FATAL) << "SetNumThreads is not supported by Hexagon backend";

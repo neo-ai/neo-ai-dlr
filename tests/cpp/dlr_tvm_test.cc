@@ -27,7 +27,8 @@ class TVMTest : public ::testing::Test {
     int device_id = 0;
     std::vector<std::string> paths = {model_path};
     DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
-    model = new dlr::TVMModel(paths, ctx);
+    std::vector<std::string> files = dlr::FindFiles(paths);
+    model = new dlr::TVMModel(files, ctx);
   }
 
   ~TVMTest() { delete model; }
@@ -56,7 +57,8 @@ TEST(TVM, TestTvmModelApisWithOutputMetadata) {
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {"./resnet_v1_5_50"};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -120,7 +122,8 @@ TEST(TVM, TestTvmModelApisWithoutMetadata) {
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -156,7 +159,8 @@ TEST(TVM, TestTvmModelApisWithoutOutputInMetadata) {
   const int device_id = 0;
   DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -192,7 +196,8 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
 
   DLContext ctx = {DLDeviceType::kDLCPU, 0};
   std::vector<std::string> paths = {model_path};
-  dlr::TVMModel model = dlr::TVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::TVMModel model = dlr::TVMModel(files, ctx);
 
   EXPECT_EQ(model.GetNumInputs(), 1);
   EXPECT_EQ(model.GetNumOutputs(), 2);
@@ -207,7 +212,7 @@ TEST(TVM, TestTvmModelGetDeviceTypeFromMetadata) {
 
   EXPECT_THROW(({
                  try {
-                   dlr::TVMModel(paths, ctx);
+                   dlr::TVMModel(files, ctx);
                  } catch (const dmlc::Error& e) {
                    EXPECT_STREQ(
                        e.what(),

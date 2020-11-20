@@ -9,46 +9,19 @@
 
 using namespace dlr;
 
-ModelPath dlr::GetTvmPaths(const std::vector<std::string>& dirname) {
-  ModelPath paths;
-  std::vector<std::string> paths_vec;
-  for (auto dir : dirname) {
-    ListDir(dir, paths_vec);
-  }
-  for (auto filename : paths_vec) {
-    std::string basename = GetBasename(filename);
-    if (EndsWith(filename, ".json") &&
-        std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
-                    std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
-                    [basename](const std::string& s) { return (s != basename); }) &&
-        filename != "version.json") {
-      paths.model_json = filename;
-    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
-      paths.model_lib = filename;
-    } else if (EndsWith(filename, ".tensorrt")) {
-      paths.model_lib = filename;
-    } else if (EndsWith(filename, ".params")) {
-      paths.params = filename;
-    } else if (filename == "version.json") {
-      paths.ver_json = filename;
-    } else if (EndsWith(filename, ".meta")) {
-      paths.metadata = filename;
-    }
-  }
-  if (paths.model_json.empty() || paths.model_lib.empty() || paths.params.empty()) {
+void TVMModel::SetupTVMModule(const std::vector<std::string>& files) {
+  ModelPath path;
+  dlr::InitModelPath(files, &path);
+  if (path.model_json.empty() || path.model_lib.empty() || path.params.empty()) {
     throw dmlc::Error("Invalid TVM model artifact. Must have .so, .json, and .params files.");
   }
-  return paths;
-}
 
-void TVMModel::SetupTVMModule(const std::vector<std::string>& model_path) {
-  ModelPath paths = GetTvmPaths(model_path);
   std::vector<DLRModelElem> model_elems = {
-      {DLRModelElemType::TVM_GRAPH, paths.model_json.c_str(), nullptr, 0},
-      {DLRModelElemType::TVM_PARAMS, paths.params.c_str(), nullptr, 0},
-      {DLRModelElemType::TVM_LIB, paths.model_lib.c_str(), nullptr, 0}};
-  if (!paths.metadata.empty()) {
-    model_elems.push_back({DLRModelElemType::NEO_METADATA, paths.metadata.c_str(), nullptr, 0});
+      {DLRModelElemType::TVM_GRAPH, path.model_json.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_PARAMS, path.params.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0}};
+  if (!path.metadata.empty()) {
+    model_elems.push_back({DLRModelElemType::NEO_METADATA, path.metadata.c_str(), nullptr, 0});
   }
   SetupTVMModule(model_elems);
 }
@@ -70,7 +43,7 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   }
 
   std::string graph_str;
-  std::basic_string<char, std::char_traits<char>, dlr::DLRAllocator<char>> params_str;
+  DLRString params_str;
   const char* params_data = nullptr;
   size_t params_size = 0;
   std::string model_lib_path;
@@ -102,29 +75,26 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
       if (el.path != nullptr) {
         model_lib_path = el.path;
       } else {
-        throw dmlc::Error("Invalid TVM model element TVM_LIB. TVM_LIB must be a file.");
+        throw dmlc::Error("Invalid TVM model element TVM_LIB. TVM_LIB must be a file path.");
       }
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {
         metadata_data = dlr::LoadFileToString(el.path);
       } else if (el.data != nullptr) {
         metadata_data = static_cast<const char*>(el.data);
-      } else {
-        throw dmlc::Error("Invalid model element NEO_METADATA");
       }
     }
   }
   if (graph_str.empty() || params_data == nullptr || params_size <= 0 || model_lib_path.empty()) {
     throw dmlc::Error("Invalid TVM model. Must have TVM_GRAPH, TVM_PARAMS and TVM_LIB elements");
   }
-  tvm::runtime::Module module;
-  if (!IsFileEmpty(model_lib_path)) {
-    module = tvm::runtime::Module::LoadFromFile(model_lib_path);
-  }
   if (!metadata_data.empty()) {
     LoadJsonFromString(metadata_data, this->metadata_);
     ValidateDeviceTypeIfExists();
   }
+
+  tvm::runtime::Module module;
+  module = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
   tvm_graph_runtime_->Init(graph_str, module, {ctx_});
@@ -226,6 +196,21 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, const void* inpu
   UpdateInputShapes();
 }
 
+void TVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  if (index > -1) {
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+    DLTensor input_tensor = *(arr.operator->());
+    int64_t read_size =
+        std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1, std::multiplies<int64_t>());
+    int64_t expected_size = std::accumulate(
+        input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1, std::multiplies<int64_t>());
+    CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
+    tvm_graph_runtime_->SetInput(index, tensor);
+  }
+}
+
 void TVMModel::GetInput(const char* name, void* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
@@ -262,6 +247,16 @@ const void* TVMModel::GetOutputPtr(int index) const {
   throw dmlc::Error("GetOutputPtr is not supported for non-CPU device types");
 }
 
+void TVMModel::GetOutputManagedTensorPtr(int index, const DLManagedTensor** out) {
+  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  *out = output.ToDLPack();
+}
+
+void TVMModel::GetOutputTensor(int index, DLTensor* out) {
+  tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
+  get_output(index, out);
+}
+
 void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
   *size = 1;
   const DLTensor* tensor = outputs_[index];
@@ -284,8 +279,6 @@ void TVMModel::Run() {
   tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
   run();
 }
-
-const char* TVMModel::GetBackend() const { return "tvm"; }
 
 static inline int SetEnv(const char* key, const char* value) {
 #ifdef _WIN32

@@ -121,8 +121,7 @@ TEST(DLR, DataTransformMultipleColumn) {
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   // User input
-  const char* data =
-      R"([["2.345", "apple"], [7, "7"]])";
+  const char* data = R"([["2.345", "apple"], [7, "7"]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
@@ -151,7 +150,8 @@ TEST(DLR, DataTransformMultipleColumn) {
 TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl"};
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
   EXPECT_EQ(model->GetNumInputs(), 1);
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
@@ -188,7 +188,8 @@ TEST(DLR, RelayVMDataTransformInput) {
 TEST(DLR, RelayVMDataTransformOutput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel"};
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(paths, ctx);
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
 
   std::vector<int> input_data = {0, 1, 2, 3, -75};
   std::vector<int64_t> shape = {5};

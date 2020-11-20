@@ -54,7 +54,8 @@ TEST_F(RelayVMElemTest, TestCreateModel_LibTvmIsPointer) {
         try {
           new dlr::RelayVMModel(model_elems, ctx);
         } catch (const dmlc::Error& e) {
-          EXPECT_STREQ(e.what(), "Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file.");
+          EXPECT_STREQ(e.what(),
+                       "Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file path.");
           throw;
         }
       },

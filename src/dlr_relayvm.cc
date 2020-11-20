@@ -10,32 +10,13 @@ using namespace dlr;
 
 const std::string RelayVMModel::ENTRY_FUNCTION = "main";
 
-ModelPath RelayVMModel::GetModelPath(const std::vector<std::string>& paths) {
-  ModelPath model_path;
-  std::vector<std::string> paths_vec;
-  for (auto path : paths) {
-    ListDir(path, paths_vec);
-  }
-
-  for (auto path : paths_vec) {
-    if (!EndsWith(path, LIBDLR) && EndsWith(path, ".so")) {
-      model_path.model_lib = path;
-    } else if (EndsWith(path, ".ro")) {
-      model_path.relay_executable = path;
-    } else if (EndsWith(path, ".meta")) {
-      model_path.metadata = path;
-    }
-  }
-
-  if (model_path.model_lib.empty() || model_path.relay_executable.empty() ||
-      model_path.metadata.empty()) {
+void RelayVMModel::SetupVMModule(const std::vector<std::string>& files) {
+  ModelPath path;
+  dlr::InitModelPath(files, &path);
+  if (path.model_lib.empty() || path.relay_executable.empty() || path.metadata.empty()) {
     throw dmlc::Error("Invalid RelayVM model artifact. Must have .so, .ro, and .meta files.");
   }
-  return model_path;
-}
 
-void RelayVMModel::SetupVMModule(const std::vector<std::string>& paths) {
-  ModelPath path = GetModelPath(paths);
   const std::vector<DLRModelElem> model_elems = {
       {DLRModelElemType::RELAY_EXEC, path.relay_executable.c_str(), nullptr, 0},
       {DLRModelElemType::TVM_LIB, path.model_lib.c_str(), nullptr, 0},
@@ -75,7 +56,7 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
       if (el.path != nullptr) {
         model_lib_path = el.path;
       } else {
-        throw dmlc::Error("Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file.");
+        throw dmlc::Error("Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file path.");
       }
     } else if (el.type == DLRModelElemType::NEO_METADATA) {
       if (el.path != nullptr) {
@@ -276,6 +257,27 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   inputs_[index] = input_arr;
 }
 
+void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
+  // Handle string input.
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    std::vector<DLDataType> dtypes;
+    for (size_t i = 0; i < num_inputs_; ++i) {
+      dtypes.emplace_back(GetInputDLDataType(i));
+    }
+    data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim, dtypes,
+                                   ctx_, &inputs_);
+    return;
+  }
+
+  int index = GetInputIndex(name);
+  if (index > -1) {
+    std::vector<int64_t> arr_shape(tensor->shape, tensor->shape + tensor->ndim);
+    tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, tensor->dtype, ctx_);
+    input_arr.CopyFrom(tensor);
+    inputs_[index] = input_arr;
+  }
+}
+
 void RelayVMModel::UpdateInputs() {
   const int kNumArgs = num_inputs_ + 1;
   TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
@@ -348,6 +350,24 @@ const void* RelayVMModel::GetOutputPtr(int index) const {
   return outputs_[index]->data;
 }
 
+void RelayVMModel::GetOutputManagedTensorPtr(int index, const DLManagedTensor** out) {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  auto out_array = outputs_[index];
+  CHECK(!(HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)))
+      << "Output transforms are not supported with GetOutputManagedTensor.";
+  *out = out_array.ToDLPack();
+}
+
+void RelayVMModel::GetOutputTensor(int index, DLTensor* out) {
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  auto out_array = outputs_[index];
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    data_transform_.GetOutput(index, out->data);
+    return;
+  }
+  out_array.CopyTo(out);
+}
+
 void RelayVMModel::GetOutputShape(int index, int64_t* shape) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
   if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
@@ -397,8 +417,6 @@ const char* RelayVMModel::GetOutputType(int index) const {
   }
   return output_types_[index].c_str();
 }
-
-const char* RelayVMModel::GetBackend() const { return "relayvm"; }
 
 void RelayVMModel::SetNumThreads(int threads) { throw dmlc::Error("Not Implemented!"); }
 

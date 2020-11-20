@@ -5,6 +5,8 @@
 #include <fstream>
 using namespace dlr;
 
+const char* dlr::kBackendToStr[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
+
 bool dlr::IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
   return pFile.peek() == std::ifstream::traits_type::eof();
@@ -47,17 +49,33 @@ std::string dlr::GetBasename(const std::string& path) {
 #endif
 }
 
-void dlr::ListDir(const std::string& dirname, std::vector<std::string>& paths) {
-  dmlc::io::URI uri(dirname.c_str());
+void dlr::ListDir(const std::string& path, std::vector<std::string>& paths) {
+  dmlc::io::URI uri(path.c_str());
   dmlc::io::FileSystem* fs = dmlc::io::FileSystem::GetInstance(uri);
-  std::vector<dmlc::io::FileInfo> file_list;
-  fs->ListDirectory(uri, &file_list);
-  for (dmlc::io::FileInfo info : file_list) {
-    if (info.type != dmlc::io::FileType::kDirectory) {
-      paths.push_back(info.path.name);
+  if (fs->GetPathInfo(uri).type == dmlc::io::FileType::kDirectory) {
+    std::vector<dmlc::io::FileInfo> file_list;
+    fs->ListDirectory(uri, &file_list);
+    for (dmlc::io::FileInfo info : file_list) {
+      if (info.type != dmlc::io::FileType::kDirectory) {
+        paths.push_back(info.path.name);
+      }
     }
+  } else {
+    paths.push_back(path);
   }
 }
+
+std::string dlr::FixWindowsDriveLetter(const std::string& path) {
+  std::string path_string{path};
+  std::string special_prefix{""};
+  if (path_string.length() >= 2 && path_string[1] == ':' &&
+      std::isalpha(path_string[0], std::locale("C"))) {
+    // Handle drive letter
+    special_prefix = path_string.substr(0, 2);
+    path_string = path_string.substr(2);
+  }
+  return special_prefix + path_string;
+};
 
 void dlr::LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject) {
   std::ifstream jsonFile(path);
@@ -84,29 +102,30 @@ std::string dlr::LoadFileToString(const std::string& path, std::ios_base::openmo
   return blob.str();
 }
 
-DLRBackend dlr::GetBackend(const std::vector<std::string>& dir_paths) {
-  // Support the case where user provides full path to hexagon file.
-  if (EndsWith(dir_paths[0], "_hexagon_model.so")) {
-    return DLRBackend::kHEXAGON;
+std::vector<std::string> dlr::FindFiles(const std::vector<std::string>& paths) {
+  std::vector<std::string> files;
+  for (auto path : paths) {
+    dlr::ListDir(path, files);
   }
-  // Scan Directory content to guess the backend.
-  std::vector<std::string> paths;
-  for (auto dir : dir_paths) {
-    dlr::ListDir(dir, paths);
-  }
-  bool has_so = false;
-  for (auto filename : paths) {
+  return files;
+}
+
+DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
+  // Scan files to guess the backend.
+  bool has_tvm_lib = false;
+  for (auto filename : files) {
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".ro")) {
       return DLRBackend::kRELAYVM;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
-    } else if (EndsWith(filename, ".so")) {
-      has_so = true;  // dont return immediately since so could be part of many diff backend types
+    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
+      has_tvm_lib =
+          true;  // dont return immediately since it could be part of many diff backend types
     }
   }
-  if (has_so) return DLRBackend::kTREELITE;
+  if (has_tvm_lib) return DLRBackend::kTREELITE;
   return DLRBackend::kUNKNOWN;
 }
 
@@ -120,11 +139,65 @@ DLRBackend dlr::GetBackend(const std::vector<DLRModelElem>& model_elems) {
     } else if (el.type == DLRModelElemType::HEXAGON_LIB) {
       return DLRBackend::kHEXAGON;
     } else if (el.type == DLRModelElemType::TVM_LIB) {
-      has_tvm_lib = true;  // it could be part of many diff backend types
+      has_tvm_lib =
+          true;  // dont return immediately since it could be part of many diff backend types
     }
   }
   if (has_tvm_lib) return DLRBackend::kTREELITE;
   return DLRBackend::kUNKNOWN;
+}
+
+void dlr::InitModelPath(const std::vector<std::string>& files, ModelPath* paths) {
+  for (auto filename : files) {
+    std::string basename = GetBasename(filename);
+    if (EndsWith(filename, ".json") &&
+        std::all_of(std::begin(SAGEMAKER_AUXILIARY_JSON_FILES),
+                    std::end(SAGEMAKER_AUXILIARY_JSON_FILES),
+                    [basename](const std::string& s) { return (s != basename); }) &&
+        filename != "version.json") {
+      if (paths->model_json.length() > 0) {
+        std::string msg = "Found multiple *.json files: ";
+        msg += paths->model_json + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_json = filename;
+    } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
+      if (paths->model_lib.length() > 0) {
+        std::string msg = "Found multiple model lib files: ";
+        msg += paths->model_lib + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_lib = filename;
+    } else if (EndsWith(filename, ".tensorrt")) {
+      if (paths->model_lib.length() > 0) {
+        std::string msg = "Found multiple model lib files: ";
+        msg += paths->model_lib + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->model_lib = filename;
+    } else if (EndsWith(filename, ".params")) {
+      if (paths->params.length() > 0) {
+        std::string msg = "Found multiple *.params files: ";
+        msg += paths->params + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->params = filename;
+    } else if (EndsWith(filename, ".meta")) {
+      if (paths->metadata.length() > 0) {
+        std::string msg = "Found multiple *.meta files: ";
+        msg += paths->metadata + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->metadata = filename;
+    } else if (EndsWith(filename, ".ro")) {
+      if (paths->relay_executable.length() > 0) {
+        std::string msg = "Found multiple *.ro files: ";
+        msg += paths->relay_executable + " " + filename;
+        throw dmlc::Error(msg);
+      }
+      paths->relay_executable = filename;
+    }
+  }
 }
 
 const std::vector<int64_t>& DLRModel::GetInputShape(int index) const {

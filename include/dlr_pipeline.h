@@ -3,6 +3,7 @@
 
 #include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
+
 #include "dlr_common.h"
 
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -49,7 +50,6 @@ class DLR_DLL PipelineModel : public DLRModel {
   virtual std::vector<std::string> GetWeightNames() const override;
 
   virtual void Run() override;
-  virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 

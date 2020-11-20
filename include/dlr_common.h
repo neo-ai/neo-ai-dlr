@@ -60,12 +60,16 @@ typedef struct {
   std::string model_lib;
   std::string params;
   std::string model_json;
-  std::string ver_json;
   std::string metadata;
   std::string relay_executable;
 } ModelPath;
 
-void ListDir(const std::string& dirname, std::vector<std::string>& paths);
+void ListDir(const std::string& path, std::vector<std::string>& paths);
+
+std::vector<std::string> FindFiles(const std::vector<std::string>& paths);
+
+/* Logic to handle Windows drive letter */
+std::string FixWindowsDriveLetter(const std::string& path);
 
 std::string GetBasename(const std::string& path);
 
@@ -73,9 +77,8 @@ bool IsFileEmpty(const std::string& filePath);
 
 std::string GetParentFolder(const std::string& path);
 
-void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
-
 void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
+void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 std::string LoadFileToString(const std::string& path,
                              std::ios_base::openmode mode = std::ios_base::in);
@@ -93,12 +96,14 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
 }
 
 enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
+extern const char* kBackendToStr[6];
 
 /*! \brief Get the backend based on the contents of the model folder.
  */
-DLRBackend GetBackend(const std::vector<std::string>& dirname);
-
+DLRBackend GetBackend(const std::vector<std::string>& files);
 DLRBackend GetBackend(const std::vector<DLRModelElem>& model_elems);
+
+void InitModelPath(const std::vector<std::string>& files, ModelPath* paths);
 
 std::string GetMetadataFile(const std::string& dirname);
 
@@ -167,7 +172,7 @@ class DLR_DLL DLRModel {
   virtual std::vector<std::string> GetWeightNames() const = 0;
 
   virtual DLDeviceType GetDeviceTypeFromMetadata() const;
-  virtual const char* GetBackend() const = 0;
+  virtual DLRBackend GetBackend() { return backend_; }
   virtual void SetNumThreads(int threads) = 0;
   virtual bool HasMetadata() const;
   virtual void UseCPUAffinity(bool use) = 0;

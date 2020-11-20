@@ -1,6 +1,7 @@
 #include "dlr_pipeline.h"
 
 #include <stdlib.h>
+
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -142,8 +143,6 @@ void PipelineModel::Run() {
     curr_model->Run();
   }
 }
-
-const char* PipelineModel::GetBackend() const { return "pipeline"; }
 
 void PipelineModel::SetNumThreads(int threads) {
   // Try to set Number of Threads to pipeline models
