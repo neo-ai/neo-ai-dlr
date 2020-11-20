@@ -111,8 +111,8 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
         // If there is no items in map, try to pass forward as float.
         if (mapping[c].empty()) {
           data[out_index] = input_json[r][c].is_number()
-                              ? input_json[r][c].get<float>()
-                              : std::stof(input_json[r][c].get_ref<const std::string&>());
+                                ? input_json[r][c].get<float>()
+                                : std::stof(input_json[r][c].get_ref<const std::string&>());
           continue;
         }
         const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
@@ -137,14 +137,17 @@ DataTransform::GetTransformerMap() const {
 }
 
 template <typename T>
-nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& mapping, const T* data,
+nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& transform,
+                                                      const T* data,
                                                       const std::vector<int64_t>& shape) const {
+  const nlohmann::json& mapping = transform["CategoricalString"];
   CHECK_EQ(shape.size(), 1);
   nlohmann::json output_json = nlohmann::json::array();
   for (int64_t i = 0; i < shape[0]; ++i) {
     auto it = mapping.find(std::to_string(data[i]));
     if (it == mapping.end()) {
-      output_json.push_back(kUnknownLabel);
+      output_json.push_back(transform.count("UnseenLabel") ? transform["UnseenLabel"]
+                                                           : kUnknownLabel);
     } else {
       output_json.push_back(*it);
     }
@@ -153,19 +156,20 @@ nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& mapp
 }
 
 template <typename T>
-nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& mapping, const T* data,
+nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& transform,
+                                                      const T* data,
                                                       const std::vector<int64_t>& shape) const {
   CHECK_EQ(shape.size(), 2);
   nlohmann::json output_json = nlohmann::json::array();
   for (int64_t i = 0; i < shape[0]; ++i) {
-    output_json.push_back(TransformOutputHelper1D<T>(mapping, data + i * shape[1], {shape[1]}));
+    output_json.push_back(TransformOutputHelper1D<T>(transform, data + i * shape[1], {shape[1]}));
   }
   return output_json;
 }
 
 void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
                                     const tvm::runtime::NDArray& output_array) {
-  auto& mapping = metadata["DataTransform"]["Output"][std::to_string(index)]["CategoricalString"];
+  auto& transform = metadata["DataTransform"]["Output"][std::to_string(index)];
   const DLTensor* tensor = output_array.operator->();
   CHECK_EQ(tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
@@ -175,9 +179,9 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
   std::vector<int64_t> shape(output_array->shape, output_array->shape + output_array->ndim);
   nlohmann::json output_json;
   if (shape.size() == 1) {
-    output_json = TransformOutputHelper1D<int>(mapping, static_cast<int*>(tensor->data), shape);
+    output_json = TransformOutputHelper1D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else if (shape.size() == 2) {
-    output_json = TransformOutputHelper2D<int>(mapping, static_cast<int*>(tensor->data), shape);
+    output_json = TransformOutputHelper2D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else {
     throw dmlc::Error("DataTransform CategoricalString is only supported for 1-D or 2-D inputs.");
   }
