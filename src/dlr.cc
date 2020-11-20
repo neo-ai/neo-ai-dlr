@@ -94,7 +94,6 @@ extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void*
   DLTensor* dltensor = static_cast<DLTensor*>(tensor);
   if (backend == DLRBackend::kTVM) {
     TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
-    std::cout << "here" << std::endl;
     CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
     tvm_model->SetInputTensor(name, dltensor);
   } else {
