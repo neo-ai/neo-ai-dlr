@@ -12,7 +12,7 @@ std::string dlr::GetHexagonModelFile(const std::vector<std::string>& files) {
   ModelPath paths;
   dlr::InitModelPath(files, &paths);
   if (paths.model_lib.empty()) {
-    LOG(FATAL) << "Invalid Hexagon model artifat. Must have .so file";
+    LOG(FATAL) << "Invalid Hexagon model artifact. Must have .so file";
   }
   return paths.model_lib;
 }

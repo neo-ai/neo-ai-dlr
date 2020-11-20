@@ -2,6 +2,7 @@
 #define DLR_ALLOCATOR_H_
 
 #include <memory>
+#include <string>
 
 #ifndef DLR_ALLOC_TYPEDEF
 #define DLR_ALLOC_TYPEDEF

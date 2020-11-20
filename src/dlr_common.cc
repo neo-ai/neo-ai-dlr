@@ -3,6 +3,8 @@
 #include <dmlc/filesystem.h>
 
 #include <fstream>
+#include <locale>
+
 using namespace dlr;
 
 const char* dlr::kBackendToStr[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
