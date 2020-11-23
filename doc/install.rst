@@ -24,7 +24,7 @@ Building DLR from source
 
 Building DLR consists of two steps:
 
-1. Build the shared library from C++ code (``libdlr.so`` for Linux, ``libdlr.dylib`` for Mac OSX, and ``dlr.dll`` for Windows).
+1. Build the shared library from C++ code (``libdlr.so`` for Linux, ``libdlr.dylib`` for macOS, and ``dlr.dll`` for Windows).
 2. Then install the Python package ``dlr``.
 
 .. note:: Use of Git submodules
@@ -156,17 +156,15 @@ Similarly, to enable support for OpenCL devices, run CMake with ``-DUSE_OPENCL=O
   cd ../python
   python3 setup.py install --user
 
-Building on Mac OS X
+Building on macOS
 --------------------
 
-Install GCC and CMake from `Homebrew <https://brew.sh/>`_:
+Install CMake from `Homebrew <https://brew.sh/>`_:
 
 .. code-block:: bash
 
   brew update
-  brew install cmake gcc@8
-
-To ensure that Homebrew GCC is used (instead of default Apple compiler), specify environment variables ``CC`` and ``CXX`` when invoking CMake:
+  brew install cmake
 
 .. code-block:: bash
 
@@ -174,10 +172,10 @@ To ensure that Homebrew GCC is used (instead of default Apple compiler), specify
   cd neo-ai-dlr
   mkdir build
   cd build
-  CC=gcc-8 CXX=g++-8 cmake ..
+  cmake ..
   make -j4
 
-NVIDIA GPUs are not supported for Mac OS X target.
+NVIDIA GPUs are not supported for macOS target.
 
 Once the compilation is completed, install the Python package by running ``setup.py``:
 
