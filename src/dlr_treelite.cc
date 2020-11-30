@@ -139,7 +139,7 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape, const void*
   treelite_input_->row_ptr.reserve(batch_size);
   for (size_t i = 0; i < batch_size; ++i) {
     for (uint32_t j = 0; j < num_col; ++j) {
-      if (!std::isnan(input_f[i * num_col + j])) {
+      if (!std::isnan(input_f[i * num_col + j]) && input_f[i * num_col + j] != 0.0f) {
         treelite_input_->data.push_back(input_f[i * num_col + j]);
         treelite_input_->col_ind.push_back(j);
       }
