@@ -207,6 +207,19 @@ DLR_DLL
 int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* tensor);
 
 /*!
+ * \brief Sets the input from existing DLTensor without copying data. Can only be
+ *        used with TVM models (GraphRuntime). Input tensor device must match the device of the
+ *        model, and data must be alligned to 128 bytes. GetDLRInput cannot be used for inputs set
+ *        via SetDLRInputZeroCopy.
+ * \param handle The model handle returned from CreateDLRModel().
+ * \param name The input node name.
+ * \param tensor The input DLTensor.
+ * \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int SetDLRInputTensorZeroCopy(DLRModelHandle* handle, const char* name, void* tensor);
+
+/*!
  \brief Gets the current value of the input according the node name.
  \param handle The model handle returned from CreateDLRModel().
  \param name The input node name.

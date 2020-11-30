@@ -344,6 +344,46 @@ TEST(DLR, TestMakePathVecForMultipleLinuxPaths) {
   EXPECT_EQ(path_vec[1], "/d/e/f");
 }
 
+TEST(DLR, TestSetInputTensorZeroCopy_TVM) {
+  auto model = GetDLRModel();
+  // set input
+  int64_t shape[4] = {1, 224, 224, 3};
+  DLTensor input = GetInputDLTensor(4, shape, "cat224-3.txt");
+  EXPECT_EQ(SetDLRInputTensorZeroCopy(&model, "input_tensor", &input), 0);
+
+  // run inference
+  EXPECT_EQ(RunDLRModel(&model), 0);
+
+  // output 0
+  int output0_d[1];
+  EXPECT_EQ(GetDLROutput(&model, 0, output0_d), 0);
+  EXPECT_EQ(output0_d[0], 112);
+  int64_t output0_shape[1] = {1};
+  DLTensor output0 = GetEmptyDLTensor(1, output0_shape, kDLInt, 32);
+  EXPECT_EQ(GetDLROutputTensor(&model, 0, &output0), 0);
+  EXPECT_EQ(((int*)(output0.data))[0], 112);
+
+  // output 1
+  float output1_d[1001];
+  EXPECT_EQ(GetDLROutput(&model, 1, output1_d), 0);
+  EXPECT_GT(output1_d[112], 0.01);
+  int64_t output1_shape[2] = {1, 1001};
+  DLTensor output1 = GetEmptyDLTensor(2, output1_shape, kDLFloat, 32);
+  EXPECT_EQ(GetDLROutputTensor(&model, 1, &output1), 0);
+  EXPECT_GT(((float*)(output1.data))[112], 0.01);
+  DLManagedTensor* output1_p;
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 1, (const void**)&output1_p), 0);
+  EXPECT_GT(((float*)(output1_p->dl_tensor.data))[112], 0.01);
+  for (int i = 0; i < 1001; i++) {
+    EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
+  }
+
+  DeleteDLTensor(output0);
+  DeleteDLTensor(output1);
+  DeleteDLTensor(input);
+  DeleteDLRModel(&model);
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 #ifndef _WIN32

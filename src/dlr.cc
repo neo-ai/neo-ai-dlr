@@ -104,6 +104,21 @@ extern "C" int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void*
   API_END();
 }
 
+extern "C" int SetDLRInputTensorZeroCopy(DLRModelHandle* handle, const char* name, void* tensor) {
+  API_BEGIN();
+  DLRModel* dlr_model = static_cast<DLRModel*>(*handle);
+  DLRBackend backend = dlr_model->GetBackend();
+  CHECK(backend == DLRBackend::kTVM)
+      << "model is not a TVMModel. Found '" << kBackendToStr[static_cast<int>(backend)]
+      << "' but expected 'tvm'";
+
+  DLTensor* dltensor = static_cast<DLTensor*>(tensor);
+  TVMModel* tvm_model = static_cast<TVMModel*>(*handle);
+  CHECK(tvm_model != nullptr) << "model is nullptr, create it first";
+  tvm_model->SetInputTensorZeroCopy(name, dltensor);
+  API_END();
+}
+
 extern "C" int GetDLRInput(DLRModelHandle* handle, const char* name, void* input) {
   API_BEGIN();
   DLRModel* model = static_cast<DLRModel*>(*handle);

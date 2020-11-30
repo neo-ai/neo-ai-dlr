@@ -211,6 +211,21 @@ void TVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
   }
 }
 
+void TVMModel::SetInputTensorZeroCopy(const char* name, DLTensor* tensor) {
+  std::string str(name);
+  int index = tvm_graph_runtime_->GetInputIndex(str);
+  if (index > -1) {
+    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+    DLTensor input_tensor = *(arr.operator->());
+    int64_t read_size =
+        std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1, std::multiplies<int64_t>());
+    int64_t expected_size = std::accumulate(
+        input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1, std::multiplies<int64_t>());
+    CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
+    tvm_graph_runtime_->SetInputZeroCopy(index, tensor);
+  }
+}
+
 void TVMModel::GetInput(const char* name, void* input) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);

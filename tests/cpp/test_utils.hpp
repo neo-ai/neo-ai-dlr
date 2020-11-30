@@ -9,6 +9,18 @@
 #include <iostream>
 #include <sstream>
 
+void* alligned_malloc(size_t size, size_t align) {
+  void* ptr;
+#ifdef _MSC_VER
+  ptr = _aligned_malloc(size, align);
+#else
+  if (posix_memalign(&ptr, align, size) != 0) {
+    return 0;
+  }
+#endif
+  return ptr;
+}
+
 std::vector<float> LoadImageAndPreprocess(const std::string& img_path, size_t size,
                                           int batch_size) {
   std::string line;
@@ -40,11 +52,11 @@ DLTensor GetInputDLTensor(int ndim, int64_t* shape, const char* filename) {
   DLTensor dltensor;
   dltensor.ctx = {kDLCPU, 0};
   dltensor.ndim = ndim;
-  dltensor.shape = (int64_t*)malloc(ndim * sizeof(int64_t));
+  dltensor.shape = (int64_t*)alligned_malloc(ndim * sizeof(int64_t), 128);
   dltensor.strides = 0;
   dltensor.byte_offset = 0;
   dltensor.dtype = {kDLFloat, 32, 1};
-  dltensor.data = malloc(img_size * sizeof(float));
+  dltensor.data = alligned_malloc(img_size * sizeof(float), 128);
 
   // copy shapes
   for (int i = 0; i < ndim; i++) dltensor.shape[i] = shape[i];
