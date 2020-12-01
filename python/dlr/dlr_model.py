@@ -11,31 +11,6 @@ from .api import IDLRModel
 from .libpath import find_lib_path
 from .neologger import create_logger
 
-# Map from dtype string to ctype type.
-# Equivalent to np.ctypeslib.as_ctypes_type which requires numpy>=1.16.1
-DTYPE_TO_CTYPE = {
-    "float32": ctypes.c_float,
-    "float64": ctypes.c_double,
-    "uint8": ctypes.c_ubyte,
-    "uint32": ctypes.c_uint,
-    "uint64": ctypes.c_ulong,
-    "int8": ctypes.c_byte,
-    "int32": ctypes.c_int,
-    "int64": ctypes.c_long,
-}
-
-def _get_ctype_from_dtype(dtype):
-    """
-    Convert type string to ctype type.
-
-    Parameters
-    ----------
-    dtype: str
-        Type as a string, e.g. "float32".
-    """
-    if dtype not in DTYPE_TO_CTYPE:
-        raise ValueError("Model has input or output datatype {} which is not supported.".format(dtype))
-    return DTYPE_TO_CTYPE[dtype]
 
 class DLRError(Exception):
     """Error thrown by DLR"""
@@ -263,7 +238,7 @@ class DLRModelImpl(IDLRModel):
         return self.output_dtypes
 
     def get_input_name(self, index):
-        if not (0 <= index < self.num_outputs):
+        if not (0 <= index < self.num_inputs):
             raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
         return self.get_input_names()[index]
 
@@ -273,7 +248,7 @@ class DLRModelImpl(IDLRModel):
         return self.get_output_names()[index]
 
     def get_input_dtype(self, index):
-        if not (0 <= index < self.num_outputs):
+        if not (0 <= index < self.num_inputs):
             raise Exception("Index cannot be greater than {}".format(self.num_inputs - 1))
         return self.get_input_dtypes()[index]
 
@@ -333,7 +308,6 @@ class DLRModelImpl(IDLRModel):
             in_data_pointer = c_char_p(in_data.encode('utf-8'))
             shape = np.array([len(in_data)], dtype=np.int64)
         else:
-            input_ctype = _get_ctype_from_dtype(input_dtype)
             # float32 inputs can accept any data (backward compatibility).
             if input_dtype == "float32":
                 type_match = True
@@ -343,7 +317,7 @@ class DLRModelImpl(IDLRModel):
                 raise ValueError("input data with name {} should have dtype {} but {} is provided".
                                 format(name, input_dtype, data.dtype.name))
             in_data = np.ascontiguousarray(data, dtype=input_dtype)
-            in_data_pointer = in_data.ctypes.data_as(POINTER(input_ctype))
+            in_data_pointer = in_data.ctypes._as_parameter_
             shape = np.array(in_data.shape, dtype=np.int64)
         self.input_shapes[name] = shape
         self._check_call(self._lib.SetDLRInput(byref(self.handle),
@@ -429,10 +403,9 @@ class DLRModelImpl(IDLRModel):
             raise ValueError("index is expected between 0 and "
                              "len(output_shapes)-1, but got %d" % index)
         output_dtype = self.get_output_dtype(index)
-        output_ctype = _get_ctype_from_dtype(output_dtype)
         output = np.zeros(self.output_size_dim[index][0], dtype=output_dtype)
         self._check_call(self._lib.GetDLROutput(byref(self.handle), c_int(index),
-                    output.ctypes.data_as(ctypes.POINTER(output_ctype))))
+                         output.ctypes._as_parameter_))
         out = output.reshape(self.output_shapes[index])
         return out
 
@@ -499,13 +472,12 @@ class DLRModelImpl(IDLRModel):
                              'input {}, we cannot infer its shape. '.format(name) +
                              'Shape parameter should be explicitly specified')
         input_dtype = self._get_input_or_weight_dtype_by_name(name)
-        input_ctype = _get_ctype_from_dtype(input_dtype)
         if shape is None:
             shape = self.input_shapes[name]
         shape = np.array(shape)
         out = np.zeros(shape.prod(), dtype=input_dtype)
         self._check_call(self._lib.GetDLRInput(byref(self.handle),
                                      c_char_p(name.encode('utf-8')),
-                                     out.ctypes.data_as(ctypes.POINTER(input_ctype))))
+                                     out.ctypes._as_parameter_))
         out = out.reshape(shape)
         return out
