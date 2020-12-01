@@ -49,7 +49,7 @@ TEST(DLR, DataTransformCategoricalString) {
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
                                            shape.size(), dtypes, ctx, &transformed_data));
 
-  std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
+  std::vector<float> expected_output = {0, 1, 2, 2, -1, -1};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 6);
   EXPECT_EQ(transformed_data[0]->shape[1], 1);
@@ -132,7 +132,7 @@ TEST(DLR, DataTransformMultipleColumn) {
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
-  std::vector<float> expected_output_string = {-1, 0, -1, 2};
+  std::vector<float> expected_output_string = {-1, 0, 2, 2};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 2);
   EXPECT_EQ(transformed_data[0]->shape[1], 2);
@@ -185,6 +185,60 @@ TEST(DLR, RelayVMDataTransformInput) {
   delete model;
 }
 
+TEST(DLR, DataTransformOutput) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Output": {
+          "0": {
+            "CategoricalString": {
+              "0": "apple",
+              "1": "banana"
+            },
+            "UnseenLabel": "carrot"
+          }
+        }
+      }
+    })"_json;
+
+  // Setup data from output of model.
+  DLContext ctx = {kDLCPU, 0};
+  DLDataType dtype = {kDLInt, 32, 1};
+  std::vector<int> input_data = {0, 1, 2, -64561245};
+  std::vector<int64_t> shape = {1, static_cast<int64_t>(input_data.size())};
+  DLTensor input_tensor;
+  input_tensor.data = input_data.data();
+  input_tensor.ctx = ctx;
+  input_tensor.ndim = static_cast<int64_t>(shape.size());
+  input_tensor.shape = const_cast<int64_t*>(shape.data());
+  input_tensor.strides = nullptr;
+  input_tensor.byte_offset = 0;
+  input_tensor.dtype = dtype;
+  tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(shape, dtype, ctx);
+  input_arr.CopyFrom(&input_tensor);
+
+  transform.TransformOutput(metadata, 0, input_arr);
+
+  std::string expected_output = "[[\"apple\",\"banana\",\"carrot\",\"carrot\"]]";
+  int64_t size;
+  int dim;
+  EXPECT_NO_THROW(transform.GetOutputSizeDim(0, &size, &dim));
+  EXPECT_EQ(size, expected_output.size());
+  EXPECT_EQ(dim, 1);
+  int64_t output_shape[1];
+  EXPECT_NO_THROW(transform.GetOutputShape(0, output_shape));
+  EXPECT_EQ(output_shape[0], expected_output.size());
+  std::vector<char> output(size, 0);
+  EXPECT_NO_THROW(transform.GetOutput(0, output.data()));
+  std::string output_string(output.begin(), output.end());
+  EXPECT_EQ(output_string, expected_output);
+  char* output_ptr = nullptr;
+  EXPECT_NO_THROW(output_ptr = (char*)transform.GetOutputPtr(0));
+  std::string output_ptr_string(output_ptr, output_ptr + size);
+  EXPECT_EQ(output_ptr_string, expected_output);
+}
+
 TEST(DLR, RelayVMDataTransformOutput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel"};
@@ -207,7 +261,7 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unknown_label>\",\"<unknown_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>\",\"<unseen_"
       "label>\"]";
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
