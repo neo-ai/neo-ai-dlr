@@ -46,6 +46,8 @@ class DLR_DLL TreeliteModel : public DLRModel {
   size_t treelite_output_size_;
   std::unique_ptr<TreeliteInput> treelite_input_;
   std::vector<float, DLRAllocator<float>> treelite_output_;
+  /*! \brief Whether input is sparse (zero values should be skipped) */
+  bool has_sparse_input_;
   void SetupTreeliteModule(std::vector<std::string> model_path);
   void UpdateInputShapes();
 
