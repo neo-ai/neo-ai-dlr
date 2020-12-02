@@ -74,9 +74,13 @@ void TreeliteModel::SetupTreeliteModule(const std::vector<std::string>& model_pa
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
   UpdateInputShapes();
+  has_sparse_input_ = false;
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
     LoadJsonFromFile(paths.metadata, this->metadata_);
     ValidateDeviceTypeIfExists();
+    if (metadata_.count("Model") && metadata_["Model"].count("SparseInput")) {
+      has_sparse_input_ = metadata_["Model"]["SparseInput"].get<std::string>() == "1";
+    }
   }
 }
 
@@ -139,10 +143,10 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape, const void*
   treelite_input_->row_ptr.reserve(batch_size);
   for (size_t i = 0; i < batch_size; ++i) {
     for (uint32_t j = 0; j < num_col; ++j) {
-      if (!std::isnan(input_f[i * num_col + j]) && input_f[i * num_col + j] != 0.0f) {
-        treelite_input_->data.push_back(input_f[i * num_col + j]);
-        treelite_input_->col_ind.push_back(j);
-      }
+      if (std::isnan(input_f[i * num_col + j])) continue;
+      if (has_sparse_input_ && input_f[i * num_col + j] == 0.0f) continue;
+      treelite_input_->data.push_back(input_f[i * num_col + j]);
+      treelite_input_->col_ind.push_back(j);
     }
     treelite_input_->row_ptr.push_back(treelite_input_->data.size());
   }
