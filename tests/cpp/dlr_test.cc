@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include "dlr_common.h"
 #include "test_utils.hpp"
 
 DLRModelHandle GetDLRModel() {
@@ -299,6 +300,48 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   DeleteDLTensor(output3);
   DeleteDLTensor(input);
   DeleteDLRModel(&model);
+}
+
+TEST(DLR, TestMakePathVecForSingleWindowsPath) {
+  std::string windows_path = "C:\\a\\b\\c:";
+  std::vector<std::string> path_vec = dlr::MakePathVec(windows_path);
+  EXPECT_EQ(path_vec.size(), 1);
+  EXPECT_EQ(path_vec[0], "C:\\a\\b\\c");
+}
+
+TEST(DLR, TestMakePathVecForMultipleWindowsPaths) {
+  std::string windows_path = "C:\\a\\b\\c:D:\\a\\b\\c";
+  std::vector<std::string> path_vec = dlr::MakePathVec(windows_path);
+  EXPECT_EQ(path_vec[0], "C:\\a\\b\\c");
+  EXPECT_EQ(path_vec[1], "D:\\a\\b\\c");
+}
+
+TEST(DLR, TestMakePathVecForSingleLinuxPath) {
+  std::string linux_path = "/a/b/c";
+  std::vector<std::string> path_vec = dlr::MakePathVec(linux_path);
+  EXPECT_EQ(path_vec.size(), 1);
+  EXPECT_EQ(path_vec[0], "/a/b/c");
+  linux_path = "/a/b/c:";
+  path_vec = dlr::MakePathVec(linux_path);
+  EXPECT_EQ(path_vec.size(), 1);
+  EXPECT_EQ(path_vec[0], "/a/b/c");
+}
+
+TEST(DLR, TestMakePathVecForMultipleSingleCharacterLinuxPaths) {
+  std::string linux_path = "ab:b:c";
+  std::vector<std::string> path_vec = dlr::MakePathVec(linux_path);
+  EXPECT_EQ(path_vec.size(), 3);
+  EXPECT_EQ(path_vec[0], "ab");
+  EXPECT_EQ(path_vec[1], "b");
+  EXPECT_EQ(path_vec[2], "c");
+}
+
+TEST(DLR, TestMakePathVecForMultipleLinuxPaths) {
+  std::string linux_path = "/a/b/c:/d/e/f";
+  std::vector<std::string> path_vec = dlr::MakePathVec(linux_path);
+  EXPECT_EQ(path_vec.size(), 2);
+  EXPECT_EQ(path_vec[0], "/a/b/c");
+  EXPECT_EQ(path_vec[1], "/d/e/f");
 }
 
 int main(int argc, char** argv) {

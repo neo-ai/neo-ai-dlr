@@ -245,14 +245,9 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-std::vector<std::string> MakePathVec(std::string model_path) {
-  std::vector<std::string> path_vec = dmlc::Split(model_path, ':');
-  for (int i = 0; i < path_vec.size(); i++) path_vec[i] = FixWindowsDriveLetter(path_vec[i]);
-  return path_vec;
-}
 
 DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
-  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
   DLRBackend backend = dlr::GetBackend(files);
   if (backend == DLRBackend::kTVM) {
@@ -283,7 +278,7 @@ int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, in
   DLContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
   DLRModel* model = new HexagonModel(files, ctx, debug_level);
   *handle = model;
@@ -300,7 +295,7 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   ctx.device_type = static_cast<DLDeviceType>(dev_type);
   ctx.device_id = dev_id;
 
-  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
 
   DLRBackend backend = dlr::GetBackend(files);
@@ -408,7 +403,7 @@ extern "C" int GetDLRBackend(DLRModelHandle* handle, const char** name) {
 
 extern "C" int GetDLRDeviceType(const char* model_path) {
   API_BEGIN();
-  std::vector<std::string> path_vec = MakePathVec(model_path);
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   try {
     return dlr::GetDeviceTypeFromMetadata(path_vec);
   } catch (dmlc::Error& e) {

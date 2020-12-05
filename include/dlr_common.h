@@ -113,6 +113,8 @@ std::string GetStringFromDeviceType(DLDeviceType device_type);
 
 DLDeviceType GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths);
 
+std::vector<std::string> MakePathVec(std::string model_path);
+
 bool HasNegative(const int64_t* arr, const size_t size);
 
 #define CHECK_SHAPE(msg, value, expected) \

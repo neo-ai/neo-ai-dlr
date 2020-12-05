@@ -305,3 +305,25 @@ DLDeviceType dlr::GetDeviceTypeFromMetadata(const std::vector<std::string>& mode
 bool dlr::HasNegative(const int64_t* arr, const size_t size) {
   return std::any_of(arr, arr + size, [](int64_t x) { return x < 0; });
 }
+
+std::vector<std::string> dlr::MakePathVec(std::string model_path) {
+  std::vector<std::string> path_vec;
+  int start = 0;
+  int path_start = 0;
+  bool is_windows_path = model_path.find(":") == 1;
+
+  while (start != -1) {
+    int end = model_path.find(":", start + 1);
+    if ((end - start > 2) || (!is_windows_path && end - start > 1)) {
+      path_vec.push_back(model_path.substr(path_start, end - path_start));
+      path_start = end + 1;
+    }
+    start = end;
+  }
+
+  if (model_path.length() - path_start > 0) {
+    path_vec.push_back(model_path.substr(path_start));
+  }
+
+  return path_vec;
+}
