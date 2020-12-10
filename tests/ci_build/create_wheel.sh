@@ -10,7 +10,7 @@ fi
 
 cd python
 rm -f dist/*
-"${PYTHON_COMMAND}" setup.py bdist_wheel --universal
+"${PYTHON_COMMAND}" setup.py bdist_wheel
 for file in dist/*.whl
 do
   mv ${file} ${file%-any.whl}-${suffix}.whl
