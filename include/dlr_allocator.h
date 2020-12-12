@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-
 #if defined(_MSC_VER) || defined(_WIN32)
 #define DLR_DLL __declspec(dllexport)
 #else

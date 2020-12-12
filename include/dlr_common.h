@@ -81,7 +81,7 @@ DLR_DLL void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jso
 DLR_DLL void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
 DLR_DLL std::string LoadFileToString(const std::string& path,
-                             std::ios_base::openmode mode = std::ios_base::in);
+                                     std::ios_base::openmode mode = std::ios_base::in);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() && mainStr.compare(0, toMatch.size(), toMatch) == 0;

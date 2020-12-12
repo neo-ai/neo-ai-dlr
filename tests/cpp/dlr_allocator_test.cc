@@ -97,7 +97,7 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsSTLSet) {
   EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign_fn));
   EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
 
-  auto throw_error1 = [](){
+  auto throw_error1 = []() {
     std::vector<int, dlr::DLRAllocator<int>>* data;
     try {
       data = new std::vector<int, dlr::DLRAllocator<int>>(1024);
@@ -120,7 +120,7 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsSTLSet) {
     }
   };
 
-  EXPECT_THROW(throw_error2, dmlc::Error);
+  EXPECT_THROW(throw_error2(), dmlc::Error);
 }
 
 class CustomAllocatorTrackingTest : public CustomAllocatorTest {
