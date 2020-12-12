@@ -90,6 +90,7 @@ endif()
 
 set(TVM_SRC "${PROJECT_SOURCE_DIR}/3rdparty/tvm")
 set(JSON_SRC "${PROJECT_SOURCE_DIR}/3rdparty/json")
+set(DLFCN_WIN32 "${PROJECT_SOURCE_DIR}/3rdparty/dlfcn-win32")
 set(LIBNPY_SRC "${PROJECT_SOURCE_DIR}/3rdparty/libnpy")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
@@ -340,14 +341,19 @@ add_custom_target(demo DEPENDS ${DEMO_EXECS})
 # Tests
 if(NOT(AAR_BUILD))
   include(cmake/googletest.cmake)
+  if (WIN32)
+    include_directories(${DLFCN_WIN32}/src)
+    add_subdirectory(${DLFCN_WIN32})
+  endif()
+
   fetch_googletest(
     ${PROJECT_SOURCE_DIR}/cmake
     ${PROJECT_BINARY_DIR}/googletest
-    )
+  )
 
   enable_testing()
-
   file(GLOB TEST_SRCS tests/cpp/*.cc)
+
   if(WITH_HEXAGON)
     file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
     list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
@@ -367,7 +373,7 @@ if(NOT(AAR_BUILD))
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
-    target_link_libraries(${__execname} gtest_main dl)
+    target_link_libraries(${__execname} gtest_main dl) 
     set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})
     message(STATUS "Added dlsym Test: " ${__execname})
