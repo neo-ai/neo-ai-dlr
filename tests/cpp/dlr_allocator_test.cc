@@ -97,28 +97,30 @@ TEST_F(CustomAllocatorTest, CustomAllocatorsSTLSet) {
   EXPECT_NO_THROW(dlr::DLRAllocatorFunctions::SetMemalignFunction(test_memalign_fn));
   EXPECT_TRUE(dlr::DLRAllocatorFunctions::AllSet());
 
-  EXPECT_THROW(({
-                 std::vector<int, dlr::DLRAllocator<int>>* data;
-                 try {
-                   data = new std::vector<int, dlr::DLRAllocator<int>>(1024);
-                 } catch (const dmlc::Error& e) {
-                   EXPECT_STREQ(e.what(), "Using custom alloc");
-                   throw;
-                 }
-               }),
-               dmlc::Error);
+  auto throw_error1 = []() {
+    std::vector<int, dlr::DLRAllocator<int>>* data;
+    try {
+      data = new std::vector<int, dlr::DLRAllocator<int>>(1024);
+    } catch (const dmlc::Error& e) {
+      EXPECT_STREQ(e.what(), "Using custom alloc");
+      throw;
+    }
+  };
 
-  EXPECT_THROW(({
-                 std::vector<int, dlr::DLRAllocator<int>>* data =
-                     new std::vector<int, dlr::DLRAllocator<int>>(256);
-                 try {
-                   delete data;
-                 } catch (const dmlc::Error& e) {
-                   EXPECT_STREQ(e.what(), "Using custom free");
-                   throw;
-                 }
-               }),
-               dmlc::Error);
+  EXPECT_THROW(throw_error1(), dmlc::Error);
+
+  auto throw_error2 = []() {
+    std::vector<int, dlr::DLRAllocator<int>>* data =
+        new std::vector<int, dlr::DLRAllocator<int>>(256);
+    try {
+      delete data;
+    } catch (const dmlc::Error& e) {
+      EXPECT_STREQ(e.what(), "Using custom free");
+      throw;
+    }
+  };
+
+  EXPECT_THROW(throw_error2(), dmlc::Error);
 }
 
 class CustomAllocatorTrackingTest : public CustomAllocatorTest {

@@ -8,3 +8,7 @@
 	path = 3rdparty/libnpy
 	url = https://github.com/llohse/libnpy.git
 	branch = master
+[submodule "3rdparty/dlfcn-win32"]
+	path = 3rdparty/dlfcn-win32
+	url = https://github.com/dlfcn-win32/dlfcn-win32.git
+	branch = master

@@ -66,7 +66,7 @@ typedef struct {
 
 void ListDir(const std::string& path, std::vector<std::string>& paths);
 
-std::vector<std::string> FindFiles(const std::vector<std::string>& paths);
+DLR_DLL std::vector<std::string> FindFiles(const std::vector<std::string>& paths);
 
 /* Logic to handle Windows drive letter */
 std::string FixWindowsDriveLetter(const std::string& path);
@@ -77,11 +77,11 @@ bool IsFileEmpty(const std::string& filePath);
 
 std::string GetParentFolder(const std::string& path);
 
-void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
-void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
+DLR_DLL void LoadJsonFromString(const std::string& jsonData, nlohmann::json& jsonObject);
+DLR_DLL void LoadJsonFromFile(const std::string& path, nlohmann::json& jsonObject);
 
-std::string LoadFileToString(const std::string& path,
-                             std::ios_base::openmode mode = std::ios_base::in);
+DLR_DLL std::string LoadFileToString(const std::string& path,
+                                     std::ios_base::openmode mode = std::ios_base::in);
 
 inline bool StartsWith(const std::string& mainStr, const std::string& toMatch) {
   return mainStr.size() >= toMatch.size() && mainStr.compare(0, toMatch.size(), toMatch) == 0;
@@ -113,7 +113,7 @@ std::string GetStringFromDeviceType(DLDeviceType device_type);
 
 DLDeviceType GetDeviceTypeFromMetadata(const std::vector<std::string>& model_paths);
 
-std::vector<std::string> MakePathVec(std::string model_path);
+DLR_DLL std::vector<std::string> MakePathVec(std::string model_path);
 
 bool HasNegative(const int64_t* arr, const size_t size);
 

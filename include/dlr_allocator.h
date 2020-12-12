@@ -4,6 +4,12 @@
 #include <memory>
 #include <string>
 
+#if defined(_MSC_VER) || defined(_WIN32)
+#define DLR_DLL __declspec(dllexport)
+#else
+#define DLR_DLL
+#endif  // defined(_MSC_VER) || defined(_WIN32)
+
 #ifndef DLR_ALLOC_TYPEDEF
 #define DLR_ALLOC_TYPEDEF
 /*! \brief A pointer to a malloc-like function. */
@@ -17,7 +23,7 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 namespace dlr {
 
 /*! \brief Stores custom allocation functions. */
-class DLRAllocatorFunctions {
+class DLR_DLL DLRAllocatorFunctions {
  private:
   /*! \brief Custom malloc-like function, nullptr if not set. */
   static DLRMallocFunctionPtr malloc_fn_;
@@ -65,7 +71,7 @@ class DLRAllocatorFunctions {
 
 /*! \brief STL-compatible allocator using allocator functions from DLRAllocatorFunctions. */
 template <typename T>
-class DLRAllocator : public std::allocator<T> {
+class DLR_DLL DLRAllocator : public std::allocator<T> {
  private:
   using Base = std::allocator<T>;
   using Pointer = typename std::allocator_traits<Base>::pointer;
