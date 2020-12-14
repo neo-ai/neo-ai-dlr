@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-suffix="$1"
+if [ -z "$1" ]; then
+  echo "Error: <plat-name> should be provided, e.g. manylinux1_x86_64"
+  exit 1
+fi
 
 if [[ -z "${PYTHON_COMMAND}" ]]
 then
@@ -10,8 +13,4 @@ fi
 
 cd python
 rm -f dist/*
-"${PYTHON_COMMAND}" setup.py bdist_wheel
-for file in dist/*.whl
-do
-  mv ${file} ${file%-any.whl}-${suffix}.whl
-done
+"${PYTHON_COMMAND}" setup.py bdist_wheel --plat-name=$1
