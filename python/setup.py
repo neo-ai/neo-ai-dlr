@@ -6,27 +6,32 @@ from subprocess import check_output
 from setuptools.dist import Distribution
 from platform import system
 
-# Universal build will only contain python files, and libdlr.so is expected to be found in compiled
-# model artifact folder.
-is_universal = "--universal" in sys.argv
+if "--universal" in sys.argv:
+  raise ValueError("Creating py2.py3 wheels is not supported")
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 
-if not is_universal:
-    # Use libpath.py to locate libdlr.so
-    LIBPATH_PY = os.path.abspath('./dlr/libpath.py')
-    LIBPATH = {'__file__': LIBPATH_PY}
-    exec(compile(open(LIBPATH_PY, "rb").read(), LIBPATH_PY, 'exec'),
-        LIBPATH, LIBPATH)
-    LIB_PATH = [os.path.relpath(LIBPATH['find_lib_path'](setup=True), CURRENT_DIR)]
+BUILD_DIR = "../build/lib/"
 
-    if not LIB_PATH:
-        raise RuntimeError('libdlr.so missing. Please compile first using CMake')
-    include_package_data = True
-    data_files = [('dlr', LIB_PATH)]
+libname = 'libdlr.so'
+if sys.platform == 'win32':
+  libname = 'dlr.dll'
+elif sys.platform == 'darwin':
+  libname = 'libdlr.dylib'
+
+LIB_PATH = os.path.join(BUILD_DIR, libname)
+
+if os.path.exists(LIB_PATH):
+  print("Found", libname, "at", LIB_PATH)
+  include_package_data = True
+  data_files = [('dlr', [LIB_PATH,])]
 else:
-    include_package_data = False
-    data_files = None
+  print(libname, "is not found!")
+  print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+  print("!!! Preparing universal py3 version of DLR !!!")
+  print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+  include_package_data = False
+  data_files = None
 
 # fetch meta data
 METADATA_PY = os.path.abspath("./dlr/metadata.py")
@@ -62,4 +67,5 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: Apache Software License",
     ],
+    python_requires = '>=3.5',
 )
