@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 include(cmake/Utils.cmake)
-include(3rdparty/tvm/cmake/util/Util.cmake)
-include(3rdparty/tvm/cmake/util/FindCUDA.cmake)
+include(3rdparty/tvm/cmake/utils/Utils.cmake)
+include(3rdparty/tvm/cmake/utils/FindCUDA.cmake)
 
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
@@ -213,68 +213,14 @@ if(USE_TENSORRT)
     include_directories(${TENSORRT_INCLUDE_DIR})
     list(APPEND DLR_LINKER_LIBS ${TENSORRT_LIB_DIR})
 
-    # NNVM TRT Integration
-    file(GLOB TENSORRT_SRCS ${TVM_SRC}/src/contrib/subgraph/*.cc)
-    list(APPEND DLR_SRC ${TENSORRT_SRCS})
+    # TRT runtime sources
+    file(GLOB RUNTIME_TENSORRT_SRCS ${TVM_SRC}/src/runtime/contrib/tensorrt/*.cc)
+    set_source_files_properties(${RUNTIME_TENSORRT_SRCS} PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+    list(APPEND DLR_SRC ${RUNTIME_TENSORRT_SRCS})
+
+    # Set defines
     add_definitions(-DTVM_GRAPH_RUNTIME_TENSORRT)
 
-    # TRT Relay sources
-    file(GLOB TENSORRT_RELAY_SRCS ${TVM_SRC}/src/runtime/contrib/tensorrt/*.cc)
-    list(APPEND DLR_SRC ${TENSORRT_RELAY_SRCS})
-    # Additional TVM compiler sources
-    include_directories("${TVM_SRC}/3rdparty/rang/include")
-    include_directories("${TVM_SRC}/3rdparty/compiler-rt")
-    include_directories("${TVM_SRC}/topi/include")
-    file(GLOB_RECURSE COMPILER_SRCS
-        ${TVM_SRC}/src/auto_scheduler/*.cc
-        ${TVM_SRC}/src/node/*.cc
-        ${TVM_SRC}/src/ir/*.cc
-        ${TVM_SRC}/src/arith/*.cc
-        ${TVM_SRC}/src/te/*.cc
-        ${TVM_SRC}/src/autotvm/*.cc
-        ${TVM_SRC}/src/tir/*.cc
-        ${TVM_SRC}/src/topi/*.cc
-        ${TVM_SRC}/src/driver/*.cc
-        ${TVM_SRC}/src/parser/*.cc
-        ${TVM_SRC}/src/printer/*.cc
-        ${TVM_SRC}/src/support/*.cc
-    )
-    file(GLOB CODEGEN_SRCS
-        ${TVM_SRC}/src/target/*.cc
-        ${TVM_SRC}/src/target/source/*.cc
-    )
-    list(APPEND COMPILER_SRCS ${CODEGEN_SRCS})
-    file(GLOB_RECURSE RELAY_OP_SRCS
-        ${TVM_SRC}/src/relay/op/*.cc
-    )
-    file(GLOB_RECURSE RELAY_PASS_SRCS
-        ${TVM_SRC}/src/relay/analysis/*.cc
-        ${TVM_SRC}/src/relay/transforms/*.cc
-        ${TVM_SRC}/src/relay/quantize/*.cc
-    )
-    file(GLOB RELAY_BACKEND_SRCS
-        ${TVM_SRC}/src/relay/backend/*.cc
-        ${TVM_SRC}/src/relay/backend/vm/*.cc
-    )
-    file(GLOB_RECURSE RELAY_IR_SRCS
-        ${TVM_SRC}/src/relay/ir/*.cc
-    )
-    file(GLOB_RECURSE RELAY_QNN_SRCS
-        ${TVM_SRC}/src/relay/qnn/*.cc
-    )
-    list(APPEND COMPILER_SRCS ${RELAY_OP_SRCS})
-    list(APPEND COMPILER_SRCS ${RELAY_PASS_SRCS})
-    list(APPEND COMPILER_SRCS ${RELAY_BACKEND_SRCS})
-    list(APPEND COMPILER_SRCS ${RELAY_IR_SRCS})
-    list(APPEND COMPILER_SRCS ${RELAY_QNN_SRCS})
-    file(GLOB DATATYPE_SRCS ${TVM_SRC}/src/target/datatype/*.cc)
-    list(APPEND COMPILER_SRCS ${DATATYPE_SRCS})
-    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_metal_off.cc)
-    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_sdaccel_off.cc)
-    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_aocl_off.cc)
-    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/target/opt/build_opencl_off.cc)
-    list(APPEND COMPILER_SRCS ${TVM_SRC}/src/runtime/container.cc)
-    list(APPEND DLR_SRC ${COMPILER_SRCS})
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_HEXAGON)

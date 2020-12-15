@@ -97,7 +97,7 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   module = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
   tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
-  tvm_graph_runtime_->Init(graph_str, module, {ctx_});
+  tvm_graph_runtime_->Init(graph_str, module, {ctx_}, nullptr);
   dmlc::MemoryFixedSizeStream strm(const_cast<char*>(params_data), params_size);
   tvm_graph_runtime_->LoadParams(&strm);
 
