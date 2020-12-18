@@ -56,6 +56,20 @@ pipeline {
     }
     stage('Build & Test') {
       parallel {
+        stage('Build for Windows') {
+          agent {
+            label 'Win64'
+          }
+          steps {
+            unstash name: 'srcs'
+            sh """
+            mkdir -p build
+            cd build
+            cmake .. -G"Visual Studio 16 2019"
+            MSBuild.exe dlr.sln
+            """
+          }
+        }
         stage('Build for Manylinux') {
           agent {
             dockerfile {
