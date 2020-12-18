@@ -214,16 +214,22 @@ void TVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
 void TVMModel::SetInputTensorZeroCopy(const char* name, DLTensor* tensor) {
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
-  if (index > -1) {
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
-    DLTensor input_tensor = *(arr.operator->());
-    int64_t read_size =
-        std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1, std::multiplies<int64_t>());
-    int64_t expected_size = std::accumulate(
-        input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1, std::multiplies<int64_t>());
-    CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
-    tvm_graph_runtime_->SetInputZeroCopy(index, tensor);
+  if (index == -1) return;
+  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  const DLTensor* old_t = arr.operator->();
+  CHECK_EQ(reinterpret_cast<size_t>(tensor->data) % 128, 0)
+      << "Data must be alligned to 128 bits for SetDLRInputTensorZeroCopy.";
+  CHECK_EQ(old_t->ndim, static_cast<size_t>(tensor->ndim))
+      << "Model expected " << old_t->ndim << " dimensions, but input has " << tensor->ndim;
+  CHECK_EQ(old_t->ctx.device_type, tensor->ctx.device_type)
+      << "The input data must be on device \"" << GetStringFromDeviceType(old_t->ctx.device_type)
+      << "\", but user gave input on \"" << GetStringFromDeviceType(tensor->ctx.device_type)
+      << "\"";
+  CHECK_EQ(old_t->ctx.device_id, tensor->ctx.device_id);
+  for (auto i = 0; i < tensor->ndim; ++i) {
+    CHECK_EQ(old_t->shape[i], tensor->shape[i]);
   }
+  tvm_graph_runtime_->SetInputZeroCopy(index, tensor);
 }
 
 void TVMModel::GetInput(const char* name, void* input) {
