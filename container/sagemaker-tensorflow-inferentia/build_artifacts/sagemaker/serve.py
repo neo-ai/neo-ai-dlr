@@ -327,7 +327,7 @@ class ServiceManager(object):
         else:
             self._create_tfs_config()
             #Start TFS workers for each gunicorn worker
-            for tf_worker_num in range(self._gunicorn_workers):
+            for tf_worker_num in range(int(self._gunicorn_workers)):
                 self._start_tfs()
             print("all TFS PIDs {}".format(self._tfs))
 
