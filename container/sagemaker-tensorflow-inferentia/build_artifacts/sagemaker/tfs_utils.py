@@ -98,7 +98,7 @@ def tfs_command(tfs_grpc_port,
                 tfs_config_path,
                 tfs_enable_batching,
                 tfs_batching_config_file):
-    cmd = "tensorflow_model_server " \
+    cmd = "tensorflow_model_server_neuron " \
           "--port={} " \
           "--rest_api_port={} " \
           "--model_config_file={} " \

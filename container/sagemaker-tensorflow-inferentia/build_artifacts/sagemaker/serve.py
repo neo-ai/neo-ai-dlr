@@ -326,6 +326,7 @@ class ServiceManager(object):
             log.info("multi-model endpoint is enabled, TFS model servers will be started later")
         else:
             self._create_tfs_config()
+            #Start TFS workers for each gunicorn worker
             for tf_worker_num in range(self._gunicorn_workers):
                 self._start_tfs()
             print("all TFS PIDs {}".format(self._tfs))
