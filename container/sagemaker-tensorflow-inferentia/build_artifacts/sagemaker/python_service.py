@@ -17,13 +17,14 @@ import logging
 import os
 import subprocess
 import time
-
+import grpc
 import falcon
 import requests
 
 from urllib3.util.retry import Retry
 
 from multi_model_utils import lock, timeout, MultiModelException
+from tensorflow_serving.apis import predict_pb2, prediction_service_pb2_grpc
 import tfs_utils
 
 SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get("SAGEMAKER_MULTI_MODEL", "false").lower() == "true"
@@ -284,7 +285,8 @@ class PythonServiceResource:
 
         def handler(data, context):
             processed_input = custom_input_handler(data, context)
-            response = requests.post(context.rest_uri, data=processed_input)
+            channel = grpc.insecure_channel("localhost:{}".format(context.grpc_port))
+            response = prediction_service_pb2_grpc.PredictionServiceStub(channel).Predict(processed_input, 60.0)
             return custom_output_handler(response, context)
 
         return handler
