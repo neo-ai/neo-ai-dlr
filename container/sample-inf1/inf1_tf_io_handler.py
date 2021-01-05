@@ -1,3 +1,6 @@
+'''
+This file is to be named inference.py when hosting on sagemaker
+'''
 import grpc
 import gzip
 import os
