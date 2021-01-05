@@ -9,7 +9,7 @@ RUN apt-get update && \
     apt-get install -y git && \
     apt-get install -y clang-format-10
 
-RUN pip3 install sklearn pytest
+RUN pip3 install Cython numpy sklearn pytest
 ENV PYTHON_COMMAND=python3
 
 WORKDIR /workspace
