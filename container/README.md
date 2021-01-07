@@ -8,28 +8,7 @@ This directory contains Dockerfile and other files needed to build DLR inference
 # Run the following command at the root directory of the neo-ai-dlr repository
 docker build --build-arg APP=xgboost -t xgboost-cpu -f container/Dockerfile.cpu .
 ```
-* Image Classification container: Handle requests containing JPEG or PNG format. Suitable for serving image classifiers produced by the [SageMaker Image Classification algorithm](https://docs.aws.amazon.com/sagemaker/latest/dg/image-classification.html).
-  - Build for CPU target
-  ```
-  # Run the following command at the root directory of the neo-ai-dlr repository
-  docker build --build-arg APP=image_classification -t ic-cpu -f container/Dockerfile.cpu .
-  ```
-  - Build for GPU target: First download `TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
-  ```
-  # Run the following command at the root directory of the neo-ai-dlr repository
-  docker build --build-arg APP=image_classification -t ic-gpu -f container/Dockerfile.gpu .
-  ```
-* MXNet BYOM (Bring Your Own Model): Handle requests of any form. See [this example notebook](https://github.com/awslabs/amazon-sagemaker-examples/blob/master/sagemaker-python-sdk/mxnet_mnist/mxnet_mnist_neo.ipynb) for more details.
-  - Build for CPU target
-  ```
-  # Run the following command at the root directory of the neo-ai-dlr repository
-  docker build --build-arg APP=mxnet_byom -t mxnet-byom-cpu -f container/Dockerfile.cpu .
-  ```
-  - Build for GPU target: First download `TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz` from NVIDIA into the directory `neo-ai-dlr/container/`. Then run
-  ```
-  # Run the following command at the root directory of the neo-ai-dlr repository
-  docker build --build-arg APP=mxnet_byom -t mxnet-byom-gpu -f container/Dockerfile.gpu .
-  ```
+
 
 ## How to test container locally
 The following command runs `xgboost-cpu:latest` container locally. You can run other containers by replacing `xgboost-cpu` with the appropriate tag. 
