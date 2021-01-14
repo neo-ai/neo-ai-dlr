@@ -42,6 +42,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 CUSTOM_ATTRIBUTES_HEADER = "X-Amzn-SageMaker-Custom-Attributes"
+prediction_services = {}
 
 
 def default_handler(data, context):
@@ -285,8 +286,12 @@ class PythonServiceResource:
 
         def handler(data, context):
             processed_input = custom_input_handler(data, context)
-            channel = grpc.insecure_channel("localhost:{}".format(context.grpc_port))
-            response = prediction_service_pb2_grpc.PredictionServiceStub(channel).Predict(processed_input, 60.0)
+            if not context.grpc_port in prediction_services:
+                print("Creating service for port %s" % context.grpc_port)
+                channel = grpc.insecure_channel("localhost:{}".format(context.grpc_port))
+                prediction_services[context.grpc_port] = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+
+            response = prediction_services[context.grpc_port].Predict(processed_input, 60.0)
             return custom_output_handler(response, context)
 
         return handler
