@@ -173,6 +173,7 @@ if(USE_CUDA)
       set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     endif()
     enable_language(CUDA)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
     file(GLOB CONTRIB_THRUST_SRC ${TVM_SRC}/src/runtime/contrib/thrust/*.cu)
     list(APPEND RUNTIME_CUDA_SRCS ${CONTRIB_THRUST_SRC})
 
