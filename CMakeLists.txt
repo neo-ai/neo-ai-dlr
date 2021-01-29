@@ -97,6 +97,9 @@ set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
 set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
 
+# DLR only uses C-APIs from TVM RunTime
+set(TVM_C_API_MEM_MGMT ON)
+
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
