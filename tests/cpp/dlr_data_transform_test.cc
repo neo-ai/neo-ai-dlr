@@ -132,7 +132,7 @@ TEST(DLR, DataTransformMultipleColumn) {
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
-  std::vector<float> expected_output_string = {-1, 0, -1, 2};
+  std::vector<float> expected_output_string = {2.345, 0, 7, 2};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 2);
   EXPECT_EQ(transformed_data[0]->shape[1], 2);
@@ -207,7 +207,7 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unknown_label>\",\"<unknown_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>\",\"<unseen_"
       "label>\"]";
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
