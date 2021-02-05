@@ -132,7 +132,7 @@ TEST(DLR, DataTransformMultipleColumn) {
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
-  std::vector<float> expected_output_string = {-1, 0, -1, 2};
+  std::vector<float> expected_output_string = {2.345, 0, 7, 2};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 2);
   EXPECT_EQ(transformed_data[0]->shape[1], 2);
@@ -191,6 +191,15 @@ TEST(DLR, RelayVMDataTransformOutput) {
   std::vector<std::string> files = dlr::FindFiles(paths);
   dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
 
+  int64_t size;
+  int dim;
+  EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
+  EXPECT_EQ(size, -1);
+  EXPECT_EQ(dim, 1);
+  int64_t output_shape[1];
+  EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
+  EXPECT_EQ(output_shape[0], -1);
+
   std::vector<int> input_data = {0, 1, 2, 3, -75};
   std::vector<int64_t> shape = {5};
   EXPECT_STREQ(model->GetInputType(0), "int32");
@@ -198,15 +207,12 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unknown_label>\",\"<unknown_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>\",\"<unseen_"
       "label>\"]";
-  int64_t size;
-  int dim;
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
   EXPECT_EQ(size, expected_output.size());
   EXPECT_EQ(dim, 1);
-  int64_t output_shape[1];
   EXPECT_NO_THROW(model->GetOutputShape(0, output_shape));
   EXPECT_EQ(output_shape[0], expected_output.size());
 

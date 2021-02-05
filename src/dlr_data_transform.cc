@@ -108,6 +108,13 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
       const int out_index = r * input_json[r].size() + c;
       // Look up in map. If not found, use kMissingValue.
       try {
+        // If there is no items in map, try to pass forward as float.
+        if (mapping[c].empty()) {
+          data[out_index] = input_json[r][c].is_number()
+                                ? input_json[r][c].get<float>()
+                                : std::stof(input_json[r][c].get_ref<const std::string&>());
+          continue;
+        }
         const std::string& data_str = input_json[r][c].get_ref<const std::string&>();
         auto it = mapping[c].find(data_str);
         data[out_index] = it != mapping[c].end() ? it->operator float() : kMissingValue;
@@ -130,14 +137,17 @@ DataTransform::GetTransformerMap() const {
 }
 
 template <typename T>
-nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& mapping, const T* data,
+nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& transform,
+                                                      const T* data,
                                                       const std::vector<int64_t>& shape) const {
+  const nlohmann::json& mapping = transform["CategoricalString"];
   CHECK_EQ(shape.size(), 1);
   nlohmann::json output_json = nlohmann::json::array();
   for (int64_t i = 0; i < shape[0]; ++i) {
     auto it = mapping.find(std::to_string(data[i]));
     if (it == mapping.end()) {
-      output_json.push_back(kUnknownLabel);
+      output_json.push_back(transform.count("UnseenLabel") ? transform["UnseenLabel"]
+                                                           : kUnknownLabel);
     } else {
       output_json.push_back(*it);
     }
@@ -146,19 +156,20 @@ nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& mapp
 }
 
 template <typename T>
-nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& mapping, const T* data,
+nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& transform,
+                                                      const T* data,
                                                       const std::vector<int64_t>& shape) const {
   CHECK_EQ(shape.size(), 2);
   nlohmann::json output_json = nlohmann::json::array();
   for (int64_t i = 0; i < shape[0]; ++i) {
-    output_json.push_back(TransformOutputHelper1D<T>(mapping, data + i * shape[1], {shape[1]}));
+    output_json.push_back(TransformOutputHelper1D<T>(transform, data + i * shape[1], {shape[1]}));
   }
   return output_json;
 }
 
 void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
                                     const tvm::runtime::NDArray& output_array) {
-  auto& mapping = metadata["DataTransform"]["Output"][std::to_string(index)]["CategoricalString"];
+  auto& transform = metadata["DataTransform"]["Output"][std::to_string(index)];
   const DLTensor* tensor = output_array.operator->();
   CHECK_EQ(tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
@@ -168,9 +179,9 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
   std::vector<int64_t> shape(output_array->shape, output_array->shape + output_array->ndim);
   nlohmann::json output_json;
   if (shape.size() == 1) {
-    output_json = TransformOutputHelper1D<int>(mapping, static_cast<int*>(tensor->data), shape);
+    output_json = TransformOutputHelper1D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else if (shape.size() == 2) {
-    output_json = TransformOutputHelper2D<int>(mapping, static_cast<int*>(tensor->data), shape);
+    output_json = TransformOutputHelper2D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else {
     throw dmlc::Error("DataTransform CategoricalString is only supported for 1-D or 2-D inputs.");
   }
@@ -178,19 +189,29 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
 }
 
 void DataTransform::GetOutputShape(int index, int64_t* shape) const {
-  shape[0] = transformed_outputs_.at(index).size();
+  auto it = transformed_outputs_.find(index);
+  shape[0] = it == transformed_outputs_.end() ? -1 : it->second.size();
 }
 
 void DataTransform::GetOutputSizeDim(int index, int64_t* size, int* dim) const {
-  *size = transformed_outputs_.at(index).size();
+  auto it = transformed_outputs_.find(index);
+  if (it == transformed_outputs_.end()) {
+    *size = -1;
+    *dim = 1;
+    return;
+  }
+  *size = it->second.size();
   *dim = 1;
 }
 
 void DataTransform::GetOutput(int index, void* output) const {
-  const std::string& output_str = transformed_outputs_.at(index);
-  std::copy(output_str.begin(), output_str.end(), static_cast<char*>(output));
+  auto it = transformed_outputs_.find(index);
+  CHECK(it != transformed_outputs_.end()) << "Inference has not been run or output does not exist.";
+  std::copy(it->second.begin(), it->second.end(), static_cast<char*>(output));
 }
 
 const void* DataTransform::GetOutputPtr(int index) const {
-  return static_cast<const void*>(transformed_outputs_.at(index).data());
+  auto it = transformed_outputs_.find(index);
+  CHECK(it != transformed_outputs_.end()) << "Inference has not been run or output does not exist.";
+  return static_cast<const void*>(it->second.data());
 }

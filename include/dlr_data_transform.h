@@ -40,7 +40,7 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
 class DLR_DLL DataTransform {
  private:
   /*! \brief When there is no mapping entry for TransformOutput, this value is used. */
-  const char* kUnknownLabel = "<unknown_label>";
+  const char* kUnknownLabel = "<unseen_label>";
 
   /*! \brief Buffers to store transformed outputs. Maps output index to transformed data. */
   std::unordered_map<int, std::string> transformed_outputs_;
