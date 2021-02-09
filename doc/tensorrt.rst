@@ -11,14 +11,9 @@ TensorRT in Neo
 ***************
 
 For targets with NVIDIA GPUs, Neo may use `TensorRT <https://developer.nvidia.com/tensorrt>`_ to optimize all or part of your model.
-If your optimized model is using TensorRT, you will see outputs similar to the following
-during the first inference after loading the model.
-
-
-.. code-block:: none
-
-  Building new TensorRT engine for subgraph tensorrt_0
-  Finished building TensorRT engine for subgraph tensorrt_0
+Using TensorRT enables Neo compiled models to obtain the best possible performance on NVIDIA GPUs.
+The first inference after loading the model may take a few minutes while TensorRT builds the inference engine(s).
+After the engines are built, any further inference calls will be fast.
 
 
 *****************************
@@ -79,21 +74,48 @@ Caching TensorRT Engines
 
 During the first inference, DLR will invoke the TensorRT API to build an engine. This can be time consuming, so you can set ``TVM_TENSORRT_CACHE_DIR``
 to point to a directory to save these built engines to on the disk. The next time you load the model and give it the same directory,
-DLR will load the already built engines to avoid the long warmup time.
+DLR will load the already built engines to avoid the long warmup time. The cached engine files can only be used on the exact same hardware and software platform that
+they were generated on.
 
 .. code-block:: bash
 
   $ TVM_TENSORRT_CACHE_DIR=. python3 run.py
 
   Building new TensorRT engine for subgraph tensorrt_0
-  Caching TensorRT engine to ./8030730458607885728.plan
+  Caching TensorRT engine to ./tensorrt_0.plan
   Finished building TensorRT engine for subgraph tensorrt_0
   Latency: 4.380748271942139 ms
 
   $ TVM_TENSORRT_CACHE_DIR=. python3 run.py
 
-  Loading cached TensorRT engine from ./8030730458607885728.plan
+  Loading cached TensorRT engine from ./tensorrt_0.plan
   Latency: 4.414560794830322 ms
+
+
+With Multiple Models
+====================
+
+Please keep in mind that each model must have its own unique cache directory. If you are using multiple models,
+change the directory after loading the model and performing one inference call before loading the next model.
+
+.. code-block:: python
+
+  # Load first model
+  os.environ["TVM_TENSORRT_CACHE_DIR"] = "model1_cache/"
+  model1 = dlr.DLRModel(...)
+  # Run inference at least one to load cached engine
+  model1.run(...)
+
+  # Load second model
+  os.environ["TVM_TENSORRT_CACHE_DIR"] = "model2_cache/"
+  model2 = dlr.DLRModel(...)
+  # Run inference at least one to load cached engine
+  model2.run(...)
+
+  # Now both models can be used at will.
+  model1.run(...)
+  model2.run(...)
+
 
 Changing the TensorRT Workspace Size
 ------------------------------------
