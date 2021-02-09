@@ -11,9 +11,10 @@ TensorRT in Neo
 ***************
 
 For targets with NVIDIA GPUs, Neo may use `TensorRT <https://developer.nvidia.com/tensorrt>`_ to optimize all or part of your model.
-Because of this, the first inference after loading the model may take a few minutes while TensorRT builds the inference engine(s).
+Using TensorRT enables Neo compiled models to obtain the best possible performance on NVIDIA GPUs.
+The first inference after loading the model may take a few minutes while TensorRT builds the inference engine(s).
 After the engines are built, any further inference calls will be fast.
-To avoid the time consuming engine build each time the model is loaded, please see the :ref:`Caching TensorRT Engines` option.
+To avoid the time consuming engine build each time the model is loaded, please see the :ref:`caching-tensorrt-engines` option.
 
 
 *****************************
@@ -69,6 +70,8 @@ but may cause some slight loss in the model accuracy.
   Latency: 1.7122554779052734 ms
 
 
+.. _caching-tensorrt-engines:
+
 Caching TensorRT Engines
 ------------------------
 
@@ -95,6 +98,7 @@ Please keep in mind that each model must have its own unique cache directory. If
 change the directory after loading the model and performing one inference call before loading the next model.
 
 .. code-block:: python
+
   # Load first model
   os.environ["TVM_TENSORRT_CACHE_DIR"] = "model1_cache/"
   model1 = dlr.DLRModel(...)
