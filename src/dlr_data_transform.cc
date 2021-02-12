@@ -161,7 +161,7 @@ int64_t DateTimeTransformer::GetWeekDay(int64_t year, int64_t month,
       postive_modulo((day + (int64_t)std::floor(2.6 * month_ - 0.2) -
                       2 * century + year_ + year_ / 4 + century / 4),
                      7);
-  weekday = weekday == 0 ? 6 : weekday - 1;
+  weekday = weekday == 0 ? 7 : weekday;
   return weekday;
 }
 
@@ -223,16 +223,17 @@ void DateTimeTransformer::DigitizeDateTime(
     if (i == 2 and IsLeapYear(year)) day_of_year += 1;
   }
   int64_t week_offset =
-      GetWeekDay(year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(year, 1, 1));
-  day_of_year += day - week_offset - 1;
+      GetWeekDay(year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(year, 1, 1)) + 1;
+  day_of_year += day - week_offset;
   int64_t week_of_year = day_of_year / 7;
+  if (week_offset > 0) week_of_year += 1;
 
   datetime_digits[0] = GetWeekDay(year, month, day);
   datetime_digits[1] = year;
   datetime_digits[2] = hour;
   datetime_digits[3] = minute;
   datetime_digits[4] = second;
-  datetime_digits[5] = month - 1;  // month starts from 0
+  datetime_digits[5] = month;
   datetime_digits[6] = week_of_year;
 }
 
