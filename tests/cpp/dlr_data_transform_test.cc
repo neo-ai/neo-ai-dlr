@@ -257,7 +257,8 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>\",\"<unseen_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>"
+      "\",\"<unseen_"
       "label>\"]";
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));

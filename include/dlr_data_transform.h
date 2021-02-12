@@ -95,7 +95,8 @@ class DLR_DLL DateTimeTransformer : public Transformer {
 /*! \brief Handles transformations of input and output data. */
 class DLR_DLL DataTransform {
  private:
-  /*! \brief When there is no mapping entry for TransformOutput, this value is used. */
+  /*! \brief When there is no mapping entry for TransformOutput, this value is
+   * used. */
   const char* kUnknownLabel = "<unseen_label>";
 
   /*! \brief Buffers to store transformed outputs. Maps output index to
