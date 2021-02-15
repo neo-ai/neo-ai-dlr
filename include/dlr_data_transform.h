@@ -7,8 +7,6 @@
 
 #include "dlr_common.h"
 
-#define NUM_DATE_TIME_COLS 7
-
 namespace dlr {
 
 /*! \brief Base case for input transformers. */
@@ -44,8 +42,9 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
 
 class DLR_DLL DateTimeTransformer : public Transformer {
  private:
-  /*! \brief When there is no mapping entry for TransformInput, this value is used. */
-  const float kMissingValue = -1.0f;
+  /*! \brief Number of columns defined by Autopilot Sagemaker-Scikit-Learn-Extension for
+   * DateTimeVectorizer */
+  const int kNumDateTimeCols = 7;
 
   const std::map<std::string, int> month_to_digit = {
       {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"Apr", 4},  {"May", 5},  {"Jun", 6},

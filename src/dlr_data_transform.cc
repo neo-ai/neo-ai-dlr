@@ -130,7 +130,7 @@ tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& inp
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to 7
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
-                                    static_cast<int64_t>(NUM_DATE_TIME_COLS)};
+                                    static_cast<int64_t>(kNumDateTimeCols)};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform CategoricalString is only supported for float32 "
          "inputs.";
@@ -184,7 +184,7 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
   std::string day_str = GetNextSplittedStr(date_str, delimiter);
 
   delimiter = ":";
-  bool isPM = time_str.substr(time_str.size() - 2, 2).compare("pm") == 0;
+  bool is_pm = time_str.substr(time_str.size() - 2, 2).compare("pm") == 0;
   std::string second_str = "00";
   std::string hour_str = GetNextSplittedStr(time_str, delimiter);
   std::string minute_str = GetNextSplittedStr(time_str, delimiter);
@@ -198,7 +198,7 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
   int64_t year = std::stoi(year_str);
   int64_t second = std::stoi(second_str);
   int64_t minute = std::stoi(minute_str);
-  int64_t hour = std::stoi(hour_str) + int(isPM) * 12;
+  int64_t hour = std::stoi(hour_str) + int(is_pm) * 12;
 
   int64_t day_of_year = 0;
   for (size_t i = 1; i < month; ++i) {
@@ -227,12 +227,12 @@ void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
       << "DataTransform CategoricalString is only supported for CPU.";
   float* data = static_cast<float*>(input_tensor->data);
 
-  std::vector<int64_t> datetime_digits = std::vector<int64_t>(NUM_DATE_TIME_COLS, 0);
+  std::vector<int64_t> datetime_digits = std::vector<int64_t>(kNumDateTimeCols, 0);
   for (size_t r = 0; r < input_json.size(); ++r) {
     std::string entry = input_json[r][0].get_ref<const std::string&>();
     DigitizeDateTime(entry, datetime_digits);
-    for (size_t c = 0; c < NUM_DATE_TIME_COLS; ++c) {
-      const int out_index = r * NUM_DATE_TIME_COLS + c;
+    for (size_t c = 0; c < kNumDateTimeCols; ++c) {
+      const int out_index = r * kNumDateTimeCols + c;
       data[out_index] = (float)datetime_digits[c];
     }
   }
