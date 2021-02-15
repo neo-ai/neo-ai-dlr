@@ -193,8 +193,7 @@ TEST(DLR, RelayVMDataTransformInput) {
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
 
-  const char* data =
-      R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
+  const char* data = R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
                           7.5, 4, 2.03, 0, 94.77387065117672]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);
@@ -245,8 +244,7 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>"
-      "\",\"<unseen_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>\",\"<unseen_"
       "label>\"]";
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));

@@ -60,8 +60,7 @@ tvm::runtime::NDArray Transformer::InitNDArray(const nlohmann::json& input_json,
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
-      << "DataTransform CategoricalString is only supported for float32 "
-         "inputs.";
+      << "DataTransform CategoricalString is only supported for float32 inputs.";
   return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
 }
 
@@ -94,9 +93,8 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
                                                 tvm::runtime::NDArray& input_array) const {
   const nlohmann::json& mapping = transform["Map"];
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
-  // Writing directly to the DLTensor will only work for CPU context. For other
-  // contexts, we would need to create an intermediate buffer on CPU and copy
-  // that to the context.
+  // Writing directly to the DLTensor will only work for CPU context. For other contexts, we would
+  // need to create an intermediate buffer on CPU and copy that to the context.
   CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
   CHECK_EQ(input_json[0].size(), mapping.size())
@@ -298,9 +296,8 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
   } else if (shape.size() == 2) {
     output_json = TransformOutputHelper2D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else {
-    throw dmlc::Error(
-        "DataTransform CategoricalString is only supported for 1-D or 2-D "
-        "inputs.");
+    throw dmlc::Error("DataTransform CategoricalString is only supported for 1-D or 2-D inputs.");
+    ;
   }
   transformed_outputs_[index] = output_json.dump();
 }
