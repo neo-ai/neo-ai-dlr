@@ -46,17 +46,15 @@ TEST(DLR, DataTransformCategoricalString) {
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
-  EXPECT_NO_THROW(
-      transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                               shape.size(), dtypes, ctx, &transformed_data));
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
 
   std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 6);
   EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    CHECK_EQ(static_cast<float*>(transformed_data[0]->data)[i],
-             expected_output[i])
+    CHECK_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
         << "Output at index " << i;
     ;
   }
@@ -86,19 +84,16 @@ TEST(DLR, DataTransformCategoricalStringNumericColumn) {
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
-  EXPECT_NO_THROW(
-      transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                               shape.size(), dtypes, ctx, &transformed_data));
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
-  std::vector<float> expected_output = {2.345, 7,     7,    -9.7,
-                                        kNan,  -kInf, kNan, kInf};
+  std::vector<float> expected_output = {2.345, 7, 7, -9.7, kNan, -kInf, kNan, kInf};
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 8);
   EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i],
-                  expected_output[i]);
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
   }
 }
 
@@ -129,13 +124,11 @@ TEST(DLR, DataTransformMultipleColumn) {
   const char* data = R"([["2.345", "apple"], [7, "7"]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
-  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1},
-                                    DLDataType{kDLFloat, 32, 1}};
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(2);
-  EXPECT_NO_THROW(
-      transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                               shape.size(), dtypes, ctx, &transformed_data));
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
@@ -147,12 +140,10 @@ TEST(DLR, DataTransformMultipleColumn) {
   EXPECT_EQ(transformed_data[1]->shape[0], 2);
   EXPECT_EQ(transformed_data[1]->shape[1], 2);
   for (size_t i = 0; i < expected_output_float.size(); ++i) {
-    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i],
-                  expected_output_float[i]);
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output_float[i]);
   }
   for (size_t i = 0; i < expected_output_string.size(); ++i) {
-    ExpectFloatEq(static_cast<float*>(transformed_data[1]->data)[i],
-                  expected_output_string[i]);
+    ExpectFloatEq(static_cast<float*>(transformed_data[1]->data)[i], expected_output_string[i]);
   }
 }
 
@@ -179,20 +170,17 @@ TEST(DLR, DataTransformDateTime) {
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
   DLContext ctx = DLContext{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
-  EXPECT_NO_THROW(
-      transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                               shape.size(), dtypes, ctx, &transformed_data));
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 2);
   EXPECT_EQ(transformed_data[0]->shape[1], 7);
 
-  std::vector<float> expected_output = {3, 2018, 1,  34, 0,  1, 1,
-                                        6, 2012, 23, 34, 59, 2, 6};
+  std::vector<float> expected_output = {3, 2018, 1, 34, 0, 1, 1, 6, 2012, 23, 34, 59, 2, 6};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i],
-                  expected_output[i]);
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
   }
 }
 
@@ -224,9 +212,9 @@ TEST(DLR, RelayVMDataTransformInput) {
   EXPECT_EQ(output_shape[1], 608);
 
   // Check first 10 outputs.
-  std::vector<float> expected_output = {
-      -0.6220951, -0.58858633, 1.2049465, -0.67777526, 1.204448,   1.0382348,
-      -0.8542239, 1.0385356,   0.7477714, -0.45150468, 0.74640894, -0.9504773};
+  std::vector<float> expected_output = {-0.6220951, -0.58858633, 1.2049465,  -0.67777526,
+                                        1.204448,   1.0382348,   -0.8542239, 1.0385356,
+                                        0.7477714,  -0.45150468, 0.74640894, -0.9504773};
   std::vector<float> output(size, 0);
   EXPECT_NO_THROW(model->GetOutput(0, output.data()));
   for (size_t i = 0; i < expected_output.size(); ++i) {
