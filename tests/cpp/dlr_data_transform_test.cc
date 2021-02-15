@@ -163,8 +163,7 @@ TEST(DLR, DataTransformDateTime) {
     })"_json;
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
-  const char* data =
-      R"([["Jan 3rd, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"]])";
+  const char* data = R"([["Jan 3rd, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
 
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
