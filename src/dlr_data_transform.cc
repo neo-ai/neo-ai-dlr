@@ -132,7 +132,7 @@ tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& inp
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(kNumDateTimeCols)};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
-      << "DataTransform CategoricalString is only supported for float32 "
+      << "DataTransform DateTimeTransformer is only supported for float32 "
          "inputs.";
   return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
 }
@@ -174,6 +174,12 @@ bool DateTimeTransformer::IsLeapYear(int64_t year) const {
 
 void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
                                            std::vector<int64_t>& datetime_digits) const {
+  size_t n_comma = std::count(input_string.begin(), input_string.end(), ',');
+  if (n_comma != 2) {
+    for (size_t i = 0; i < datetime_digits.size(); ++i) datetime_digits[i] = 0;
+    return;
+  }
+
   std::string delimiter = ", ";
   std::string date_str = GetNextSplittedStr(input_string, delimiter);
   std::string year_str = GetNextSplittedStr(input_string, delimiter);
@@ -224,16 +230,18 @@ void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
                                        tvm::runtime::NDArray& input_array) const {
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
   CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
-      << "DataTransform CategoricalString is only supported for CPU.";
+      << "DataTransform DateTimeVectorizer is only supported for CPU.";
   float* data = static_cast<float*>(input_tensor->data);
 
   std::vector<int64_t> datetime_digits = std::vector<int64_t>(kNumDateTimeCols, 0);
   for (size_t r = 0; r < input_json.size(); ++r) {
+    CHECK(input_json[r].size() > 0)
+        << "Input must contains a string of format [Date Month, Year, Time].";
     std::string entry = input_json[r][0].get_ref<const std::string&>();
     DigitizeDateTime(entry, datetime_digits);
     for (size_t c = 0; c < kNumDateTimeCols; ++c) {
       const int out_index = r * kNumDateTimeCols + c;
-      data[out_index] = (float)datetime_digits[c];
+      data[out_index] = static_cast<float>(datetime_digits[c]);
     }
   }
 }
@@ -297,7 +305,6 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
     output_json = TransformOutputHelper2D<int>(transform, static_cast<int*>(tensor->data), shape);
   } else {
     throw dmlc::Error("DataTransform CategoricalString is only supported for 1-D or 2-D inputs.");
-    ;
   }
   transformed_outputs_[index] = output_json.dump();
 }

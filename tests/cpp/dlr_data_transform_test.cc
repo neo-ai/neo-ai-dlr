@@ -163,7 +163,7 @@ TEST(DLR, DataTransformDateTime) {
     })"_json;
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
-  const char* data = R"([["Jan 3rd, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"]])";
+  const char* data = R"([["Jan 3rd, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"], [""]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
 
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
@@ -173,10 +173,11 @@ TEST(DLR, DataTransformDateTime) {
                                            shape.size(), dtypes, ctx, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
-  EXPECT_EQ(transformed_data[0]->shape[0], 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 3);
   EXPECT_EQ(transformed_data[0]->shape[1], 7);
 
-  std::vector<float> expected_output = {3, 2018, 1, 34, 0, 1, 1, 6, 2012, 23, 34, 59, 2, 6};
+  std::vector<float> expected_output = {3,  2018, 1, 34, 0, 1, 1, 6, 2012, 23, 34,
+                                        59, 2,    6, 0,  0, 0, 0, 0, 0,    0};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
     ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
