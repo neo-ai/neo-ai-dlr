@@ -14,6 +14,10 @@ class DLR_DLL Transformer {
  public:
   virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                             tvm::runtime::NDArray& input_array) const = 0;
+
+  /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
+  virtual tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
+                                            DLContext ctx) const;
 };
 
 class DLR_DLL FloatTransformer : public Transformer {
@@ -36,6 +40,43 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
                     tvm::runtime::NDArray& input_array) const;
 };
 
+class DLR_DLL DateTimeTransformer : public Transformer {
+ private:
+  /*! \brief Number of columns defined by Autopilot Sagemaker-Scikit-Learn-Extension for
+   * DateTimeVectorizer */
+  const int kNumDateTimeCols = 7;
+
+  const std::map<std::string, int> month_to_digit = {
+      {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"Apr", 4},  {"May", 5},  {"Jun", 6},
+      {"Jul", 7}, {"Aug", 8}, {"Sep", 9}, {"Oct", 10}, {"Nov", 11}, {"Dec", 12}};
+
+  const std::map<uint8_t, uint8_t> num_days = {{1, 31}, {2, 28},  {3, 31},  {4, 30},
+                                               {5, 31}, {6, 30},  {7, 31},  {8, 31},
+                                               {9, 30}, {10, 31}, {11, 30}, {12, 31}};
+  ;
+
+  /*! \brief Split Strings in regard of given delimiter strings */
+  std::string GetNextSplittedStr(std::string& input_string, std::string delimiter) const;
+
+  /*! \brief Calculate if a given year is a leap year */
+  bool IsLeapYear(int64_t year) const;
+
+  /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
+   * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
+  void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
+
+  int64_t GetWeekDay(int64_t year, int64_t month, int64_t day) const;
+
+  inline int64_t postive_modulo(int64_t i, int64_t n) const { return (i % n + n) % n; }
+
+ public:
+  void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const;
+
+  tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
+                                    DLContext ctx) const;
+};
+
 /*! \brief Handles transformations of input and output data. */
 class DLR_DLL DataTransform {
  private:
@@ -47,10 +88,6 @@ class DLR_DLL DataTransform {
 
   /*! \brief Helper function for TransformInput. Interpets 1-D char input as JSON. */
   nlohmann::json GetAsJson(const int64_t* shape, const void* input, int dim) const;
-
-  /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
-  tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
-                                    DLContext ctx) const;
 
   const std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<Transformer>>>
   GetTransformerMap() const;

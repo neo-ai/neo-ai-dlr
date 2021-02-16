@@ -147,6 +147,43 @@ TEST(DLR, DataTransformMultipleColumn) {
   }
 }
 
+TEST(DLR, DataTransformDateTime) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "ColumnTransform": [
+            {
+              "Type": "DateTime"
+            }
+          ]
+        }
+      }
+    })"_json;
+  EXPECT_TRUE(transform.HasInputTransform(metadata));
+
+  const char* data = R"([["Jan 3rd, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"], [""]])";
+  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
+  DLContext ctx = DLContext{kDLCPU, 0};
+  std::vector<tvm::runtime::NDArray> transformed_data(1);
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
+
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 3);
+  EXPECT_EQ(transformed_data[0]->shape[1], 7);
+
+  std::vector<float> expected_output = {3,  2018, 1, 34, 0, 1, 1, 6, 2012, 23, 34,
+                                        59, 2,    6, 0,  0, 0, 0, 0, 0,    0};
+
+  for (size_t i = 0; i < expected_output.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
+  }
+}
+
 TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl"};

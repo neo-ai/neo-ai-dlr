@@ -28,14 +28,13 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
   const auto& transforms = metadata["DataTransform"]["Input"]["ColumnTransform"];
   CHECK_LE(tvm_inputs->size(), transforms.size());
   for (int i = 0; i < tvm_inputs->size(); i++) {
-    tvm_inputs->at(i) = InitNDArray(input_json, dtypes[i], ctx);
-
     const std::string& transformer_type = transforms[i]["Type"].get_ref<const std::string&>();
     auto it = GetTransformerMap()->find(transformer_type);
     CHECK(it != GetTransformerMap()->end())
         << transformer_type << " is not a valid DataTransform type.";
     const auto transformer = it->second;
 
+    tvm_inputs->at(i) = transformer->InitNDArray(input_json, dtypes[i], ctx);
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
   }
 }
@@ -55,8 +54,8 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input,
   return input_json;
 }
 
-tvm::runtime::NDArray DataTransform::InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
-                                                 DLContext ctx) const {
+tvm::runtime::NDArray Transformer::InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
+                                               DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
@@ -126,6 +125,127 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
   }
 }
 
+tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
+                                                       DLDataType dtype, DLContext ctx) const {
+  // Create NDArray for transformed input which will be passed to TVM. NUM_COL
+  // fixed to 7
+  std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
+                                    static_cast<int64_t>(kNumDateTimeCols)};
+  CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
+      << "DataTransform DateTimeTransformer is only supported for float32 "
+         "inputs.";
+  return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+}
+
+int64_t DateTimeTransformer::GetWeekDay(int64_t year, int64_t month, int64_t day) const {
+  int64_t century = year / 100;
+  int64_t month_ = month == 2 ? 12 : postive_modulo((month - 2), 12);
+  int64_t year_ = month <= 2 ? year % 100 - 1 : year % 100;
+  int64_t weekday = postive_modulo((day + (int64_t)std::floor(2.6 * month_ - 0.2) - 2 * century +
+                                    year_ + year_ / 4 + century / 4),
+                                   7);
+  weekday = weekday == 0 ? 7 : weekday;
+  return weekday;
+}
+
+std::string DateTimeTransformer::GetNextSplittedStr(std::string& input_string,
+                                                    std::string delimiter) const {
+  size_t pos = input_string.find(delimiter);
+  std::string splitted_str = input_string.substr(0, pos);
+  if (pos != std::string::npos) {
+    input_string.erase(0, pos + delimiter.length());
+  } else {
+    input_string.erase(0, input_string.size());
+  }
+  return splitted_str;
+}
+
+bool DateTimeTransformer::IsLeapYear(int64_t year) const {
+  if (year % 4 != 0) {
+    return false;
+  } else if (year % 100 != 0) {
+    return true;
+  } else if (year % 400 != 0) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
+                                           std::vector<int64_t>& datetime_digits) const {
+  size_t n_comma = std::count(input_string.begin(), input_string.end(), ',');
+  if (n_comma != 2) {
+    for (size_t i = 0; i < datetime_digits.size(); ++i) datetime_digits[i] = 0;
+    return;
+  }
+
+  std::string delimiter = ", ";
+  std::string date_str = GetNextSplittedStr(input_string, delimiter);
+  std::string year_str = GetNextSplittedStr(input_string, delimiter);
+  std::string time_str = GetNextSplittedStr(input_string, delimiter);
+
+  delimiter = " ";
+  std::string month_str = GetNextSplittedStr(date_str, delimiter);
+  std::string day_str = GetNextSplittedStr(date_str, delimiter);
+
+  delimiter = ":";
+  bool is_pm = time_str.substr(time_str.size() - 2, 2).compare("pm") == 0;
+  std::string second_str = "00";
+  std::string hour_str = GetNextSplittedStr(time_str, delimiter);
+  std::string minute_str = GetNextSplittedStr(time_str, delimiter);
+
+  if (time_str.size() > 0) {
+    second_str = GetNextSplittedStr(time_str, delimiter);
+  }
+
+  int64_t day = std::stoi(day_str);
+  int64_t month = month_to_digit.at(month_str);
+  int64_t year = std::stoi(year_str);
+  int64_t second = std::stoi(second_str);
+  int64_t minute = std::stoi(minute_str);
+  int64_t hour = std::stoi(hour_str) + int(is_pm) * 12;
+
+  int64_t day_of_year = 0;
+  for (size_t i = 1; i < month; ++i) {
+    day_of_year += num_days.at(i);
+    if (i == 2 and IsLeapYear(year)) day_of_year += 1;
+  }
+  int64_t week_offset = GetWeekDay(year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(year, 1, 1)) + 1;
+  day_of_year += day - week_offset;
+  int64_t week_of_year = day_of_year / 7;
+  if (week_offset > 0) week_of_year += 1;
+
+  datetime_digits[0] = GetWeekDay(year, month, day);
+  datetime_digits[1] = year;
+  datetime_digits[2] = hour;
+  datetime_digits[3] = minute;
+  datetime_digits[4] = second;
+  datetime_digits[5] = month;
+  datetime_digits[6] = week_of_year;
+}
+
+void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
+                                       const nlohmann::json& transform,
+                                       tvm::runtime::NDArray& input_array) const {
+  DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
+  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+      << "DataTransform DateTimeVectorizer is only supported for CPU.";
+  float* data = static_cast<float*>(input_tensor->data);
+
+  std::vector<int64_t> datetime_digits = std::vector<int64_t>(kNumDateTimeCols, 0);
+  for (size_t r = 0; r < input_json.size(); ++r) {
+    CHECK(input_json[r].size() > 0)
+        << "Input must contains a string of format [Date Month, Year, Time].";
+    std::string entry = input_json[r][0].get_ref<const std::string&>();
+    DigitizeDateTime(entry, datetime_digits);
+    for (size_t c = 0; c < kNumDateTimeCols; ++c) {
+      const int out_index = r * kNumDateTimeCols + c;
+      data[out_index] = static_cast<float>(datetime_digits[c]);
+    }
+  }
+}
+
 const std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<Transformer>>>
 DataTransform::GetTransformerMap() const {
   static auto map =
@@ -133,6 +253,7 @@ DataTransform::GetTransformerMap() const {
   if (!map->empty()) return map;
   map->emplace("Float", std::make_shared<FloatTransformer>());
   map->emplace("CategoricalString", std::make_shared<CategoricalStringTransformer>());
+  map->emplace("DateTime", std::make_shared<DateTimeTransformer>());
   return map;
 }
 
