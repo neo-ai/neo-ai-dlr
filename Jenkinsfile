@@ -50,7 +50,7 @@ pipeline {
         unstash name: 'srcs'
         sh """
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/master
+        tests/ci_build/git-clang-format.sh origin/main
         """
       }
     }

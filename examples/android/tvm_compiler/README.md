@@ -40,7 +40,7 @@ Each folder will have three files:
 * model.params
 
 Compiled models can be run using `neo-ai-dlr` API/lib.
-See [DLR Android examples](https://github.com/neo-ai/neo-ai-dlr/tree/master/examples/android)
+See [DLR Android examples](https://github.com/neo-ai/neo-ai-dlr/tree/main/examples/android)
 
 ### GluonCV
 To compile GluonCV models use script `compile_gluoncv.py`.

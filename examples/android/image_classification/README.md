@@ -13,7 +13,7 @@ models from different frameworks
 
 These instructions walk you through building and
 running the demo on an Android device. For an explanation of the source, see
-[DLR Android image classification example](https://github.com/neo-ai/neo-ai-dlr/tree/master/examples/android/image_classification).
+[DLR Android image classification example](https://github.com/neo-ai/neo-ai-dlr/tree/main/examples/android/image_classification).
 
 <!-- TODO(b/124116863): Add app screenshot. -->
 
