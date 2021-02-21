@@ -3,6 +3,7 @@
 
 #include <tvm/runtime/ndarray.h>
 
+#include <ctime>
 #include <nlohmann/json.hpp>
 
 #include "dlr_common.h"
@@ -45,6 +46,11 @@ class DLR_DLL DateTimeTransformer : public Transformer {
   /*! \brief Number of columns defined by Autopilot Sagemaker-Scikit-Learn-Extension for
    * DateTimeVectorizer */
   const int kNumDateTimeCols = 7;
+
+  const std::vector<std::string> datetime_templates = {
+      "%h %dth, %Y, %I:%M:%S%p", "%h %dth, %Y, %I:%M%p", "%h %dth, %Y, %I%p",
+      "%Y-%m-%d %I:%M:%S%p",     "%Y-%m-%d %H:%M:%S",    "%Y-%m-%d",
+  };
 
   const std::map<std::string, int> month_to_digit = {
       {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"Apr", 4},  {"May", 5},  {"Jun", 6},
