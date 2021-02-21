@@ -174,55 +174,32 @@ bool DateTimeTransformer::IsLeapYear(int64_t year) const {
 
 void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
                                            std::vector<int64_t>& datetime_digits) const {
-  size_t n_comma = std::count(input_string.begin(), input_string.end(), ',');
-  if (n_comma != 2) {
-    for (size_t i = 0; i < datetime_digits.size(); ++i) datetime_digits[i] = 0;
-    return;
+  struct tm tm = {};
+  std::cout << "input: " << input_string << std::endl;
+  char* strptime_success;
+  for (const auto datetime_template : datetime_templates) {
+    strptime_success = strptime(input_string.c_str(), datetime_template.c_str(), &tm);
+    if (strptime_success) {
+      std::cout << "template: " << datetime_template << std::endl;
+      break;
+    }
   }
 
-  std::string delimiter = ", ";
-  std::string date_str = GetNextSplittedStr(input_string, delimiter);
-  std::string year_str = GetNextSplittedStr(input_string, delimiter);
-  std::string time_str = GetNextSplittedStr(input_string, delimiter);
-
-  delimiter = " ";
-  std::string month_str = GetNextSplittedStr(date_str, delimiter);
-  std::string day_str = GetNextSplittedStr(date_str, delimiter);
-
-  delimiter = ":";
-  bool is_pm = time_str.substr(time_str.size() - 2, 2).compare("pm") == 0;
-  std::string second_str = "00";
-  std::string hour_str = GetNextSplittedStr(time_str, delimiter);
-  std::string minute_str = GetNextSplittedStr(time_str, delimiter);
-
-  if (time_str.size() > 0) {
-    second_str = GetNextSplittedStr(time_str, delimiter);
-  }
-
-  int64_t day = std::stoi(day_str);
-  int64_t month = month_to_digit.at(month_str);
-  int64_t year = std::stoi(year_str);
-  int64_t second = std::stoi(second_str);
-  int64_t minute = std::stoi(minute_str);
-  int64_t hour = std::stoi(hour_str) + int(is_pm) * 12;
-
-  int64_t day_of_year = 0;
-  for (size_t i = 1; i < month; ++i) {
-    day_of_year += num_days.at(i);
-    if (i == 2 and IsLeapYear(year)) day_of_year += 1;
-  }
-  int64_t week_offset = GetWeekDay(year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(year, 1, 1)) + 1;
-  day_of_year += day - week_offset;
-  int64_t week_of_year = day_of_year / 7;
+  int64_t week_offset =
+      GetWeekDay(1900 + tm.tm_year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(1900 + tm.tm_year, 1, 1)) + 1;
+  int64_t week_of_year = (tm.tm_yday) / 7;
   if (week_offset > 0) week_of_year += 1;
 
-  datetime_digits[0] = GetWeekDay(year, month, day);
-  datetime_digits[1] = year;
-  datetime_digits[2] = hour;
-  datetime_digits[3] = minute;
-  datetime_digits[4] = second;
-  datetime_digits[5] = month;
+  datetime_digits[0] = tm.tm_wday;
+  datetime_digits[1] = 1900 + tm.tm_year;
+  datetime_digits[2] = tm.tm_hour;
+  datetime_digits[3] = tm.tm_min;
+  datetime_digits[4] = tm.tm_sec;
+  datetime_digits[5] = 1 + tm.tm_mon;
   datetime_digits[6] = week_of_year;
+
+  for (auto d : datetime_digits) std::cout << d << ",";
+  std::cout << std::endl << std::endl;
 }
 
 void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
