@@ -69,7 +69,8 @@ class DLR_DLL DateTimeTransformer : public Transformer {
 
   /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
    * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
-  void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
+  void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits,
+                        int64_t output_offset) const;
 
   int64_t GetWeekDay(int64_t year, int64_t month, int64_t day) const;
 
