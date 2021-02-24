@@ -128,7 +128,7 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
 tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
                                                        DLDataType dtype, DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
-  // fixed to original input size + 7
+  // fixed to 7
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(kNumDateTimeCols)};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
