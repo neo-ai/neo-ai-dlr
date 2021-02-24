@@ -52,12 +52,6 @@ class DLR_DLL DateTimeTransformer : public Transformer {
       "%Y-%m-%d %I:%M:%S%p",     "%Y-%m-%d %H:%M:%S",    "%Y-%m-%d",
   };
 
-  /*! \brief Split Strings in regard of given delimiter strings */
-  std::string GetNextSplittedStr(std::string& input_string, std::string delimiter) const;
-
-  /*! \brief Calculate if a given year is a leap year */
-  bool IsLeapYear(int64_t year) const;
-
   /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
    * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
   void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
