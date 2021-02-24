@@ -129,7 +129,6 @@ tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& inp
                                                        DLDataType dtype, DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to original input size + 7
-  std::cout << "input_json/[0/].size(): " << input_json[0].size() << std::endl;
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size() + kNumDateTimeCols)};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
@@ -177,14 +176,11 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
                                            std::vector<int64_t>& datetime_digits,
                                            int64_t output_offset) const {
   struct tm tm = {};
-  std::cout << "input: " << input_string << std::endl;
-  std::cout << "datetime_digits_size: " << datetime_digits.size() << std::endl;
 
   char* strptime_success;
   for (const auto datetime_template : datetime_templates) {
     strptime_success = strptime(input_string.c_str(), datetime_template.c_str(), &tm);
     if (strptime_success) {
-      std::cout << "template: " << datetime_template << std::endl;
       break;
     }
   }
@@ -201,9 +197,6 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
   datetime_digits[output_offset + 4] = tm.tm_sec;
   datetime_digits[output_offset + 5] = 1 + tm.tm_mon;
   datetime_digits[output_offset + 6] = week_of_year;
-
-  for (auto d : datetime_digits) std::cout << d << ",";
-  std::cout << std::endl << std::endl;
 }
 
 void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
