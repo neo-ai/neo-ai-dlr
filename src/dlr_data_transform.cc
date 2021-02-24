@@ -148,30 +148,6 @@ int64_t DateTimeTransformer::GetWeekDay(int64_t year, int64_t month, int64_t day
   return weekday;
 }
 
-std::string DateTimeTransformer::GetNextSplittedStr(std::string& input_string,
-                                                    std::string delimiter) const {
-  size_t pos = input_string.find(delimiter);
-  std::string splitted_str = input_string.substr(0, pos);
-  if (pos != std::string::npos) {
-    input_string.erase(0, pos + delimiter.length());
-  } else {
-    input_string.erase(0, input_string.size());
-  }
-  return splitted_str;
-}
-
-bool DateTimeTransformer::IsLeapYear(int64_t year) const {
-  if (year % 4 != 0) {
-    return false;
-  } else if (year % 100 != 0) {
-    return true;
-  } else if (year % 400 != 0) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
 void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
                                            std::vector<int64_t>& datetime_digits) const {
   struct tm tm = {};
@@ -196,9 +172,6 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
   datetime_digits[4] = tm.tm_sec;
   datetime_digits[5] = 1 + tm.tm_mon;
   datetime_digits[6] = week_of_year;
-
-  for (auto d : datetime_digits) std::cout << d << ",";
-  std::cout << std::endl << std::endl;
 }
 
 void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,

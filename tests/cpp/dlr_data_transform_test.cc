@@ -155,7 +155,7 @@ TEST(DLR, DataTransformDateTime) {
         "Input": {
           "ColumnTransform": [
             {
-              "Type": "DateTime"
+              "Type": "DateTime", "DateCol": 0
             }
           ]
         }
@@ -177,9 +177,9 @@ TEST(DLR, DataTransformDateTime) {
   EXPECT_EQ(transformed_data[0]->shape[0], 5);
   EXPECT_EQ(transformed_data[0]->shape[1], 7);
 
-  std::vector<float> expected_output = {3, 2018, 1, 34, 0, 1, 1, 6, 2012, 23, 34, 59, 2, 6,
-                                        3, 2006, 0, 0,  0, 8, 34, 1, 2017, 14, 21, 28, 5, 19,
-                                        0, 1900, 0, 0,  0, 1, 1};
+  std::vector<float> expected_output = {3,  2018, 1, 34,   0, 1,    1, 6, 2012, 23, 34,   59,
+                                        2,  6,    3, 2006, 0, 0,    0, 8, 34,   1,  2017, 14,
+                                        21, 28,   5, 19,   0, 1900, 0, 0, 0,    1,  1};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
     ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
