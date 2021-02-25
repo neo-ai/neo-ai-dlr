@@ -68,9 +68,9 @@ If you wish to opt-out of this data collection feature, please follow the steps 
 ## Examples
 We prepared several examples demonstrating how to use DLR API on different platforms
 
-* [Neo AI DLR image classification Android example application](https://github.com/neo-ai/neo-ai-dlr/tree/master/examples/android/image_classification)
-* [DL Model compiler for Android](https://github.com/neo-ai/neo-ai-dlr/tree/master/examples/android/tvm_compiler)
-* [DL Model compiler for AWS EC2 instances](https://github.com/neo-ai/neo-ai-dlr/tree/master/container/ec2_compilation_container)
+* [Neo AI DLR image classification Android example application](https://github.com/neo-ai/neo-ai-dlr/tree/main/examples/android/image_classification)
+* [DL Model compiler for Android](https://github.com/neo-ai/neo-ai-dlr/tree/main/examples/android/tvm_compiler)
+* [DL Model compiler for AWS EC2 instances](https://github.com/neo-ai/neo-ai-dlr/tree/main/container/ec2_compilation_container)
 
 ## License
 
