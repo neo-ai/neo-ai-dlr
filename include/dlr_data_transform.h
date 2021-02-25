@@ -3,6 +3,7 @@
 
 #include <tvm/runtime/ndarray.h>
 
+#include <ctime>
 #include <nlohmann/json.hpp>
 
 #include "dlr_common.h"
@@ -46,20 +47,10 @@ class DLR_DLL DateTimeTransformer : public Transformer {
    * DateTimeVectorizer */
   const int kNumDateTimeCols = 7;
 
-  const std::map<std::string, int> month_to_digit = {
-      {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"Apr", 4},  {"May", 5},  {"Jun", 6},
-      {"Jul", 7}, {"Aug", 8}, {"Sep", 9}, {"Oct", 10}, {"Nov", 11}, {"Dec", 12}};
-
-  const std::map<uint8_t, uint8_t> num_days = {{1, 31}, {2, 28},  {3, 31},  {4, 30},
-                                               {5, 31}, {6, 30},  {7, 31},  {8, 31},
-                                               {9, 30}, {10, 31}, {11, 30}, {12, 31}};
-  ;
-
-  /*! \brief Split Strings in regard of given delimiter strings */
-  std::string GetNextSplittedStr(std::string& input_string, std::string delimiter) const;
-
-  /*! \brief Calculate if a given year is a leap year */
-  bool IsLeapYear(int64_t year) const;
+  const std::vector<std::string> datetime_templates = {
+      "%h %dth, %Y, %I:%M:%S%p", "%h %dth, %Y, %I:%M%p", "%h %dth, %Y, %I%p",
+      "%Y-%m-%d %I:%M:%S%p",     "%Y-%m-%d %H:%M:%S",    "%Y-%m-%d",
+  };
 
   /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
    * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
