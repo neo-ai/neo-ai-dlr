@@ -156,7 +156,7 @@ TEST(DLR, DataTransformDateTime) {
         "Input": {
           "ColumnTransform": [
             {
-              "Type": "DateTime", "DateCol": 0
+              "Type": "DateTime", "DateCol": [1]
             }
           ]
         }
@@ -164,8 +164,8 @@ TEST(DLR, DataTransformDateTime) {
     })"_json;
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
-  const char* data =
-      R"([["Jan 3th, 2018, 1:34am"], ["Feb 11th, 2012, 11:34:59pm"], ["2006-08-23"], ["2017-05-08 14:21:28"], [""]])";
+  const char* data = R"([["123", "Jan 3th, 2018, 1:34am"]])";
+  // ["Feb 11th, 2012, 11:34:59pm"], ["2006-08-23"], ["2017-05-08 14:21:28"], [""]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
 
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
@@ -175,12 +175,41 @@ TEST(DLR, DataTransformDateTime) {
                                            shape.size(), dtypes, ctx, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
-  EXPECT_EQ(transformed_data[0]->shape[0], 5);
+  EXPECT_EQ(transformed_data[0]->shape[0], 1);
   EXPECT_EQ(transformed_data[0]->shape[1], 7);
 
-  std::vector<float> expected_output = {3,  2018, 1, 34,   0, 1,    1, 6, 2012, 23, 34,   59,
-                                        2,  6,    3, 2006, 0, 0,    0, 8, 34,   1,  2017, 14,
-                                        21, 28,   5, 19,   0, 1900, 0, 0, 0,    1,  1};
+  std::vector<float> expected_output = {3, 2018, 1, 34, 0, 1, 1};
+
+  for (size_t i = 0; i < expected_output.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
+  }
+
+  metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "ColumnTransform": [
+            {
+              "Type": "DateTime", "DateCol": [0, 1]
+            }
+          ]
+        }
+      }
+    })"_json;
+  EXPECT_TRUE(transform.HasInputTransform(metadata));
+
+  data = R"([["Feb 11th, 2012, 11:34:59pm", "2006-08-23"], ["2017-05-08 14:21:28", ""]])";
+  shape = {static_cast<int64_t>(std::strlen(data))};
+
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
+
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 2);
+  EXPECT_EQ(transformed_data[0]->shape[1], 14);
+
+  expected_output = {6, 2012, 23, 34, 59, 2, 6,  3, 2006, 0, 0, 0, 8, 34,
+                     1, 2017, 14, 21, 28, 5, 19, 0, 1900, 0, 0, 0, 1, 1};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
     ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);

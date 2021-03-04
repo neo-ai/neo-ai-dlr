@@ -34,7 +34,7 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
         << transformer_type << " is not a valid DataTransform type.";
     const auto transformer = it->second;
 
-    tvm_inputs->at(i) = transformer->InitNDArray(input_json, dtypes[i], ctx);
+    tvm_inputs->at(i) = transformer->InitNDArray(input_json, transforms[i], dtypes[i], ctx);
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
   }
 }
@@ -54,7 +54,8 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input,
   return input_json;
 }
 
-tvm::runtime::NDArray Transformer::InitNDArray(const nlohmann::json& input_json, DLDataType dtype,
+tvm::runtime::NDArray Transformer::InitNDArray(const nlohmann::json& input_json,
+                                               const nlohmann::json& transform, DLDataType dtype,
                                                DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
@@ -126,11 +127,13 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
 }
 
 tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
+                                                       const nlohmann::json& transform,
                                                        DLDataType dtype, DLContext ctx) const {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to 7
+  auto date_col = transform["DateCol"].get<std::vector<int>>();
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
-                                    static_cast<int64_t>(kNumDateTimeCols)};
+                                    static_cast<int64_t>(date_col.size() * kNumDateTimeCols)};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform DateTimeTransformer is only supported for float32 "
          "inputs.";
@@ -186,12 +189,14 @@ void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
   for (size_t r = 0; r < input_json.size(); ++r) {
     CHECK(input_json[r].size() > 0)
         << "Input must contains a string of format [Date Month, Year, Time].";
-    auto date_col = transform["DateCol"].get_ref<const nlohmann::json::number_integer_t&>();
-    std::string entry = input_json[r][date_col].get_ref<const std::string&>();
-    DigitizeDateTime(entry, datetime_digits);
-    for (size_t c = 0; c < kNumDateTimeCols; ++c) {
-      const int out_index = r * kNumDateTimeCols + c;
-      data[out_index] = static_cast<float>(datetime_digits[c]);
+    auto date_col = transform["DateCol"].get<std::vector<int>>();
+    for (size_t i = 0; i < date_col.size(); ++i) {
+      std::string entry = input_json[r][date_col[i]].get_ref<const std::string&>();
+      DigitizeDateTime(entry, datetime_digits);
+      for (size_t c = 0; c < kNumDateTimeCols; ++c) {
+        const int out_index = r * date_col.size() * kNumDateTimeCols + i * kNumDateTimeCols + c;
+        data[out_index] = static_cast<float>(datetime_digits[c]);
+      }
     }
   }
 }
