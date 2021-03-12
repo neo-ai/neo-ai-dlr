@@ -53,6 +53,7 @@ option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
+option(ENABLE_DATATRANSFORM "Enable datatransform for Sagemaker-scikit-learn-extension models" OFF)
 
 
 # Use RPATH on Mac OS X as flexible mechanism for locating dependencies
@@ -115,6 +116,10 @@ FILE(GLOB DLR_SRC
     ${TVM_SRC}/src/runtime/metadata_module.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
 )
+
+if(NOT(ENABLE_DATATRANSFORM))
+  list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_trasform.cc)
+endif()
 
 if(USE_OPENCL)
     message("USING OpenCL")
@@ -300,6 +305,10 @@ if(NOT(AAR_BUILD))
 
   enable_testing()
   file(GLOB TEST_SRCS tests/cpp/*.cc)
+
+  if(NOT(ENABLE_DATATRANSFORM))
+    list(REMOVE_ITEM TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc)
+  endif()
 
   if(WITH_HEXAGON)
     file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
