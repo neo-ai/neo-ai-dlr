@@ -11,7 +11,10 @@
 #include <tvm/runtime/vm/vm.h>
 
 #include "dlr_common.h"
+
+#ifdef ENABLE_DATATRANSFORM
 #include "dlr_data_transform.h"
+#endif
 
 #ifdef _WIN32
 #define LIBEXT ".dll"
@@ -43,7 +46,11 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+
+  #ifdef ENABLE_DATATRANSFORM
   DataTransform data_transform_;
+  #endif
+
   void SetupVMModule(const std::vector<std::string>& paths);
   void SetupVMModule(const std::vector<DLRModelElem>& model_elems);
   void FetchInputNodesData();

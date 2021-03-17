@@ -118,7 +118,7 @@ FILE(GLOB DLR_SRC
 )
 
 if(NOT(ENABLE_DATATRANSFORM))
-  list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_trasform.cc)
+  list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_transform.cc)
 endif()
 
 if(USE_OPENCL)
