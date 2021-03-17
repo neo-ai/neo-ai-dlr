@@ -91,7 +91,7 @@ pipeline {
             sh """
             mkdir -p build
             cd build
-            cmake .. && make -j16
+            cmake -DENABLE_DATATRANSFORM .. && make -j16
             CTEST_OUTPUT_ON_FAILURE=TRUE make test
             cd ..
             tests/ci_build/create_wheel.sh manylinux1_x86_64
