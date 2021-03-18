@@ -491,4 +491,3 @@ if(NOT(AAR_BUILD))
 endif()
 # Group sources
 #auto_source_group("${SOURCES}")
-message(${CMAKE_CXX_FLAGS})
