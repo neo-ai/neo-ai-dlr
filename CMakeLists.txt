@@ -235,7 +235,7 @@ if(WITH_HEXAGON)
 endif()
 
 if(ENABLE_DATATRANSFORM)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_DATATRANSFORM")
+    add_definitions(-DENABLE_DATATRANSFORM) 
 endif()
 
 if(AAR_BUILD)
@@ -318,7 +318,7 @@ if(NOT(AAR_BUILD))
   endif()
 
   if(WITH_HEXAGON)
-    file(GLOB HEXAGON_TEST_SRS tests/cpp/dlr_hexagon/*.cc)
+    file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
     list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
   endif()
   foreach(__srcpath ${TEST_SRCS})
