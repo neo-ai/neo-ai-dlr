@@ -149,7 +149,7 @@ void RelayVMModel::FetchOutputNodesData() {
 }
 
 const char* RelayVMModel::GetInputName(int index) const {
-#ifdef ENABLE_TRANSFORM
+#ifdef ENABLE_DATATRANSFORM
   if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
     return "input";
   }
@@ -160,7 +160,7 @@ const char* RelayVMModel::GetInputName(int index) const {
 }
 
 const char* RelayVMModel::GetInputType(int index) const {
-#ifdef ENABLE_TRANSFORM
+#ifdef ENABLE_DATATRANSFORM
   if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
     return "json";
   }
