@@ -118,7 +118,7 @@ FILE(GLOB DLR_SRC
 )
 
 if(NOT(ENABLE_DATATRANSFORM))
-  list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_trasform.cc)
+  list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_transform.cc)
 endif()
 
 if(USE_OPENCL)
@@ -233,6 +233,11 @@ if(WITH_HEXAGON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
     list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
 endif()
+
+if(ENABLE_DATATRANSFORM)
+    add_definitions(-DENABLE_DATATRANSFORM) 
+endif()
+
 if(AAR_BUILD)
     list(APPEND DLR_SRC "src/jni/dlr_jni.cc")
 endif()
@@ -307,7 +312,9 @@ if(NOT(AAR_BUILD))
   file(GLOB TEST_SRCS tests/cpp/*.cc)
 
   if(NOT(ENABLE_DATATRANSFORM))
-    list(REMOVE_ITEM TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc)
+    list(REMOVE_ITEM TEST_SRCS 
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_pipeline_skl_xgb_test.cc)
   endif()
 
   if(WITH_HEXAGON)
