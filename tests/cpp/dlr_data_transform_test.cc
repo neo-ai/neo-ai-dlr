@@ -208,14 +208,13 @@ TEST(DLR, DataTransformDateTime) {
   EXPECT_EQ(transformed_data[0]->shape[0], 4);
   EXPECT_EQ(transformed_data[0]->shape[1], 14);
 
-  expected_output = {6, 2012, 23, 34, 59, 2, 6,  3, 2006, 0,  0,  0,  8, 34,
-                     1, 2017, 14, 21, 28, 5, 19, 0, 1900, 0,  0,  0,  1, 52,
-                     -1, -1, 12, 28, 48, -1, -1, -1, -1, 12, 28, 48, -1, -1,
-                     2, 2004, 12, 28, 48, 9, 37, 2, 2004, 12, 28, 48, 9, 37};
+  expected_output = {6,  2012, 23, 34, 59, 2,  6,  3,  2006, 0,  0,  0,  8,  34,
+                     1,  2017, 14, 21, 28, 5,  19, 0,  1900, 0,  0,  0,  1,  52,
+                     -1, -1,   12, 28, 48, -1, -1, -1, -1,   12, 28, 48, -1, -1,
+                     2,  2004, 12, 28, 48, 9,  37, 2,  2004, 12, 28, 48, 9,  37};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    if (expected_output[i] == -1)
-      continue;
+    if (expected_output[i] == -1) continue;
     ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
   }
 }
