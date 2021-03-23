@@ -49,17 +49,24 @@ class DLR_DLL DateTimeTransformer : public Transformer {
   const int kNumDateTimeCols = 7;
 
   const std::vector<std::string> datetime_templates = {
-      "%h %dth, %Y, %I:%M:%S%p", "%h %dth, %Y, %I:%M%p", "%h %dth, %Y, %I%p",
-      "%Y-%m-%d %I:%M:%S%p",     "%Y-%m-%d %H:%M:%S",    "%Y-%m-%d",
+      "%h %dth, %Y, %I:%M:%S%p",
+      "%h %dth, %Y, %I:%M%p",
+      "%h %dth, %Y, %I%p",
+      "%Y-%m-%d %I:%M:%S%p",
+      "%Y-%m-%d %H:%M:%S",
+      "%Y-%m-%d %H:%M:%S+00",
+      "%Y-%m-%d",
+      "%H:%M:%S+00",
+      "%H:%M:%S",
   };
 
   /*! \brief Convert a given string to an array of digits representing [WEEKDAY,
    * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
   void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
 
-  int64_t GetWeekDay(int64_t year, int64_t month, int64_t day) const;
+  bool isLeap(int64_t year) const;
 
-  inline int64_t postive_modulo(int64_t i, int64_t n) const { return (i % n + n) % n; }
+  int64_t GetWeekNumber(std::tm tm) const;
 
  public:
   void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,

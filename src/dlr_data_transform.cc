@@ -140,33 +140,53 @@ tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& inp
   return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
 }
 
-int64_t DateTimeTransformer::GetWeekDay(int64_t year, int64_t month, int64_t day) const {
-  int64_t century = year / 100;
-  int64_t month_ = month == 2 ? 12 : postive_modulo((month - 2), 12);
-  int64_t year_ = month <= 2 ? year % 100 - 1 : year % 100;
-  int64_t weekday = postive_modulo((day + (int64_t)std::floor(2.6 * month_ - 0.2) - 2 * century +
-                                    year_ + year_ / 4 + century / 4),
-                                   7);
-  weekday = weekday == 0 ? 7 : weekday;
-  return weekday;
+bool DateTimeTransformer::isLeap(int64_t year) const {
+  if (year % 4 == 0) {
+    if (year % 100 == 0 && year % 400 != 0)
+      return false;
+    else
+      return true;
+  }
+  return false;
+}
+
+int64_t DateTimeTransformer::GetWeekNumber(std::tm tm) const {
+  int64_t year = 1900 + tm.tm_year;
+  int64_t monday = tm.tm_yday - (tm.tm_wday + 6) % 7;
+  int64_t monday_year = 1 + (monday + 6) % 7;
+  int64_t first_monday = (monday_year >= 4) ? monday_year - 7 : monday_year;
+  int64_t wyear = 1 + (monday - first_monday) / 7;
+
+  if (wyear == 0) {
+    wyear = 52;
+    if (monday_year == 3 || monday_year == 4 || (isLeap(year) && monday_year == 2)) wyear = 53;
+  }
+
+  if (wyear == 53) {
+    int num_days = isLeap(year) ? 366 : 365;
+    if (num_days - monday < 3) {
+      wyear = 1;
+    }
+  }
+  return wyear;
 }
 
 void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
                                            std::vector<int64_t>& datetime_digits) const {
-  struct tm tm = {};
+  struct tm tm {};
 
   char* strptime_success;
   for (const auto datetime_template : datetime_templates) {
     strptime_success = strptime(input_string.c_str(), datetime_template.c_str(), &tm);
     if (strptime_success) {
+      if (datetime_template.compare(0, 8, "%H:%M:%S") == 0) {
+        std::time_t t = std::time(0);
+        tm = *std::localtime(&t);
+        strptime_success = strptime(input_string.c_str(), datetime_template.c_str(), &tm);
+      }
       break;
     }
   }
-
-  int64_t week_offset =
-      GetWeekDay(1900 + tm.tm_year, 1, 1) == 0 ? 0 : (7 - GetWeekDay(1900 + tm.tm_year, 1, 1)) + 1;
-  int64_t week_of_year = (tm.tm_yday) / 7;
-  if (week_offset > 0) week_of_year += 1;
 
   datetime_digits[0] = tm.tm_wday;
   datetime_digits[1] = 1900 + tm.tm_year;
@@ -174,7 +194,7 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
   datetime_digits[3] = tm.tm_min;
   datetime_digits[4] = tm.tm_sec;
   datetime_digits[5] = 1 + tm.tm_mon;
-  datetime_digits[6] = week_of_year;
+  datetime_digits[6] = GetWeekNumber(tm);
 }
 
 void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
