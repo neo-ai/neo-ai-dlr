@@ -198,20 +198,24 @@ TEST(DLR, DataTransformDateTime) {
     })"_json;
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
-  data = R"([["Feb 11th, 2012, 11:34:59pm", "2006-08-23"], ["2017-05-08 14:21:28", ""]])";
+  data =
+      R"([["Feb 11th, 2012, 11:34:59pm", "2006-08-23"], ["2017-05-08 14:21:28", ""], ["12:28:48.000001", "12:28:48.000001+00"], ["2004-09-07 12:28:48.000001", "2004-09-07 12:28:48.000001+00"]])";
   shape = {static_cast<int64_t>(std::strlen(data))};
 
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
                                            shape.size(), dtypes, ctx, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
-  EXPECT_EQ(transformed_data[0]->shape[0], 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 4);
   EXPECT_EQ(transformed_data[0]->shape[1], 14);
 
-  expected_output = {6, 2012, 23, 34, 59, 2, 6,  3, 2006, 0, 0, 0, 8, 34,
-                     1, 2017, 14, 21, 28, 5, 19, 0, 1900, 0, 0, 0, 1, 1};
+  expected_output = {6,  2012, 23, 34, 59, 2,  6,  3,  2006, 0,  0,  0,  8,  34,
+                     1,  2017, 14, 21, 28, 5,  19, 0,  1900, 0,  0,  0,  1,  52,
+                     -1, -1,   12, 28, 48, -1, -1, -1, -1,   12, 28, 48, -1, -1,
+                     2,  2004, 12, 28, 48, 9,  37, 2,  2004, 12, 28, 48, 9,  37};
 
   for (size_t i = 0; i < expected_output.size(); ++i) {
+    if (expected_output[i] == -1) continue;
     ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i]);
   }
 }
