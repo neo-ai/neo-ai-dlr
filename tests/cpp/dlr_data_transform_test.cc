@@ -48,6 +48,11 @@ TEST(DLR, DataTransformCategoricalString) {
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
                                            shape.size(), dtypes, ctx, &transformed_data));
+  // Test that same buffer is reused.
+  const void* buffer = transformed_data[0]->data;
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
+  EXPECT_EQ(buffer, transformed_data[0]->data);
 
   std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
   EXPECT_EQ(transformed_data[0]->ndim, 2);

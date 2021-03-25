@@ -46,6 +46,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+  const tvm::runtime::NDArray empty_;
 
 #ifdef ENABLE_DATATRANSFORM
   DataTransform data_transform_;

@@ -299,9 +299,13 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   input_tensor.dtype = dtype;
   std::vector<int64_t> arr_shape(shape, shape + dim);
 
-  tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
-  input_arr.CopyFrom(&input_tensor);
-  inputs_[index] = input_arr;
+  // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
+  // always match.
+  if (inputs_[index] == empty_ || inputs_[index].Shape() != arr_shape ||
+      !TypeEqual(inputs_[index].DataType(), dtype)) {
+    inputs_[index] = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
+  }
+  inputs_[index].CopyFrom(&input_tensor);
 }
 
 void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
