@@ -332,10 +332,10 @@ void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
 }
 
 void RelayVMModel::UpdateInputs() {
-  const int kNumArgs = num_inputs_ + 1;
-  TVMValue* values = (TVMValue*)malloc(sizeof(TVMValue) * kNumArgs);
-  int* type_codes = (int*)malloc(sizeof(int) * kNumArgs);
-  auto arg_setter = tvm::runtime::TVMArgsSetter(values, type_codes);
+  const size_t num_args = num_inputs_ + 1;
+  std::vector<TVMValue> values(num_args);
+  std::vector<int> type_codes(num_args);
+  tvm::runtime::TVMArgsSetter arg_setter(values.data(), type_codes.data());
   arg_setter(0, ENTRY_FUNCTION);
   for (int i = 0; i < inputs_.size(); i++) {
     arg_setter(i + 1, inputs_[i]);
@@ -343,10 +343,7 @@ void RelayVMModel::UpdateInputs() {
 
   tvm::runtime::PackedFunc set_input = vm_module_->GetFunction("set_input");
   tvm::runtime::TVMRetValue rv;
-  set_input.CallPacked(tvm::runtime::TVMArgs(values, type_codes, kNumArgs), &rv);
-
-  free(values);
-  free(type_codes);
+  set_input.CallPacked(tvm::runtime::TVMArgs(values.data(), type_codes.data(), num_args), &rv);
 }
 
 void RelayVMModel::Run() {
