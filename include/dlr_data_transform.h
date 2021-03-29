@@ -12,14 +12,17 @@ namespace dlr {
 
 /*! \brief Base case for input transformers. */
 class DLR_DLL Transformer {
+ protected:
+  const tvm::runtime::NDArray empty_;
+
  public:
   virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                             tvm::runtime::NDArray& input_array) const = 0;
 
   /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
-  virtual tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json,
-                                            const nlohmann::json& transform, DLDataType dtype,
-                                            DLContext ctx) const;
+  virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                           DLDataType dtype, DLContext ctx,
+                           tvm::runtime::NDArray& input_array) const;
 };
 
 class DLR_DLL FloatTransformer : public Transformer {
@@ -72,9 +75,8 @@ class DLR_DLL DateTimeTransformer : public Transformer {
   void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                     tvm::runtime::NDArray& input_array) const;
 
-  tvm::runtime::NDArray InitNDArray(const nlohmann::json& input_json,
-                                    const nlohmann::json& transform, DLDataType dtype,
-                                    DLContext ctx) const;
+  void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                   DLDataType dtype, DLContext ctx, tvm::runtime::NDArray& input_array) const;
 };
 
 /*! \brief Handles transformations of input and output data. */
