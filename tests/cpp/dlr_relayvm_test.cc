@@ -51,6 +51,8 @@ TEST_F(RelayVMTest, TestGetInputDim) { EXPECT_EQ(model->GetInputDim(0), 4); }
 
 TEST_F(RelayVMTest, TestSetInput) {
   EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
+  // Second time should reuse same buffer.
+  EXPECT_NO_THROW(model->SetInput("image_tensor", input_shape, img.data(), input_dim));
 }
 
 TEST_F(RelayVMTest, TestGetNumOutputs) { EXPECT_EQ(model->GetNumOutputs(), 4); }

@@ -34,7 +34,7 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
         << transformer_type << " is not a valid DataTransform type.";
     const auto transformer = it->second;
 
-    tvm_inputs->at(i) = transformer->InitNDArray(input_json, transforms[i], dtypes[i], ctx);
+    transformer->InitNDArray(input_json, transforms[i], dtypes[i], ctx, tvm_inputs->at(i));
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
   }
 }
@@ -54,15 +54,19 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input,
   return input_json;
 }
 
-tvm::runtime::NDArray Transformer::InitNDArray(const nlohmann::json& input_json,
-                                               const nlohmann::json& transform, DLDataType dtype,
-                                               DLContext ctx) const {
+void Transformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                              DLDataType dtype, DLContext ctx,
+                              tvm::runtime::NDArray& input_array) const {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform CategoricalString is only supported for float32 inputs.";
-  return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
+  // always match.
+  if (input_array == empty_ || input_array.Shape() != arr_shape) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  }
 }
 
 void FloatTransformer::MapToNDArray(const nlohmann::json& input_json,
@@ -126,9 +130,9 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
   }
 }
 
-tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
-                                                       const nlohmann::json& transform,
-                                                       DLDataType dtype, DLContext ctx) const {
+void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
+                                      const nlohmann::json& transform, DLDataType dtype,
+                                      DLContext ctx, tvm::runtime::NDArray& input_array) const {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to 7
   auto date_col = transform["DateCol"].get<std::vector<int>>();
@@ -137,7 +141,9 @@ tvm::runtime::NDArray DateTimeTransformer::InitNDArray(const nlohmann::json& inp
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform DateTimeTransformer is only supported for float32 "
          "inputs.";
-  return tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  if (input_array == empty_ || input_array.Shape() != arr_shape) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  }
 }
 
 bool DateTimeTransformer::isLeap(int64_t year) const {
