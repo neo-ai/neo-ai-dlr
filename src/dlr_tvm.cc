@@ -103,8 +103,10 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
                       std::inserter(input_names_, input_names_.begin()));
   // Save the number of inputs
   num_inputs_ = input_names_.size();
+  inputs_.resize(num_inputs_);
   input_types_.resize(num_inputs_);
   for (int i = 0; i < num_inputs_; i++) {
+    inputs_[i] = tvm_graph_runtime_->GetInput(i);
     input_types_[i] = tvm_graph_runtime_->GetInputType(i);
   }
 
@@ -114,8 +116,7 @@ void TVMModel::SetupTVMModule(std::vector<std::string> model_path) {
   outputs_.resize(num_outputs_);
   output_types_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
-    tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(i);
-    outputs_[i] = output.operator->();
+    outputs_[i] = tvm_graph_runtime_->GetOutput(i);
     output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
   }
   UpdateInputShapes();
@@ -136,11 +137,19 @@ std::vector<std::string> TVMModel::GetWeightNames() const {
 }
 
 const char* TVMModel::GetInputName(int index) const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return "input";
+  }
+
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_names_[index].c_str();
 }
 
 const char* TVMModel::GetInputType(int index) const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return "json";
+  }
+
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   return input_types_[index].c_str();
 }
@@ -164,8 +173,17 @@ const char* TVMModel::GetWeightName(int index) const {
   return weight_names_[index].c_str();
 }
 
-void TVMModel::SetInput(const char* name, const int64_t* shape,
-                        const void* input, int dim) {
+void TVMModel::SetInput(const char* name, const int64_t* shape, const void* input, int dim) {
+  // Handle string input.
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    std::vector<DLDataType> dtypes;
+    for (size_t i = 0; i < num_inputs_; ++i) {
+      dtypes.emplace_back(inputs_[i]->dtype);
+    }
+    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, ctx_, &inputs_);
+    return;
+  }
+
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -184,6 +202,11 @@ void TVMModel::SetInput(const char* name, const int64_t* shape,
 }
 
 void TVMModel::GetInput(const char* name, void* input) {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    LOG(WARNING) << "GetInput is not supported for this model.";
+    return;
+  }
+
   std::string str(name);
   int index = tvm_graph_runtime_->GetInputIndex(str);
   tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
@@ -199,12 +222,19 @@ void TVMModel::GetInput(const char* name, void* input) {
 }
 
 void TVMModel::GetOutputShape(int index, int64_t* shape) const {
-  std::memcpy(shape, outputs_[index]->shape,
-              sizeof(int64_t) * outputs_[index]->ndim);
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    data_transform_.GetOutputShape(index, shape);
+    return;
+  }
+  std::memcpy(shape, outputs_[index]->shape, sizeof(int64_t) * outputs_[index]->ndim);
 }
 
 void TVMModel::GetOutput(int index, void* out) {
-  DLTensor output_tensor = *outputs_[index];
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    data_transform_.GetOutput(index, out);
+    return;
+  }
+  DLTensor output_tensor = *outputs_[index].operator->();
   output_tensor.ctx = DLContext{kDLCPU, 0};
   output_tensor.data = out;
   tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
@@ -212,6 +242,10 @@ void TVMModel::GetOutput(int index, void* out) {
 }
 
 const void* TVMModel::GetOutputPtr(int index) const {
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    return data_transform_.GetOutputPtr(index);
+  }
+
   tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
   const DLTensor* tensor = output.operator->();
   if (tensor->ctx.device_type == kDLCPU) {
@@ -221,8 +255,12 @@ const void* TVMModel::GetOutputPtr(int index) const {
 }
 
 void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    data_transform_.GetOutputSizeDim(index, size, dim);
+    return;
+  }
   *size = 1;
-  const DLTensor* tensor = outputs_[index];
+  const DLTensor* tensor = outputs_[index].operator->();
   for (int i = 0; i < tensor->ndim; ++i) {
     if (tensor->shape[i] < 0) {
       *size = -1;
@@ -235,12 +273,22 @@ void TVMModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 
 const char* TVMModel::GetOutputType(int index) const {
   CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)) {
+    return "json";
+  }
+
   return output_types_[index].c_str();
 }
 
 void TVMModel::Run() {
   tvm::runtime::PackedFunc run = tvm_module_->GetFunction("run");
   run();
+  // Apply DataTransform if needed.
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    if (HasMetadata() && data_transform_.HasOutputTransform(metadata_, i)) {
+      data_transform_.TransformOutput(metadata_, i, outputs_[i]);
+    }
+  }
 }
 
 const char* TVMModel::GetBackend() const { return "tvm"; }
@@ -306,4 +354,11 @@ int TVMModel::GetOutputIndex(const char* name) const {
 void TVMModel::GetOutputByName(const char* name, void* out) {
   int output_index = this->GetOutputIndex(name);
   this->GetOutput(output_index, out);
+}
+
+int TVMModel::GetNumInputs() const {
+  if (HasMetadata() && data_transform_.HasInputTransform(metadata_)) {
+    return 1;
+  }
+  return num_inputs_;
 }
