@@ -175,7 +175,7 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
     }
   }
 
-  datetime_digits[0] = tm.tm_wday;
+  datetime_digits[0] = tm.tm_wday == 0 ? 7 : tm.tm_wday;
   datetime_digits[1] = 1900 + tm.tm_year;
   datetime_digits[2] = tm.tm_hour;
   datetime_digits[3] = tm.tm_min;
