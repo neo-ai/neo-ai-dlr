@@ -14,7 +14,8 @@ bool DataTransform::HasInputTransform(const nlohmann::json& metadata) const {
 }
 
 bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index) const {
-  auto index_str = std::to_string(index); return metadata.count("DataTransform") && metadata["DataTransform"].count("Output") &&
+  auto index_str = std::to_string(index);
+  return metadata.count("DataTransform") && metadata["DataTransform"].count("Output") &&
          metadata["DataTransform"]["Output"].count(index_str) &&
          metadata["DataTransform"]["Output"][index_str].count("CategoricalString");
 }

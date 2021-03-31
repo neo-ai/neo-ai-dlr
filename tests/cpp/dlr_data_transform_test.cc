@@ -198,7 +198,7 @@ TEST(DLR, DataTransformDateTime) {
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   data =
-      R"([["Feb 11th, 2012, 11:34:59pm", "2006-08-23"], ["2017-05-08 14:21:28", ""], ["12:28:48.000001", "12:28:48.000001+00"], ["2004-09-07 12:28:48.000001", "2004-09-07 12:28:48.000001+00"]])";
+      R"([["Feb 11th, 2012, 11:34:59pm", "2006-08-23"], ["2017-05-08 14:21:28", ""], ["12:28:48.000001", "12:28:48.000001+00"], ["2004-09-07 12:28:48.000001-07", "2004-09-07 12:28:48.000001+08"]])";
   shape = {static_cast<int64_t>(std::strlen(data))};
 
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
