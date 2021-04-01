@@ -157,24 +157,12 @@ bool DateTimeTransformer::isLeap(int64_t year) const {
 }
 
 int64_t DateTimeTransformer::GetWeekNumber(std::tm tm) const {
-  int64_t year = 1900 + tm.tm_year;
-  int64_t monday = tm.tm_yday - (tm.tm_wday + 6) % 7;
-  int64_t monday_year = 1 + (monday + 6) % 7;
-  int64_t first_monday = (monday_year >= 4) ? monday_year - 7 : monday_year;
-  int64_t wyear = 1 + (monday - first_monday) / 7;
-
-  if (wyear == 0) {
-    wyear = 52;
-    if (monday_year == 3 || monday_year == 4 || (isLeap(year) && monday_year == 2)) wyear = 53;
-  }
-
-  if (wyear == 53) {
-    int num_days = isLeap(year) ? 366 : 365;
-    if (num_days - monday < 3) {
-      wyear = 1;
-    }
-  }
-  return wyear;
+  // mktime(&tm);
+  int day_of_the_week = (tm.tm_wday + 6) % 7;
+  tm.tm_mday -= day_of_the_week;
+  tm.tm_mday += 3;
+  mktime(&tm);
+  return tm.tm_yday / 7 + 1;
 }
 
 void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
@@ -194,7 +182,7 @@ void DateTimeTransformer::DigitizeDateTime(std::string& input_string,
     }
   }
 
-  datetime_digits[0] = tm.tm_wday;
+  datetime_digits[0] = tm.tm_wday == 0 ? 7 : tm.tm_wday;
   datetime_digits[1] = 1900 + tm.tm_year;
   datetime_digits[2] = tm.tm_hour;
   datetime_digits[3] = tm.tm_min;
