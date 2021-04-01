@@ -111,6 +111,8 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   }
   // Get list of weights
   weight_names_ = tvm_graph_runtime_->GetWeightNames();
+  // Weight names can be in a random order. Sort them for consistency.
+  std::sort(weight_names_.begin(), weight_names_.end());
   num_weights_ = weight_names_.size();
   // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
   // Remove weights from input_names while maintaining order.
