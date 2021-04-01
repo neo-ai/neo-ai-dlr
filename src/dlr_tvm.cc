@@ -113,11 +113,11 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   weight_names_ = tvm_graph_runtime_->GetWeightNames();
   num_weights_ = weight_names_.size();
   // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
-  // Compute set difference to get names of inputs only
-  std::sort(input_names.begin(), input_names.end());
-  std::sort(weight_names_.begin(), weight_names_.end());
-  std::set_difference(input_names.begin(), input_names.end(), weight_names_.begin(),
-                      weight_names_.end(), std::inserter(input_names_, input_names_.begin()));
+  // Remove weights from input_names while maintaining order.
+  std::unordered_set<std::string> weight_names_set(weight_names_.begin(), weight_names_.end());
+  for (auto& name : input_names) {
+    if (weight_names_set.count(name) == 0) input_names_.push_back(name);
+  }
   // Save the number of inputs
   num_inputs_ = input_names_.size();
   input_types_.resize(num_inputs_);
