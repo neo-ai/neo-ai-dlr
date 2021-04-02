@@ -79,15 +79,15 @@ void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
       0)
       << TreeliteGetLastError();
   treelite_output_buffer_size_ = num_output_class;
-  treelite_output_.empty();
+  // Reserve space for 1 row.
+  treelite_output_.resize(treelite_output_buffer_size_);
   // NOTE: second dimension of the output shape is smaller than num_output_class
   //       when a multi-class classifier outputs only the class prediction
   //       (argmax) To detect this edge case, run TreelitePredictorPredictInst()
   //       once.
   std::vector<TreelitePredictorEntry> tmp_in(treelite_num_feature_);
-  std::vector<float> tmp_out(num_output_class);
   CHECK_EQ(TreelitePredictorPredictInst(treelite_model_, tmp_in.data(), 0,
-                                        tmp_out.data(), &treelite_output_size_),
+                                        treelite_output_.data(), &treelite_output_size_),
            0)
       << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
