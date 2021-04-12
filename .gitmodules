@@ -3,7 +3,7 @@
 	url = https://github.com/neo-ai/tvm.git
 [submodule "3rdparty/treelite"]
 	path = 3rdparty/treelite
-	url = https://github.com/neo-ai/treelite
+	url = https://github.com/dmlc/treelite.git
 [submodule "3rdparty/libnpy"]
 	path = 3rdparty/libnpy
 	url = https://github.com/llohse/libnpy.git
