@@ -1,0 +1,14 @@
+[property]
+gpu-id=0
+net-scale-factor=1
+model-color-format=0
+labelfile-path=labels.txt
+num-detected-classes=80
+interval=0
+gie-unique-id=1
+process-mode=1
+network-type=0
+cluster-mode=4
+maintain-aspect-ratio=0
+engine-create-func-name=NvDsInferNeoDlrCudaEngineGet
+custom-lib-path=libnvdsinfer_custom_impl_neodlr.so
