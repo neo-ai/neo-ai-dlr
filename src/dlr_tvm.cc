@@ -146,9 +146,7 @@ void TVMModel::UpdateInputShapes() {
   }
 }
 
-std::vector<std::string> TVMModel::GetWeightNames() const {
-  return weight_names_;
-}
+std::vector<std::string> TVMModel::GetWeightNames() const { return weight_names_; }
 
 const char* TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
