@@ -103,21 +103,19 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
 
   tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));
 
-  // This is the combined count of inputs and weights
-  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
-  std::vector<std::string> input_names;
-  for (int i = 0; i < num_inputs_weights; i++) {
-    input_names.push_back(tvm_graph_runtime_->GetInputName(i));
-  }
-  // Get list of weights
+  // Get list of weights.
   weight_names_ = tvm_graph_runtime_->GetWeightNames();
   num_weights_ = weight_names_.size();
-  // tvm_graph_runtime_->GetInputName(*) returns both inputs and weights
-  // Compute set difference to get names of inputs only
-  std::sort(input_names.begin(), input_names.end());
-  std::sort(weight_names_.begin(), weight_names_.end());
-  std::set_difference(input_names.begin(), input_names.end(), weight_names_.begin(),
-                      weight_names_.end(), std::inserter(input_names_, input_names_.begin()));
+  std::unordered_set<std::string> weight_names_set(weight_names_.begin(), weight_names_.end());
+  // TVM inputs contains both inputs and weights.
+  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
+  // Filter out weights to get only inputs.
+  for (int i = 0; i < num_inputs_weights; i++) {
+    auto name = tvm_graph_runtime_->GetInputName(i);
+    if (weight_names_set.count(name) == 0) {
+      input_names_.push_back(name);
+    }
+  }
   // Save the number of inputs
   num_inputs_ = input_names_.size();
   input_types_.resize(num_inputs_);
@@ -148,9 +146,7 @@ void TVMModel::UpdateInputShapes() {
   }
 }
 
-std::vector<std::string> TVMModel::GetWeightNames() const {
-  return tvm_graph_runtime_->GetWeightNames();
-}
+std::vector<std::string> TVMModel::GetWeightNames() const { return weight_names_; }
 
 const char* TVMModel::GetInputName(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
