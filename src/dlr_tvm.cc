@@ -147,7 +147,7 @@ void TVMModel::UpdateInputShapes() {
 }
 
 std::vector<std::string> TVMModel::GetWeightNames() const {
-  return tvm_graph_runtime_->GetWeightNames();
+  return weight_names_;
 }
 
 const char* TVMModel::GetInputName(int index) const {
