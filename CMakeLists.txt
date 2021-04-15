@@ -471,6 +471,22 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/${INVERSELABEL_MODEL})
   endif()
 
+  set(INPUTORDER_MODEL input_order-ml_m4.tar.gz)
+  set(INPUTORDER_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/input_order)
+  if(NOT IS_DIRECTORY ${INPUTORDER_MODEL_DIR})
+    file(MAKE_DIRECTORY ${INPUTORDER_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.9.0/${INPUTORDER_MODEL}
+      /tmp/${INPUTORDER_MODEL}
+      SHA1
+      e677130d4e47f0a5298f0280aa36a28ae9bb5ef1
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${INPUTORDER_MODEL}
+                    WORKING_DIRECTORY ${INPUTORDER_MODEL_DIR})
+    file(REMOVE /tmp/${INPUTORDER_MODEL})
+  endif()
+
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
