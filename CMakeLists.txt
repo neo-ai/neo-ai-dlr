@@ -425,6 +425,22 @@ if(NOT(AAR_BUILD))
     file(REMOVE /tmp/${AUTOML_MODEL})
   endif()
 
+  set(AUTOML_STATIC_MODEL automl_static-ml_m4.tar.gz)
+  set(AUTOML_STATIC_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/automl_static)
+  if(NOT IS_DIRECTORY ${AUTOML_STATIC_MODEL_DIR})
+    file(MAKE_DIRECTORY ${AUTOML_STATIC_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.9.0/${AUTOML_STATIC_MODEL}
+      /tmp/${AUTOML_STATIC_MODEL}
+      SHA1
+      d776a30bcaeceff99844958fc88085972f5aec24
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${AUTOML_STATIC_MODEL}
+                    WORKING_DIRECTORY ${AUTOML_STATIC_MODEL_DIR})
+    file(REMOVE /tmp/${AUTOML_STATIC_MODEL})
+  endif()
+
   set(PIPELINE_MODEL1 ${CMAKE_CURRENT_BINARY_DIR}/pipeline_model1)
   if(NOT IS_DIRECTORY ${PIPELINE_MODEL1})
     file(MAKE_DIRECTORY ${PIPELINE_MODEL1})
@@ -485,6 +501,22 @@ if(NOT(AAR_BUILD))
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${INPUTORDER_MODEL}
                     WORKING_DIRECTORY ${INPUTORDER_MODEL_DIR})
     file(REMOVE /tmp/${INPUTORDER_MODEL})
+  endif()
+
+  set(INVERSELABEL_STATIC_MODEL inverselabel_static-ml_m4.tar.gz)
+  set(INVERSELABEL_STATIC_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/inverselabel_static)
+  if(NOT IS_DIRECTORY ${INVERSELABEL_STATIC_MODEL_DIR})
+    file(MAKE_DIRECTORY ${INVERSELABEL_STATIC_MODEL_DIR})
+    download_file(
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.9.0/${INVERSELABEL_STATIC_MODEL}
+      /tmp/${INVERSELABEL_STATIC_MODEL}
+      SHA1
+      bc4b0d958a18579362c4255741fdb4b86ab92aad
+    )
+    # this is OS-agnostic
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${INVERSELABEL_STATIC_MODEL}
+                    WORKING_DIRECTORY ${INVERSELABEL_STATIC_MODEL_DIR})
+    file(REMOVE /tmp/${INVERSELABEL_STATIC_MODEL})
   endif()
 
   if(WITH_HEXAGON)
