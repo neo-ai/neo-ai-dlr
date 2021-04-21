@@ -6,6 +6,7 @@ include(3rdparty/tvm/cmake/utils/FindCUDA.cmake)
 # Option for Android on Arm --- has to come before project() function
 option(ANDROID_BUILD "Build for Android target" OFF)
 option(AAR_BUILD "Build Android Archive (AAR)" OFF)
+option(DLR_BUILD_TESTS "Build DLR tests" ON)
 
 if(ANDROID_BUILD)
     set(ANDROID_SYSROOT "${NDK_ROOT}/sysroot")
@@ -15,7 +16,9 @@ if(ANDROID_BUILD)
     endif()
 endif(ANDROID_BUILD)
 
-project(dlr)
+project(dlr VERSION 1.9.0 LANGUAGES C CXX)
+
+message(STATUS "dlr version: ${dlr_VERSION}")
 
 # The following lines should be after project()
 set_default_configuration_release()
@@ -256,10 +259,10 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
-if(ANDROID_BUILD)
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS})
-else()
-  target_link_libraries(dlr treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
+target_link_libraries(dlr PRIVATE treelite_runtime_static tvm_runtime_static)
+target_link_libraries(dlr PUBLIC ${DLR_LINKER_LIBS})
+if(NOT(ANDROID_BUILD))
+  target_link_libraries(dlr PUBLIC pthread)
 endif()
 
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
@@ -295,8 +298,40 @@ foreach(__srcpath ${DEMO_SRCS})
 endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
+target_include_directories(dlr INTERFACE $<INSTALL_INTERFACE:include>)
+install(TARGETS dlr
+        DESTINATION lib
+        EXPORT dlrTargets)
+install(FILES include/dlr.h DESTINATION include)
+install(EXPORT dlrTargets
+  FILE dlrTargets.cmake
+  DESTINATION lib/cmake/dlr
+)
+
+include(CMakePackageConfigHelpers)
+# generate the config file that is includes the exports
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/dlrConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/dlr"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  )
+# generate the version file for the config file
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/dlrConfigVersion.cmake"
+  VERSION "${dlr_VERSION}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+# install the configuration file
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/dlrConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/dlrConfigVersion.cmake
+  DESTINATION lib/cmake/dlr
+)
+
 # Tests
-if(NOT(AAR_BUILD))
+if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   include(cmake/googletest.cmake)
   if (WIN32)
     include_directories(${DLFCN_WIN32}/src)
