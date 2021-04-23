@@ -23,32 +23,29 @@ std::string dlr::GetParentFolder(const std::string& path) {
 }
 
 std::string dlr::GetBasename(const std::string& path) {
-#ifdef _WIN32
-  /* remove any trailing backward or forward slashes
-     (UNIX does this automatically) */
-  std::string path_;
-  std::string::size_type tmp = path.find_last_of("/\\");
-  if (tmp == path.length() - 1) {
-    size_t i = tmp;
-    while ((path[i] == '/' || path[i] == '\\') && i >= 0) {
-      --i;
-    }
-    path_ = path.substr(0, i + 1);
-  } else {
-    path_ = path;
+  if (path.empty()) {
+    return {};
   }
-  std::vector<char> fname(path_.length() + 1);
-  std::vector<char> ext(path_.length() + 1);
-  _splitpath_s(path_.c_str(), NULL, 0, NULL, 0, &fname[0], path_.length() + 1, &ext[0],
-               path_.length() + 1);
-  return std::string(&fname[0]) + std::string(&ext[0]);
-#else
-  char* path_ = strdup(path.c_str());
-  char* base = basename(path_);
-  std::string ret(base);
-  free(path_);
-  return ret;
-#endif
+  auto len = path.length();
+  auto index = path.find_last_of("/\\");
+  if (index == std::string::npos) {
+    return path;
+  }
+  if (index + 1 >= len) {
+    len--;
+    index = path.substr(0, len).find_last_of("/\\");
+    if (len == 0) {
+      return path;
+    }
+    if (index == 0) {
+      return path.substr(1, len - 1);
+    }
+    if (index == std::string::npos) {
+      return path.substr(0, len);
+    }
+    return path.substr(index + 1, len - index - 1);
+  }
+  return path.substr(index + 1, len - index);
 }
 
 void dlr::ListDir(const std::string& path, std::vector<std::string>& paths) {
