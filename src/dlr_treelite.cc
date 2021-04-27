@@ -52,6 +52,11 @@ ModelPath dlr::GetTreelitePaths(std::vector<std::string> dirname) {
   return paths;
 }
 
+TreeliteInput::~TreeliteInput() {
+  if (handle) TreeliteDeleteSparseBatch(handle);
+  handle = nullptr;
+}
+
 void TreeliteModel::SetupTreeliteModule(std::vector<std::string> model_path) {
   ModelPath paths = GetTreelitePaths(model_path);
   // If OMP_NUM_THREADS is set, use it to determine number of threads;

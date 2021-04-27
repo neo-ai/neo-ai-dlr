@@ -143,5 +143,8 @@ int main(int argc, char** argv) {
   }
   std::cout << "Max probability is " << max_pred << " at index " << max_id
             << std::endl;
+
+  // cleanup
+  DeleteDLRModel(&model);
   return 0;
 }
