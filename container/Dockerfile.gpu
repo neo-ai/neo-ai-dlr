@@ -20,8 +20,8 @@ RUN apt-get update && \
     curl \
     ca-certificates \
     openssl \
-    libssl1.1 \
     libnettle6 \
+    libssl1.1 \
     libzstd1 \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
