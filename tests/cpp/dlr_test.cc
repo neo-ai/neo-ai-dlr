@@ -121,6 +121,7 @@ TEST(DLR, TestGetDLRNumOutputs) {
   int num_outputs;
   EXPECT_EQ(GetDLRNumOutputs(&model, &num_outputs), 0);
   EXPECT_EQ(num_outputs, 2);
+  DeleteDLRModel(&model);
 }
 
 TEST(DLR, TestGetDLROutputType) {
@@ -253,6 +254,7 @@ TEST(DLR, TestCreateFromPaths_TVM) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
   }
 
+  output1_p->deleter(output1_p);
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
   DeleteDLTensor(input);
@@ -297,6 +299,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
     EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
   }
 
+  output3_p->deleter(output3_p);
   DeleteDLTensor(output3);
   DeleteDLTensor(input);
   DeleteDLRModel(&model);
@@ -378,6 +381,7 @@ TEST(DLR, TestSetInputTensorZeroCopy_TVM) {
     EXPECT_EQ(((float*)(output1_p->dl_tensor.data))[i], ((float*)(output1.data))[i]);
   }
 
+  output1_p->deleter(output1_p);
   DeleteDLTensor(output0);
   DeleteDLTensor(output1);
   DeleteDLTensor(input);

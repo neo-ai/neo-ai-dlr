@@ -91,6 +91,7 @@ TEST(PipelineTest, TestGetDLRNumOutputs) {
   int num_outputs;
   EXPECT_EQ(GetDLRNumOutputs(&model, &num_outputs), 0);
   EXPECT_EQ(num_outputs, 1);
+  DeleteDLRModel(&model);
 }
 
 TEST(PipelineTest, TestGetDLROutputType) {
