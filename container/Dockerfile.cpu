@@ -13,6 +13,7 @@ RUN apt-get update && \
     wget \
     curl \
     ca-certificates \
+    libnettle6 \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
