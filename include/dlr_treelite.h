@@ -22,7 +22,8 @@ struct TreeliteInput {
   std::vector<size_t, DLRAllocator<size_t>> row_ptr;
   size_t num_row;
   size_t num_col;
-  CSRBatchHandle handle;
+  CSRBatchHandle handle = nullptr;
+  ~TreeliteInput();
 };
 
 /*! \brief Get the paths of the Treelite model files.

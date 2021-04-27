@@ -120,6 +120,7 @@ TEST(DLR, TestGetDLRNumOutputs) {
   int num_outputs;
   EXPECT_EQ(GetDLRNumOutputs(&model, &num_outputs), 0);
   EXPECT_EQ(num_outputs, 2);
+  DeleteDLRModel(&model);
 }
 
 TEST(DLR, TestGetDLROutputType) {
