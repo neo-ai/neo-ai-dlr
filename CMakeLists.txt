@@ -96,7 +96,6 @@ set(LIBNPY_SRC "${PROJECT_SOURCE_DIR}/3rdparty/libnpy")
 set(TREELITE_SRC "${PROJECT_SOURCE_DIR}/3rdparty/treelite")
 set(DMLC_CORE_SRC "${TVM_SRC}/3rdparty/dmlc-core")
 set(DLPACK_SRC "${TVM_SRC}/3rdparty/dlpack")
-set(FMT_SRC "${TREELITE_SRC}/3rdparty/fmt")
 
 include_directories("${TVM_SRC}/include")
 include_directories("${TVM_SRC}/src/runtime")
@@ -104,7 +103,6 @@ include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
 include_directories("${FMT_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
-include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${JSON_SRC}")
 
@@ -246,7 +244,9 @@ set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
 
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_STATIC_LIBS ON)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_STATIC_LIBS OFF)
 add_library(objdlr OBJECT ${DLR_SRC})
 
 #shared_library
