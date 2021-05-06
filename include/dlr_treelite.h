@@ -22,7 +22,7 @@ struct TreeliteInput {
   std::vector<size_t, DLRAllocator<size_t>> row_ptr;
   size_t num_row;
   size_t num_col;
-  CSRBatchHandle handle = nullptr;
+  DMatrixHandle handle = nullptr;
   ~TreeliteInput();
 };
 

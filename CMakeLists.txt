@@ -106,7 +106,6 @@ include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
-include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${JSON_SRC}")
 
@@ -249,7 +248,9 @@ FILE(GLOB MAIN_SRC src/*.cc)
 
 set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_STATIC_LIBS ON)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_STATIC_LIBS OFF)
 add_library(objdlr OBJECT ${DLR_SRC})
 
 target_compile_definitions(objdlr PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
