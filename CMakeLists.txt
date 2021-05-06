@@ -273,15 +273,6 @@ endif()
 add_library(dlr_static STATIC $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr_static ${CMAKE_BINARY_DIR}/lib)
 
-set(OPREFIX object_)
-add_custom_target(combined_lib
-	COMMAND mkdir -p ${OPREFIX}tvm_runtime || true && cd ${OPREFIX}tvm_runtime &&  ar -x ${TVM_RUNTIME}
-	COMMAND mkdir -p ${OPREFIX}treelite_runtime || true && cd ${OPREFIX}treelite_runtime &&  ar -x ${TREELITE_RUNTIME}
-	COMMAND g++  ${OPREFIX}*/*.o -shared -o ${CMAKE_CURRENT_SOURCE_DIR}/libcombined.so
-	COMMAND rm -rf ${OPREFIX}*
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
-
 # Demos
 set(DEMO_EXECS "")
 file(GLOB DEMO_SRCS demo/cpp/*.cc)
