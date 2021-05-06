@@ -147,5 +147,7 @@ int main(int argc, char** argv) {
 
   peek_model(model);
 
+  // cleanup
+  DeleteDLRModel(&model);
   return 0;
 }

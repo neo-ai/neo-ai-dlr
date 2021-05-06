@@ -137,5 +137,8 @@ int main(int argc, char** argv) {
     max_pred = max_pred_uint8;
   }
   std::cout << "Max probability is " << max_pred << " at index " << max_id << std::endl;
+
+  // cleanup
+  DeleteDLRModel(&model);
   return 0;
 }
