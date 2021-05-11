@@ -21,7 +21,7 @@ class DLR_DLL Transformer {
 
   /*! \brief Helper function for TransformInput. Allocates NDArray to store mapped input data. */
   virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                           DLDataType dtype, DLContext ctx,
+                           DLDataType dtype, DLDevice dev,
                            tvm::runtime::NDArray& input_array) const;
 };
 
@@ -77,7 +77,7 @@ class DLR_DLL DateTimeTransformer : public Transformer {
                     tvm::runtime::NDArray& input_array) const;
 
   void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                   DLDataType dtype, DLContext ctx, tvm::runtime::NDArray& input_array) const;
+                   DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array) const;
 };
 
 /*! \brief Handles transformations of input and output data. */
@@ -117,7 +117,7 @@ class DLR_DLL DataTransform {
    * for the model input.
    */
   void TransformInput(const nlohmann::json& metadata, const int64_t* shape, const void* input,
-                      int dim, const std::vector<DLDataType>& dtypes, DLContext ctx,
+                      int dim, const std::vector<DLDataType>& dtypes, DLDevice dev,
                       std::vector<tvm::runtime::NDArray>* tvm_inputs) const;
 
   /*! \brief Transform integer output using CategoricalString output DataTransform. When this map is

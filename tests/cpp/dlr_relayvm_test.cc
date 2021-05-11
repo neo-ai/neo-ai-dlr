@@ -25,10 +25,10 @@ class RelayVMTest : public ::testing::Test {
   RelayVMTest() {
     const int device_type = kDLCPU;
     const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
     std::vector<std::string> files = dlr::FindFiles(paths);
-    model = new dlr::RelayVMModel(files, ctx);
+    model = new dlr::RelayVMModel(files, dev);
   }
 
   ~RelayVMTest() { delete model; }

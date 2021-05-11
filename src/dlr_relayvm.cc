@@ -86,12 +86,12 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   vm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(vm));
 
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
-  if (ctx_.device_type == DLDeviceType::kDLCPU) {
-    init(static_cast<int>(ctx_.device_type), ctx_.device_id,
+  if (dev_.device_type == DLDeviceType::kDLCPU) {
+    init(static_cast<int>(dev_.device_type), dev_.device_id,
          static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
   } else {
     // CPU context also must be initialized because input/output data comes from CPU.
-    init(static_cast<int>(ctx_.device_type), ctx_.device_id,
+    init(static_cast<int>(dev_.device_type), dev_.device_id,
          static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled),
          static_cast<int>(DLDeviceType::kDLCPU), 0,
          static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
@@ -188,7 +188,7 @@ void RelayVMModel::GetInput(const char* name, void* input) {
   auto in_array = inputs_[index];
   DLTensor input_tensor;
   input_tensor.data = input;
-  input_tensor.ctx = ctx_;
+  input_tensor.device = dev_;
   input_tensor.ndim = in_array->ndim;
   input_tensor.dtype = in_array->dtype;
   input_tensor.shape = in_array->shape;
@@ -282,7 +282,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
     for (size_t i = 0; i < num_inputs_; ++i) {
       dtypes.emplace_back(GetInputDLDataType(i));
     }
-    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, ctx_, &inputs_);
+    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, dev_, &inputs_);
     return;
   }
 #endif
@@ -291,7 +291,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   DLDataType dtype = GetInputDLDataType(index);
   DLTensor input_tensor;
   input_tensor.data = const_cast<void*>(input);
-  input_tensor.ctx = DLContext{DLDeviceType::kDLCPU, 0};
+  input_tensor.device = DLDevice{DLDeviceType::kDLCPU, 0};
   input_tensor.ndim = dim;
   input_tensor.shape = const_cast<int64_t*>(shape);
   input_tensor.strides = nullptr;
@@ -303,7 +303,7 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
   // always match.
   if (inputs_[index] == empty_ || inputs_[index].Shape() != arr_shape ||
       !TypeEqual(inputs_[index].DataType(), dtype)) {
-    inputs_[index] = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx_);
+    inputs_[index] = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev_);
   }
   inputs_[index].CopyFrom(&input_tensor);
 }
@@ -317,7 +317,7 @@ void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
       dtypes.emplace_back(GetInputDLDataType(i));
     }
     data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim, dtypes,
-                                   ctx_, &inputs_);
+                                   dev_, &inputs_);
     return;
   }
 #endif
@@ -325,7 +325,7 @@ void RelayVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
   int index = GetInputIndex(name);
   if (index > -1) {
     std::vector<int64_t> arr_shape(tensor->shape, tensor->shape + tensor->ndim);
-    tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, tensor->dtype, ctx_);
+    tvm::runtime::NDArray input_arr = tvm::runtime::NDArray::Empty(arr_shape, tensor->dtype, dev_);
     input_arr.CopyFrom(tensor);
     inputs_[index] = input_arr;
   }
@@ -388,7 +388,7 @@ void RelayVMModel::GetOutput(int index, void* output) {
 
   DLTensor output_tensor;
   output_tensor.data = output;
-  output_tensor.ctx = DLContext{DLDeviceType::kDLCPU, 0};
+  output_tensor.device = DLDevice{DLDeviceType::kDLCPU, 0};
   output_tensor.ndim = out_array->ndim;
   output_tensor.dtype = out_array->dtype;
   output_tensor.shape = out_array->shape;

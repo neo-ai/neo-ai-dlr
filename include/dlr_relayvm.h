@@ -61,14 +61,14 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DLDataType GetInputDLDataType(int index);
 
  public:
-  explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+  explicit RelayVMModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM) {
     SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
-  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM) {
     SetupVMModule(model_elems);
     FetchInputNodesData();
     FetchOutputNodesData();

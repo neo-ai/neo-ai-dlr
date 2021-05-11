@@ -1,7 +1,7 @@
 #ifndef DLR_TVM_H_
 #define DLR_TVM_H_
 
-#include <graph/graph_runtime.h>
+#include <graph_executor/graph_executor.h>
 #include <tvm/runtime/memory.h>
 #include <tvm/runtime/registry.h>
 
@@ -23,7 +23,7 @@ namespace dlr {
  */
 class DLR_DLL TVMModel : public DLRModel {
  private:
-  tvm::runtime::ObjectPtr<tvm::runtime::GraphRuntime> tvm_graph_runtime_;
+  tvm::runtime::ObjectPtr<tvm::runtime::GraphExecutor> tvm_graph_executor_;
   std::shared_ptr<tvm::runtime::Module> tvm_module_;
   std::vector<tvm::runtime::NDArray> inputs_;
   std::vector<tvm::runtime::NDArray> outputs_;
@@ -41,12 +41,12 @@ class DLR_DLL TVMModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
+  explicit TVMModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTVM) {
     SetupTVMModule(files);
   }
-  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTVM) {
+  explicit TVMModel(std::vector<DLRModelElem> model_elems, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTVM) {
     SetupTVMModule(model_elems);
   }
 

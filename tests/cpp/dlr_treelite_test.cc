@@ -30,10 +30,10 @@ class TreeliteTest : public ::testing::Test {
     // Instantiate model
     const int device_type = 1;
     const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./xgboost_test"};
     std::vector<std::string> files = dlr::FindFiles(paths);
-    model = new dlr::TreeliteModel(files, ctx);
+    model = new dlr::TreeliteModel(files, dev);
   }
 
   ~TreeliteTest() { delete model; }

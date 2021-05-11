@@ -55,8 +55,8 @@ class DLR_DLL TreeliteModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTREELITE) {
+  explicit TreeliteModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTREELITE) {
     SetupTreeliteModule(files);
   }
 

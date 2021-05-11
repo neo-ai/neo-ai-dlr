@@ -214,10 +214,10 @@ void DLRModel::ValidateDeviceTypeIfExists() {
     // Ignore missing metadata file or missing device type.
     return;
   }
-  if (device_type != 0 && ctx_.device_type != device_type) {
+  if (device_type != 0 && dev_.device_type != device_type) {
     std::string msg = "Compiled model requires device type \"";
     msg += GetStringFromDeviceType(device_type) + "\" but user gave \"";
-    msg += GetStringFromDeviceType(ctx_.device_type) + "\".";
+    msg += GetStringFromDeviceType(dev_.device_type) + "\".";
     throw dmlc::Error(msg);
   }
 }

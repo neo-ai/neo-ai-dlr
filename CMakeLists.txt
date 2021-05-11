@@ -145,7 +145,7 @@ endif(USE_OPENCL)
 
 if(USE_CUDA)
     message("USING CUDA")
-    find_cuda(${USE_CUDA})
+    find_cuda(${USE_CUDA} ${USE_CUDNN})
     if(NOT CUDA_FOUND)
         message(FATAL_ERROR "CUDA not found, please specify CUDA location with -DUSE_CUDA=/path/to/cuda/")
     endif(NOT CUDA_FOUND)
@@ -227,7 +227,7 @@ if(USE_TENSORRT)
     list(APPEND DLR_SRC ${RUNTIME_TENSORRT_SRCS})
 
     # Set defines
-    add_definitions(-DTVM_GRAPH_RUNTIME_TENSORRT)
+    add_definitions(-DTVM_GRAPH_EXECUTOR_TENSORRT)
 
     set(USE_TENSORRT OFF)
 endif()
@@ -247,9 +247,13 @@ endif()
 set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
 
+set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 add_library(objdlr OBJECT ${DLR_SRC})
+
+target_compile_definitions(objdlr PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
+target_compile_definitions(objdlr PRIVATE TVM_USE_LIBBACKTRACE=0)
 
 #shared_library
 find_package(Threads)
@@ -354,6 +358,8 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
+    target_compile_definitions(${__execname} PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
+    target_compile_definitions(${__execname} PRIVATE TVM_USE_LIBBACKTRACE=0)
     target_link_libraries(${__execname} dlr gtest_main)
     set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})

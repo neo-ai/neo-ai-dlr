@@ -17,7 +17,7 @@ class TVMElemTest : public ::testing::Test {
   const std::string meta_file = "./resnet_v1_5_50/compiled.meta";
   int device_type = 1;
   int device_id = 0;
-  DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+  DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
 
   dlr::TVMModel* model;
 
@@ -36,7 +36,7 @@ class TVMElemTest : public ::testing::Test {
     img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
 
     // Instantiate model
-    model = new dlr::TVMModel(model_elems, ctx);
+    model = new dlr::TVMModel(model_elems, dev);
   }
 
   ~TVMElemTest() { delete model; }
@@ -53,7 +53,7 @@ TEST_F(TVMElemTest, TestCreateModel_LibTvmIsPointer) {
   EXPECT_THROW(
       {
         try {
-          new dlr::TVMModel(model_elems, ctx);
+          new dlr::TVMModel(model_elems, dev);
         } catch (const dmlc::Error& e) {
           EXPECT_STREQ(e.what(), "Invalid TVM model element TVM_LIB. TVM_LIB must be a file path.");
           throw;
@@ -70,7 +70,7 @@ TEST_F(TVMElemTest, TestCreateModel_GraphIsMissing) {
   EXPECT_THROW(
       {
         try {
-          new dlr::TVMModel(model_elems, ctx);
+          new dlr::TVMModel(model_elems, dev);
         } catch (const dmlc::Error& e) {
           EXPECT_STREQ(e.what(),
                        "Invalid TVM model. Must have TVM_GRAPH, TVM_PARAMS and TVM_LIB elements");
