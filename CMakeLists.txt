@@ -74,14 +74,7 @@ option(TEST_COVERAGE "C++ test coverage" OFF)
 # Compiler flags
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# --exclude-libs is not available on Windows and macOS. As such, Windows and 
-# Mac do not support the creation of multiple DLRModel instances (in Python) in 
-# case model folders have their own libdlr.so.
-if (WIN32 OR APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--exclude-libs,ALL")
-endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funroll-loops")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
@@ -130,7 +123,7 @@ if(USE_OPENCL)
       if(NOT OpenCL_FOUND)
         message(FATAL_ERROR "OpenCL not found, please specify OpenCL location with -DUSE_OPENCL=/path/to/OpenCL")
       endif(NOT OpenCL_FOUND)
-    else(USE_OPENCL STREQUAL "ON")
+    else()
       set(OpenCL_TOOLKIT_ROOT_DIR ${USE_OPENCL})
       message(STATUS "Custom OPENCL_PATH=" ${OpenCL_TOOLKIT_ROOT_DIR})
       set(OpenCL_INCLUDE_DIRS ${OpenCL_TOOLKIT_ROOT_DIR}/include)
@@ -258,6 +251,14 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
+# --exclude-libs is not available on Windows and macOS. As such, Windows and
+# Mac do not support the creation of multiple DLRModel instances (in Python) in
+# case model folders have their own libdlr.so.
+if(WIN32 OR APPLE)
+  message(STATUS "Loading of multiple different DLR shared libraries in Python session is not supported on Windows and Mac")
+else()
+  target_link_libraries(dlr PRIVATE "-Wl,--exclude-libs,ALL")
+endif()
 target_link_libraries(dlr PRIVATE treelite_runtime_static tvm_runtime_static)
 target_link_libraries(dlr PUBLIC ${DLR_LINKER_LIBS})
 if(DLR_STATIC_LIBSTDCPP)
