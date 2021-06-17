@@ -4,6 +4,7 @@
 #include <dlpack/dlpack.h>
 #include <dmlc/logging.h>
 
+#include <stdlib.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -102,6 +103,14 @@ DLTensor GetEmptyDLTensor(int ndim, int64_t* shape, uint8_t dtype, uint8_t bits)
 void DeleteDLTensor(DLTensor& dltensor) {
   free(dltensor.shape);
   free(dltensor.data);
+}
+
+int SetEnv(const char* key, const char* value) {
+#ifdef _WIN32
+  return static_cast<int>(_putenv_s(key, value));
+#else
+  return setenv(key, value, 1);
+#endif  // _WIN32
 }
 
 #endif

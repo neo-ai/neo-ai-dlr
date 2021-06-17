@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <nlohmann/json.hpp>
+
 #include "test_utils.hpp"
 
 int main(int argc, char** argv) {
@@ -136,4 +138,46 @@ TEST_F(RelayVMTest, TestGetOutput) {
   for (int i = 0; i < 100; i++) {
     EXPECT_EQ(output3_p[i], output3[i]);
   }
+}
+
+TEST(DLR, TestRelayVMAllocatorDefault) {
+  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kPooled);
+
+  delete model;
+}
+
+TEST(DLR, TestRelayVMAllocatorEnvVar) {
+  EXPECT_EQ(SetEnv("DLR_RELAYVM_ALLOCATOR", "naive"), 0);
+  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
+  std::vector<std::string> files = dlr::FindFiles(paths);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
+
+  delete model;
+  EXPECT_EQ(SetEnv("DLR_RELAYVM_ALLOCATOR", ""), 0);
+}
+
+TEST(DLR, TestRelayVMAllocatorFromMetadata) {
+  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  std::string ro_file = "./ssd_mobilenet_v1/code.ro";
+  std::string so_file = "./ssd_mobilenet_v1/compiled.so";
+  std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
+  std::ifstream ifs(meta_file);
+  nlohmann::json metadata = nlohmann::json::parse(ifs);
+  metadata["Model"]["RelayVMAllocator"] = "naive";
+  std::string meta_str = metadata.dump();
+  std::vector<DLRModelElem> model_elems = {
+      {DLRModelElemType::RELAY_EXEC, ro_file.c_str(), nullptr, 0},
+      {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
+      {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), meta_str.size()}};
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(model_elems, ctx);
+  EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
+  delete model;
 }

@@ -75,6 +75,13 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
 
   LoadJsonFromString(metadata_data, this->metadata_);
   ValidateDeviceTypeIfExists();
+  // Override allocator - default is kPooled.
+  const char* val = std::getenv("DLR_RELAYVM_ALLOCATOR");
+  if ((metadata_.count("Model") && metadata_["Model"].count("RelayVMAllocator") &&
+       metadata_["Model"]["RelayVMAllocator"].get<std::string>() == "naive") ||
+      (val != nullptr && std::string(val) == "naive")) {
+    allocator_type_ = tvm::runtime::vm::AllocatorType::kNaive;
+  }
 
   tvm::runtime::Module lib = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
@@ -87,14 +94,11 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
 
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
   if (ctx_.device_type == DLDeviceType::kDLCPU) {
-    init(static_cast<int>(ctx_.device_type), ctx_.device_id,
-         static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
+    init(static_cast<int>(ctx_.device_type), ctx_.device_id, static_cast<int>(allocator_type_));
   } else {
     // CPU context also must be initialized because input/output data comes from CPU.
-    init(static_cast<int>(ctx_.device_type), ctx_.device_id,
-         static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled),
-         static_cast<int>(DLDeviceType::kDLCPU), 0,
-         static_cast<int>(tvm::runtime::vm::AllocatorType::kPooled));
+    init(static_cast<int>(ctx_.device_type), ctx_.device_id, static_cast<int>(allocator_type_),
+         static_cast<int>(DLDeviceType::kDLCPU), 0, static_cast<int>(allocator_type_));
   }
 }
 
@@ -528,3 +532,5 @@ int RelayVMModel::GetNumInputs() const {
 
   return num_inputs_;
 }
+
+tvm::runtime::vm::AllocatorType RelayVMModel::GetAllocatorType() { return allocator_type_; }
