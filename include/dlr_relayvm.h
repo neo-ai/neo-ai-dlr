@@ -46,6 +46,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   tvm::runtime::ObjectRef output_ref_;
   std::vector<tvm::runtime::NDArray> outputs_;
   std::vector<std::vector<int64_t>> output_shapes_;
+  tvm::runtime::vm::AllocatorType allocator_type_;
 
 #ifdef ENABLE_DATATRANSFORM
   DataTransform data_transform_;
@@ -61,13 +62,15 @@ class DLR_DLL RelayVMModel : public DLRModel {
 
  public:
   explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+      : DLRModel(ctx, DLRBackend::kRELAYVM),
+        allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
   explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM) {
+      : DLRModel(ctx, DLRBackend::kRELAYVM),
+        allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(model_elems);
     FetchInputNodesData();
     FetchOutputNodesData();
@@ -96,6 +99,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void GetOutputTensor(int index, DLTensor* out);
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+  tvm::runtime::vm::AllocatorType GetAllocatorType();
 
   /*
     Following methods use metadata file to lookup input and output names.
