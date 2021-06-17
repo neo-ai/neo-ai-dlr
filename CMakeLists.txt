@@ -110,13 +110,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${JSON_SRC}")
 
 # Add only top level *.cc files (non-RECURSE)
-FILE(GLOB DLR_SRC
-    "src/*.cc"
-    ${TVM_SRC}/src/runtime/dso_library.cc
-    ${TVM_SRC}/src/runtime/cpu_device_api.cc
-    ${TVM_SRC}/src/runtime/metadata_module.cc
-    ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
-)
+FILE(GLOB DLR_SRC "src/*.cc")
 
 if(NOT(ENABLE_DATATRANSFORM))
   list(REMOVE_ITEM DLR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/dlr_data_transform.cc)
@@ -246,8 +240,11 @@ endif()
 set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
 
+set(USE_BUILD_STATIC_RUNTIME ON)
 set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
+set(USE_BUILD_STATIC_RUNTIME OFF)
+
 set(BUILD_STATIC_LIBS ON)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
 set(BUILD_STATIC_LIBS OFF)
@@ -263,7 +260,7 @@ add_library(dlr SHARED $<TARGET_OBJECTS:objdlr>)
 set_output_directory(dlr ${CMAKE_BINARY_DIR}/lib)
 set_target_properties(dlr PROPERTIES LINKER_LANGUAGE CXX)
 message(STATUS "DLR_LINKER_LIBS: " ${DLR_LINKER_LIBS})
-target_link_libraries(dlr PRIVATE treelite_runtime_static tvm_runtime_static)
+target_link_libraries(dlr PRIVATE treelite_runtime_static tvm_runtime_objs)
 target_link_libraries(dlr PUBLIC ${DLR_LINKER_LIBS})
 if(DLR_STATIC_LIBSTDCPP)
   message(STATUS "Using -static-libstdc++")
