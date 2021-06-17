@@ -17,7 +17,7 @@ if(ANDROID_BUILD)
     endif()
 endif(ANDROID_BUILD)
 
-project(dlr VERSION 1.9.0 LANGUAGES C CXX)
+project(dlr VERSION 1.10.0 LANGUAGES C CXX)
 
 message(STATUS "dlr version: ${dlr_VERSION}")
 
