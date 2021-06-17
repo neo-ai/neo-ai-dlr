@@ -100,6 +100,7 @@ class DLR_DLL RelayVMModel : public DLRModel {
   void GetOutputTensor(int index, DLTensor* out);
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+  tvm::runtime::vm::AllocatorType GetAllocatorType();
 
   /*
     Following methods use metadata file to lookup input and output names.

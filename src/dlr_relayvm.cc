@@ -75,10 +75,10 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
 
   LoadJsonFromString(metadata_data, this->metadata_);
   ValidateDeviceTypeIfExists();
-  // Override allocator.
-  const char* val = std::getenv("DLR_VM_ALLOCATOR");
-  if ((metadata_.count("Model") && metadata_["Model"].count("VMAllocator") &&
-       metadata_["Model"]["VMAllocator"].get<std::string>() == "naive") ||
+  // Override allocator - default is kPooled.
+  const char* val = std::getenv("DLR_RELAYVM_ALLOCATOR");
+  if ((metadata_.count("Model") && metadata_["Model"].count("RelayVMAllocator") &&
+       metadata_["Model"]["RelayVMAllocator"].get<std::string>() == "naive") ||
       (val != nullptr && std::string(val) == "naive")) {
     allocator_type_ = tvm::runtime::vm::AllocatorType::kNaive;
   }
@@ -532,3 +532,5 @@ int RelayVMModel::GetNumInputs() const {
 
   return num_inputs_;
 }
+
+tvm::runtime::vm::AllocatorType RelayVMModel::GetAllocatorType() { return allocator_type_; }
