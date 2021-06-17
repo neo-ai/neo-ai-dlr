@@ -1,6 +1,7 @@
 #include "dlr_relayvm.h"
 
 #include <gtest/gtest.h>
+
 #include <nlohmann/json.hpp>
 
 #include "test_utils.hpp"
