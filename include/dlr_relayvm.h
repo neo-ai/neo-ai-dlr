@@ -2,7 +2,8 @@
 #define DLR_RELAYVM_H_
 
 #include <dlpack/dlpack.h>
-#include <tvm/runtime/container.h>
+#include <tvm/runtime/container/adt.h>
+#include <tvm/runtime/container/shape_tuple.h>
 #include <tvm/runtime/module.h>
 #include <tvm/runtime/ndarray.h>
 #include <tvm/runtime/object.h>
