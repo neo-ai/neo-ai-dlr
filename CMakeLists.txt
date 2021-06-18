@@ -57,6 +57,8 @@ option(USE_OPENCL  "Build with OpenCL" OFF)
 option(USE_CUDA  "Build with CUDA" OFF)
 option(USE_CUDNN "Build with CUDNN" OFF)
 option(USE_TENSORRT "Build with Tensor RT" OFF)
+option(USE_OPENMP "Build with OpenMP" OFF)
+option(USE_MLAS "Build with MLAS" OFF)
 option(ENABLE_DATATRANSFORM "Enable datatransform for Sagemaker-scikit-learn-extension models" OFF)
 
 
@@ -228,7 +230,9 @@ if(WITH_HEXAGON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
     list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
 endif()
-
+if(USE_MLAS)
+    list(APPEND DLR_LINKER_LIBS onnxruntime_mlas)
+endif()
 if(ENABLE_DATATRANSFORM)
     add_definitions(-DENABLE_DATATRANSFORM) 
 endif()
@@ -294,6 +298,7 @@ foreach(__srcpath ${DEMO_SRCS})
 endforeach()
 add_custom_target(demo DEPENDS ${DEMO_EXECS})
 
+install(TARGETS onnxruntime_mlas EXPORT dlrTargets)
 target_include_directories(dlr INTERFACE $<INSTALL_INTERFACE:include>)
 install(TARGETS dlr
         DESTINATION lib
