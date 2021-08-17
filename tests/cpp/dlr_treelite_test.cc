@@ -1,5 +1,6 @@
 #include "dlr_treelite.h"
 
+#include <iostream>
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv) {
@@ -106,6 +107,17 @@ TEST_F(TreeliteTest, TestGetOutputSizeDim) {
 
 TEST_F(TreeliteTest, TestGetOutput) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
+  EXPECT_NO_THROW(model->Run());
+  float output[1];
+  EXPECT_NO_THROW(model->GetOutput(0, output));
+  float* output_p;
+  EXPECT_NO_THROW(output_p = (float*)model->GetOutputPtr(0));
+  EXPECT_EQ(output_p[0], output[0]);
+}
+
+TEST_F(TreeliteTest, TestScoreOutput) {
+  EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
+  EXPECT_NO_THROW(model->SetPredMargin());
   EXPECT_NO_THROW(model->Run());
   float output[1];
   EXPECT_NO_THROW(model->GetOutput(0, output));
