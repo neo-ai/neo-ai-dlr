@@ -52,6 +52,9 @@ class DLR_DLL TreeliteModel : public DLRModel {
   void SetupTreeliteModule(std::vector<std::string> model_path);
   void UpdateInputShapes();
 
+  // whether to produce raw margin scores instead of transformed probabilities
+  int pred_margin = 0;
+
  public:
   /*! \brief Load model files from given folder path.
    */
@@ -82,6 +85,8 @@ class DLR_DLL TreeliteModel : public DLRModel {
   virtual const char* GetBackend() const override;
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
+
+  inline void SetPredMargin(bool pred_margin) { pred_margin = int(pred_margin); };
 };
 
 }  // namespace dlr

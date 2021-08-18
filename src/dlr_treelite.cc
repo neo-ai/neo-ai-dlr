@@ -238,11 +238,9 @@ const char* TreeliteModel::GetOutputType(int index) const {
 void TreeliteModel::Run() {
   size_t out_result_size;
   CHECK(treelite_input_);
-  treelite_output_.resize(treelite_input_->num_row *
-                          treelite_output_buffer_size_);
-  CHECK_EQ(TreelitePredictorPredictBatch(
-               treelite_model_, treelite_input_->handle, 1, 0, 0,
-               treelite_output_.data(), &out_result_size),
+  treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
+  CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle, 1, 0,
+                                         pred_margin, treelite_output_.data(), &out_result_size),
            0)
       << TreeliteGetLastError();
 }
