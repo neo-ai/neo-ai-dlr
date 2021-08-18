@@ -84,7 +84,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
   virtual void SetNumThreads(int threads) override;
   virtual void UseCPUAffinity(bool use) override;
 
-  inline void SetPredMargin() { pred_margin = 1; };
+  inline void SetPredMargin(bool pred_margin) { pred_margin = int(pred_margin); };
 };
 
 }  // namespace dlr

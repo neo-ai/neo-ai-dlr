@@ -117,7 +117,7 @@ TEST_F(TreeliteTest, TestGetOutput) {
 
 TEST_F(TreeliteTest, TestScoreOutput) {
   EXPECT_NO_THROW(model->SetInput("data", in_shape, data.data(), in_dim));
-  EXPECT_NO_THROW(model->SetPredMargin());
+  EXPECT_NO_THROW(model->SetPredMargin(true));
   EXPECT_NO_THROW(model->Run());
   float output[1];
   EXPECT_NO_THROW(model->GetOutput(0, output));
