@@ -146,16 +146,6 @@ void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
   }
 }
 
-bool DateTimeTransformer::isLeap(int64_t year) const {
-  if (year % 4 == 0) {
-    if (year % 100 == 0 && year % 400 != 0)
-      return false;
-    else
-      return true;
-  }
-  return false;
-}
-
 int64_t DateTimeTransformer::GetWeekNumber(std::tm tm) const {
   // mktime(&tm);
   int day_of_the_week = (tm.tm_wday + 6) % 7;
@@ -223,6 +213,7 @@ DataTransform::GetTransformerMap() const {
   map->emplace("Float", std::make_shared<FloatTransformer>());
   map->emplace("CategoricalString", std::make_shared<CategoricalStringTransformer>());
   map->emplace("DateTime", std::make_shared<DateTimeTransformer>());
+  map->emplace("Text", std::make_shared<TextTransformer>());
   return map;
 }
 
@@ -244,6 +235,16 @@ nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& tran
   }
   return output_json;
 }
+
+void TextTransformer::InitNDArray(const nlohmann::json& input_json,
+                                  const nlohmann::json& transform, DLDataType dtype,
+                                  DLContext ctx, tvm::runtime::NDArray& input_array) const {
+                                  } 
+
+void TextTransformer::MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                            tvm::runtime::NDArray& input_array) const = 0 {
+
+                            }
 
 template <typename T>
 nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& transform,

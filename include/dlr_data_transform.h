@@ -51,7 +51,7 @@ class DLR_DLL DateTimeTransformer : public Transformer {
    * DateTimeVectorizer */
   const int kNumDateTimeCols = 7;
 
-  const std::vector<std::string> datetime_templates = {
+  const std::array<std::string, 10> datetime_templates = {
       "%h %dth, %Y, %I:%M:%S%p",
       "%h %dth, %Y, %I:%M%p",
       "%h %dth, %Y, %I%p",
@@ -68,8 +68,6 @@ class DLR_DLL DateTimeTransformer : public Transformer {
    * YEAR, HOUR, MINUTE, SECOND, MONTH, WEEK_OF_YEAR*/
   void DigitizeDateTime(std::string& input_string, std::vector<int64_t>& datetime_digits) const;
 
-  bool isLeap(int64_t year) const;
-
   int64_t GetWeekNumber(std::tm tm) const;
 
  public:
@@ -78,6 +76,18 @@ class DLR_DLL DateTimeTransformer : public Transformer {
 
   void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                    DLDataType dtype, DLContext ctx, tvm::runtime::NDArray& input_array) const;
+};
+
+class DLR_DLL TextTransformer : public Transformer {
+ public:
+  TextTransformer() {
+    std::cout << "TextTransform is initialized" << std::endl;
+  }
+  virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                    tvm::runtime::NDArray& input_array) const override {};
+
+  virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
+                   DLDataType dtype, DLContext ctx, tvm::runtime::NDArray& input_array) const override {};
 };
 
 /*! \brief Handles transformations of input and output data. */
