@@ -77,8 +77,8 @@ option(TEST_COVERAGE "C++ test coverage" OFF)
 # Compiler flags
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# --exclude-libs is not available on Windows and macOS. As such, Windows and 
-# Mac do not support the creation of multiple DLRModel instances (in Python) in 
+# --exclude-libs is not available on Windows and macOS. As such, Windows and
+# Mac do not support the creation of multiple DLRModel instances (in Python) in
 # case model folders have their own libdlr.so.
 if (WIN32 OR APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -239,7 +239,7 @@ if(WITH_HEXAGON)
 endif()
 
 if(ENABLE_DATATRANSFORM)
-    add_definitions(-DENABLE_DATATRANSFORM) 
+    add_definitions(-DENABLE_DATATRANSFORM)
 endif()
 
 if(AAR_BUILD)
@@ -280,8 +280,11 @@ FILE(GLOB MAIN_SRC src/*.cc)
 
 set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}") # Save BUILD_SHARED_LIBS
 set(BUILD_STATIC_LIBS ON)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")  # Restore BUILD_SHARED_LIBS
 set(BUILD_STATIC_LIBS OFF)
 add_library(objdlr OBJECT ${DLR_SRC})
 
@@ -321,7 +324,7 @@ foreach(__srcpath ${DEMO_SRCS})
   if (ANDROID_BUILD)
     target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -fuse-ld=gold)
   else (ANDROID_BUILD)
-    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)     
+    target_link_libraries(${__execname} PRIVATE treelite_runtime_static tvm_runtime_static ${DLR_LINKER_LIBS} -lpthread)
   endif ()
   set_output_directory(${__execname} ${CMAKE_BINARY_DIR}/bin)
   set_target_properties(${__execname} PROPERTIES EXCLUDE_FROM_ALL 1)
@@ -381,7 +384,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   file(GLOB TEST_SRCS tests/cpp/*.cc)
 
   if(NOT(ENABLE_DATATRANSFORM))
-    list(REMOVE_ITEM TEST_SRCS 
+    list(REMOVE_ITEM TEST_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_pipeline_skl_xgb_test.cc)
   endif()
@@ -407,7 +410,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
-    target_link_libraries(${__execname} gtest_main dl) 
+    target_link_libraries(${__execname} gtest_main dl)
     set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})
     message(STATUS "Added dlsym Test: " ${__execname})
@@ -422,7 +425,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     e35e82f3371bed37caa7ecece417f50876414077
   )
   endif()
-  
+
   set(STREET_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/street_small.npy)
   if(NOT EXISTS ${STREET_IMAGE})
   download_file(
@@ -432,7 +435,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     206d1a12646a5fe43d0877d38bd137c70a5adc3b
   )
   endif()
-  
+
   # Download compiled model for unit tests
   set(RESNET_MODEL ${CMAKE_CURRENT_BINARY_DIR}/resnet_v1_5_50)
   if(NOT IS_DIRECTORY ${RESNET_MODEL})
