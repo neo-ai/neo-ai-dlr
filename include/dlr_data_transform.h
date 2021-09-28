@@ -4,6 +4,7 @@
 #include <tvm/runtime/ndarray.h>
 
 #include <ctime>
+#include <memory>
 #include <nlohmann/json.hpp>
 
 #include "dlr_common.h"
@@ -79,15 +80,31 @@ class DLR_DLL DateTimeTransformer : public Transformer {
 };
 
 class DLR_DLL TextTransformer : public Transformer {
- public:
-  TextTransformer() {
-    std::cout << "TextTransform is initialized" << std::endl;
-  }
+
+public:
+  TextTransformer();
+
   virtual void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                    tvm::runtime::NDArray& input_array) const override {};
+                            tvm::runtime::NDArray& input_array) const override;
 
   virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                   DLDataType dtype, DLContext ctx, tvm::runtime::NDArray& input_array) const override {};
+                           DLDataType dtype, DLContext ctx,
+                           tvm::runtime::NDArray& input_array) const override;
+
+  inline void SetIndex(int idx) const { column_idx = idx; }; 
+
+private:
+  const static int kCharNum = 256;
+  char delims[kCharNum];
+  std::unique_ptr<std::vector<std::unordered_map<std::string, int>>> vocab_to_cols;
+  std::unique_ptr<std::unordered_map<int, int>> col_to_id;
+  
+  mutable int column_idx;  
+
+  static void LowerStr(std::string& data)
+  {
+    std::transform(data.begin(), data.end(), data.begin(),[](unsigned char c){ return std::tolower(c); });
+  }
 };
 
 /*! \brief Handles transformations of input and output data. */

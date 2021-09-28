@@ -32,7 +32,7 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
     auto it = GetTransformerMap()->find(transformer_type);
     CHECK(it != GetTransformerMap()->end())
         << transformer_type << " is not a valid DataTransform type.";
-    const auto transformer = it->second;
+    const Transformer* transformer = &(*it->second);
 
     transformer->InitNDArray(input_json, transforms[i], dtypes[i], ctx, tvm_inputs->at(i));
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
@@ -236,15 +236,75 @@ nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& tran
   return output_json;
 }
 
+TextTransformer::TextTransformer() {
+  vocab_to_cols = std::make_unique<std::vector<std::unordered_map<std::string, int>>>();
+  col_to_id = std::make_unique<std::unordered_map<int, int>>();
+
+  int j = 0;
+  for (size_t i = 1; i < kCharNum; i++) {
+    if (!isalnum(i)) {
+      delims[j++] = i;
+    }
+  }
+  delims[j] = 0;
+}
+
 void TextTransformer::InitNDArray(const nlohmann::json& input_json,
                                   const nlohmann::json& transform, DLDataType dtype,
                                   DLContext ctx, tvm::runtime::NDArray& input_array) const {
-                                  } 
+  auto vocabularies = transform["Vocabularies"].get<std::vector<std::string>>();
+  auto text_col  = transform["TextCol"].get<int>();
+  SetIndex(text_col);
 
-void TextTransformer::MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                            tvm::runtime::NDArray& input_array) const = 0 {
+  std::unordered_map<std::string, int> vocab_to_col;
+  for (size_t i = 0; i < vocabularies.size(); ++i) {
+    vocab_to_col[vocabularies[i]] = i;
+  }
+  col_to_id->emplace(text_col, vocab_to_cols->size());
+  vocab_to_cols->push_back(vocab_to_col);
 
-                            }
+  std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
+                                    static_cast<int64_t>(vocabularies.size())};
+
+  CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
+      << "DataTransform TextTransformer is only supported for float32 inputs.";
+  if (input_array == empty_ || input_array.Shape() != arr_shape) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  }
+} 
+
+void TextTransformer::MapToNDArray(const nlohmann::json& input_json,
+                                   const nlohmann::json& transform,
+                                   tvm::runtime::NDArray& input_array) const {
+  const nlohmann::json& vocab = transform["Vocabularies"];
+  DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
+  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+      << "DataTransform TfIdfVectorizer is only supported for CPU.";
+
+  int id = col_to_id->at(column_idx);
+  std::unordered_map<std::string, int>& vocab_to_col = vocab_to_cols->at(id);
+  int num_col = vocab_to_col.size();
+  float* data = static_cast<float*>(input_tensor->data);
+  
+  for (size_t r = 0; r < input_json.size(); ++r) 
+  {
+    memset(data + r * num_col, 0, num_col * sizeof(float));
+    std::string entry = input_json[r][column_idx].get_ref<const std::string&>();
+    char* pch;
+    pch = strtok (&entry[0], delims);
+    while (pch != NULL)
+    {
+      std::string token(pch);
+      LowerStr(token);
+      if (vocab_to_col.find(token) != vocab_to_col.end())
+      {
+        int out_index  = r * num_col + vocab_to_col[token];
+        data[out_index] += 1;
+      }
+      pch = strtok (NULL, delims);
+    }
+  }
+}
 
 template <typename T>
 nlohmann::json DataTransform::TransformOutputHelper2D(const nlohmann::json& transform,
