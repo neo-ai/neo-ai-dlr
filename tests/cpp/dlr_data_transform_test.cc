@@ -171,7 +171,8 @@ TEST(DLR, DataTransformDateTime) {
   EXPECT_TRUE(transform.HasInputTransform(metadata));
 
   const char* data = R"([["123", "Jan 3th, 2018, 1:34am"]])";
-  // ["Feb 11th, 2012, 11:34:59pm"], ["2006-08-23"], ["2017-05-08 14:21:28"], [""]])";
+  // ["Feb 11th, 2012, 11:34:59pm"], ["2006-08-23"], ["2017-05-08 14:21:28"],
+  // [""]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
 
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
@@ -226,6 +227,66 @@ TEST(DLR, DataTransformDateTime) {
   }
 }
 
+TEST(DLR, DataTransformText) {
+  dlr::DataTransform transform;
+  nlohmann::json metadata = R"(
+    {
+      "DataTransform": {
+        "Input": {
+          "ColumnTransform": [
+            {
+              "Type": "Text", 
+              "Vocabularies": ["cats", "chase", "dogs", "eat", "hate", "like", "people", "rats"],
+              "TextCol": 1
+            },
+            {
+              "Type": "Text", 
+              "Vocabularies": ["are", "mammals", "rats"],
+              "TextCol": 2
+            } 
+          ]
+        }
+      }
+    })"_json;
+
+  const char* data = R"(
+    [
+      ["", "Cats eat rats.", "Rats are mammals."],
+      ["", "Dogs chase cats.", "Rats are mammals."],
+      ["", "People like dogs.", "Rats are mammals."],
+      ["", "People hate rats.", "Rats are mammals."]
+    ])";
+
+  std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
+  std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
+  DLContext ctx = DLContext{kDLCPU, 0};
+  std::vector<tvm::runtime::NDArray> transformed_data(2);
+  EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
+                                           shape.size(), dtypes, ctx, &transformed_data));
+
+  EXPECT_EQ(transformed_data[0]->ndim, 2);
+  EXPECT_EQ(transformed_data[0]->shape[0], 4);
+  EXPECT_EQ(transformed_data[0]->shape[1], 8);
+  EXPECT_EQ(transformed_data[1]->ndim, 2);
+  EXPECT_EQ(transformed_data[1]->shape[0], 4);
+  EXPECT_EQ(transformed_data[1]->shape[1], 3);
+
+  float* data1 = static_cast<float*>(transformed_data[0]->data);
+
+  std::vector<float> expected_output0 = {1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+                                         0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1};
+
+  std::vector<float> expected_output1 = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+  for (size_t i = 0; i < expected_output0.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[0]->data)[i], expected_output0[i]);
+  }
+
+  for (size_t i = 0; i < expected_output1.size(); ++i) {
+    ExpectFloatEq(static_cast<float*>(transformed_data[1]->data)[i], expected_output1[i]);
+  }
+}
+
 TEST(DLR, RelayVMDataTransformInput) {
   DLContext ctx = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl"};
@@ -234,7 +295,8 @@ TEST(DLR, RelayVMDataTransformInput) {
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
 
-  const char* data = R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
+  const char* data =
+      R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
                           7.5, 4, 2.03, 0, 94.77387065117672]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);
@@ -284,7 +346,8 @@ TEST(DLR, RelayVMDataTransformOutput) {
   model->Run();
 
   std::string expected_output =
-      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unknown_label>\",\"<unknown_"
+      "[\"Iris-setosa\",\"Iris-versicolor\",\"Iris-virginica\",\"<unseen_label>"
+      "\",\"<unseen_"
       "label>\"]";
   EXPECT_STREQ(model->GetOutputType(0), "json");
   EXPECT_NO_THROW(model->GetOutputSizeDim(0, &size, &dim));
@@ -312,7 +375,8 @@ TEST(DLR, TVMDataTransformInput) {
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
 
-  const char* data = R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
+  const char* data =
+      R"([[77, "no", "no", 0, 245.2, 87, 41.68, 254.1, 83, 21.6,239.4, 91, 10.77,
                           7.5, 4, 2.03, 0, 94.77387065117672]])";
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   model->SetInput("input", shape.data(), const_cast<char*>(data), 1);
