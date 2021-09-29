@@ -93,15 +93,15 @@ class DLR_DLL TextTransformer : public Transformer {
                            DLDataType dtype, DLContext ctx,
                            tvm::runtime::NDArray& input_array) const override;
 
-  inline void SetIndex(int idx) const { column_idx = idx; };
+  inline void SetIndex(int idx) const { column_idx_ = idx; };
 
  private:
   const static int kCharNum = 256;
-  char delims[kCharNum];
-  std::unique_ptr<std::vector<std::unordered_map<std::string, int>>> vocab_to_cols;
-  std::unique_ptr<std::unordered_map<int, int>> col_to_id;
+  std::string delims;
+  std::unique_ptr<std::vector<std::unordered_map<std::string, int>>> vocab_to_cols_;
+  std::unique_ptr<std::unordered_map<int, int>> col_to_id_;
 
-  mutable int column_idx;
+  mutable int column_idx_;
 
   static void LowerStr(std::string& data) {
     std::transform(data.begin(), data.end(), data.begin(),

@@ -239,16 +239,14 @@ nlohmann::json DataTransform::TransformOutputHelper1D(const nlohmann::json& tran
 }
 
 TextTransformer::TextTransformer() {
-  vocab_to_cols = std::make_unique<std::vector<std::unordered_map<std::string, int>>>();
-  col_to_id = std::make_unique<std::unordered_map<int, int>>();
+  vocab_to_cols_ = std::make_unique<std::vector<std::unordered_map<std::string, int>>>();
+  col_to_id_ = std::make_unique<std::unordered_map<int, int>>();
 
-  int j = 0;
   for (size_t i = 1; i < kCharNum; i++) {
     if (!isalnum(i)) {
-      delims[j++] = i;
+      delims += i;
     }
   }
-  delims[j] = 0;
 }
 
 void TextTransformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
@@ -262,8 +260,8 @@ void TextTransformer::InitNDArray(const nlohmann::json& input_json, const nlohma
   for (size_t i = 0; i < vocabularies.size(); ++i) {
     vocab_to_col[vocabularies[i]] = i;
   }
-  col_to_id->emplace(text_col, vocab_to_cols->size());
-  vocab_to_cols->push_back(vocab_to_col);
+  col_to_id_->emplace(text_col, vocab_to_cols_->size());
+  vocab_to_cols_->push_back(vocab_to_col);
 
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(vocabularies.size())};
@@ -283,24 +281,24 @@ void TextTransformer::MapToNDArray(const nlohmann::json& input_json,
   CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
       << "DataTransform TfIdfVectorizer is only supported for CPU.";
 
-  int id = col_to_id->at(column_idx);
-  std::unordered_map<std::string, int>& vocab_to_col = vocab_to_cols->at(id);
+  int id = col_to_id_->at(column_idx_);
+  std::unordered_map<std::string, int>& vocab_to_col = vocab_to_cols_->at(id);
   int num_col = vocab_to_col.size();
   float* data = static_cast<float*>(input_tensor->data);
 
   for (size_t r = 0; r < input_json.size(); ++r) {
-    memset(data + r * num_col, 0, num_col * sizeof(float));
-    std::string entry = input_json[r][column_idx].get_ref<const std::string&>();
-    char* pch;
-    pch = strtok(&entry[0], delims);
-    while (pch != NULL) {
-      std::string token(pch);
-      LowerStr(token);
+    std::fill_n(data + r * num_col, num_col, 0.f);
+    std::string entry = input_json[r][column_idx_].get_ref<const std::string&>();
+    LowerStr(entry);
+    std::size_t str_pos = 0;
+    std::string token;
+    while ((str_pos = entry.find_first_of(delims)) != std::string::npos) {
+      token = entry.substr(0, str_pos);
+      entry.erase(0, str_pos + 1);
       if (vocab_to_col.find(token) != vocab_to_col.end()) {
         int out_index = r * num_col + vocab_to_col[token];
         data[out_index] += 1;
       }
-      pch = strtok(NULL, delims);
     }
   }
 }
