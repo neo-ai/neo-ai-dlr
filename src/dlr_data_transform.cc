@@ -301,6 +301,8 @@ void TextTransformer::MapToNDArray(const nlohmann::json& input_json,
       }
     }
   }
+  vocab_to_cols_->clear();
+  col_to_id_->clear();
 }
 
 template <typename T>
