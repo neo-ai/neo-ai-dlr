@@ -6,6 +6,10 @@
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
 
+#ifdef DLR_TENSORFLOW
+#include "dlr_tensorflow/dlr_tensorflow.h"
+#endif  // DLR_TENSORFLOW
+
 #ifdef DLR_HEXAGON
 #include "dlr_hexagon/dlr_hexagon.h"
 #endif  // DLR_HEXAGON
@@ -260,28 +264,56 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-
-DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
-  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
-  std::vector<std::string> files = FindFiles(path_vec);
-  DLRBackend backend = dlr::GetBackend(files);
-  if (backend == DLRBackend::kTVM) {
-    return std::make_shared<TVMModel>(files, ctx);
-  } else if (backend == DLRBackend::kRELAYVM) {
-    return std::make_shared<RelayVMModel>(files, ctx);
-  } else if (backend == DLRBackend::kTREELITE) {
-    return std::make_shared<TreeliteModel>(files, ctx);
-#ifdef DLR_HEXAGON
-  } else if (backend == DLRBackend::kHEXAGON) {
-    return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
-#endif  // DLR_HEXAGON
-  } else {
-    std::string err = "Unable to determine backend from path: '";
-    err = err + model_path + "'.";
-    throw dmlc::Error(err);
-    return nullptr;  // unreachable
-  }
+#ifdef DLR_TENSORFLOW
+DLR_TFConfig DefaultTFConfig() {
+  // GPUOptions.allow_growth is True
+  // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
+  // share GPU memory. No Performance degradation was detected.
+  DLR_TFConfig tf_config = {};
+  tf_config.inter_op_parallelism_threads = 0;
+  tf_config.intra_op_parallelism_threads = 0;
+  tf_config.gpu_options.allow_growth = 1;
+  tf_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
+  return tf_config;
 }
+
+TensorflowModel* CreateTensorflowModel(const char* model_path,
+                                       const DLR_TFTensorDesc* inputs, int input_size,
+                                       const char* outputs[], int output_size,
+                                       const DLR_TFConfig& tf_config) {
+  const std::string model_path_string(model_path);
+  // TensorflowModel class does not use DLContext internally
+  DLContext ctx;
+  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
+  ctx.device_id = 0;
+  std::vector<std::string> v_inputs(input_size);
+  std::vector<std::vector<int64_t>> v_input_shapes(input_size);
+  for (int i = 0; i < input_size; i++) {
+    DLR_TFTensorDesc v = inputs[i];
+    v_inputs[i] = v.name;
+    v_input_shapes[i] = std::vector<int64_t>(v.dims, v.dims + v.num_dims);
+  }
+  std::vector<std::string> v_outputs(output_size);
+  for (int i = 0; i < output_size; i++) {
+    v_outputs[i] = outputs[i];
+  }
+  return new TensorflowModel(model_path_string, ctx, v_inputs,
+                             v_input_shapes, v_outputs, tf_config);
+}
+
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow
+ * ctor.
+ */
+int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
+                                 const DLR_TFTensorDesc* inputs, int input_size,
+                                 const char* outputs[], int output_size,
+                                 const DLR_TFConfig tf_config) {
+  API_BEGIN();
+  DLRModel* model = CreateTensorflowModel(model_path, inputs, input_size, outputs, output_size, tf_config);
+  *handle = model;
+  API_END();
+}
+#endif  // DLR_TENSORFLOW
 
 #ifdef DLR_HEXAGON
 /*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
@@ -322,6 +354,13 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
       model = new RelayVMModel(files, ctx);
     } else if (backend == DLRBackend::kTREELITE) {
       model = new TreeliteModel(files, ctx);
+#ifdef DLR_TENSORFLOW
+    } else if (backend == DLRBackend::kTENSORFLOW) {
+      // input and output tensor names will be detected automatically.
+      // use undefined number of threads - threads=0
+      DLR_TFConfig tf_config = DefaultTFConfig();
+      model = CreateTensorflowModel(model_path, NULL, 0, NULL, 0, tf_config);
+#endif  // DLR_TENSORFLOW
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
       model = new HexagonModel(files, ctx, 1 /*debug_level*/);
@@ -339,6 +378,36 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
 
   *handle = model;
   API_END();
+}
+
+DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
+  if (backend == DLRBackend::kTVM) {
+    return std::make_shared<TVMModel>(files, ctx);
+  } else if (backend == DLRBackend::kRELAYVM) {
+    return std::make_shared<RelayVMModel>(files, ctx);
+  } else if (backend == DLRBackend::kTREELITE) {
+    return std::make_shared<TreeliteModel>(files, ctx);
+#ifdef DLR_TENSORFLOW
+    } else if (backend == DLRBackend::kTENSORFLOW) {
+      // input and output tensor names will be detected automatically.
+      // use undefined number of threads - threads=0
+      DLR_TFConfig tf_config = DefaultTFConfig();
+      DLRModel* model = CreateTensorflowModel(model_path, NULL, 0, NULL, 0, tf_config);
+      return std::shared_ptr<DLRModel>(model);
+#endif  // DLR_TENSORFLOW
+#ifdef DLR_HEXAGON
+  } else if (backend == DLRBackend::kHEXAGON) {
+    return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
+#endif  // DLR_HEXAGON
+  } else {
+    std::string err = "Unable to determine backend from path: '";
+    err = err + model_path + "'.";
+    throw dmlc::Error(err);
+    return nullptr;  // unreachable
+  }
 }
 
 extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,

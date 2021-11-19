@@ -50,7 +50,7 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 
 #ifndef DLR_MODEL_ELEM
 #define DLR_MODEL_ELEM
-enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
+enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC, TF_FROZEN_GRAPH };
 typedef struct ModelElem {
   const enum DLRModelElemType type;
   const char* path;
@@ -83,6 +83,52 @@ int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
 DLR_DLL
 int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,
                                 size_t model_elems_size, int dev_type, int dev_id);
+
+#ifdef DLR_TENSORFLOW
+
+/*!
+ \brief Tensorflow GPU Options structure for Tensorflow Config structure.
+ */
+typedef struct DLR_TFGPUOptions {
+  int allow_growth;
+  double per_process_gpu_memory_fraction;
+} DLR_TFGPUOptions;
+
+/*!
+ \brief Tensorflow Config structure for CreateDLRModelFromTensorflow.
+ */
+typedef struct DLR_TFConfig {
+  int intra_op_parallelism_threads;
+  int inter_op_parallelism_threads;
+  DLR_TFGPUOptions gpu_options;
+} DLR_TFConfig;
+
+/*!
+ \brief TF Tensor Description structure for CreateDLRModelFromTensorflow.
+ */
+typedef struct DLR_TFTensorDesc {
+  const char* name;
+  const int64_t* dims;
+  const int num_dims;
+} DLR_TFTensorDesc;
+
+/*!
+ \brief Creates a DLR model from Tensorflow frozen model .pb file
+ \param handle The pointer to save the model handle.
+ \param model_path Path to .pb file or to the top-level directory containing .pb
+ file \param inputs array of input names \param input_size size of input array
+ \param outputs array of output names
+ \param output_size size of output array
+ \param batch_size set batch size for the case when the model has dynamic batch
+ size \param threads Number of threads to use (ignored if zero of less) \return
+ 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
+                                 const DLR_TFTensorDesc* inputs, int input_size,
+                                 const char* outputs[], int output_size,
+                                 const DLR_TFConfig tf_config);
+#endif  // DLR_TENSORFLOW
 
 #ifdef DLR_HEXAGON
 /*!

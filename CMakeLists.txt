@@ -227,6 +227,12 @@ if(USE_TENSORRT)
 
     set(USE_TENSORRT OFF)
 endif()
+if(WITH_TENSORFLOW_LIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW")
+    include_directories("${WITH_TENSORFLOW_LIB}/include")
+    list(APPEND DLR_SRC "src/dlr_tensorflow/dlr_tensorflow.cc")
+    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW_LIB}/lib -ltensorflow)
+endif()
 if(WITH_HEXAGON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
     list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
@@ -377,7 +383,10 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_pipeline_skl_xgb_test.cc)
   endif()
-
+  if(WITH_TENSORFLOW_LIB)
+    file(GLOB TENSORFLOW_TEST_SRCS tests/cpp/dlr_tensorflow/*.cc)
+    list(APPEND TEST_SRCS ${TENSORFLOW_TEST_SRCS})
+  endif()
   if(WITH_HEXAGON)
     file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
     list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
@@ -580,6 +589,16 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     file(REMOVE /tmp/${INVERSELABEL_STATIC_MODEL})
   endif()
 
+  if(WITH_TENSORFLOW_LIB)
+      # Download Test Tensorflow model
+      file(MAKE_DIRECTORY mobilenet_v1_1.0_224)
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf-models/mobilenet_v1_1.0_224_frozen.pb
+        ./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb
+        SHA1
+        4df8525bcf2ec96296098ba7fec0fff1abe32fce
+      )
+  endif() # WITH_TENSORFLOW_LIB
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
