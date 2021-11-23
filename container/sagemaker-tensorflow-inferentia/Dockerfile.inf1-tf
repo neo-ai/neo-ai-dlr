@@ -51,7 +51,7 @@ RUN apt-get update \
 RUN echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list && \
     wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add - && \
     apt-get update && \
-    apt-get install "tensorflow-model-server-neuron=1.15.*" \
+    apt-get install "tensorflow-model-server-neuron=1.15.0.2.0.4.0" \
             aws-neuron-tools && \
     rm -rf /var/lib/apt/lists/*
 
@@ -77,7 +77,7 @@ RUN ${PIP} install --no-cache-dir \
  && ${PIP} install --no-dependencies --no-cache-dir \
     tensorflow-serving-api==1.15.0
 
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron>=1.15.0,<1.16.0"
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron==1.15.5.2.0.4.0"
 
 COPY sagemaker /sagemaker
 
