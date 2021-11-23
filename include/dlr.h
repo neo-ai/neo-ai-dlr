@@ -104,15 +104,6 @@ typedef struct DLR_TFConfig {
 } DLR_TFConfig;
 
 /*!
- \brief TF Tensor Description structure for CreateDLRModelFromTensorflow.
- */
-typedef struct DLR_TFTensorDesc {
-  const char* name;
-  const int64_t* dims;
-  const int num_dims;
-} DLR_TFTensorDesc;
-
-/*!
  \brief Creates a DLR model from Tensorflow frozen model .pb file
  \param handle The pointer to save the model handle.
  \param model_path Path to .pb file or to the top-level directory containing .pb
@@ -125,8 +116,6 @@ typedef struct DLR_TFTensorDesc {
  */
 DLR_DLL
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
-                                 const DLR_TFTensorDesc* inputs, int input_size,
-                                 const char* outputs[], int output_size,
                                  const DLR_TFConfig tf_config);
 #endif  // DLR_TENSORFLOW
 

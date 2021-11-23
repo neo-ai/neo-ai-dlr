@@ -132,7 +132,7 @@ TF_Output TensorflowModel::ParseTensorName(const std::string& t_name) {
     LOG(FATAL) << "ERROR: TF_GraphOperationByName failed for operation "
                << op_name;
   }
-  TF_Output oper_out = {op, op_out_id};
+  const TF_Output oper_out = {op, op_out_id};
   return oper_out;
 }
 
@@ -217,58 +217,50 @@ void TensorflowModel::DetectInputShapes() {
                  << TF_Message(status_);
       return;  // unreachable
     }
-    // Set Batch size to 1 if undefined
-    if (dims[0] == -1) {
-      dims[0] = 1;
-    }
-    for (int z = 1; z < n_dim; z++) {
-      if (dims[z] < 1) {
-        LOG(FATAL) << "ERROR: non-positive dimensions are not supported. "
-                   << "tensor: " << t_name << ", dims[" << z << "]=" << dims[z];
-        return;  // unreachable
-      }
-    }
-    input_shapes_.push_back(std::vector<int64_t>(dims, dims + n_dim));
+    graph_input_shapes_.push_back(std::vector<int64_t>(dims, dims + n_dim));
   }
+  input_shapes_.resize(num_inputs_);
+}
+
+TF_Tensor* TensorflowModel::AllocateInputTensor(int index, const int64_t* dims, const int n_dim) {
+  const TF_Output oper_out = inputs_[index];
+  size_t num_elements = 1;
+  for (int z = 0; z < n_dim; z++) {
+    if (dims[z] < 1) {
+      LOG(FATAL) << "ERROR: non-positive dimensions are not supported. "
+                 << "input id: " << index << ", dims[" << z << "]=" << dims[z];
+    }
+    num_elements *= dims[z];
+  }
+  const TF_DataType t_type = TF_OperationOutputType(oper_out);
+  const size_t num_bytes = TF_DataTypeSize(t_type) * num_elements;
+
+  TF_GraphSetTensorShape(graph_, oper_out, dims, n_dim, status_);
+  if (TF_GetCode(status_) != TF_OK) {
+    LOG(FATAL) << "ERROR: TF_GraphSetTensorShape failed " << TF_Message(status_);
+  }
+
+  TF_Tensor* tensor = TF_AllocateTensor(t_type, dims, n_dim, num_bytes);
+  LOG(INFO) << "Input Tensor " << index << " was allocated";
+  return tensor;
 }
 
 void TensorflowModel::PrepInputs() {
-  for (int i = 0; i < num_inputs_; i++) {
-    const std::string& t_name = input_names_[i];
-    const TF_Output oper_out = ParseTensorName(t_name);
-    const std::vector<int64_t>& shape = input_shapes_[i];
-    const int64_t* dims = shape.data();
-    const int n_dim = shape.size();
-    size_t num_elements = 1;
-    for (int z = 0; z < n_dim; z++) {
-      if (dims[z] < 1) {
-        LOG(FATAL) << "ERROR: non-positive dimensions are not supported. "
-                   << "tensor: " << t_name << ", dims[" << z << "]=" << dims[z];
-        return;  // unreachable
-      }
-      num_elements *= dims[z];
-    }
+  for (std::string& t_name : input_names_) {
+    TF_Output oper_out = ParseTensorName(t_name);
     const TF_DataType t_type = TF_OperationOutputType(oper_out);
-    const size_t num_bytes = TF_DataTypeSize(t_type) * num_elements;
-
-    TF_GraphSetTensorShape(graph_, oper_out, dims, n_dim, status_);
-    if (TF_GetCode(status_) != TF_OK) {
-      LOG(FATAL) << "ERROR: TF_GraphSetTensorShape failed "
-                 << TF_Message(status_);
-      return;  // unreachable
-    }
-
-    TF_Tensor* tensor = TF_AllocateTensor(t_type, dims, n_dim, num_bytes);
+    input_types_.push_back(std::to_string((int) t_type));
     inputs_.push_back(oper_out);
-    input_tensors_.push_back(tensor);
+    // fill output_tensors_ vector with nulls
+    input_tensors_.push_back(nullptr);
   }
-  LOG(INFO) << "Input Tensors were allocated";
 }
 
 void TensorflowModel::PrepOutputs() {
   for (std::string& t_name : output_names_) {
     TF_Output oper_out = ParseTensorName(t_name);
-
+    const TF_DataType t_type = TF_OperationOutputType(oper_out);
+    output_types_.push_back(std::to_string((int) t_type));
     outputs_.push_back(oper_out);
     // fill output_tensors_ vector with nulls
     output_tensors_.push_back(nullptr);
@@ -291,9 +283,6 @@ int TensorflowModel::GetInputId(const char* name) {
 TensorflowModel::TensorflowModel(
     const std::string& model_path,
     const DLContext& ctx,
-    const std::vector<std::string>& inputs,
-    const std::vector<std::vector<int64_t>>& input_shapes,
-    const std::vector<std::string>& outputs,
     const DLR_TFConfig& tf_config)
     : DLRModel(ctx, DLRBackend::kTENSORFLOW) {
   const std::string pb_file = GetTensorflowFile(model_path);
@@ -303,23 +292,9 @@ TensorflowModel::TensorflowModel(
 
   LoadFrozenModel(pb_file.c_str());
 
-  if (inputs.empty()) {
-    DetectInputs();
-  } else {
-    input_names_ = inputs;
-    num_inputs_ = input_names_.size();
-  }
-  if (input_shapes.empty()) {
-    DetectInputShapes();
-  } else {
-    input_shapes_ = input_shapes;
-  }
-  if (outputs.empty()) {
-    DetectOutputs();
-  } else {
-    output_names_ = outputs;
-    num_outputs_ = output_names_.size();
-  }
+  DetectInputs();
+  DetectInputShapes();
+  DetectOutputs();
 
   PrepInputs();
   PrepOutputs();
@@ -375,18 +350,27 @@ const char* TensorflowModel::GetInputName(int index) const {
 }
 
 const char* TensorflowModel::GetInputType(int index) const {
-  LOG(FATAL) << "GetInputType is not supported by Tensorflow backend";
-  return "";  // unreachable
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  return input_types_[index].c_str();
+}
+
+const std::vector<int64_t>& TensorflowModel::GetInputShape(int index) const {
+  CHECK_LT(index, num_inputs_) << "Input index is out of range.";
+  if (input_shapes_[index].size() != 0) {
+    return input_shapes_[index];
+  }
+  return graph_input_shapes_[index];
 }
 
 const int TensorflowModel::GetInputDim(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  return input_shapes_[index].size();
+  return graph_input_shapes_[index].size();
 }
 
 const int64_t TensorflowModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  const std::vector<int64_t>& shape = GetInputShape(index);
+  const std::vector<int64_t>& shape =
+    input_shapes_[index].size() != 0 ? input_shapes_[index] : graph_input_shapes_[index];
   if (dlr::HasNegative(shape.data(), shape.size())) return -1;
   return abs(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
 }
@@ -400,9 +384,24 @@ void TensorflowModel::SetInput(const char* name, const int64_t* shape,
                                const void* input, int dim) {
   int index = GetInputId(name);
   TF_Tensor* tensor = input_tensors_[index];
-  CHECK_EQ(dim, TF_NumDims(tensor)) << "Incorrect input dim";
-  for (int i = 0; i < dim; i++) {
-    CHECK_EQ(shape[i], TF_Dim(tensor, i)) << "Incorrect input shape";
+
+  bool keep = tensor != nullptr && TF_NumDims(tensor) == dim;
+  if (keep) {
+    for (int i = 0; i < dim; i++) {
+      if (shape[i] != TF_Dim(tensor, i)) {
+        keep = false;
+        break;
+      }
+    }
+  }
+  if (!keep) {
+    if (tensor != nullptr) {
+      TF_DeleteTensor(tensor);
+      input_tensors_[index] = nullptr;
+    }
+    tensor = AllocateInputTensor(index, shape, dim);
+    input_tensors_[index] = tensor;
+    input_shapes_[index] = std::vector<int64_t>(shape, shape + dim);
   }
   size_t num_bytes = TF_TensorByteSize(tensor);
   void* in_t_data = TF_TensorData(tensor);
@@ -412,6 +411,7 @@ void TensorflowModel::SetInput(const char* name, const int64_t* shape,
 void TensorflowModel::GetInput(const char* name, void* input) {
   int index = GetInputId(name);
   TF_Tensor* tensor = input_tensors_[index];
+  CHECK_NOTNULL(tensor);
   size_t num_bytes = TF_TensorByteSize(tensor);
   void* in_t_data = TF_TensorData(tensor);
   std::memcpy(input, in_t_data, num_bytes);
@@ -458,8 +458,8 @@ void TensorflowModel::GetOutputSizeDim(int index, int64_t* size, int* dim) {
 }
 
 const char* TensorflowModel::GetOutputType(int index) const {
-  LOG(FATAL) << "GetOutputType is not supported by Tensorflow backend";
-  return "";  // unreachable
+  CHECK_LT(index, num_outputs_) << "Output index is out of range.";
+  return output_types_[index].c_str();
 }
 
 void TensorflowModel::Run() {

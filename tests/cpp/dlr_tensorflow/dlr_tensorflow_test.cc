@@ -22,6 +22,38 @@ int ArgMax(float* data, int start, int size) {
   return idx;
 }
 
+void CheckInputShape(DLRModelHandle& handle, const int batch_size) {
+  // GetDLRInputSizeDim
+  int64_t in_size;
+  int in_dim;
+  if (GetDLRInputSizeDim(&handle, 0, &in_size, &in_dim)) {
+    FAIL() << "GetDLRInputSizeDim failed";
+  }
+  LOG(INFO) << "GetDLRInputSizeDim.size: " << in_size;
+  LOG(INFO) << "GetDLRInputSizeDim.dim: " << in_dim;
+  if (batch_size == -1) {
+    EXPECT_EQ(-1, in_size);
+  } else {
+    EXPECT_EQ(batch_size * 224 * 224 * 3, in_size);
+  }
+  EXPECT_EQ(4, in_dim);
+
+  // GetDLRInputShape
+  int64_t shape[in_dim];
+  if (GetDLRInputShape(&handle, 0, shape)) {
+    FAIL() << "GetDLRInputShape failed";
+  }
+  std::stringstream ss;
+  ss << "GetDLRInputShape: (" << shape[0];
+  for (int i = 1; i < in_dim; i++) {
+    ss << "," << shape[i];
+  }
+  ss << ")";
+  LOG(INFO) << ss.str();
+  const int64_t exp_shape[4] = {batch_size, 224, 224, 3};
+  EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
+}
+
 void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
   // GetDLRBackend
   const char* backend_name;
@@ -71,6 +103,24 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
   LOG(INFO) << "DLROutputName: " << output_name;
   EXPECT_STREQ("MobilenetV1/Predictions/Reshape_1:0", output_name);
 
+  // GetDLRInputType
+  const char* input_type;
+  if (GetDLRInputType(&handle, 0, &input_type)) {
+    FAIL() << "GetDLRInputType failed";
+  }
+  LOG(INFO) << "DLRInputType: " << input_type;
+  EXPECT_STREQ("1", input_type);
+
+  // GetDLROutputType
+  const char* output_type;
+  if (GetDLROutputType(&handle, 0, &output_type)) {
+    FAIL() << "GetDLROutputType failed";
+  }
+  LOG(INFO) << "DLROutputType: " << output_type;
+  EXPECT_STREQ("1", output_type);
+
+  CheckInputShape(handle, -1);
+
   // Load image
   size_t img_size = 224 * 224 * 3;
   std::vector<float> img = LoadImageAndPreprocess("cat224-3.txt", img_size, batch_size);
@@ -86,6 +136,8 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
     FAIL() << "SetDLRInput failed";
   }
   LOG(INFO) << "SetDLRInput - OK";
+
+  CheckInputShape(handle, batch_size);
 
   // GetDLRInput
   std::vector<float> input2(img_size);
@@ -157,13 +209,9 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   tf_config.inter_op_parallelism_threads = 2;
   tf_config.intra_op_parallelism_threads = 2;
   int batch_size = 1;
-  const int64_t dims[4] = {batch_size, 224, 224, 3};
-  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
-  const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle = NULL;
-  if (CreateDLRModelFromTensorflow(&handle, model_file, inputs, 1, outputs, 1,
-                                   tf_config)) {
+  if (CreateDLRModelFromTensorflow(&handle, model_file, tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
@@ -180,13 +228,9 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   // Use undefined number of threads
   DLR_TFConfig tf_config = {};
   int batch_size = 8;
-  const int64_t dims[4] = {batch_size, 224, 224, 3};
-  const DLR_TFTensorDesc inputs[1] = {{"input:0", dims, 4}};
-  const char* outputs[1] = {"MobilenetV1/Predictions/Reshape_1:0"};
 
   DLRModelHandle handle = NULL;
-  if (CreateDLRModelFromTensorflow(&handle, model_dir, inputs, 1, outputs, 1,
-                                   tf_config)) {
+  if (CreateDLRModelFromTensorflow(&handle, model_dir, tf_config)) {
     FAIL() << DLRGetLastError() << std::endl;
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
@@ -197,7 +241,7 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   DeleteDLRModel(&handle);
 }
 
-TEST(Tensorflow, AutodetectInputsAndOutputs) {
+TEST(Tensorflow, CreateDLRModel) {
   // Use generic CreateDLRModel
   // input and output tensor names will be detected automatically.
   const char* model_file =

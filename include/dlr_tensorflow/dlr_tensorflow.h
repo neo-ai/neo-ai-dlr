@@ -31,9 +31,9 @@ class TensorflowModel : public DLRModel {
   TF_Status* status_;
   TF_Graph* graph_;
   TF_Session* sess_;
-  // input_names_ are declared in base class
-  std::vector<std::vector<int64_t>> input_shapes_;
+  std::vector<std::vector<int64_t>> graph_input_shapes_; // might have -1 dimensions
   std::vector<std::string> output_names_;
+  std::vector<std::string> output_types_;
   std::vector<TF_Output> inputs_;
   std::vector<TF_Output> outputs_;
   std::vector<TF_Tensor*> input_tensors_;
@@ -46,6 +46,7 @@ class TensorflowModel : public DLRModel {
   void PrepInputs();
   void PrepOutputs();
   int GetInputId(const char* name);
+  TF_Tensor* AllocateInputTensor(int index, const int64_t* dims, const int n_dim);
 
  public:
   /*! \brief Load model files from given folder path.
@@ -53,9 +54,6 @@ class TensorflowModel : public DLRModel {
   explicit TensorflowModel(
       const std::string& model_path,
       const DLContext& ctx,
-      const std::vector<std::string>& inputs,
-      const std::vector<std::vector<int64_t>>& input_shapes,
-      const std::vector<std::string>& outputs,
       const DLR_TFConfig& tf_config);
   ~TensorflowModel();
 
@@ -63,6 +61,7 @@ class TensorflowModel : public DLRModel {
   virtual const char* GetInputType(int index) const override;
   virtual const int GetInputDim(int index) const override;
   virtual const int64_t GetInputSize(int index) const override;
+  virtual const std::vector<int64_t>& GetInputShape(int index) const override;
   virtual const char* GetWeightName(int index) const override;
   virtual std::vector<std::string> GetWeightNames() const override;
   virtual void GetInput(const char* name, void* input) override;

@@ -278,38 +278,22 @@ DLR_TFConfig DefaultTFConfig() {
 }
 
 TensorflowModel* CreateTensorflowModel(const char* model_path,
-                                       const DLR_TFTensorDesc* inputs, int input_size,
-                                       const char* outputs[], int output_size,
                                        const DLR_TFConfig& tf_config) {
   const std::string model_path_string(model_path);
   // TensorflowModel class does not use DLContext internally
-  DLContext ctx;
+  DLContext ctx; // ignored by TensorflowModel
   ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
   ctx.device_id = 0;
-  std::vector<std::string> v_inputs(input_size);
-  std::vector<std::vector<int64_t>> v_input_shapes(input_size);
-  for (int i = 0; i < input_size; i++) {
-    DLR_TFTensorDesc v = inputs[i];
-    v_inputs[i] = v.name;
-    v_input_shapes[i] = std::vector<int64_t>(v.dims, v.dims + v.num_dims);
-  }
-  std::vector<std::string> v_outputs(output_size);
-  for (int i = 0; i < output_size; i++) {
-    v_outputs[i] = outputs[i];
-  }
-  return new TensorflowModel(model_path_string, ctx, v_inputs,
-                             v_input_shapes, v_outputs, tf_config);
+  return new TensorflowModel(model_path_string, ctx, tf_config);
 }
 
 /*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow
  * ctor.
  */
 int CreateDLRModelFromTensorflow(DLRModelHandle* handle, const char* model_path,
-                                 const DLR_TFTensorDesc* inputs, int input_size,
-                                 const char* outputs[], int output_size,
                                  const DLR_TFConfig tf_config) {
   API_BEGIN();
-  DLRModel* model = CreateTensorflowModel(model_path, inputs, input_size, outputs, output_size, tf_config);
+  DLRModel* model = CreateTensorflowModel(model_path, tf_config);
   *handle = model;
   API_END();
 }
@@ -356,10 +340,11 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
       model = new TreeliteModel(files, ctx);
 #ifdef DLR_TENSORFLOW
     } else if (backend == DLRBackend::kTENSORFLOW) {
+      const std::string model_path_string(model_path);
       // input and output tensor names will be detected automatically.
       // use undefined number of threads - threads=0
-      DLR_TFConfig tf_config = DefaultTFConfig();
-      model = CreateTensorflowModel(model_path, NULL, 0, NULL, 0, tf_config);
+      const DLR_TFConfig tf_config = DefaultTFConfig();
+      model = new TensorflowModel(model_path_string, ctx, tf_config);
 #endif  // DLR_TENSORFLOW
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
@@ -392,11 +377,11 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
     return std::make_shared<TreeliteModel>(files, ctx);
 #ifdef DLR_TENSORFLOW
     } else if (backend == DLRBackend::kTENSORFLOW) {
+      const std::string model_path_string(model_path);
       // input and output tensor names will be detected automatically.
       // use undefined number of threads - threads=0
-      DLR_TFConfig tf_config = DefaultTFConfig();
-      DLRModel* model = CreateTensorflowModel(model_path, NULL, 0, NULL, 0, tf_config);
-      return std::shared_ptr<DLRModel>(model);
+      const DLR_TFConfig tf_config = DefaultTFConfig();
+      return std::make_shared<TensorflowModel>(model_path_string, ctx, tf_config);
 #endif  // DLR_TENSORFLOW
 #ifdef DLR_HEXAGON
   } else if (backend == DLRBackend::kHEXAGON) {
