@@ -54,7 +54,7 @@ void CheckInputShape(DLRModelHandle& handle, const int batch_size) {
   EXPECT_TRUE(std::equal(std::begin(exp_shape), std::end(exp_shape), shape));
 }
 
-void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
+void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int prev_batch_size) {
   // GetDLRBackend
   const char* backend_name;
   if (GetDLRBackend(&handle, &backend_name)) {
@@ -119,7 +119,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size) {
   LOG(INFO) << "DLROutputType: " << output_type;
   EXPECT_STREQ("1", output_type);
 
-  CheckInputShape(handle, -1);
+  CheckInputShape(handle, prev_batch_size);
 
   // Load image
   size_t img_size = 224 * 224 * 3;
@@ -208,7 +208,6 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   DLR_TFConfig tf_config = {};
   tf_config.inter_op_parallelism_threads = 2;
   tf_config.intra_op_parallelism_threads = 2;
-  int batch_size = 1;
 
   DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_file, tf_config)) {
@@ -216,7 +215,10 @@ TEST(Tensorflow, CreateDLRModelFromTensorflow) {
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
 
-  CheckAllDLRMethods(handle, batch_size);
+  // batch size 1
+  CheckAllDLRMethods(handle, 1, -1);
+  // Run the same model for input with batch size 8
+  CheckAllDLRMethods(handle, 8, 1);
 
   // DeleteDLRModel
   DeleteDLRModel(&handle);
@@ -227,7 +229,6 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   const char* model_dir = "./mobilenet_v1_1.0_224";
   // Use undefined number of threads
   DLR_TFConfig tf_config = {};
-  int batch_size = 8;
 
   DLRModelHandle handle = NULL;
   if (CreateDLRModelFromTensorflow(&handle, model_dir, tf_config)) {
@@ -235,7 +236,10 @@ TEST(Tensorflow, CreateDLRModelFromTensorflowDir) {
   }
   LOG(INFO) << "CreateDLRModelFromTensorflow - OK";
 
-  CheckAllDLRMethods(handle, batch_size);
+  // batch size 8
+  CheckAllDLRMethods(handle, 8, -1);
+  // Run the same model for input with batch size 2
+  CheckAllDLRMethods(handle, 2, 8);
 
   // DeleteDLRModel
   DeleteDLRModel(&handle);
@@ -246,7 +250,6 @@ TEST(Tensorflow, CreateDLRModel) {
   // input and output tensor names will be detected automatically.
   const char* model_file =
       "./mobilenet_v1_1.0_224/mobilenet_v1_1.0_224_frozen.pb";
-  const int batch_size = 1;
   const int dev_type = 1;  // 1 - kDLCPU
   const int dev_id = 0;
 
@@ -256,7 +259,10 @@ TEST(Tensorflow, CreateDLRModel) {
   }
   LOG(INFO) << "CreateDLRModel - OK";
 
-  CheckAllDLRMethods(handle, batch_size);
+  // batch size 2
+  CheckAllDLRMethods(handle, 2, -1);
+  // Run the same model for input with batch size 8
+  CheckAllDLRMethods(handle, 8, 2);
 
   // DeleteDLRModel
   DeleteDLRModel(&handle);

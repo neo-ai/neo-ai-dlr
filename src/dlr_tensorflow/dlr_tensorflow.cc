@@ -234,12 +234,6 @@ TF_Tensor* TensorflowModel::AllocateInputTensor(int index, const int64_t* dims, 
   }
   const TF_DataType t_type = TF_OperationOutputType(oper_out);
   const size_t num_bytes = TF_DataTypeSize(t_type) * num_elements;
-
-  TF_GraphSetTensorShape(graph_, oper_out, dims, n_dim, status_);
-  if (TF_GetCode(status_) != TF_OK) {
-    LOG(FATAL) << "ERROR: TF_GraphSetTensorShape failed " << TF_Message(status_);
-  }
-
   TF_Tensor* tensor = TF_AllocateTensor(t_type, dims, n_dim, num_bytes);
   LOG(INFO) << "Input Tensor " << index << " was allocated";
   return tensor;
@@ -356,10 +350,7 @@ const char* TensorflowModel::GetInputType(int index) const {
 
 const std::vector<int64_t>& TensorflowModel::GetInputShape(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  if (input_shapes_[index].size() != 0) {
-    return input_shapes_[index];
-  }
-  return graph_input_shapes_[index];
+  return input_shapes_[index].empty() ? graph_input_shapes_[index] : input_shapes_[index];
 }
 
 const int TensorflowModel::GetInputDim(int index) const {
@@ -370,7 +361,7 @@ const int TensorflowModel::GetInputDim(int index) const {
 const int64_t TensorflowModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
   const std::vector<int64_t>& shape =
-    input_shapes_[index].size() != 0 ? input_shapes_[index] : graph_input_shapes_[index];
+    input_shapes_[index].empty() ? graph_input_shapes_[index] : input_shapes_[index];
   if (dlr::HasNegative(shape.data(), shape.size())) return -1;
   return abs(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
 }
