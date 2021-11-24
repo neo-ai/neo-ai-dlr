@@ -90,7 +90,7 @@ Building for NVIDIA GPU on Jetson Devices
 
 By default, DLR will be built with CPU support only. To enable support for NVIDIA GPUs, enable CUDA, CUDNN, and TensorRT by calling CMake with these extra options.
 
-DLR requires CMake 3.13 or greater. First, we will build CMake from source.
+DLR requires CMake 3.17.2 or greater. First, we will build CMake from source.
 
 .. code-block:: bash
 
@@ -138,7 +138,6 @@ If you have a system install of TensorRT via Deb or RPM package, you can instead
   python3 setup.py install --user
 
 See `Additional Options for TensorRT Optimized Models <https://neo-ai-dlr.readthedocs.io/en/latest/tensorrt.html>`_ to learn how to enable FP16 precision and more for your Neo optimized models which use TensorRT.
-
 
 Building for OpenCL Devices
 """""""""""""""""""""""""""
@@ -259,6 +258,26 @@ Install `Android Studio <https://developer.android.com/studio>`_.
 
   # dlr-release.aar file will be under dlr/build/outputs/aar/ folder
   ls -lah dlr/build/outputs/aar/dlr-release.aar
+
+
+Building DLR with TensorFlow C library
+--------------------------------------
+
+We can use DLR to run Tensorflow 1.x / 2.x models (including `TensorRT converted models <https://blog.tensorflow.org/2021/01/leveraging-tensorflow-tensorrt-integration.html>`_) via TensorFlow C library.
+
+TensorFlow C library can be downloaded from `tensorflow.org <https://www.tensorflow.org/install/lang_c>`_ or built `from source <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README.md>`_.
+
+To build DLR with TensorFlow C library:
+
+.. code-block:: bash
+
+  # Build DLR with libtensorflow
+  cmake .. -DWITH_TENSORFLOW_LIB=<path to libtensorflow folder>
+  make -j8
+
+  # Test DLR with libtensorflow
+  export LD_LIBRARY_PATH=<path to libtensorflow folder>/lib
+  ./dlr_tensorflow_test
 
 
 Building DLR with Hexagon support
