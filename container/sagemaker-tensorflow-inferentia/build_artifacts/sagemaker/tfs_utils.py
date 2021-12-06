@@ -15,7 +15,13 @@ import logging
 import multiprocessing
 import os
 import re
+import requests
+import time
+import json
 
+from multi_model_utils import timeout
+from urllib3.util.retry import Retry
+from urllib3.exceptions import NewConnectionError, MaxRetryError
 from collections import namedtuple
 
 logging.basicConfig(level=logging.INFO)
@@ -26,11 +32,11 @@ DEFAULT_ACCEPT_HEADER = "application/json"
 CUSTOM_ATTRIBUTES_HEADER = "X-Amzn-SageMaker-Custom-Attributes"
 
 Context = namedtuple("Context",
-                     "model_name, model_version, method, rest_uri, grpc_port, "
+                     "model_name, model_version, method, rest_uri, grpc_port, channel, "
                      "custom_attributes, request_content_type, accept_header, content_length")
 
 
-def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None):
+def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None, channel=None):
     tfs_attributes = parse_tfs_custom_attributes(req)
     tfs_uri = make_tfs_uri(rest_port, tfs_attributes, default_model_name, model_name)
 
@@ -42,6 +48,7 @@ def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None
                       tfs_attributes.get("tfs-method"),
                       tfs_uri,
                       grpc_port,
+                      channel,
                       req.get_header(CUSTOM_ATTRIBUTES_HEADER),
                       req.get_header("Content-Type") or DEFAULT_CONTENT_TYPE,
                       req.get_header("Accept") or DEFAULT_ACCEPT_HEADER,
@@ -97,14 +104,24 @@ def tfs_command(tfs_grpc_port,
                 tfs_rest_port,
                 tfs_config_path,
                 tfs_enable_batching,
-                tfs_batching_config_file):
-    cmd = "tensorflow_model_server_neuron " \
+                tfs_batching_config_file,
+                tfs_intra_op_parallelism=None,
+                tfs_inter_op_parallelism=None,
+                tfs_enable_gpu_memory_fraction=False,
+                tfs_gpu_memory_fraction=None):
+    tf = "tensorflow_model_server"
+    if os.environ.get("NEURON_CORE_HOST_TOTAL", None) is not None:
+        tf = "tensorflow_model_server_neuron"
+    cmd = "{} " \
           "--port={} " \
           "--rest_api_port={} " \
           "--model_config_file={} " \
-          "--max_num_load_retries=0 {}" \
-        .format(tfs_grpc_port, tfs_rest_port, tfs_config_path,
-                get_tfs_batching_args(tfs_enable_batching, tfs_batching_config_file))
+          "--max_num_load_retries=0 {} {} {} {}"\
+        .format(tf, tfs_grpc_port, tfs_rest_port, tfs_config_path,
+                get_tfs_batching_args(tfs_enable_batching, tfs_batching_config_file),
+                get_tensorflow_intra_op_parallelism_args(tfs_intra_op_parallelism),
+                get_tensorflow_inter_op_parallelism_args(tfs_inter_op_parallelism),
+                get_tfs_gpu_mem_args(tfs_enable_gpu_memory_fraction, tfs_gpu_memory_fraction))
     return cmd
 
 
@@ -137,6 +154,27 @@ def get_tfs_batching_args(enable_batching, tfs_batching_config):
     if enable_batching:
         return "--enable_batching=true " \
                "--batching_parameters_file={}".format(tfs_batching_config)
+    else:
+        return ""
+
+
+def get_tensorflow_intra_op_parallelism_args(tfs_intra_op_parallelism):
+    if tfs_intra_op_parallelism:
+        return "--tensorflow_intra_op_parallelism={}".format(tfs_intra_op_parallelism)
+    else:
+        return ""
+
+
+def get_tensorflow_inter_op_parallelism_args(tfs_inter_op_parallelism):
+    if tfs_inter_op_parallelism:
+        return "--tensorflow_inter_op_parallelism={}".format(tfs_inter_op_parallelism)
+    else:
+        return ""
+
+
+def get_tfs_gpu_mem_args(enable_gpu_memory_fraction, gpu_memory_fraction):
+    if enable_gpu_memory_fraction and gpu_memory_fraction:
+        return "--per_process_gpu_memory_fraction={}".format(gpu_memory_fraction)
     else:
         return ""
 
@@ -184,6 +222,31 @@ def create_batching_config(batching_config_file):
     for batching_parameter in batching_parameters:
         config += "%s { value: %s }\n" % (batching_parameter.key, batching_parameter.value)
 
-    log.info("batching config: \n%s\n", config)
-    with open(batching_config_file, "w") as f:
+    log.info('batching config: \n%s\n', config)
+    with open(batching_config_file, 'w') as f:
         f.write(config)
+
+
+def wait_for_model(rest_port, model_name, timeout_seconds, wait_interval_seconds=5):
+    tfs_url = "http://localhost:{}/v1/models/{}".format(rest_port, model_name)
+
+    with timeout(timeout_seconds):
+        while True:
+            try:
+                session = requests.Session()
+                retries = Retry(total=9,
+                                backoff_factor=0.1)
+                session.mount('http://', requests.adapters.HTTPAdapter(max_retries=retries))
+                log.info("Trying to connect with model server: {}".format(tfs_url))
+                response = session.get(tfs_url)
+                log.info(response)
+                if response.status_code == 200:
+                    versions = json.loads(response.content)["model_version_status"]
+                    if all(version["state"] == "AVAILABLE" for version in versions):
+                        break
+            except (ConnectionRefusedError, NewConnectionError,
+                    MaxRetryError, requests.exceptions.ConnectionError):
+                log.warning("model: {} is not available yet ".format(tfs_url))
+                time.sleep(wait_interval_seconds)
+
+    log.info("model: {} is available now".format(tfs_url))
