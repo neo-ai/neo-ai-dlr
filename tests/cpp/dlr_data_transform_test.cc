@@ -60,7 +60,7 @@ TEST(DLR, DataTransformCategoricalString) {
   EXPECT_EQ(transformed_data[0]->shape[0], 6);
   EXPECT_EQ(transformed_data[0]->shape[1], 1);
   for (size_t i = 0; i < expected_output.size(); ++i) {
-    CHECK_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
+    EXPECT_EQ(static_cast<float*>(transformed_data[0]->data)[i], expected_output[i])
         << "Output at index " << i;
     ;
   }

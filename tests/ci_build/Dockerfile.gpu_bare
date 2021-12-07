@@ -15,6 +15,7 @@ RUN apt-get update && \
     wget \
     curl \
     ca-certificates \
+    openssl \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
@@ -27,8 +28,8 @@ RUN apt-get update && \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh \
-    && bash cmake-3.17.2-Linux-x86_64.sh --skip-license --prefix=/usr/local
+RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh \
+    && bash cmake-3.22.0-linux-x86_64.sh --skip-license --prefix=/usr/local
 
 ENV PYTHON_COMMAND=python3
 

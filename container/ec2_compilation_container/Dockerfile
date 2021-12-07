@@ -4,9 +4,12 @@ RUN apt update
 
 RUN apt install -y build-essential
 RUN apt install -y llvm-6.0 clang-6.0
-RUN apt install -y cmake git wget curl vim zip
+RUN apt install -y git wget curl ca-certificates openssl vim zip
 RUN apt install -y python3 python3-dev python3-distutils
 RUN apt install -y libedit-dev libxml2-dev antlr4
+
+RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh \
+    && bash cmake-3.22.0-linux-x86_64.sh --skip-license --prefix=/usr/local
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
 
