@@ -1,6 +1,7 @@
 #ifndef DLR_H_
 #define DLR_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -51,7 +52,7 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 #define DLR_MODEL_ELEM
 enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
 typedef struct ModelElem {
-  const DLRModelElemType type;
+  const enum DLRModelElemType type;
   const char* path;
   const void* data;
   const size_t data_size;
