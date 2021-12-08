@@ -202,19 +202,7 @@ def CloudInstallAndTest(cloudTarget) {
     sudo -H pip3 install -U pip setuptools wheel
     pip3 --version
     echo "Installing DLR Python package..."
-    pip3 install --prefer-binary python/dist/*.whl
-    """
-    if (cloudTarget == "p2" || cloudTarget == "p3") {
-      sh """
-      sudo -H pip3 install --prefer-binary -U tensorflow_gpu
-      """
-    } else {
-      sh """
-      sudo -H pip3 install --prefer-binary -U tensorflow
-      """
-    }
-    sh """
-    type toco_from_protos
+    pip3 install python/dist/*.whl
     """
     echo "Running integration tests..."
     unstash name: 'srcs'
