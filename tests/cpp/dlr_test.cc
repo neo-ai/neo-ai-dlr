@@ -57,9 +57,9 @@ TEST(DLR, TestGetDLRWeightName) {
   auto model = GetDLRModel();
   const char* weight_name;
   EXPECT_EQ(GetDLRWeightName(&model, 0, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p45");
+  EXPECT_STREQ(weight_name, "p105");
   EXPECT_EQ(GetDLRWeightName(&model, 107, &weight_name), 0);
-  EXPECT_STREQ(weight_name, "p72");
+  EXPECT_STREQ(weight_name, "p76");
   DeleteDLRModel(&model);
 }
 
@@ -278,7 +278,7 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   EXPECT_EQ(SetDLRInputTensor(&model, input_name, &input), 0);
 
   // run inference
-  EXPECT_EQ(RunDLRModel(&model), 0);
+  EXPECT_EQ(RunDLRModel(&model), 0) << DLRGetLastError();
 
   // output 3
   float output3_d[100];

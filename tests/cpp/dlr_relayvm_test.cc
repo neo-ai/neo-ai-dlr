@@ -27,10 +27,10 @@ class RelayVMTest : public ::testing::Test {
   RelayVMTest() {
     const int device_type = kDLCPU;
     const int device_id = 0;
-    DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+    DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
     std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
     std::vector<std::string> files = dlr::FindFiles(paths);
-    model = new dlr::RelayVMModel(files, ctx);
+    model = new dlr::RelayVMModel(files, dev);
   }
 
   ~RelayVMTest() { delete model; }
@@ -141,10 +141,10 @@ TEST_F(RelayVMTest, TestGetOutput) {
 }
 
 TEST(DLR, TestRelayVMAllocatorDefault) {
-  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
   std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
 
   EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kPooled);
 
@@ -153,10 +153,10 @@ TEST(DLR, TestRelayVMAllocatorDefault) {
 
 TEST(DLR, TestRelayVMAllocatorEnvVar) {
   EXPECT_EQ(SetEnv("DLR_RELAYVM_ALLOCATOR", "naive"), 0);
-  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
   std::vector<std::string> paths = {"./ssd_mobilenet_v1"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
 
   EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
 
@@ -165,7 +165,7 @@ TEST(DLR, TestRelayVMAllocatorEnvVar) {
 }
 
 TEST(DLR, TestRelayVMAllocatorFromMetadata) {
-  DLContext ctx = {static_cast<DLDeviceType>(kDLCPU), 0};
+  DLDevice dev = {static_cast<DLDeviceType>(kDLCPU), 0};
   std::string ro_file = "./ssd_mobilenet_v1/code.ro";
   std::string so_file = "./ssd_mobilenet_v1/compiled.so";
   std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
@@ -177,7 +177,7 @@ TEST(DLR, TestRelayVMAllocatorFromMetadata) {
       {DLRModelElemType::RELAY_EXEC, ro_file.c_str(), nullptr, 0},
       {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
       {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), meta_str.size()}};
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(model_elems, ctx);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(model_elems, dev);
   EXPECT_EQ(model->GetAllocatorType(), tvm::runtime::vm::AllocatorType::kNaive);
   delete model;
 }

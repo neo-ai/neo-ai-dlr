@@ -41,7 +41,7 @@ ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
 }
 
 TreeliteInput::~TreeliteInput() {
-  if (handle) TreeliteDeleteSparseBatch(handle);
+  if (handle) TreeliteDMatrixFree(handle);
   handle = nullptr;
 }
 
@@ -62,22 +62,31 @@ void TreeliteModel::SetupTreeliteModule(const std::vector<std::string>& model_pa
       << TreeliteGetLastError();
   treelite_input_.reset(nullptr);
 
+  const char* output_type;
+  CHECK_EQ(TreelitePredictorQueryLeafOutputType(treelite_model_, &output_type), 0)
+      << TreeliteGetLastError();
+  CHECK_EQ(std::string(output_type), "float32")
+      << "Only float32 output types are supported, got " << output_type;
   size_t num_output_class;  // > 1 for multi-class classification; 1 otherwise
-  CHECK_EQ(TreelitePredictorQueryNumOutputGroup(treelite_model_, &num_output_class), 0)
+  CHECK_EQ(TreelitePredictorQueryNumClass(treelite_model_, &num_output_class), 0)
       << TreeliteGetLastError();
   treelite_output_buffer_size_ = num_output_class;
   treelite_output_.empty();
+
   // NOTE: second dimension of the output shape is smaller than num_output_class
   //       when a multi-class classifier outputs only the class prediction
-  //       (argmax) To detect this edge case, run TreelitePredictorPredictInst()
-  //       once.
-  std::vector<TreelitePredictorEntry> tmp_in(treelite_num_feature_);
-  std::vector<float> tmp_out(num_output_class);
-  CHECK_EQ(TreelitePredictorPredictInst(treelite_model_, tmp_in.data(), 0, tmp_out.data(),
-                                        &treelite_output_size_),
+  //       (argmax) To detect this edge case, run TreelitePredictorQueryResultSize()
+  DMatrixHandle tmp_matrix;
+  std::vector<float> tmp_in(treelite_num_feature_);
+  const float missing_value = 0.0f;
+  CHECK_EQ(TreeliteDMatrixCreateFromMat(tmp_in.data(), "float32", /*num_row=*/1,
+                                        treelite_num_feature_, &missing_value, &tmp_matrix),
            0)
       << TreeliteGetLastError();
+  CHECK_EQ(TreelitePredictorQueryResultSize(treelite_model_, tmp_matrix, &treelite_output_size_), 0)
+      << TreeliteGetLastError();
   CHECK_LE(treelite_output_size_, num_output_class) << "Precondition violated";
+
   UpdateInputShapes();
   has_sparse_input_ = false;
   if (!paths.metadata.empty() && !IsFileEmpty(paths.metadata)) {
@@ -166,9 +175,9 @@ void TreeliteModel::SetInput(const char* name, const int64_t* shape, const void*
 
   // Register CSR matrix with Treelite backend
   CHECK_EQ(
-      TreeliteAssembleSparseBatch(treelite_input_->data.data(), treelite_input_->col_ind.data(),
-                                  treelite_input_->row_ptr.data(), batch_size,
-                                  treelite_num_feature_, &treelite_input_->handle),
+      TreeliteDMatrixCreateFromCSR(treelite_input_->data.data(), "float32",
+                                   treelite_input_->col_ind.data(), treelite_input_->row_ptr.data(),
+                                   batch_size, treelite_num_feature_, &treelite_input_->handle),
       0)
       << TreeliteGetLastError();
   UpdateInputShapes();
@@ -214,8 +223,9 @@ void TreeliteModel::Run() {
   size_t out_result_size;
   CHECK(treelite_input_);
   treelite_output_.resize(treelite_input_->num_row * treelite_output_buffer_size_);
-  CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle, 1, 0,
-                                         pred_margin, treelite_output_.data(), &out_result_size),
+  CHECK_EQ(TreelitePredictorPredictBatch(treelite_model_, treelite_input_->handle, 0, 0,
+                                         (PredictorOutputHandle*)treelite_output_.data(),
+                                         &out_result_size),
            0)
       << TreeliteGetLastError();
 }

@@ -260,20 +260,19 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-
-DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
+DLRModelPtr CreateDLRModelPtr(const char* model_path, DLDevice& dev) {
   std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
   DLRBackend backend = dlr::GetBackend(files);
   if (backend == DLRBackend::kTVM) {
-    return std::make_shared<TVMModel>(files, ctx);
+    return std::make_shared<TVMModel>(files, dev);
   } else if (backend == DLRBackend::kRELAYVM) {
-    return std::make_shared<RelayVMModel>(files, ctx);
+    return std::make_shared<RelayVMModel>(files, dev);
   } else if (backend == DLRBackend::kTREELITE) {
-    return std::make_shared<TreeliteModel>(files, ctx);
+    return std::make_shared<TreeliteModel>(files, dev);
 #ifdef DLR_HEXAGON
   } else if (backend == DLRBackend::kHEXAGON) {
-    return std::make_shared<HexagonModel>(files, ctx, 1 /*debug_level*/);
+    return std::make_shared<HexagonModel>(files, dev, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
   } else {
     std::string err = "Unable to determine backend from path: '";
@@ -289,13 +288,13 @@ DLRModelPtr CreateDLRModelPtr(const char* model_path, DLContext& ctx) {
  */
 int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, int debug_level) {
   API_BEGIN();
-  // HexagonModel class does not use DLContext internally
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
-  ctx.device_id = 0;
+  // HexagonModel class does not use DLDevice internally
+  DLDevice dev;
+  dev.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
+  dev.device_id = 0;
   std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
-  DLRModel* model = new HexagonModel(files, ctx, debug_level);
+  DLRModel* model = new HexagonModel(files, dev, debug_level);
   *handle = model;
   API_END();
 }
@@ -306,9 +305,9 @@ int CreateDLRModelFromHexagon(DLRModelHandle* handle, const char* model_path, in
 extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
                               int dev_id) {
   API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
+  DLDevice dev;
+  dev.device_type = static_cast<DLDeviceType>(dev_type);
+  dev.device_id = dev_id;
 
   std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
   std::vector<std::string> files = FindFiles(path_vec);
@@ -317,14 +316,14 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
   DLRModel* model;
   try {
     if (backend == DLRBackend::kTVM) {
-      model = new TVMModel(files, ctx);
+      model = new TVMModel(files, dev);
     } else if (backend == DLRBackend::kRELAYVM) {
-      model = new RelayVMModel(files, ctx);
+      model = new RelayVMModel(files, dev);
     } else if (backend == DLRBackend::kTREELITE) {
-      model = new TreeliteModel(files, ctx);
+      model = new TreeliteModel(files, dev);
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
-      model = new HexagonModel(files, ctx, 1 /*debug_level*/);
+      model = new HexagonModel(files, dev, 1 /*debug_level*/);
 #endif  // DLR_HEXAGON
     } else {
       std::string err = "Unable to determine backend from path: '";
@@ -344,9 +343,9 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
 extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,
                                            size_t model_elems_size, int dev_type, int dev_id) {
   API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
+  DLDevice dev;
+  dev.device_type = static_cast<DLDeviceType>(dev_type);
+  dev.device_id = dev_id;
 
   std::vector<DLRModelElem> model_elem_vec(model_elems, model_elems + model_elems_size);
 
@@ -354,9 +353,9 @@ extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRMode
   DLRModel* model;
   try {
     if (backend == DLRBackend::kTVM) {
-      model = new TVMModel(model_elem_vec, ctx);
+      model = new TVMModel(model_elem_vec, dev);
     } else if (backend == DLRBackend::kRELAYVM) {
-      model = new RelayVMModel(model_elem_vec, ctx);
+      model = new RelayVMModel(model_elem_vec, dev);
     } else {
       LOG(FATAL) << "Unsupported backend!";
       return -1;  // unreachable
@@ -375,20 +374,20 @@ extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRMode
 extern "C" int CreateDLRPipeline(DLRModelHandle* handle, int num_models, const char** model_paths,
                                  int dev_type, int dev_id) {
   API_BEGIN();
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(dev_type);
-  ctx.device_id = dev_id;
+  DLDevice dev;
+  dev.device_type = static_cast<DLDeviceType>(dev_type);
+  dev.device_id = dev_id;
   std::vector<DLRModelPtr> dlr_models;
   for (int i = 0; i < num_models; i++) {
     try {
-      DLRModelPtr model_ptr = CreateDLRModelPtr(model_paths[i], ctx);
+      DLRModelPtr model_ptr = CreateDLRModelPtr(model_paths[i], dev);
       dlr_models.push_back(model_ptr);
     } catch (dmlc::Error& e) {
       LOG(ERROR) << e.what();
       return -1;
     }
   }
-  DLRModel* pipeline_model = new PipelineModel(dlr_models, ctx);
+  DLRModel* pipeline_model = new PipelineModel(dlr_models, dev);
   *handle = pipeline_model;
   API_END();
 }

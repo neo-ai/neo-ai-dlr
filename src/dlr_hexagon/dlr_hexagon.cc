@@ -96,9 +96,9 @@ int HexagonModel::GetInputId(const char* name) {
 }
 
 // Constructor
-HexagonModel::HexagonModel(const std::vector<std::string>& files, const DLContext& ctx,
+HexagonModel::HexagonModel(const std::vector<std::string>& files, const DLDevice& dev,
                            const int debug_level)
-    : DLRModel(ctx, DLRBackend::kHEXAGON) {
+    : DLRModel(dev, DLRBackend::kHEXAGON) {
   const std::string model_so_file = GetHexagonModelFile(files);
   LOG(INFO) << "Model: " << model_so_file;
   const std::string model_folder = GetParentFolder(model_so_file);

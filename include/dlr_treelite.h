@@ -22,7 +22,7 @@ struct TreeliteInput {
   std::vector<size_t, DLRAllocator<size_t>> row_ptr;
   size_t num_row;
   size_t num_col;
-  CSRBatchHandle handle = nullptr;
+  DMatrixHandle handle = nullptr;
   ~TreeliteInput();
 };
 
@@ -58,8 +58,8 @@ class DLR_DLL TreeliteModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit TreeliteModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kTREELITE) {
+  explicit TreeliteModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kTREELITE) {
     SetupTreeliteModule(files);
   }
 
