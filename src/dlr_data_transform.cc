@@ -64,7 +64,8 @@ void Transformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::
       << "DataTransform CategoricalString is only supported for float32 inputs.";
   // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
   // always match.
-  if (input_array == empty_ || input_array.Shape() != tvm::runtime::ShapeTuple(arr_shape)) {
+  if (input_array == empty_ || !std::equal(input_array.Shape().begin(), input_array.Shape().end(),
+                                           arr_shape.begin(), arr_shape.end())) {
     input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev);
   }
 }
@@ -141,7 +142,8 @@ void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform DateTimeTransformer is only supported for float32 "
          "inputs.";
-  if (input_array == empty_ || input_array.Shape() != tvm::runtime::ShapeTuple(arr_shape)) {
+  if (input_array == empty_ || !std::equal(input_array.Shape().begin(), input_array.Shape().end(),
+                                           arr_shape.begin(), arr_shape.end())) {
     input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev);
   }
 }
