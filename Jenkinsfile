@@ -32,6 +32,7 @@ pipeline {
         label 'cpu-build'
       }
       steps {
+        nodeInfo()
         checkoutSrcs()
         stash name: 'srcs', excludes: '.git/'
         milestone label: 'Sources ready', ordinal: 1
@@ -47,6 +48,7 @@ pipeline {
         }
       }
       steps {
+        nodeInfo()
         unstash name: 'srcs'
         sh """
         tests/ci_build/git-clang-format.sh HEAD~1
@@ -66,6 +68,7 @@ pipeline {
             }
           }
           steps {
+            nodeInfo()
             unstash name: 'srcs'
             sh """
             mkdir -p build
@@ -87,6 +90,7 @@ pipeline {
             }
           }
           steps {
+            nodeInfo()
             unstash name: 'srcs'
             sh """
             mkdir -p build
@@ -108,6 +112,7 @@ pipeline {
             }
           }
           steps {
+            nodeInfo()
             unstash name: 'srcs'
             sh """
             mkdir -p build
@@ -128,6 +133,7 @@ pipeline {
             }
           }
           steps {
+            nodeInfo()
             unstash name: 'srcs'
             echo "Building artifact for AMD64 with GPU capability. Using CUDA 10.2, CuDNN 8, TensorRT 7.1"
             s3Download(file: 'tests/ci_build/TensorRT-7.1.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.0.tar.gz',
@@ -172,6 +178,13 @@ pipeline {
 
 /* Function definitions to follow */
 
+// Add more info about job node
+def nodeInfo() {
+  sh """
+     echo "INFO: NODE_NAME=${NODE_NAME} EXECUTOR_NUMBER=${EXECUTOR_NUMBER}"
+     """
+}
+
 // Check out source code
 def checkoutSrcs() {
   retry(5) {
@@ -190,6 +203,9 @@ def checkoutSrcs() {
 def CloudInstallAndTest(cloudTarget) {
   def nodeReq = "ubuntu && amd64 && ${cloudTarget}"
   node(nodeReq) {
+    sh """
+    echo "INFO: NODE_NAME=${NODE_NAME} EXECUTOR_NUMBER=${EXECUTOR_NUMBER}"
+    """
     echo "Installing DLR package for ${cloudTarget} target"
     if (cloudTarget == "p2" || cloudTarget == "p3") {
       unstash 'dlr_gpu_whl'
@@ -218,6 +234,9 @@ def CloudInstallAndTest(cloudTarget) {
 def BuildInferenceContainer(app, target) {
   def nodeReq = "ubuntu && amd64 && cpu-build"
   node(nodeReq) {
+    sh """
+    echo "INFO: NODE_NAME=${NODE_NAME} EXECUTOR_NUMBER=${EXECUTOR_NUMBER}"
+    """
     unstash name: 'srcs'
     echo "Building inference container ${app} for target ${target}"
     if (target == "gpu") {
