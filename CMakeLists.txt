@@ -464,7 +464,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost-ml_m5.tar.gz
                     WORKING_DIRECTORY ${XGBOOST_TEST_MODEL})
-    file(REMOVE /tmp/xgboost_test.tar.gz)
+    file(REMOVE /tmp/xgboost-ml_m5.tar.gz)
   endif()
 
   set(RELAYVM_MODEL ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03-LINUX_X86_64.tar.gz)
