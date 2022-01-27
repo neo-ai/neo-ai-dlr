@@ -456,13 +456,13 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${XGBOOST_TEST_MODEL})
     file(MAKE_DIRECTORY ${XGBOOST_TEST_MODEL})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/xgboost_test.tar.gz
-      /tmp/xgboost_test.tar.gz
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.10.0/xgboost-ml_m5.tar.gz
+      /tmp/xgboost-ml_m5.tar.gz
       SHA1
-      4c8ac5f20db6c7c6d674dd2ac9d9e14ce887281e
+      1e45bb9d6108d70ac4ff37855cf13061d61ef742
     )
     # this is OS-agnostic
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost_test.tar.gz
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost-ml_m5.tar.gz
                     WORKING_DIRECTORY ${XGBOOST_TEST_MODEL})
     file(REMOVE /tmp/xgboost_test.tar.gz)
   endif()
