@@ -96,22 +96,22 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   tvm::runtime::Module module;
   module = tvm::runtime::Module::LoadFromFile(model_lib_path);
 
-  tvm_graph_runtime_ = tvm::runtime::make_object<tvm::runtime::GraphRuntime>();
-  tvm_graph_runtime_->Init(graph_str, module, {ctx_}, nullptr);
+  tvm_graph_executor_ = tvm::runtime::make_object<tvm::runtime::GraphExecutor>();
+  tvm_graph_executor_->Init(graph_str, module, {dev_}, nullptr);
   dmlc::MemoryFixedSizeStream strm(const_cast<char*>(params_data), params_size);
-  tvm_graph_runtime_->LoadParams(&strm);
+  tvm_graph_executor_->LoadParams(&strm);
 
-  tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_runtime_));
+  tvm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(tvm_graph_executor_));
 
   // Get list of weights.
-  weight_names_ = tvm_graph_runtime_->GetWeightNames();
+  weight_names_ = tvm_graph_executor_->GetWeightNames();
   num_weights_ = weight_names_.size();
   std::unordered_set<std::string> weight_names_set(weight_names_.begin(), weight_names_.end());
   // TVM inputs contains both inputs and weights.
-  const auto num_inputs_weights = tvm_graph_runtime_->NumInputs();
+  const auto num_inputs_weights = tvm_graph_executor_->NumInputs();
   // Filter out weights to get only inputs.
   for (int i = 0; i < num_inputs_weights; i++) {
-    auto name = tvm_graph_runtime_->GetInputName(i);
+    auto name = tvm_graph_executor_->GetInputName(i);
     if (weight_names_set.count(name) == 0) {
       input_names_.push_back(name);
     }
@@ -121,18 +121,18 @@ void TVMModel::SetupTVMModule(const std::vector<DLRModelElem>& model_elems) {
   inputs_.resize(num_inputs_);
   input_types_.resize(num_inputs_);
   for (int i = 0; i < num_inputs_; i++) {
-    inputs_[i] = tvm_graph_runtime_->GetInput(i);
-    input_types_[i] = tvm_graph_runtime_->GetInputType(i);
+    inputs_[i] = tvm_graph_executor_->GetInput(i);
+    input_types_[i] = tvm_graph_executor_->GetInputType(i);
   }
 
   // Get the number of output and reserve space to save output tensor
   // pointers.
-  num_outputs_ = tvm_graph_runtime_->NumOutputs();
+  num_outputs_ = tvm_graph_executor_->NumOutputs();
   outputs_.resize(num_outputs_);
   output_types_.resize(num_outputs_);
   for (int i = 0; i < num_outputs_; i++) {
-    outputs_[i] = tvm_graph_runtime_->GetOutput(i);
-    output_types_[i] = tvm_graph_runtime_->GetOutputType(i);
+    outputs_[i] = tvm_graph_executor_->GetOutput(i);
+    output_types_[i] = tvm_graph_executor_->GetOutputType(i);
   }
   UpdateInputShapes();
 }
@@ -141,7 +141,7 @@ void TVMModel::UpdateInputShapes() {
   input_shapes_.resize(num_inputs_);
   for (int i = 0; i < num_inputs_; i++) {
     std::vector<int64_t> input_shape;
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(i);
+    tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(i);
     input_shape.assign(arr->shape, arr->shape + arr->ndim);
     input_shapes_[i] = input_shape;
   }
@@ -173,13 +173,13 @@ const char* TVMModel::GetInputType(int index) const {
 
 const int TVMModel::GetInputDim(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
   return arr->ndim;
 }
 
 const int64_t TVMModel::GetInputSize(int index) const {
   CHECK_LT(index, num_inputs_) << "Input index is out of range.";
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
   if (dlr::HasNegative(arr->shape, arr->ndim)) return -1;
   return std::accumulate(arr->shape, arr->shape + arr->ndim, 1, std::multiplies<int64_t>());
 }
@@ -197,16 +197,16 @@ void TVMModel::SetInput(const char* name, const int64_t* shape, const void* inpu
     for (size_t i = 0; i < num_inputs_; ++i) {
       dtypes.emplace_back(inputs_[i]->dtype);
     }
-    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, ctx_, &inputs_);
+    data_transform_.TransformInput(metadata_, shape, input, dim, dtypes, dev_, &inputs_);
     return;
   }
 #endif
 
   std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  int index = tvm_graph_executor_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
   DLTensor input_tensor = *(arr.operator->());
-  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.device = DLDevice{kDLCPU, 0};
   input_tensor.data = const_cast<void*>(input);
   int64_t read_size = std::accumulate(shape, shape + dim, 1, std::multiplies<int64_t>());
   int64_t expected_size = std::accumulate(
@@ -226,44 +226,44 @@ void TVMModel::SetInputTensor(const char* name, DLTensor* tensor) {
       dtypes.emplace_back(inputs_[i]->dtype);
     }
     data_transform_.TransformInput(metadata_, tensor->shape, tensor->data, tensor->ndim, dtypes,
-                                   ctx_, &inputs_);
+                                   dev_, &inputs_);
     return;
   }
 #endif
 
   std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
+  int index = tvm_graph_executor_->GetInputIndex(str);
   if (index > -1) {
-    tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+    tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
     DLTensor input_tensor = *(arr.operator->());
     int64_t read_size =
         std::accumulate(tensor->shape, tensor->shape + tensor->ndim, 1, std::multiplies<int64_t>());
     int64_t expected_size = std::accumulate(
         input_tensor.shape, input_tensor.shape + input_tensor.ndim, 1, std::multiplies<int64_t>());
     CHECK_SHAPE("Mismatch found in input data size", read_size, expected_size);
-    tvm_graph_runtime_->SetInput(index, tensor);
+    tvm_graph_executor_->SetInput(index, tensor);
   }
 }
 
 void TVMModel::SetInputTensorZeroCopy(const char* name, DLTensor* tensor) {
   std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
+  int index = tvm_graph_executor_->GetInputIndex(str);
   if (index == -1) return;
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
   const DLTensor* old_t = arr.operator->();
   CHECK_EQ(reinterpret_cast<size_t>(tensor->data) % 128, 0)
       << "Data must be alligned to 128 bits for SetDLRInputTensorZeroCopy.";
   CHECK_EQ(old_t->ndim, static_cast<size_t>(tensor->ndim))
       << "Model expected " << old_t->ndim << " dimensions, but input has " << tensor->ndim;
-  CHECK_EQ(old_t->ctx.device_type, tensor->ctx.device_type)
-      << "The input data must be on device \"" << GetStringFromDeviceType(old_t->ctx.device_type)
-      << "\", but user gave input on \"" << GetStringFromDeviceType(tensor->ctx.device_type)
+  CHECK_EQ(old_t->device.device_type, tensor->device.device_type)
+      << "The input data must be on device \"" << GetStringFromDeviceType(old_t->device.device_type)
+      << "\", but user gave input on \"" << GetStringFromDeviceType(tensor->device.device_type)
       << "\"";
-  CHECK_EQ(old_t->ctx.device_id, tensor->ctx.device_id);
+  CHECK_EQ(old_t->device.device_id, tensor->device.device_id);
   for (auto i = 0; i < tensor->ndim; ++i) {
     CHECK_EQ(old_t->shape[i], tensor->shape[i]);
   }
-  tvm_graph_runtime_->SetInputZeroCopy(index, tensor);
+  tvm_graph_executor_->SetInputZeroCopy(index, tensor);
 }
 
 void TVMModel::GetInput(const char* name, void* input) {
@@ -275,11 +275,11 @@ void TVMModel::GetInput(const char* name, void* input) {
 #endif
 
   std::string str(name);
-  int index = tvm_graph_runtime_->GetInputIndex(str);
-  tvm::runtime::NDArray arr = tvm_graph_runtime_->GetInput(index);
+  int index = tvm_graph_executor_->GetInputIndex(str);
+  tvm::runtime::NDArray arr = tvm_graph_executor_->GetInput(index);
   DLTensor input_tensor;
   input_tensor.data = input;
-  input_tensor.ctx = DLContext{kDLCPU, 0};
+  input_tensor.device = DLDevice{kDLCPU, 0};
   input_tensor.ndim = arr->ndim;
   input_tensor.dtype = arr->dtype;
   input_tensor.shape = arr->shape;
@@ -306,7 +306,7 @@ void TVMModel::GetOutput(int index, void* out) {
   }
 #endif
   DLTensor output_tensor = *outputs_[index].operator->();
-  output_tensor.ctx = DLContext{kDLCPU, 0};
+  output_tensor.device = DLDevice{kDLCPU, 0};
   output_tensor.data = out;
   tvm::runtime::PackedFunc get_output = tvm_module_->GetFunction("get_output");
   get_output(index, &output_tensor);
@@ -319,9 +319,9 @@ const void* TVMModel::GetOutputPtr(int index) const {
   }
 #endif
 
-  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  tvm::runtime::NDArray output = tvm_graph_executor_->GetOutput(index);
   const DLTensor* tensor = output.operator->();
-  if (tensor->ctx.device_type == kDLCPU) {
+  if (tensor->device.device_type == kDLCPU) {
     return tensor->data;
   }
   throw dmlc::Error("GetOutputPtr is not supported for non-CPU device types");
@@ -332,7 +332,7 @@ void TVMModel::GetOutputManagedTensorPtr(int index, const DLManagedTensor** out)
   CHECK(!(HasMetadata() && data_transform_.HasOutputTransform(metadata_, index)))
       << "Output transforms are not supported with GetOutputManagedTensor.";
 #endif
-  tvm::runtime::NDArray output = tvm_graph_runtime_->GetOutput(index);
+  tvm::runtime::NDArray output = tvm_graph_executor_->GetOutput(index);
   *out = output.ToDLPack();
 }
 

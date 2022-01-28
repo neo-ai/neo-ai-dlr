@@ -128,7 +128,7 @@ class DLR_DLL DLRModel {
   size_t num_inputs_ = 1;
   size_t num_weights_ = 0;
   size_t num_outputs_ = 1;
-  DLContext ctx_;
+  DLDevice dev_;
   std::vector<std::string> input_names_;
   std::vector<std::string> input_types_;
   std::vector<std::vector<int64_t>> input_shapes_;
@@ -136,7 +136,7 @@ class DLR_DLL DLRModel {
 
  public:
   nlohmann::json metadata_ = nullptr;
-  DLRModel(const DLContext& ctx, const DLRBackend& backend) : ctx_(ctx), backend_(backend) {}
+  DLRModel(const DLDevice& dev, const DLRBackend& backend) : dev_(dev), backend_(backend) {}
   virtual ~DLRModel() {}
 
   /* Input related functions */
