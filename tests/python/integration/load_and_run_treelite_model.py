@@ -12,13 +12,17 @@ def _sparse_to_dense(csr_matrix):
     return out
 
 def test_mnist():
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-mnist')
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-mnist-1.10.0')
     data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'mnist.libsvm')
     model = DLRModel(model_path, 'cpu', 0)
 
-    X, _ = load_svmlight_file(data_file, zero_based=True)
+    X, _ = load_svmlight_file(data_file)
     print('Testing inference on XGBoost MNIST...')
-    assert model.run(_sparse_to_dense(X))[0] == 7.0
+    res = model.run(X.toarray())[0]
+    # TODO investigate why output shape size in (1,10) instead of (1,1)
+    # the model uses multi:softmax objective which outputs one class with the maximum probability
+    # assert res.shape == (1,1)
+    assert res[0][0] == 7.0
 
 def test_iris():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-iris-1.10.0')
@@ -50,11 +54,10 @@ def test_letor():
 
 if __name__ == '__main__':
     arch = get_arch()
-    model_names = ['xgboost-iris-1.10.0', 'xgboost-letor-1.10.0']
+    model_names = ['xgboost-mnist-1.10.0', 'xgboost-iris-1.10.0', 'xgboost-letor-1.10.0']
     for model_name in model_names:
         get_models(model_name, arch, kind='treelite')
-    # temporarily disable test (TODO: generate new artifacts)
-    # test_mnist()
+    test_mnist()
     test_iris()
     test_letor()
     print('All tests passed!')
