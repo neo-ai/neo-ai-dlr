@@ -305,7 +305,9 @@ void RelayVMModel::SetInput(const char* name, const int64_t* shape, const void* 
 
   // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
   // always match.
-  if (inputs_[index] == empty_ || inputs_[index].Shape() != tvm::runtime::ShapeTuple(arr_shape) ||
+  if (inputs_[index] == empty_ ||
+      !std::equal(inputs_[index].Shape().begin(), inputs_[index].Shape().end(), arr_shape.begin(),
+                  arr_shape.end()) ||
       !TypeEqual(inputs_[index].DataType(), dtype)) {
     inputs_[index] = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev_);
   }
