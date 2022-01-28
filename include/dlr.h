@@ -19,7 +19,7 @@ extern "C" {  // Open extern "C" block
 /*! \brief major version */
 #define DLR_MAJOR 1
 /*! \brief minor version */
-#define DLR_MINOR 9
+#define DLR_MINOR 10
 /*! \brief patch version */
 #define DLR_PATCH 1
 /*! \brief DLR version */
@@ -198,7 +198,7 @@ int SetDLRInput(DLRModelHandle* handle, const char* name, const int64_t* shape, 
 
 /*!
  * \brief Sets the input according the node name from existing DLTensor. Can only be
- *        used with TVM models (GraphRuntime and VMRuntime)
+ *        used with TVM models (GraphExecutor and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param name The input node name.
  * \param tensor The input DLTensor.
@@ -209,7 +209,7 @@ int SetDLRInputTensor(DLRModelHandle* handle, const char* name, void* tensor);
 
 /*!
  * \brief Sets the input from existing DLTensor without copying data. Can only be
- *        used with TVM models (GraphRuntime). Input tensor device must match the device of the
+ *        used with TVM models (GraphExecutor). Input tensor device must match the device of the
  *        model, and data must be alligned to 128 bytes. GetDLRInput cannot be used for inputs set
  *        via SetDLRInputZeroCopy.
  * \param handle The model handle returned from CreateDLRModel().
@@ -289,7 +289,7 @@ int GetDLROutputPtr(DLRModelHandle* handle, int index, const void** out);
 
 /*!
  * \brief Gets the index-th output from the model and copies it into the given DLTensor.
- *        Can only be used with TVM models (GraphRuntime and VMRuntime)
+ *        Can only be used with TVM models (GraphExecutor and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
  * \param tensor The pointer to an existing/allocated DLTensor to copy the output into.
@@ -300,7 +300,7 @@ int GetDLROutputTensor(DLRModelHandle* handle, int index, void* tensor);
 
 /*!
  * \brief Gets the index-th output from the model and sets the pointer to it.
- *        Can only be used with TVM models (GraphRuntime and VMRuntime)
+ *        Can only be used with TVM models (GraphExecutor and VMRuntime)
  * \param handle The model handle returned from CreateDLRModel().
  * \param index The index-th output.
  * \param tensor The pointer to an unallocated DLManagedTensor pointer, will be

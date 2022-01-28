@@ -214,10 +214,10 @@ void DLRModel::ValidateDeviceTypeIfExists() {
     // Ignore missing metadata file or missing device type.
     return;
   }
-  if (device_type != 0 && ctx_.device_type != device_type) {
+  if (device_type != 0 && dev_.device_type != device_type) {
     std::string msg = "Compiled model requires device type \"";
     msg += GetStringFromDeviceType(device_type) + "\" but user gave \"";
-    msg += GetStringFromDeviceType(ctx_.device_type) + "\".";
+    msg += GetStringFromDeviceType(dev_.device_type) + "\".";
     throw dmlc::Error(msg);
   }
 }
@@ -239,7 +239,7 @@ DLDeviceType dlr::GetDeviceTypeFromString(const std::string& device_type_string)
   if (device_type_string == "cpu") {
     return DLDeviceType::kDLCPU;
   } else if (device_type_string == "gpu") {
-    return DLDeviceType::kDLGPU;
+    return DLDeviceType::kDLCUDA;
   } else if (device_type_string == "opencl") {
     return DLDeviceType::kDLOpenCL;
   }
@@ -249,7 +249,7 @@ DLDeviceType dlr::GetDeviceTypeFromString(const std::string& device_type_string)
 std::string dlr::GetStringFromDeviceType(DLDeviceType device_type) {
   if (device_type == DLDeviceType::kDLCPU) {
     return "cpu";
-  } else if (device_type == DLDeviceType::kDLGPU) {
+  } else if (device_type == DLDeviceType::kDLCUDA) {
     return "gpu";
   } else if (device_type == DLDeviceType::kDLOpenCL) {
     return "opencl";

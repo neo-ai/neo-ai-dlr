@@ -2,7 +2,8 @@
 #define DLR_RELAYVM_H_
 
 #include <dlpack/dlpack.h>
-#include <tvm/runtime/container.h>
+#include <tvm/runtime/container/adt.h>
+#include <tvm/runtime/container/shape_tuple.h>
 #include <tvm/runtime/module.h>
 #include <tvm/runtime/ndarray.h>
 #include <tvm/runtime/object.h>
@@ -62,15 +63,15 @@ class DLR_DLL RelayVMModel : public DLRModel {
   DLDataType GetInputDLDataType(int index);
 
  public:
-  explicit RelayVMModel(const std::vector<std::string>& files, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM),
+  explicit RelayVMModel(const std::vector<std::string>& files, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM),
         allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(files);
     FetchInputNodesData();
     FetchOutputNodesData();
   }
-  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kRELAYVM),
+  explicit RelayVMModel(std::vector<DLRModelElem> model_elems, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kRELAYVM),
         allocator_type_(tvm::runtime::vm::AllocatorType::kPooled) {
     SetupVMModule(model_elems);
     FetchInputNodesData();

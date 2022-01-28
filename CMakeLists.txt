@@ -17,7 +17,7 @@ if(ANDROID_BUILD)
     endif()
 endif(ANDROID_BUILD)
 
-project(dlr VERSION 1.9.0 LANGUAGES C CXX)
+project(dlr VERSION 1.10.0 LANGUAGES C CXX)
 
 message(STATUS "dlr version: ${dlr_VERSION}")
 
@@ -77,7 +77,14 @@ option(TEST_COVERAGE "C++ test coverage" OFF)
 # Compiler flags
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# --exclude-libs is not available on Windows and macOS. As such, Windows and
+# Mac do not support the creation of multiple DLRModel instances (in Python) in
+# case model folders have their own libdlr.so.
+if (WIN32 OR APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+else()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--exclude-libs,ALL")
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funroll-loops")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
@@ -102,7 +109,6 @@ include_directories("${TVM_SRC}/src/runtime")
 include_directories("${DLPACK_SRC}/include")
 include_directories("${DMLC_CORE_SRC}/include")
 include_directories("${TREELITE_SRC}/include")
-include_directories("${TREELITE_SRC}/runtime/native/include")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${JSON_SRC}")
 
@@ -141,7 +147,7 @@ endif(USE_OPENCL)
 
 if(USE_CUDA)
     message("USING CUDA")
-    find_cuda(${USE_CUDA})
+    find_cuda(${USE_CUDA} ${USE_CUDNN})
     if(NOT CUDA_FOUND)
         message(FATAL_ERROR "CUDA not found, please specify CUDA location with -DUSE_CUDA=/path/to/cuda/")
     endif(NOT CUDA_FOUND)
@@ -223,7 +229,7 @@ if(USE_TENSORRT)
     list(APPEND DLR_SRC ${RUNTIME_TENSORRT_SRCS})
 
     # Set defines
-    add_definitions(-DTVM_GRAPH_RUNTIME_TENSORRT)
+    add_definitions(-DTVM_GRAPH_EXECUTOR_TENSORRT)
 
     set(USE_TENSORRT OFF)
 endif()
@@ -233,7 +239,7 @@ if(WITH_HEXAGON)
 endif()
 
 if(ENABLE_DATATRANSFORM)
-    add_definitions(-DENABLE_DATATRANSFORM) 
+    add_definitions(-DENABLE_DATATRANSFORM)
 endif()
 
 if(AAR_BUILD)
@@ -259,22 +265,31 @@ if(USE_MKL)
 endif()
 
 if(USE_MLAS)
-    message(STATUS "Build with MLAS library")
-    if (NOT (USE_OPENMP STREQUAL "gnu" OR USE_OPENMP STREQUAL "intel"))
-        message(FATAL_ERROR "MLAS library must be built with USE_OPENMP=gnu or USE_OPENMP=intel")
-    endif()
-    file(GLOB RUNTIME_MLAS_SRCS ${TVM_SRC}/src/runtime/contrib/mlas/*.cc)
-    list(APPEND DLR_SRC ${RUNTIME_MLAS_SRCS})
-    list(APPEND DLR_LINKER_LIBS onnxruntime_mlas_static)
-    include_directories(${TVM_SRC}/3rdparty/mlas/inc)
+  message(STATUS "Build with MLAS library")
+  if (NOT (USE_OPENMP STREQUAL "gnu" OR USE_OPENMP STREQUAL "intel"))
+    message(FATAL_ERROR "MLAS library must be built with USE_OPENMP=gnu or USE_OPENMP=intel")
+  endif()
+  file(GLOB RUNTIME_MLAS_SRCS ${TVM_SRC}/src/runtime/contrib/mlas/*.cc)
+  list(APPEND DLR_SRC ${RUNTIME_MLAS_SRCS})
+  list(APPEND DLR_LINKER_LIBS onnxruntime_mlas_static)
+  include_directories(${TVM_SRC}/3rdparty/mlas/inc)
 endif()
 
 set(MAIN_EXEC "")
 FILE(GLOB MAIN_SRC src/*.cc)
 
+set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}") # Save BUILD_SHARED_LIBS
+set(BUILD_STATIC_LIBS ON)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")  # Restore BUILD_SHARED_LIBS
+set(BUILD_STATIC_LIBS OFF)
 add_library(objdlr OBJECT ${DLR_SRC})
+
+target_compile_definitions(objdlr PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
+target_compile_definitions(objdlr PRIVATE TVM_USE_LIBBACKTRACE=0)
 
 #shared_library
 find_package(Threads)
@@ -333,6 +348,9 @@ install(EXPORT dlrTargets
   FILE dlrTargets.cmake
   DESTINATION lib/cmake/dlr
 )
+if(USE_MLAS)
+  install(TARGETS onnxruntime_mlas_static EXPORT dlrTargets)
+endif()
 
 include(CMakePackageConfigHelpers)
 # generate the config file that is includes the exports
@@ -373,7 +391,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   file(GLOB TEST_SRCS tests/cpp/*.cc)
 
   if(NOT(ENABLE_DATATRANSFORM))
-    list(REMOVE_ITEM TEST_SRCS 
+    list(REMOVE_ITEM TEST_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_pipeline_skl_xgb_test.cc)
   endif()
@@ -386,6 +404,8 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
+    target_compile_definitions(${__execname} PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
+    target_compile_definitions(${__execname} PRIVATE TVM_USE_LIBBACKTRACE=0)
     target_link_libraries(${__execname} dlr gtest_main)
     set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})
@@ -397,7 +417,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     get_filename_component(__srcname ${__srcpath} NAME)
     string(REPLACE ".cc" "" __execname ${__srcname})
     add_executable(${__execname} ${__srcpath})
-    target_link_libraries(${__execname} gtest_main dl) 
+    target_link_libraries(${__execname} gtest_main dl)
     set_output_directory(${__execname} ${CMAKE_BINARY_DIR})
     add_test(NAME ${__execname} COMMAND ${__execname})
     message(STATUS "Added dlsym Test: " ${__execname})
@@ -412,7 +432,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     e35e82f3371bed37caa7ecece417f50876414077
   )
   endif()
-  
+
   set(STREET_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/street_small.npy)
   if(NOT EXISTS ${STREET_IMAGE})
   download_file(
@@ -422,7 +442,7 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     206d1a12646a5fe43d0877d38bd137c70a5adc3b
   )
   endif()
-  
+
   # Download compiled model for unit tests
   set(RESNET_MODEL ${CMAKE_CURRENT_BINARY_DIR}/resnet_v1_5_50)
   if(NOT IS_DIRECTORY ${RESNET_MODEL})
@@ -443,15 +463,15 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${XGBOOST_TEST_MODEL})
     file(MAKE_DIRECTORY ${XGBOOST_TEST_MODEL})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/xgboost_test.tar.gz
-      /tmp/xgboost_test.tar.gz
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.10.0/xgboost-ml_m5.tar.gz
+      /tmp/xgboost-ml_m5.tar.gz
       SHA1
-      4c8ac5f20db6c7c6d674dd2ac9d9e14ce887281e
+      1e45bb9d6108d70ac4ff37855cf13061d61ef742
     )
     # this is OS-agnostic
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost_test.tar.gz
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/xgboost-ml_m5.tar.gz
                     WORKING_DIRECTORY ${XGBOOST_TEST_MODEL})
-    file(REMOVE /tmp/xgboost_test.tar.gz)
+    file(REMOVE /tmp/xgboost-ml_m5.tar.gz)
   endif()
 
   set(RELAYVM_MODEL ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03-LINUX_X86_64.tar.gz)
@@ -459,10 +479,10 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.5.0/${RELAYVM_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.10.0/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      49ddd9e815c6cc14ef0e9a594c8c2d0d129e5e91
+      38111e6432d643122ebf6ed5493e415871dc3fa5
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}

@@ -20,7 +20,7 @@ class RelayVMElemTest : public ::testing::Test {
   std::vector<int8_t> img{std::vector<int8_t>(img_size)};
   const int device_type = kDLCPU;
   const int device_id = 0;
-  DLContext ctx = {static_cast<DLDeviceType>(device_type), device_id};
+  DLDevice dev = {static_cast<DLDeviceType>(device_type), device_id};
   std::string ro_file = "./ssd_mobilenet_v1/code.ro";
   std::string so_file = "./ssd_mobilenet_v1/compiled.so";
   std::string meta_file = "./ssd_mobilenet_v1/compiled.meta";
@@ -35,7 +35,7 @@ class RelayVMElemTest : public ::testing::Test {
         {DLRModelElemType::RELAY_EXEC, nullptr, code_data.data(), code_data.size()},
         {DLRModelElemType::TVM_LIB, so_file.c_str(), nullptr, 0},
         {DLRModelElemType::NEO_METADATA, nullptr, meta_str.c_str(), 0}};
-    model = new dlr::RelayVMModel(model_elems, ctx);
+    model = new dlr::RelayVMModel(model_elems, dev);
   }
 
   ~RelayVMElemTest() { delete model; }
@@ -52,7 +52,7 @@ TEST_F(RelayVMElemTest, TestCreateModel_LibTvmIsPointer) {
   EXPECT_THROW(
       {
         try {
-          new dlr::RelayVMModel(model_elems, ctx);
+          new dlr::RelayVMModel(model_elems, dev);
         } catch (const dmlc::Error& e) {
           EXPECT_STREQ(e.what(),
                        "Invalid RelayVM model element TVM_LIB. TVM_LIB must be a file path.");
@@ -70,7 +70,7 @@ TEST_F(RelayVMElemTest, TestCreateModel_MetadataIsMissing) {
   EXPECT_THROW(
       {
         try {
-          new dlr::RelayVMModel(model_elems, ctx);
+          new dlr::RelayVMModel(model_elems, dev);
         } catch (const dmlc::Error& e) {
           EXPECT_STREQ(
               e.what(),

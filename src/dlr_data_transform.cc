@@ -22,7 +22,7 @@ bool DataTransform::HasOutputTransform(const nlohmann::json& metadata, int index
 
 void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t* shape,
                                    const void* input, int dim,
-                                   const std::vector<DLDataType>& dtypes, DLContext ctx,
+                                   const std::vector<DLDataType>& dtypes, DLDevice dev,
                                    std::vector<tvm::runtime::NDArray>* tvm_inputs) const {
   nlohmann::json input_json = GetAsJson(shape, input, dim);
   const auto& transforms = metadata["DataTransform"]["Input"]["ColumnTransform"];
@@ -34,7 +34,7 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
         << transformer_type << " is not a valid DataTransform type.";
     const Transformer* transformer = &(*it->second);
 
-    transformer->InitNDArray(input_json, transforms[i], dtypes[i], ctx, tvm_inputs->at(i));
+    transformer->InitNDArray(input_json, transforms[i], dtypes[i], dev, tvm_inputs->at(i));
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
   }
 }
@@ -55,18 +55,18 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input,
 }
 
 void Transformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                              DLDataType dtype, DLContext ctx,
+                              DLDataType dtype, DLDevice dev,
                               tvm::runtime::NDArray& input_array) const {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
-      << "DataTransform CategoricalString is only supported for float32 "
-         "inputs.";
-  // Only allocate new buffer if not initialized or if shape or dtype has
-  // changed. Context will always match.
-  if (input_array == empty_ || input_array.Shape() != arr_shape) {
-    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+      << "DataTransform CategoricalString is only supported for float32 inputs.";
+  // Only allocate new buffer if not initialized or if shape or dtype has changed. Context will
+  // always match.
+  if (input_array == empty_ || !std::equal(input_array.Shape().begin(), input_array.Shape().end(),
+                                           arr_shape.begin(), arr_shape.end())) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev);
   }
 }
 
@@ -74,7 +74,7 @@ void FloatTransformer::MapToNDArray(const nlohmann::json& input_json,
                                     const nlohmann::json& transform,
                                     tvm::runtime::NDArray& input_array) const {
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
-  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+  CHECK_EQ(input_tensor->device.device_type, DLDeviceType::kDLCPU)
       << "DataTransform is only supported for CPU.";
   float* data = static_cast<float*>(input_tensor->data);
   for (size_t r = 0; r < input_json.size(); ++r) {
@@ -99,10 +99,9 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
                                                 tvm::runtime::NDArray& input_array) const {
   const nlohmann::json& mapping = transform["Map"];
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
-  // Writing directly to the DLTensor will only work for CPU context. For other
-  // contexts, we would need to create an intermediate buffer on CPU and copy
-  // that to the context.
-  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+  // Writing directly to the DLTensor will only work for CPU context. For other contexts, we would
+  // need to create an intermediate buffer on CPU and copy that to the context.
+  CHECK_EQ(input_tensor->device.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
   CHECK_EQ(input_json[0].size(), mapping.size())
       << "Input has " << input_json[0].size() << " columns, but model requires " << mapping.size();
@@ -134,7 +133,7 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
 
 void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
                                       const nlohmann::json& transform, DLDataType dtype,
-                                      DLContext ctx, tvm::runtime::NDArray& input_array) const {
+                                      DLDevice dev, tvm::runtime::NDArray& input_array) const {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to 7
   auto date_col = transform["DateCol"].get<std::vector<int>>();
@@ -143,8 +142,9 @@ void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform DateTimeTransformer is only supported for float32 "
          "inputs.";
-  if (input_array == empty_ || input_array.Shape() != arr_shape) {
-    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  if (input_array == empty_ || !std::equal(input_array.Shape().begin(), input_array.Shape().end(),
+                                           arr_shape.begin(), arr_shape.end())) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev);
   }
 }
 
@@ -187,7 +187,7 @@ void DateTimeTransformer::MapToNDArray(const nlohmann::json& input_json,
                                        const nlohmann::json& transform,
                                        tvm::runtime::NDArray& input_array) const {
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
-  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+  CHECK_EQ(input_tensor->device.device_type, DLDeviceType::kDLCPU)
       << "DataTransform DateTimeVectorizer is only supported for CPU.";
   float* data = static_cast<float*>(input_tensor->data);
 
@@ -250,7 +250,7 @@ TextTransformer::TextTransformer() {
 }
 
 void TextTransformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                                  DLDataType dtype, DLContext ctx,
+                                  DLDataType dtype, DLDevice dev,
                                   tvm::runtime::NDArray& input_array) const {
   auto vocabularies = transform["Vocabularies"].get<std::vector<std::string>>();
   auto text_col = transform["TextCol"].get<int>();
@@ -268,8 +268,9 @@ void TextTransformer::InitNDArray(const nlohmann::json& input_json, const nlohma
 
   CHECK(dtype.code == kDLFloat && dtype.bits == 32 && dtype.lanes == 1)
       << "DataTransform TextTransformer is only supported for float32 inputs.";
-  if (input_array == empty_ || input_array.Shape() != arr_shape) {
-    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, ctx);
+  if (input_array == empty_ || !std::equal(input_array.Shape().begin(), input_array.Shape().end(),
+                                           arr_shape.begin(), arr_shape.end())) {
+    input_array = tvm::runtime::NDArray::Empty(arr_shape, dtype, dev);
   }
 }
 
@@ -278,7 +279,7 @@ void TextTransformer::MapToNDArray(const nlohmann::json& input_json,
                                    tvm::runtime::NDArray& input_array) const {
   const nlohmann::json& vocab = transform["Vocabularies"];
   DLTensor* input_tensor = const_cast<DLTensor*>(input_array.operator->());
-  CHECK_EQ(input_tensor->ctx.device_type, DLDeviceType::kDLCPU)
+  CHECK_EQ(input_tensor->device.device_type, DLDeviceType::kDLCPU)
       << "DataTransform TfIdfVectorizer is only supported for CPU.";
 
   int id = col_to_id_->at(column_idx_);
@@ -319,7 +320,7 @@ void DataTransform::TransformOutput(const nlohmann::json& metadata, int index,
                                     const tvm::runtime::NDArray& output_array) {
   auto& transform = metadata["DataTransform"]["Output"][std::to_string(index)];
   const DLTensor* tensor = output_array.operator->();
-  CHECK_EQ(tensor->ctx.device_type, DLDeviceType::kDLCPU)
+  CHECK_EQ(tensor->device.device_type, DLDeviceType::kDLCPU)
       << "DataTransform CategoricalString is only supported for CPU.";
   CHECK(tensor->dtype.code == kDLInt && tensor->dtype.bits == 32 && tensor->dtype.lanes == 1)
       << "DataTransform CategoricalString is only supported for int32 outputs.";

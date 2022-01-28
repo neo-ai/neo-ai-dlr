@@ -1,7 +1,6 @@
 #ifndef DLR_PIPELINE_H_
 #define DLR_PIPELINE_H_
 
-#include <graph/graph_runtime.h>
 #include <tvm/runtime/memory.h>
 
 #include "dlr_common.h"
@@ -27,8 +26,8 @@ class DLR_DLL PipelineModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit PipelineModel(const std::vector<DLRModelPtr>& dlr_models, const DLContext& ctx)
-      : DLRModel(ctx, DLRBackend::kPIPELINE), dlr_models_(dlr_models) {
+  explicit PipelineModel(const std::vector<DLRModelPtr>& dlr_models, const DLDevice& dev)
+      : DLRModel(dev, DLRBackend::kPIPELINE), dlr_models_(dlr_models) {
     SetupPipelineModel();
   }
 

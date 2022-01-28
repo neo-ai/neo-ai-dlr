@@ -45,14 +45,14 @@ TEST(DLR, DataTransformCategoricalString) {
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
-  DLContext ctx = DLContext{kDLCPU, 0};
+  DLDevice dev = DLDevice{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
   // Test that same buffer is reused.
   const void* buffer = transformed_data[0]->data;
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
   EXPECT_EQ(buffer, transformed_data[0]->data);
 
   std::vector<float> expected_output = {0, 1, 2, -1, -1, -1};
@@ -88,10 +88,10 @@ TEST(DLR, DataTransformCategoricalStringNumericColumn) {
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
-  DLContext ctx = DLContext{kDLCPU, 0};
+  DLDevice dev = DLDevice{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output = {2.345, 7, 7, -9.7, kNan, -kInf, kNan, kInf};
@@ -131,10 +131,10 @@ TEST(DLR, DataTransformMultipleColumn) {
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   // Model input
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
-  DLContext ctx = DLContext{kDLCPU, 0};
+  DLDevice dev = DLDevice{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(2);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
   const float kNan = std::numeric_limits<float>::quiet_NaN();
   const float kInf = std::numeric_limits<float>::infinity();
   std::vector<float> expected_output_float = {2.345, kNan, 7, 7};
@@ -175,10 +175,10 @@ TEST(DLR, DataTransformDateTime) {
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
 
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}};
-  DLContext ctx = DLContext{kDLCPU, 0};
+  DLDevice dev = DLDevice{kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(1);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 1);
@@ -209,7 +209,7 @@ TEST(DLR, DataTransformDateTime) {
   shape = {static_cast<int64_t>(std::strlen(data))};
 
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 4);
@@ -234,15 +234,15 @@ TEST(DLR, DataTransformText) {
         "Input": {
           "ColumnTransform": [
             {
-              "Type": "Text", 
+              "Type": "Text",
               "Vocabularies": ["cats", "chase", "dogs", "eat", "hate", "like", "people", "rats"],
               "TextCol": 1
             },
             {
-              "Type": "Text", 
+              "Type": "Text",
               "Vocabularies": ["are", "mammals", "rats"],
               "TextCol": 2
-            } 
+            }
           ]
         }
       }
@@ -258,10 +258,10 @@ TEST(DLR, DataTransformText) {
 
   std::vector<int64_t> shape = {static_cast<int64_t>(std::strlen(data))};
   std::vector<DLDataType> dtypes = {DLDataType{kDLFloat, 32, 1}, DLDataType{kDLFloat, 32, 1}};
-  DLContext ctx = DLContext{kDLCPU, 0};
+  DLDevice dev = {kDLCPU, 0};
   std::vector<tvm::runtime::NDArray> transformed_data(2);
   EXPECT_NO_THROW(transform.TransformInput(metadata, shape.data(), const_cast<char*>(data),
-                                           shape.size(), dtypes, ctx, &transformed_data));
+                                           shape.size(), dtypes, dev, &transformed_data));
 
   EXPECT_EQ(transformed_data[0]->ndim, 2);
   EXPECT_EQ(transformed_data[0]->shape[0], 4);
@@ -286,11 +286,11 @@ TEST(DLR, DataTransformText) {
   }
 }
 
-TEST(DLR, RelayVMDataTransformInput) {
-  DLContext ctx = {kDLCPU, 0};
+TEST(DLR, DISABLED_RelayVMDataTransformInput) {
+  DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
   EXPECT_EQ(model->GetNumInputs(), 1);
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
@@ -326,10 +326,10 @@ TEST(DLR, RelayVMDataTransformInput) {
 }
 
 TEST(DLR, RelayVMDataTransformOutput) {
-  DLContext ctx = {kDLCPU, 0};
+  DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, ctx);
+  dlr::RelayVMModel* model = new dlr::RelayVMModel(files, dev);
 
   int64_t size;
   int dim;
@@ -369,10 +369,10 @@ TEST(DLR, RelayVMDataTransformOutput) {
 }
 
 TEST(DLR, TVMDataTransformInput) {
-  DLContext ctx = {kDLCPU, 0};
+  DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./automl_static"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::TVMModel* model = new dlr::TVMModel(files, ctx);
+  dlr::TVMModel* model = new dlr::TVMModel(files, dev);
   EXPECT_EQ(model->GetNumInputs(), 1);
   EXPECT_STREQ(model->GetInputType(0), "json");
   EXPECT_STREQ(model->GetInputName(0), "input");
@@ -408,10 +408,10 @@ TEST(DLR, TVMDataTransformInput) {
 }
 
 TEST(DLR, TVMDataTransformOutput) {
-  DLContext ctx = {kDLCPU, 0};
+  DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel_static"};
   std::vector<std::string> files = dlr::FindFiles(paths);
-  dlr::TVMModel* model = new dlr::TVMModel(files, ctx);
+  dlr::TVMModel* model = new dlr::TVMModel(files, dev);
 
   int64_t size;
   int dim;

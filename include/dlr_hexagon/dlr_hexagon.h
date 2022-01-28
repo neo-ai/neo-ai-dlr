@@ -46,7 +46,7 @@ class HexagonModel : public DLRModel {
  public:
   /*! \brief Load model files from given folder path.
    */
-  explicit HexagonModel(const std::vector<std::string>& files, const DLContext& ctx,
+  explicit HexagonModel(const std::vector<std::string>& files, const DLDevice& dev,
                         const int debug_level);
   ~HexagonModel();
 
