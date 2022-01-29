@@ -49,8 +49,11 @@ pipeline {
       steps {
         unstash name: 'srcs'
         sh """
+        echo ----------all_env---------------
+        env
+        echo --------------------------------
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/main
+        tests/ci_build/git-clang-format.sh origin/release-1.9.1
         """
       }
     }
