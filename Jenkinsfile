@@ -50,10 +50,14 @@ pipeline {
       steps {
         nodeInfo()
         unstash name: 'srcs'
-        sh """
-        tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/$CHANGE_TARGET
-        """
+        script {
+            sh "tests/ci_build/git-clang-format.sh HEAD~1"
+            if (env.BRANCH_NAME == 'main') {
+                sh "tests/ci_build/git-clang-format.sh origin/main"
+            } else {
+                sh "tests/ci_build/git-clang-format.sh origin/$CHANGE_TARGET"
+            }
+          }
       }
     }
     stage('Build & Test') {
