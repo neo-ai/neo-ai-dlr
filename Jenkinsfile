@@ -33,6 +33,8 @@ pipeline {
       }
       steps {
         nodeInfo()
+        setEnvBaselineBranch()
+        sh 'echo "BASELINE_BRANCH: ${BASELINE_BRANCH}"'
         checkoutSrcs()
         stash name: 'srcs', excludes: '.git/'
         milestone label: 'Sources ready', ordinal: 1
@@ -52,7 +54,7 @@ pipeline {
         unstash name: 'srcs'
         sh """
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/$CHANGE_TARGET
+        tests/ci_build/git-clang-format.sh origin/${BASELINE_BRANCH}
         """
       }
     }
@@ -177,6 +179,15 @@ pipeline {
 }
 
 /* Function definitions to follow */
+
+// Set environment variable BASELINE_BRANCH
+def setEnvBaselineBranch() {
+    if (env.CHANGE_TARGET != null) {
+        env.BASELINE_BRANCH = env.CHANGE_TARGET;
+    } else {
+        env.BASELINE_BRANCH = env.BRANCH_NAME;
+    }
+}
 
 // Add more info about job node
 def nodeInfo() {
