@@ -48,10 +48,12 @@ pipeline {
       }
       steps {
         unstash name: 'srcs'
-        sh """
+        sh '''
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/release-1.10.0
-        """
+        echo "BRANCH_NAME:$BRANCH_NAME"
+        echo "CHANGE_TARGET:$CHANGE_TARGET"
+        tests/ci_build/git-clang-format.sh origin/${CHANGE_TARGET:-$BRANCH_NAME}
+        '''
       }
     }
     stage('Build & Test') {
