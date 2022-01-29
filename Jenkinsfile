@@ -12,6 +12,15 @@ def inferenceContainerApps = [
   ["xgboost", "cpu"], ["image_classification", "cpu"], ["image_classification", "gpu"]
 ]
 
+def setEnvBaselineBranch() {
+    // env.BASELINE_BRANCH = getProp1OrProp2({ env.CHANGE_TARGET }, { env.BRANCH_NAME })
+    try {
+        env.BASELINE_BRANCH = env.CHANGE_TARGET;
+    } catch(groovy.lang.MissingPropertyException e) {
+        env.BASELINE_BRANCH = env.BRANCH_NAME;
+    }
+}
+
 /* Pipeline definition */
 pipeline {
   // Each stage specify its own agent
@@ -32,6 +41,10 @@ pipeline {
         label 'cpu-build'
       }
       steps {
+        setEnvBaselineBranch()
+        sh """
+        echo "BASELINE_BRANCH: ${BASELINE_BRANCH}"
+        """
         checkoutSrcs()
         stash name: 'srcs', excludes: '.git/'
         milestone label: 'Sources ready', ordinal: 1
@@ -50,7 +63,7 @@ pipeline {
         unstash name: 'srcs'
         sh """
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/main
+        tests/ci_build/git-clang-format.sh origin/${BASELINE_BRANCH}
         """
       }
     }
