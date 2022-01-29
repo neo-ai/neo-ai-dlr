@@ -13,13 +13,9 @@ def inferenceContainerApps = [
 ]
 
 def setEnvBaselineBranch() {
-    try {
-        if (env.CHANGE_TARGET != null) {
-            env.BASELINE_BRANCH = env.CHANGE_TARGET;
-        } else {
-            env.BASELINE_BRANCH = env.BRANCH_NAME;
-        }
-    } catch(groovy.lang.MissingPropertyException e) {
+    if (env.CHANGE_TARGET != null) {
+        env.BASELINE_BRANCH = env.CHANGE_TARGET;
+    } else {
         env.BASELINE_BRANCH = env.BRANCH_NAME;
     }
 }
