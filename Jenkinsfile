@@ -12,6 +12,18 @@ def inferenceContainerApps = [
   ["xgboost", "cpu"], ["image_classification", "cpu"], ["image_classification", "gpu"]
 ]
 
+def getProp1OrProp2(Closure p1, Closure p2) {
+    try {
+        return p1()
+    } catch(groovy.lang.MissingPropertyException e) {
+        return p2()
+    }
+}
+
+def setEnvBaselineBranch() {
+    env.BASELINE_BRANCH = getProp1OrProp2({ env.CHANGE_TARGET }, { env.BRANCH_NAME })
+}
+
 /* Pipeline definition */
 pipeline {
   // Each stage specify its own agent
@@ -32,6 +44,10 @@ pipeline {
         label 'cpu-build'
       }
       steps {
+        setEnvBaselineBranch()
+        sh """
+        echo "BASELINE_BRANCH: ${BASELINE_BRANCH}"
+        """
         checkoutSrcs()
         stash name: 'srcs', excludes: '.git/'
         milestone label: 'Sources ready', ordinal: 1
