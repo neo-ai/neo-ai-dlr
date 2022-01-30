@@ -41,7 +41,7 @@ ModelPath dlr::SetTreelitePaths(const std::vector<std::string>& files) {
 }
 
 TreeliteInput::~TreeliteInput() {
-  if (handle) TreeliteDMatrixFree(handle);
+  if (handle != nullptr) TreeliteDMatrixFree(handle);
   handle = nullptr;
 }
 
@@ -240,4 +240,11 @@ void TreeliteModel::SetNumThreads(int threads) {
 
 void TreeliteModel::UseCPUAffinity(bool use) {
   throw dmlc::Error("UseCPUAffinity is not supported by Treelite backend.");
+}
+
+// Destructor
+TreeliteModel::~TreeliteModel() {
+  // Delete predictor from memory
+  if (treelite_model_ != nullptr) TreelitePredictorFree(treelite_model_);
+  treelite_model_ = nullptr;
 }

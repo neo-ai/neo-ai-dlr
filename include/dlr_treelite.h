@@ -62,6 +62,7 @@ class DLR_DLL TreeliteModel : public DLRModel {
       : DLRModel(dev, DLRBackend::kTREELITE) {
     SetupTreeliteModule(files);
   }
+  ~TreeliteModel();
 
   virtual const int GetInputDim(int index) const override;
   virtual const int64_t GetInputSize(int index) const override;
