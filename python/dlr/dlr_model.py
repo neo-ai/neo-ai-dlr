@@ -325,13 +325,18 @@ class DLRModelImpl(IDLRModel):
                                      shape.ctypes.data_as(POINTER(c_longlong)),
                                      in_data_pointer,
                                      c_int(len(shape))))
-        if self.backend == 'treelite':
+        # This helps to determine output batch size only
+        # Treelite model output shape will be know only after the model run
+        if self.backend == "treelite":
             self._lazy_init_output_shape()
 
     def _run(self):
         """A light wrapper to call run in the DLR backend."""
         self._check_call(self._lib.RunDLRModel(byref(self.handle)))
-        if self.backend == "relayvm":
+        # Treelite model output shape will be know only after the model run
+        # If model uses objective multi:softmax then output shape will be (batch, 1)
+        # because predictor will execute predictor_transform max_index
+        if self.backend in ["relayvm", "treelite"]:
             self._lazy_init_output_shape()
 
     def _get_num_outputs(self):

@@ -228,6 +228,10 @@ void TreeliteModel::Run() {
                                          &out_result_size),
            0)
       << TreeliteGetLastError();
+  // Treelite model output shape will be know only after the model run
+  // If model uses objective multi:softmax then output shape will be (batch, 1)
+  // because predictor will execute predictor_transform max_index
+  treelite_output_size_ = out_result_size / treelite_input_->num_row;
 }
 
 void TreeliteModel::SetNumThreads(int threads) {
