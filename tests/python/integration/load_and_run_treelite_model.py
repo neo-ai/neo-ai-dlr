@@ -16,13 +16,13 @@ def test_mnist():
     data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost', 'mnist.libsvm')
     model = DLRModel(model_path, 'cpu', 0)
 
-    X, _ = load_svmlight_file(data_file)
+    X, y = load_svmlight_file(data_file)
+    assert y.shape == (8,)
     print('Testing inference on XGBoost MNIST...')
     res = model.run(X.toarray())[0]
-    # TODO investigate why output shape size in (1,10) instead of (1,1)
-    # the model uses multi:softmax objective which outputs one class with the maximum probability
-    # assert res.shape == (1,1)
-    assert res[0][0] == 7.0
+    # mnist model uses multi:softmax objective which outputs one class with the maximum probability
+    assert res.shape == (8, 1)
+    assert np.allclose(res.flatten(), y)
 
 def test_iris():
     model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'xgboost-iris-1.10.0')
