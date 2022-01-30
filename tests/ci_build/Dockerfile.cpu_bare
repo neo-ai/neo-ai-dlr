@@ -6,7 +6,7 @@ RUN apt-get update && \
     build-essential git libtinfo-dev zlib1g-dev libedit-dev libxml2-dev \
     antlr4 gnupg clang-format-10 \
     && rm -rf /var/lib/apt/lists/* \
-    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
+    && curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
 
 RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh \

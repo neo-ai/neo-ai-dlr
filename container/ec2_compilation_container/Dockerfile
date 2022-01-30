@@ -11,7 +11,7 @@ RUN apt install -y libedit-dev libxml2-dev antlr4
 RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.sh \
     && bash cmake-3.22.0-linux-x86_64.sh --skip-license --prefix=/usr/local
 
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
+RUN curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
 
 RUN pip3 install -U pip setuptools wheel
 RUN pip3 install numpy decorator attrs antlr4-python3-runtime
