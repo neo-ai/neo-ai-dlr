@@ -16,7 +16,7 @@ RUN apt-get update && \
     openssl \
     libnettle6 \
     && rm -rf /var/lib/apt/lists/* \
-    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
+    && curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
 
 RUN pip3 install -U pip setuptools wheel
