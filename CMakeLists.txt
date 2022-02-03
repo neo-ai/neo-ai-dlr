@@ -69,9 +69,6 @@ set(CMAKE_MACOSX_RPATH TRUE)
 
 set(python-build "bp3-python setup.py build")
 
-# Set BUILD_SHARED_LIBS as option. By default, build shared libraries;
-# User can set this to OFF to build static libraries instead.
-option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
 
 # Compiler flags
@@ -280,12 +277,11 @@ FILE(GLOB MAIN_SRC src/*.cc)
 
 set(USE_LIBBACKTRACE OFF)
 add_subdirectory(${TVM_SRC} EXCLUDE_FROM_ALL)
-set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}") # Save BUILD_SHARED_LIBS
+# Ask Treelite to add_library treelite_runtime_static
+set(BUILD_STATIC_LIBS_SAVED "${BUILD_STATIC_LIBS}") # Save BUILD_STATIC_LIBS
 set(BUILD_STATIC_LIBS ON)
-set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(${TREELITE_SRC} EXCLUDE_FROM_ALL)
-set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")  # Restore BUILD_SHARED_LIBS
-set(BUILD_STATIC_LIBS OFF)
+set(BUILD_STATIC_LIBS "${BUILD_STATIC_LIBS_SAVED}")  # Restore BUILD_STATIC_LIBS
 add_library(objdlr OBJECT ${DLR_SRC})
 
 target_compile_definitions(objdlr PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
