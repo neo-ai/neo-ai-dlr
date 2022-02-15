@@ -66,14 +66,14 @@ RUN apt-get update && \
 
 COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
 
-RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.8 \
+RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.8\
     && pip3 install --no-cache-dir Pillow==6.2.2 \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
     && rm -rf /root/.cache/pip
 #COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
 RUN pip3 install --upgrade --force-reinstall sagemaker-inference
-RUN pip3 install torchvision==0.8.2 --no-deps
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.7.1.2.1.7.0
+RUN pip3 install torchvision==0.9.1 --no-deps
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.8.1.2.1.7.0
 
 ### Stage 2-2: Runner (APP-specific handler)
 FROM runner_base AS runner
