@@ -19,9 +19,9 @@ extern "C" {  // Open extern "C" block
 /*! \brief major version */
 #define DLR_MAJOR 1
 /*! \brief minor version */
-#define DLR_MINOR 10
+#define DLR_MINOR 11
 /*! \brief patch version */
-#define DLR_PATCH 1
+#define DLR_PATCH 0
 /*! \brief DLR version */
 #define DLR_VERSION (DLR_MAJOR * 10000 + DLR_MINOR * 100 + DLR_PATCH)
 /*! \brief helper for making version number */
