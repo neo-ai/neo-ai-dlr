@@ -113,6 +113,7 @@ include_directories("${JSON_SRC}")
 FILE(GLOB DLR_SRC
     "src/*.cc"
     ${TVM_SRC}/src/runtime/dso_library.cc
+    ${TVM_SRC}/src/runtime/library_module.cc
     ${TVM_SRC}/src/runtime/cpu_device_api.cc
     ${TVM_SRC}/src/runtime/metadata_module.cc
     ${TVM_SRC}/src/runtime/contrib/sort/sort.cc
@@ -475,10 +476,10 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.10.0/${RELAYVM_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.11.0/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      38111e6432d643122ebf6ed5493e415871dc3fa5
+      9579c77d98de992d5c9e84e1799e2669cbe65c9b
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}
