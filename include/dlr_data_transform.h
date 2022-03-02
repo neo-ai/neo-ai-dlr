@@ -23,8 +23,9 @@ class DLR_DLL Transformer {
   /*! \brief Helper function for TransformInput. Allocates NDArray to store
    * mapped input data. */
   virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                           DLDataType dtype, DLDevice dev,
-                           tvm::runtime::NDArray& input_array) const;
+                           DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array);
+
+  virtual void Clear(){};
 };
 
 class DLR_DLL FloatTransformer : public Transformer {
@@ -35,7 +36,7 @@ class DLR_DLL FloatTransformer : public Transformer {
 
  public:
   void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                    tvm::runtime::NDArray& input_array) const;
+                    tvm::runtime::NDArray& input_array) const override;
 };
 
 class DLR_DLL CategoricalStringTransformer : public Transformer {
@@ -46,7 +47,7 @@ class DLR_DLL CategoricalStringTransformer : public Transformer {
 
  public:
   void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                    tvm::runtime::NDArray& input_array) const;
+                    tvm::runtime::NDArray& input_array) const override;
 };
 
 class DLR_DLL DateTimeTransformer : public Transformer {
@@ -76,10 +77,10 @@ class DLR_DLL DateTimeTransformer : public Transformer {
 
  public:
   void MapToNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                    tvm::runtime::NDArray& input_array) const;
+                    tvm::runtime::NDArray& input_array) const override;
 
   void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                   DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array) const;
+                   DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array) override;
 };
 
 class DLR_DLL TextTransformer : public Transformer {
@@ -91,9 +92,11 @@ class DLR_DLL TextTransformer : public Transformer {
 
   virtual void InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                            DLDataType dtype, DLDevice dev,
-                           tvm::runtime::NDArray& input_array) const override;
+                           tvm::runtime::NDArray& input_array) override;
 
   inline void SetIndex(int idx) const { column_idx_ = idx; };
+
+  virtual void Clear() override;
 
  private:
   const static int kCharNum = 256;

@@ -32,10 +32,11 @@ void DataTransform::TransformInput(const nlohmann::json& metadata, const int64_t
     auto it = GetTransformerMap()->find(transformer_type);
     CHECK(it != GetTransformerMap()->end())
         << transformer_type << " is not a valid DataTransform type.";
-    const Transformer* transformer = &(*it->second);
+    Transformer* transformer = &(*it->second);
 
     transformer->InitNDArray(input_json, transforms[i], dtypes[i], dev, tvm_inputs->at(i));
     transformer->MapToNDArray(input_json, transforms[i], tvm_inputs->at(i));
+    transformer->Clear();
   }
 }
 
@@ -55,8 +56,7 @@ nlohmann::json DataTransform::GetAsJson(const int64_t* shape, const void* input,
 }
 
 void Transformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
-                              DLDataType dtype, DLDevice dev,
-                              tvm::runtime::NDArray& input_array) const {
+                              DLDataType dtype, DLDevice dev, tvm::runtime::NDArray& input_array) {
   // Create NDArray for transformed input which will be passed to TVM.
   std::vector<int64_t> arr_shape = {static_cast<int64_t>(input_json.size()),
                                     static_cast<int64_t>(input_json[0].size())};
@@ -133,7 +133,7 @@ void CategoricalStringTransformer::MapToNDArray(const nlohmann::json& input_json
 
 void DateTimeTransformer::InitNDArray(const nlohmann::json& input_json,
                                       const nlohmann::json& transform, DLDataType dtype,
-                                      DLDevice dev, tvm::runtime::NDArray& input_array) const {
+                                      DLDevice dev, tvm::runtime::NDArray& input_array) {
   // Create NDArray for transformed input which will be passed to TVM. NUM_COL
   // fixed to 7
   auto date_col = transform["DateCol"].get<std::vector<int>>();
@@ -251,7 +251,7 @@ TextTransformer::TextTransformer() {
 
 void TextTransformer::InitNDArray(const nlohmann::json& input_json, const nlohmann::json& transform,
                                   DLDataType dtype, DLDevice dev,
-                                  tvm::runtime::NDArray& input_array) const {
+                                  tvm::runtime::NDArray& input_array) {
   auto vocabularies = transform["Vocabularies"].get<std::vector<std::string>>();
   auto text_col = transform["TextCol"].get<int>();
   SetIndex(text_col);
@@ -302,6 +302,11 @@ void TextTransformer::MapToNDArray(const nlohmann::json& input_json,
       }
     }
   }
+}
+
+void TextTransformer::Clear() {
+  vocab_to_cols_->clear();
+  col_to_id_->clear();
 }
 
 template <typename T>
