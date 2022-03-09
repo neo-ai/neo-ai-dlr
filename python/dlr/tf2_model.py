@@ -1,17 +1,18 @@
 import tensorflow as tf
 from tensorflow.python.tools import saved_model_utils
+from packaging import version
 
 from .api import IDLRModel
 from .neologger import create_logger
-from .metadata import VERSION
+from .metadata import VERSION, MIN_TENSORFLOW_VERSION
 
-class TFModelImpl(IDLRModel):
+class TF2ModelImpl(IDLRModel):
     """
-    TFModelImpl is a wrapper on top of tensorflow which implements DLRModel API
+    TF2ModelImpl is a wrapper on top of tensorflow which implements DLRModel API
     Parameters
     ----------
     model_path : str
-        Full path to the directory containing the saved model
+        Full path to the saved model directory
     dev_type : str
         Device type ('cpu' or 'gpu')
     dev_id : int
@@ -19,28 +20,27 @@ class TFModelImpl(IDLRModel):
     """
 
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
-
+        # check for Tensorflow 2.x
+        assert version.parse(tf.__version__) >= version.parse(MIN_TENSORFLOW_VERSION), \
+            "Minimem Tensorflow supported version is {}, got {}".format(MIN_TENSORFLOW_VERSION, tf.__version__)
         self.model_path = model_path
         self.logger = create_logger(log_file=error_log_file)
-        if dev_type is not None:
-            devices = ["cpu", "gpu"]
-            if dev_type not in devices:
-                raise ValueError(
-                    "Invalid device type {}. Valid devices: {}".format(dev_type, devices))
-        if dev_type == 'gpu':
-            physical_devices = tf.config.list_physical_devices('GPU')
-            tf.config.experimental.set_memory_growth(
-                physical_devices[dev_id], True)
-            self.logger.info("TF memory_growth: {}".format(
-                tf.config.experimental.get_memory_growth(physical_devices[dev_id])))
-
         self.use_default_dlr = use_default_dlr
-        self._lib = None
+        if dev_type is not None or dev_id is not None:
+            self.logger.warning("dev_type and dev_id are not supported for TF2 Models and the params are ignored.")
+        physical_devices = tf.config.list_physical_devices('GPU')
+        for physical_device in physical_devices:
+            memory_growth = tf.config.experimental.get_memory_growth(physical_device)
+            if not memory_growth:
+                try:
+                    tf.config.experimental.set_memory_growth(physical_device, True)
+                    assert tf.config.experimental.get_memory_growth(physical_device)
+                except:
+                    self.logger.warning("tf.config.experimental.set_memory_growth failed.")
         self.version = VERSION
-
         self.saved_model = tf.saved_model.load(model_path)
         tag_set = 'serve'
-        assert len(self.saved_model.signatures) > 0
+        assert len(self.saved_model.signatures) > 0, "Found no signatures in the saved model."
         signature_def_key = 'serving_default'
         if signature_def_key not in self.saved_model.signatures:
             signature_def_key = list(self.saved_model.signatures.keys())[0]
@@ -91,7 +91,7 @@ class TFModelImpl(IDLRModel):
     def _validate_input_name(self, name):
         if name not in self.input_tensor_names:
             raise ValueError(
-                "Invalid input tensor name '{}'. List of input tensor names: {}".format(name, self.input_tensor_names))
+                "Invalid input name '{}'. List of input names: {}".format(name, self.input_tensor_names))
 
     def _validate_input(self, input_values):
         if isinstance(input_values, dict):
@@ -103,7 +103,7 @@ class TFModelImpl(IDLRModel):
         elif isinstance(input_values, (list, tuple)):
             l_names, l_input_values = len(
                 self.input_tensor_names), len(input_values)
-            assert l_names == l_input_values, "Input tensor number does not match, expect {}, got {}".format(
+            assert l_names == l_input_values, "Wrong number of inputs, expected {}, actual {}".format(
                 l_names, l_input_values)
             self.input_values = dict(
                 zip(self.input_tensor_names, input_values))

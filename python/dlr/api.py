@@ -2,7 +2,6 @@
 from __future__ import absolute_import as _abs
 
 import abc
-import glob
 import os
 from .neologger import create_logger
 from .counter import call_phone_home
@@ -32,25 +31,15 @@ class IDLRModel:
     def run(self, input_data):
         raise NotImplementedError
 
-
-def _find_model_file(model_path, ext):
-    if os.path.isfile(model_path) and model_path.endswith(ext):
-        return model_path
-    model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*' + ext)))
-    if len(model_files) > 1:
-        raise ValueError('Multiple {} files found under {}'.format(ext, model_path))
-    elif len(model_files) == 1:
-        return model_files[0]
-    return None
-
-def _find_saved_model(model_path):
-    if not os.path.isdir(model_path):
-        return False
-    model_file = glob.glob(os.path.abspath(os.path.join(model_path, '*' + '.pb')))
-    variables = glob.glob(os.path.abspath(os.path.join(model_path, 'variables')))
-    if any(len(e) == 0 for e in (model_file, variables)):
-        return False
-    return True
+def _is_tf2_saved_model(model_path):
+    return (
+        os.path.isdir(model_path)
+        and (
+            os.path.isfile(os.path.join(model_path, "saved_model.pb"))
+            or os.path.isfile(os.path.join(model_path, "saved_model.pbtxt"))
+        )
+        and os.path.isdir(os.path.join(model_path, "variables"))
+    )
 
 def _is_module_found(name):
     try:
@@ -86,10 +75,10 @@ class DLRModel(IDLRModel):
         try:
             # Find correct runtime implementation for the model
             # Tensorflow saved model
-            if _find_saved_model(model_path):
+            if _is_tf2_saved_model(model_path):
                 self.neo_logger.info("found TF2.x saved model, dlr will use TensorFlow runtime.")
-                from .tf_model import TFModelImpl
-                self._impl = TFModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
+                from .tf2_model import TF2ModelImpl
+                self._impl = TF2ModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
             else:
                 # Default to TVM+Treelite
                 from .dlr_model import DLRModelImpl

@@ -8,7 +8,7 @@ SAVED_MODEL_PATH = "/tmp/saved_model"
 signature_list = [tf.TensorSpec(shape=[2,2], dtype=tf.float32, name="input1"),
                   tf.TensorSpec(shape=[2,2], dtype=tf.float32, name="input2") ]
 
-class TestModel(Model):
+class TestTF2Model(Model):
     @tf.function(input_signature = [signature_list])
     def call(self, inputs):
         a, b = inputs
@@ -19,8 +19,9 @@ class TestModel(Model):
         output2 = tf.argmax(mm_flat)
         return {"output1": output1, "output2" : output2}
 
-def test_tf_model(dev_type=None, dev_id=None):
-    model = TestModel()
+def test_tf2_model(dev_type=None, dev_id=None):
+
+    model = TestTF2Model()
 
     tf.saved_model.save(model, SAVED_MODEL_PATH)
     model = DLRModel(SAVED_MODEL_PATH, dev_type, dev_id)
@@ -50,12 +51,6 @@ def test_tf_model(dev_type=None, dev_id=None):
     assert np.alltrue(m_inp1 == inp1)
     assert np.alltrue(m_inp2 == inp2)
 
-def test_tf_model_on_cpu_0():
-    test_tf_model("cpu", 0)
-
-def test_tf_model_on_gpu_0():
-    test_tf_model("gpu", 0)
-
 if __name__ == '__main__':
-    test_tf_model()
+    test_tf2_model()
     print('All tests passed!')
