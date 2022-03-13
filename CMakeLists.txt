@@ -230,6 +230,12 @@ if(USE_TENSORRT)
 
     set(USE_TENSORRT OFF)
 endif()
+if(WITH_TENSORFLOW2_LIB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW2")
+    include_directories("${WITH_TENSORFLOW2_LIB}/include")
+    list(APPEND DLR_SRC "src/dlr_tensorflow2/dlr_tensorflow2.cc")
+    list(APPEND DLR_LINKER_LIBS -L${WITH_TENSORFLOW2_LIB}/lib -ltensorflow)
+endif()
 if(WITH_HEXAGON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_HEXAGON")
     list(APPEND DLR_SRC "src/dlr_hexagon/dlr_hexagon.cc")
@@ -391,7 +397,10 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_data_transform_test.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/dlr_pipeline_skl_xgb_test.cc)
   endif()
-
+  if(WITH_TENSORFLOW2_LIB)
+    file(GLOB TENSORFLOW2_TEST_SRCS tests/cpp/dlr_tensorflow2/*.cc)
+    list(APPEND TEST_SRCS ${TENSORFLOW2_TEST_SRCS})
+  endif()
   if(WITH_HEXAGON)
     file(GLOB HEXAGON_TEST_SRCS tests/cpp/dlr_hexagon/*.cc)
     list(APPEND TEST_SRCS ${HEXAGON_TEST_SRCS})
@@ -595,7 +604,24 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
                     WORKING_DIRECTORY ${INVERSELABEL_STATIC_MODEL_DIR})
     file(REMOVE /tmp/${INVERSELABEL_STATIC_MODEL})
   endif()
-
+  if(WITH_TENSORFLOW2_LIB)
+    set(TF2_SAVED_MODEL imagenet_mobilenet_v2_100_224_classification.tar.gz)
+    set(TF2_SAVED_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/imagenet_mobilenet_v2)
+    if(NOT IS_DIRECTORY ${TF2_SAVED_MODEL_DIR})
+      file(MAKE_DIRECTORY ${TF2_SAVED_MODEL_DIR})
+      # Download Test Tensorflow model
+      download_file(
+        https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/tf2-models/${TF2_SAVED_MODEL}
+        /tmp/${TF2_SAVED_MODEL}
+        SHA1
+        2d183d967a671af1498261fdd050caa487d88e44
+      )
+      # this is OS-agnostic
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${TF2_SAVED_MODEL}
+                      WORKING_DIRECTORY ${TF2_SAVED_MODEL_DIR})
+      #file(REMOVE /tmp/${TF2_SAVED_MODEL})
+    endif()
+  endif() # WITH_TENSORFLOW2_LIB
   if(WITH_HEXAGON)
       # Download Test Hexagon model for Android 64 aarch64
       file(MAKE_DIRECTORY dlr_hexagon_model)
