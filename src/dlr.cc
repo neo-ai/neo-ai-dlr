@@ -6,6 +6,10 @@
 #include "dlr_treelite.h"
 #include "dlr_tvm.h"
 
+#ifdef DLR_TENSORFLOW2
+#include "dlr_tensorflow2/dlr_tensorflow2.h"
+#endif  // DLR_TENSORFLOW2
+
 #ifdef DLR_HEXAGON
 #include "dlr_hexagon/dlr_hexagon.h"
 #endif  // DLR_HEXAGON
@@ -260,27 +264,39 @@ extern "C" int GetDLROutputByName(DLRModelHandle* handle, const char* name, void
   API_END();
 }
 
-DLRModelPtr CreateDLRModelPtr(const char* model_path, DLDevice& dev) {
-  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
-  std::vector<std::string> files = FindFiles(path_vec);
-  DLRBackend backend = dlr::GetBackend(files);
-  if (backend == DLRBackend::kTVM) {
-    return std::make_shared<TVMModel>(files, dev);
-  } else if (backend == DLRBackend::kRELAYVM) {
-    return std::make_shared<RelayVMModel>(files, dev);
-  } else if (backend == DLRBackend::kTREELITE) {
-    return std::make_shared<TreeliteModel>(files, dev);
-#ifdef DLR_HEXAGON
-  } else if (backend == DLRBackend::kHEXAGON) {
-    return std::make_shared<HexagonModel>(files, dev, 1 /*debug_level*/);
-#endif  // DLR_HEXAGON
-  } else {
-    std::string err = "Unable to determine backend from path: '";
-    err = err + model_path + "'.";
-    throw dmlc::Error(err);
-    return nullptr;  // unreachable
-  }
+#ifdef DLR_TENSORFLOW2
+DLR_TF2Config DefaultTFConfig() {
+  // GPUOptions.allow_growth is True
+  // GPUOptions.per_process_gpu_memory_fraction=10%. It allows effectively
+  // share GPU memory. No Performance degradation was detected.
+  DLR_TF2Config tf2_config = {};
+  tf2_config.inter_op_parallelism_threads = 0;
+  tf2_config.intra_op_parallelism_threads = 0;
+  tf2_config.gpu_options.allow_growth = 1;
+  tf2_config.gpu_options.per_process_gpu_memory_fraction = 0.1;
+  return tf2_config;
 }
+
+Tensorflow2Model* CreateTensorflow2Model(const char* model_path, const DLR_TF2Config& tf2_config) {
+  const std::string model_path_string(model_path);
+  // Tensorflow2Model class does not use DLDevice internally
+  DLDevice dev;
+  dev.device_type = static_cast<DLDeviceType>(1);  // 1 - kDLCPU
+  dev.device_id = 0;
+  return new Tensorflow2Model(model_path_string, dev, tf2_config);
+}
+
+/*! \brief Translate c args from ctypes to std types for DLRModelFromTensorflow2
+ * ctor.
+ */
+int CreateDLRModelFromTensorflow2(DLRModelHandle* handle, const char* model_path,
+                                  const DLR_TF2Config tf2_config) {
+  API_BEGIN();
+  DLRModel* model = CreateTensorflow2Model(model_path, tf2_config);
+  *handle = model;
+  API_END();
+}
+#endif  // DLR_TENSORFLOW2
 
 #ifdef DLR_HEXAGON
 /*! \brief Translate c args from ctypes to std types for DLRModelFromHexagon
@@ -321,6 +337,14 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
       model = new RelayVMModel(files, dev);
     } else if (backend == DLRBackend::kTREELITE) {
       model = new TreeliteModel(files, dev);
+#ifdef DLR_TENSORFLOW2
+    } else if (backend == DLRBackend::kTENSORFLOW2) {
+      const std::string model_path_string(model_path);
+      // input and output tensor names will be detected automatically.
+      // use undefined number of threads - threads=0
+      const DLR_TF2Config tf2_config = DefaultTFConfig();
+      model = new Tensorflow2Model(model_path_string, dev, tf2_config);
+#endif  // DLR_TENSORFLOW2
 #ifdef DLR_HEXAGON
     } else if (backend == DLRBackend::kHEXAGON) {
       model = new HexagonModel(files, dev, 1 /*debug_level*/);
@@ -338,6 +362,36 @@ extern "C" int CreateDLRModel(DLRModelHandle* handle, const char* model_path, in
 
   *handle = model;
   API_END();
+}
+
+DLRModelPtr CreateDLRModelPtr(const char* model_path, DLDevice& dev) {
+  std::vector<std::string> path_vec = dlr::MakePathVec(model_path);
+  std::vector<std::string> files = FindFiles(path_vec);
+  DLRBackend backend = dlr::GetBackend(files);
+  if (backend == DLRBackend::kTVM) {
+    return std::make_shared<TVMModel>(files, dev);
+  } else if (backend == DLRBackend::kRELAYVM) {
+    return std::make_shared<RelayVMModel>(files, dev);
+  } else if (backend == DLRBackend::kTREELITE) {
+    return std::make_shared<TreeliteModel>(files, dev);
+#ifdef DLR_TENSORFLOW2
+  } else if (backend == DLRBackend::kTENSORFLOW2) {
+    const std::string model_path_string(model_path);
+    // input and output tensor names will be detected automatically.
+    // use undefined number of threads - threads=0
+    const DLR_TF2Config tf2_config = DefaultTFConfig();
+    return std::make_shared<Tensorflow2Model>(model_path_string, dev, tf2_config);
+#endif  // DLR_TENSORFLOW2
+#ifdef DLR_HEXAGON
+  } else if (backend == DLRBackend::kHEXAGON) {
+    return std::make_shared<HexagonModel>(files, dev, 1 /*debug_level*/);
+#endif  // DLR_HEXAGON
+  } else {
+    std::string err = "Unable to determine backend from path: '";
+    err = err + model_path + "'.";
+    throw dmlc::Error(err);
+    return nullptr;  // unreachable
+  }
 }
 
 extern "C" int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,

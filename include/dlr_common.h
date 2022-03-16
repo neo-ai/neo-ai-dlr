@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #include <nlohmann/json.hpp>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -41,7 +42,15 @@
 
 #ifndef DLR_MODEL_ELEM
 #define DLR_MODEL_ELEM
-enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
+enum DLRModelElemType {
+  HEXAGON_LIB,
+  NEO_METADATA,
+  TVM_GRAPH,
+  TVM_LIB,
+  TVM_PARAMS,
+  RELAY_EXEC,
+  TF2_SAVED_MODEL
+};
 typedef struct ModelElem {
   const DLRModelElemType type;
   const char* path;
@@ -95,8 +104,8 @@ inline bool EndsWith(const std::string& mainStr, const std::string& toMatch) {
     return false;
 }
 
-enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN };
-extern const char* kBackendToStr[6];
+enum class DLRBackend { kTVM, kTREELITE, kHEXAGON, kRELAYVM, kPIPELINE, kUNKNOWN, kTENSORFLOW2 };
+extern const char* kBackendToStr[7];
 
 /*! \brief Get the backend based on the contents of the model folder.
  */

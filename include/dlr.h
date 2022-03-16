@@ -50,7 +50,15 @@ typedef void* (*DLRMemalignFunctionPtr)(size_t, size_t);
 
 #ifndef DLR_MODEL_ELEM
 #define DLR_MODEL_ELEM
-enum DLRModelElemType { HEXAGON_LIB, NEO_METADATA, TVM_GRAPH, TVM_LIB, TVM_PARAMS, RELAY_EXEC };
+enum DLRModelElemType {
+  HEXAGON_LIB,
+  NEO_METADATA,
+  TVM_GRAPH,
+  TVM_LIB,
+  TVM_PARAMS,
+  RELAY_EXEC,
+  TF2_SAVED_MODEL
+};
 typedef struct ModelElem {
   const enum DLRModelElemType type;
   const char* path;
@@ -83,6 +91,36 @@ int CreateDLRModel(DLRModelHandle* handle, const char* model_path, int dev_type,
 DLR_DLL
 int CreateDLRModelFromModelElem(DLRModelHandle* handle, const DLRModelElem* model_elems,
                                 size_t model_elems_size, int dev_type, int dev_id);
+
+#ifdef DLR_TENSORFLOW2
+
+/*!
+ \brief Tensorflow GPU Options structure for Tensorflow Config structure.
+ */
+typedef struct DLR_TF2GPUOptions {
+  int allow_growth;
+  double per_process_gpu_memory_fraction;
+} DLR_TF2GPUOptions;
+
+/*!
+ \brief Tensorflow Config structure for CreateDLRModelFromTensorflow2.
+ */
+typedef struct DLR_TF2Config {
+  int intra_op_parallelism_threads;
+  int inter_op_parallelism_threads;
+  DLR_TF2GPUOptions gpu_options;
+} DLR_TF2Config;
+
+/*!
+ \brief Creates a DLR model from Tensorflow2.x saved model
+ \param handle The pointer to save the model handle.
+ \param full path to the saved model directory
+ \return 0 for success, -1 for error. Call DLRGetLastError() to get the error message.
+ */
+DLR_DLL
+int CreateDLRModelFromTensorflow2(DLRModelHandle* handle, const char* model_path,
+                                  const DLR_TF2Config tf2_config);
+#endif  // DLR_TENSORFLOW2
 
 #ifdef DLR_HEXAGON
 /*!
