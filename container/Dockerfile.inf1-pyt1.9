@@ -67,7 +67,7 @@ RUN apt-get update && \
 COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
 
 RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.8 \
-    && pip3 install --no-cache-dir Pillow==6.2.2 \
+    && pip3 install --no-cache-dir Pillow \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
     && rm -rf /root/.cache/pip
 #COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
