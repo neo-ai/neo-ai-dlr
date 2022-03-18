@@ -2,7 +2,6 @@
 from __future__ import absolute_import as _abs
 
 import abc
-import glob
 import os
 from .neologger import create_logger
 from .counter import call_phone_home
@@ -32,16 +31,15 @@ class IDLRModel:
     def run(self, input_data):
         raise NotImplementedError
 
-
-def _find_model_file(model_path, ext):
-    if os.path.isfile(model_path) and model_path.endswith(ext):
-        return model_path
-    model_files = glob.glob(os.path.abspath(os.path.join(model_path, '*' + ext)))
-    if len(model_files) > 1:
-        raise ValueError('Multiple {} files found under {}'.format(ext, model_path))
-    elif len(model_files) == 1:
-        return model_files[0]
-    return None
+def _is_tf2_saved_model(model_path):
+    return (
+        os.path.isdir(model_path)
+        and (
+            os.path.isfile(os.path.join(model_path, "saved_model.pb"))
+            or os.path.isfile(os.path.join(model_path, "saved_model.pbtxt"))
+        )
+        and os.path.isdir(os.path.join(model_path, "variables"))
+    )
 
 def _is_module_found(name):
     try:
@@ -52,7 +50,7 @@ def _is_module_found(name):
 
 # Wrapper class
 class DLRModel(IDLRModel):
-    
+
     @call_phone_home
     def __init__(self, model_path, dev_type=None, dev_id=None, error_log_file=None, use_default_dlr=False):
         """
@@ -76,13 +74,19 @@ class DLRModel(IDLRModel):
         self.neo_logger = create_logger(log_file=error_log_file)
         try:
             # Find correct runtime implementation for the model
-            self._model = model_path
-            from .dlr_model import DLRModelImpl
-            if dev_type is None:
-                dev_type = 'cpu'
-            if dev_id is None:
-                dev_id = 0
-            self._impl = DLRModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
+            # Tensorflow saved model
+            if _is_tf2_saved_model(model_path):
+                self.neo_logger.info("found TF2.x saved model, dlr will use TensorFlow runtime.")
+                from .tf2_model import TF2ModelImpl
+                self._impl = TF2ModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
+            else:
+                # Default to TVM+Treelite
+                from .dlr_model import DLRModelImpl
+                if dev_type is None:
+                    dev_type = 'cpu'
+                if dev_id is None:
+                    dev_id = 0
+                self._impl = DLRModelImpl(model_path, dev_type, dev_id, error_log_file, use_default_dlr)
         except Exception as ex:
             self.neo_logger.exception("error in DLRModel instantiation {}".format(ex))
             raise ex
@@ -160,7 +164,7 @@ class DLRModel(IDLRModel):
             self.neo_logger.exception("error in getting output names {} {}".format(self._impl.__class__.__name__, ex))
             raise ex
 
-    
+
     def get_version(self):
         """
         Get version of loaded DLR library.

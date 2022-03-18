@@ -30,7 +30,7 @@ Building DLR consists of two steps:
 .. note:: Use of Git submodules
 
   DLR uses Git submodules to manage dependencies. So when you clone the repo, remember to specify ``--recursive`` option:
-  
+
   .. code-block:: bash
 
     git clone --recursive https://github.com/neo-ai/neo-ai-dlr
@@ -105,7 +105,7 @@ DLR requires CMake 3.13 or greater. First, we will build CMake from source.
 Now, build DLR.
 
 .. code-block:: bash
- 
+
   git clone --recursive https://github.com/neo-ai/neo-ai-dlr
   cd neo-ai-dlr
   mkdir build
@@ -132,7 +132,7 @@ If you have a system install of TensorRT via Deb or RPM package, you can instead
   cd neo-ai-dlr
   mkdir build
   cd build
-  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/ 
+  cmake .. -DUSE_CUDA=ON -DUSE_CUDNN=ON -DUSE_TENSORRT=/path/to/TensorRT/
   make -j4
   cd ../python
   python3 setup.py install --user
@@ -151,7 +151,7 @@ Similarly, to enable support for OpenCL devices, run CMake with ``-DUSE_OPENCL=O
   cd neo-ai-dlr
   mkdir build
   cd build
-  cmake .. -DUSE_OPENCL=ON 
+  cmake .. -DUSE_OPENCL=ON
   make -j4
   cd ../python
   python3 setup.py install --user
@@ -213,7 +213,7 @@ Once the compilation is completed, install the Python package by running ``setup
 Building for Android on ARM
 ---------------------------
 
-Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler 
+Android build requires `Android NDK <https://developer.android.com/ndk/downloads/>`_. We utilize the android.toolchain.cmake file in NDK package to configure the crosscompiler
 
 Also required is `NDK standlone toolchain <https://developer.android.com/ndk/guides/standalone_toolchain>`_. Follow the instructions to generate necessary build-essential tools.
 
@@ -234,12 +234,12 @@ Once done with above steps, invoke cmake with following commands to build Androi
 
 ``ANDROID_PLATFORM`` should correspond to ``minSdkVersion`` of your project. If ``ANDROID_PLATFORM`` is not set it will default to ``android-21``.
 
-For arm64 targets, add 
+For arm64 targets, add
 
 .. code-block:: bash
 
-  -DANDROID_ABI=arm64-v8a 
-  
+  -DANDROID_ABI=arm64-v8a
+
 to cmake flags.
 
 Building for Android Archive (AAR) file
@@ -259,6 +259,25 @@ Install `Android Studio <https://developer.android.com/studio>`_.
 
   # dlr-release.aar file will be under dlr/build/outputs/aar/ folder
   ls -lah dlr/build/outputs/aar/dlr-release.aar
+
+Building DLR with TensorFlow C library
+--------------------------------------
+
+We can use DLR to run Tensorflow 2.x saved models (including `TensorRT converted models <https://blog.tensorflow.org/2021/01/leveraging-tensorflow-tensorrt-integration.html>`_) via TensorFlow C library.
+
+TensorFlow C library can be downloaded from `tensorflow.org <https://www.tensorflow.org/install/lang_c>`_ or built `from source <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README.md>`_.
+
+To build DLR with TensorFlow C library:
+
+.. code-block:: bash
+
+  # Build DLR with libtensorflow
+  cmake .. -DWITH_TENSORFLOW2_LIB=<path to libtensorflow folder>
+  make -j8
+
+  # Test DLR with libtensorflow
+  export LD_LIBRARY_PATH=<path to libtensorflow folder>/lib
+  ./dlr_tensorflow2_test
 
 
 Building DLR with Hexagon support

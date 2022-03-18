@@ -7,7 +7,8 @@
 
 using namespace dlr;
 
-const char* dlr::kBackendToStr[] = {"tvm", "treelite", "hexagon", "relayvm", "pipeline", "unknown"};
+const char* dlr::kBackendToStr[] = {"tvm",      "treelite", "hexagon",   "relayvm",
+                                    "pipeline", "unknown",  "tensorflow"};
 
 bool dlr::IsFileEmpty(const std::string& filePath) {
   std::ifstream pFile(filePath);
@@ -113,10 +114,13 @@ DLRBackend dlr::GetBackend(const std::vector<std::string>& files) {
   // Scan files to guess the backend.
   bool has_tvm_lib = false;
   for (auto filename : files) {
+    std::cout << "filename: " << filename << std::endl;
     if (EndsWith(filename, ".params")) {
       return DLRBackend::kTVM;
     } else if (EndsWith(filename, ".ro")) {
       return DLRBackend::kRELAYVM;
+    } else if (EndsWith(filename, "saved_model.pb") || EndsWith(filename, "saved_model.pbtxt")) {
+      return DLRBackend::kTENSORFLOW2;
     } else if (EndsWith(filename, "_hexagon_model.so")) {
       return DLRBackend::kHEXAGON;
     } else if (!EndsWith(filename, LIBDLR) && EndsWith(filename, LIBEXT)) {
@@ -135,6 +139,8 @@ DLRBackend dlr::GetBackend(const std::vector<DLRModelElem>& model_elems) {
       return DLRBackend::kTVM;
     } else if (el.type == DLRModelElemType::RELAY_EXEC) {
       return DLRBackend::kRELAYVM;
+    } else if (el.type == DLRModelElemType::TF2_SAVED_MODEL) {
+      return DLRBackend::kTENSORFLOW2;
     } else if (el.type == DLRModelElemType::HEXAGON_LIB) {
       return DLRBackend::kHEXAGON;
     } else if (el.type == DLRModelElemType::TVM_LIB) {
