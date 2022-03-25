@@ -9,9 +9,8 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 # Add arguments to achieve the version, python and url
 ARG PYTHON=python3
 ARG PIP=pip3
-ARG TFS_SHORT_VERSION=1.15.0
+ARG TFS_SHORT_VERSION=2.5.2
 ARG TF_S3_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com
-ARG TF_MODEL_SERVER_SOURCE=${TF_S3_URL}/${TFS_SHORT_VERSION}/Serving/CPU-WITH-MKL/tensorflow_model_server
 
 # See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8
@@ -51,7 +50,7 @@ RUN apt-get update \
 RUN echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list && \
     wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add - && \
     apt-get update && \
-    apt-get install "tensorflow-model-server-neuron=1.15.0.2.1.13.0" \
+    apt-get install "tensorflow-model-server-neuron=2.5.2.2.1.13.0" \
             aws-neuron-tools && \
     rm -rf /var/lib/apt/lists/*
 
@@ -75,9 +74,9 @@ RUN ${PIP} install --no-cache-dir \
     protobuf==3.10.0 \
 # using --no-dependencies to avoid installing tensorflow binary
  && ${PIP} install --no-dependencies --no-cache-dir \
-    tensorflow-serving-api==1.15.0
+    tensorflow-serving-api==2.5.2
 
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron==1.15.5.2.1.13.0"
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron==2.5.2.2.1.13.0"
 
 COPY sagemaker /sagemaker
 

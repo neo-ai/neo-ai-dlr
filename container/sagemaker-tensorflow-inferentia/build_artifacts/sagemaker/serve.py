@@ -24,8 +24,8 @@ from contextlib import contextmanager
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-JS_PING = "js_content ping"
-JS_INVOCATIONS = "js_content invocations"
+JS_PING = "js_content tensorflowServing.ping"
+JS_INVOCATIONS = "js_content tensorflowServing.invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
 MULTI_MODEL = "s" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else ""
@@ -167,7 +167,7 @@ class ServiceManager(object):
 
         log.info("tensorflow serving model config: \n%s\n", config)
 
-        with open(self._tfs_config_path, "w") as f:
+        with open(self._tfs_config_path, "w", encoding="utf8") as f:
             f.write(config)
 
     def _setup_gunicorn(self):
@@ -266,7 +266,7 @@ class ServiceManager(object):
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
         log.info("nginx config: \n%s\n", config)
 
-        with open("/sagemaker/nginx.conf", "w") as f:
+        with open("/sagemaker/nginx.conf", "w", encoding="utf8") as f:
             f.write(config)
 
     def _read_nginx_template(self):
