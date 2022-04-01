@@ -225,14 +225,36 @@ Tensorflow2Model::Tensorflow2Model(const std::string& model_path, const DLDevice
     LOG(FATAL) << "ERROR: Unable to create Session " << TF_Message(status_);
     return;  // unreachable
   }
-  ignored_names_ = {
-      "saver_filename",             // name of the checkpoint
-      "StatefulPartitionedCall_1",  // the loss
-      "StatefulPartitionedCall_2"   // save operation
-  };
-  DetectInputs();
+
+  auto metadata = GetMetadataFile(model_path);
+  if (!metadata.empty() && !IsFileEmpty(metadata)) {
+    LOG(INFO) << "Loading metadata file: " << metadata;
+    LoadJsonFromFile(metadata, this->metadata_);
+    LOG(INFO) << "Input and Output names from metadata file";
+    LOG(INFO) << "Input Names:";
+    for (auto& el : this->metadata_.at("Model").at("Inputs")) {
+      input_names_.push_back(el.at("name"));
+      LOG(INFO) << el.at("name");
+    }
+    LOG(INFO) << "Output Names:";
+    for (auto& el : this->metadata_.at("Model").at("Outputs")) {
+      output_names_.push_back(el.at("name"));
+      LOG(INFO) << el.at("name");
+    }
+    num_inputs_ = input_names_.size();
+    num_outputs_ = output_names_.size();
+  } else {
+    ignored_names_ = {
+        "saver_filename",             // name of the checkpoint
+        "StatefulPartitionedCall_1",  // the loss
+        "StatefulPartitionedCall_2"   // save operation
+    };
+    LOG(WARNING) << "Metadata file was not found. Auto-detecting Input and Output names. This may "
+                    "not work correctly for some models...";
+    DetectInputs();
+    DetectOutputs();
+  }
   DetectInputShapes();
-  DetectOutputs();
   PrepInputs();
   PrepOutputs();
 
