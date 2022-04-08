@@ -65,20 +65,29 @@ TF_Output Tensorflow2Model::ParseTensorName(const std::string& t_name) {
   return oper_out;
 }
 
-void Tensorflow2Model::DetectInputs() {
-  size_t pos = 0;
-  TF_Operation* op;
-  while ((op = TF_GraphNextOperation(graph_, &pos)) != nullptr) {
-    const std::string op_type = TF_OperationOpType(op);
-    const int n_in = TF_OperationNumInputs(op);
-    const int n_out = TF_OperationNumOutputs(op);
-    const std::string op_name = TF_OperationName(op);
-    if (op_type == "Placeholder" && n_in == 0 && n_out == 1 && ignored_names_.count(op_name) == 0) {
-      input_names_.push_back(op_name + ":0");
+void Tensorflow2Model::DetectInputsAndOutputs(const InputOutputType& inputs,
+                                              const InputOutputType& outputs) {
+  for (auto& el : inputs) {
+    const tensorflow::TensorInfo& ti = el.second;
+    input_names_.push_back(ti.name());
+    const tensorflow::TensorShapeProto& shape = ti.tensor_shape();
+    int dim_size = shape.dim_size();
+    std::vector<int64_t> dims;
+    for (int i = 0; i < dim_size; i++) {
+      const tensorflow::TensorShapeProto_Dim& dim = shape.dim(i);
+      int64_t dim_sz = dim.size();
+      dims.push_back(dim_sz);
     }
+    graph_input_shapes_.push_back(dims);
+  }
+  for (auto& el : outputs) {
+    const tensorflow::TensorInfo& ti = el.second;
+    output_names_.push_back(ti.name());
   }
   num_inputs_ = input_names_.size();
-  std::string msg = "Found " + std::to_string(num_inputs_) + " possible inputs: ";
+  num_outputs_ = output_names_.size();
+  input_shapes_.resize(num_inputs_);
+  std::string msg = "Found " + std::to_string(num_inputs_) + " inputs: ";
   for (int i = 0; i < num_inputs_; i++) {
     if (i > 0) {
       msg += ", ";
@@ -86,37 +95,7 @@ void Tensorflow2Model::DetectInputs() {
     msg += input_names_[i];
   }
   LOG(INFO) << msg;
-}
-
-void Tensorflow2Model::DetectOutputs() {
-  size_t pos = 0;
-  TF_Operation* op;
-  // while loop
-  while ((op = TF_GraphNextOperation(graph_, &pos)) != nullptr) {
-    const std::string op_type = TF_OperationOpType(op);
-    const int n_out = TF_OperationNumOutputs(op);
-    const int n_cout = TF_OperationNumControlOutputs(op);
-    const std::string op_name = TF_OperationName(op);
-    if (op_type != "Const" && op_type != "Assign" && op_type != "NoOp" &&
-        op_type != "Placeholder" && n_cout == 0 && ignored_names_.count(op_name) == 0) {
-      int n_consumers = 0;
-      for (int i = 0; i < n_out; i++) {
-        const TF_Output tf_out = {op, i};
-        n_consumers += TF_OperationOutputNumConsumers(tf_out);
-        if (n_consumers != 0) {
-          break;
-        }
-      }
-      if (n_consumers != 0) {
-        continue;  // while loop
-      }
-      for (int i = 0; i < n_out; i++) {
-        output_names_.push_back(op_name + ":" + std::to_string(i));
-      }
-    }
-  }
-  num_outputs_ = output_names_.size();
-  std::string msg = "Found " + std::to_string(num_outputs_) + " possible outputs: ";
+  msg = "Found " + std::to_string(num_outputs_) + " outputs: ";
   for (int i = 0; i < num_outputs_; i++) {
     if (i > 0) {
       msg += ", ";
@@ -124,27 +103,6 @@ void Tensorflow2Model::DetectOutputs() {
     msg += output_names_[i];
   }
   LOG(INFO) << msg;
-}
-
-void Tensorflow2Model::DetectInputShapes() {
-  for (int i = 0; i < num_inputs_; i++) {
-    const std::string& t_name = input_names_[i];
-    const TF_Output oper_out = ParseTensorName(t_name);
-
-    int n_dim = TF_GraphGetTensorNumDims(graph_, oper_out, status_);
-    if (TF_GetCode(status_) != TF_OK) {
-      LOG(FATAL) << "ERROR: TF_GraphGetTensorNumDims failed " << TF_Message(status_);
-      return;  // unreachable
-    }
-    int64_t dims[n_dim];
-    TF_GraphGetTensorShape(graph_, oper_out, dims, n_dim, status_);
-    if (TF_GetCode(status_) != TF_OK) {
-      LOG(FATAL) << "ERROR: TF_GraphGetTensorShape failed " << TF_Message(status_);
-      return;  // unreachable
-    }
-    graph_input_shapes_.push_back(std::vector<int64_t>(dims, dims + n_dim));
-  }
-  input_shapes_.resize(num_inputs_);
 }
 
 TF_Tensor* Tensorflow2Model::AllocateInputTensor(int index, const int64_t* dims, const int n_dim) {
@@ -216,45 +174,24 @@ Tensorflow2Model::Tensorflow2Model(const std::string& model_path, const DLDevice
     }
   }
   TF_Buffer* run_opts = nullptr;
-  TF_Buffer* meta_graph_def = nullptr;
+  TF_Buffer* meta_graph = TF_NewBuffer();
+  ;
   const char* tags = "serve";
   int ntags = 1;
   sess_ = TF_LoadSessionFromSavedModel(sess_opts, run_opts, model_path.c_str(), &tags, ntags,
-                                       graph_, meta_graph_def, status_);
+                                       graph_, meta_graph, status_);
   if (TF_GetCode(status_) != TF_OK) {
     LOG(FATAL) << "ERROR: Unable to create Session " << TF_Message(status_);
     return;  // unreachable
   }
+  tensorflow::MetaGraphDef metagraph_def;
+  metagraph_def.ParseFromArray(meta_graph->data, meta_graph->length);
+  TF_DeleteBuffer(meta_graph);
+  const tensorflow::SignatureDef& serving_default_def =
+      metagraph_def.signature_def().at("serving_default");
 
-  auto metadata = GetMetadataFile(model_path);
-  if (!metadata.empty() && !IsFileEmpty(metadata)) {
-    LOG(INFO) << "Loading metadata file: " << metadata;
-    LoadJsonFromFile(metadata, this->metadata_);
-    LOG(INFO) << "Input and Output names from metadata file";
-    LOG(INFO) << "Input Names:";
-    for (auto& el : this->metadata_.at("Model").at("Inputs")) {
-      input_names_.push_back(el.at("name"));
-      LOG(INFO) << el.at("name");
-    }
-    LOG(INFO) << "Output Names:";
-    for (auto& el : this->metadata_.at("Model").at("Outputs")) {
-      output_names_.push_back(el.at("name"));
-      LOG(INFO) << el.at("name");
-    }
-    num_inputs_ = input_names_.size();
-    num_outputs_ = output_names_.size();
-  } else {
-    ignored_names_ = {
-        "saver_filename",             // name of the checkpoint
-        "StatefulPartitionedCall_1",  // the loss
-        "StatefulPartitionedCall_2"   // save operation
-    };
-    LOG(WARNING) << "Metadata file was not found. Auto-detecting Input and Output names. This may "
-                    "not work correctly for some models...";
-    DetectInputs();
-    DetectOutputs();
-  }
-  DetectInputShapes();
+  DetectInputsAndOutputs(serving_default_def.inputs(), serving_default_def.outputs());
+
   PrepInputs();
   PrepOutputs();
 

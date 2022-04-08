@@ -14,22 +14,21 @@ void PrepareTF2ConfigProto(const DLR_TF2Config& tf2_config, std::vector<std::uin
 /*! \brief class Tensorflow2Model
  */
 class Tensorflow2Model : public DLRModel {
+  typedef google::protobuf::Map<std::string, tensorflow::TensorInfo> InputOutputType;
+
  private:
   TF_Status* status_;
   TF_Graph* graph_;
   TF_Session* sess_;
   std::vector<std::vector<int64_t>> graph_input_shapes_;  // might have -1 dimensions
   std::vector<std::string> output_names_;
-  std::set<std::string> ignored_names_;
   std::vector<std::string> output_types_;
   std::vector<TF_Output> inputs_;
   std::vector<TF_Output> outputs_;
   std::vector<TF_Tensor*> input_tensors_;
   std::vector<TF_Tensor*> output_tensors_;
   TF_Output ParseTensorName(const std::string& t_name);
-  void DetectInputs();
-  void DetectOutputs();
-  void DetectInputShapes();
+  void DetectInputsAndOutputs(const InputOutputType& inputs, const InputOutputType& outputs);
   void PrepInputs();
   void PrepOutputs();
   int GetInputId(const char* name);

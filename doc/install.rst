@@ -266,13 +266,14 @@ Building DLR with TensorFlow C library
 We can use DLR to run Tensorflow 2.x saved models (including `TensorRT converted models <https://blog.tensorflow.org/2021/01/leveraging-tensorflow-tensorrt-integration.html>`_) via TensorFlow C library.
 
 TensorFlow C library can be downloaded from `tensorflow.org <https://www.tensorflow.org/install/lang_c>`_ or built `from source <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README.md>`_.
+TensorFlow C/C++ headers target can be built from source with `bazel build --config=opt tensorflow:install_headers`.
 
 To build DLR with TensorFlow C library:
 
 .. code-block:: bash
 
   # Build DLR with libtensorflow
-  cmake .. -DWITH_TENSORFLOW2_LIB=<path to libtensorflow folder>
+  cmake .. -DWITH_TENSORFLOW2_LIB=<path to libtensorflow folder>  -DCMAKE_PREFIX_PATH=<path to bazel-bin/tensorflow/include; path to bazel-bin/tensorflow/include/src>
   make -j8
 
   # Test DLR with libtensorflow
