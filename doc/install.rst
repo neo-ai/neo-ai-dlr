@@ -266,18 +266,36 @@ Building DLR with TensorFlow C library
 We can use DLR to run Tensorflow 2.x saved models (including `TensorRT converted models <https://blog.tensorflow.org/2021/01/leveraging-tensorflow-tensorrt-integration.html>`_) via TensorFlow C library.
 
 TensorFlow C library can be downloaded from `tensorflow.org <https://www.tensorflow.org/install/lang_c>`_ or built `from source <https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/lib_package/README.md>`_.
-TensorFlow C/C++ headers target can be built from source with `bazel build --config=opt tensorflow:install_headers`.
+
+TensorFlow C/C++ headers can be obtained by building the following Tensorflow target.
+
+.. code-block:: bash
+
+  bazel build --config=opt tensorflow:install_headers
+
+  # The headers will be saved to bazel-bin/tensorflow/include
+
+Another way to get TensorFlow C/C++ headers is to install Tensorflow python package using pip. The headers can be found inside the installation folder, e.g.
+
+.. code-block:: bash
+
+  sudo pip3 install tensorflow==<tf_version>
+
+  # The headers can be found in /usr/local/lib/python3.x/dist-packages/tensorflow/include
+
 
 To build DLR with TensorFlow C library:
 
 .. code-block:: bash
 
   # Build DLR with libtensorflow
-  cmake .. -DWITH_TENSORFLOW2_LIB=<path to libtensorflow folder>  -DCMAKE_PREFIX_PATH=<path to bazel-bin/tensorflow/include; path to bazel-bin/tensorflow/include/src>
+  cmake .. \
+    -DWITH_TENSORFLOW2_LIB=<path to libtensorflow lib folder> \
+    -DTENSORFLOW2_INCLUDE=<tensorflow include folder>
   make -j8
 
   # Test DLR with libtensorflow
-  export LD_LIBRARY_PATH=<path to libtensorflow folder>/lib
+  export LD_LIBRARY_PATH=<path to libtensorflow lib folder>
   ./dlr_tensorflow2_test
 
 

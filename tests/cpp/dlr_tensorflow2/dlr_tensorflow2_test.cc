@@ -93,7 +93,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int 
     FAIL() << "GetDLRInputName failed";
   }
   LOG(INFO) << "DLRInputName: " << input_name;
-  EXPECT_STREQ("serving_default_inputs:0", input_name);
+  EXPECT_STREQ("inputs", input_name);
 
   // GetDLROutputName
   const char* output_name;
@@ -101,7 +101,15 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int 
     FAIL() << "GetDLROutputName failed";
   }
   LOG(INFO) << "DLROutputName: " << output_name;
-  EXPECT_STREQ("StatefulPartitionedCall:0", output_name);
+  EXPECT_STREQ("logits", output_name);
+
+  // GetDLROutputIndex
+  int index = -1;
+  if (GetDLROutputIndex(&handle, output_name, &index)) {
+    FAIL() << "GetDLROutputIndex failed";
+  }
+  LOG(INFO) << "GetDLROutputIndex: " << index;
+  EXPECT_EQ(0, index);
 
   // GetDLRInputType
   const char* input_type;
@@ -198,6 +206,13 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int 
     // Imagenet 281 - tabby, tabby cat
     EXPECT_GE(output[out_offset + 281], 0.3f);
   }
+
+  // GetDLROutputByName
+  std::vector<float> output_1(out_size);
+  if (GetDLROutputByName(&handle, "logits", output_1.data())) {
+    FAIL() << "GetDLROutputByName failed";
+  }
+  EXPECT_TRUE(std::equal(output_1.begin(), output_1.end(), output.begin()));
 }
 
 TEST(Tensorflow, CreateDLRModelFromTensorflow2) {

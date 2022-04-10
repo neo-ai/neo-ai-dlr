@@ -69,7 +69,8 @@ void Tensorflow2Model::DetectInputsAndOutputs(const InputOutputType& inputs,
                                               const InputOutputType& outputs) {
   for (auto& el : inputs) {
     const tensorflow::TensorInfo& ti = el.second;
-    input_names_.push_back(ti.name());
+    input_names_.push_back(el.first);
+    input_tensor_names_.push_back(ti.name());
     const tensorflow::TensorShapeProto& shape = ti.tensor_shape();
     int dim_size = shape.dim_size();
     std::vector<int64_t> dims;
@@ -82,7 +83,8 @@ void Tensorflow2Model::DetectInputsAndOutputs(const InputOutputType& inputs,
   }
   for (auto& el : outputs) {
     const tensorflow::TensorInfo& ti = el.second;
-    output_names_.push_back(ti.name());
+    output_names_.push_back(el.first);
+    output_tensor_names_.push_back(ti.name());
   }
   num_inputs_ = input_names_.size();
   num_outputs_ = output_names_.size();
@@ -123,7 +125,7 @@ TF_Tensor* Tensorflow2Model::AllocateInputTensor(int index, const int64_t* dims,
 }
 
 void Tensorflow2Model::PrepInputs() {
-  for (std::string& t_name : input_names_) {
+  for (std::string& t_name : input_tensor_names_) {
     TF_Output oper_out = ParseTensorName(t_name);
     const TF_DataType t_type = TF_OperationOutputType(oper_out);
     input_types_.push_back(std::to_string((int)t_type));
@@ -134,7 +136,7 @@ void Tensorflow2Model::PrepInputs() {
 }
 
 void Tensorflow2Model::PrepOutputs() {
-  for (std::string& t_name : output_names_) {
+  for (std::string& t_name : output_tensor_names_) {
     TF_Output oper_out = ParseTensorName(t_name);
     const TF_DataType t_type = TF_OperationOutputType(oper_out);
     output_types_.push_back(std::to_string((int)t_type));
@@ -175,7 +177,6 @@ Tensorflow2Model::Tensorflow2Model(const std::string& model_path, const DLDevice
   }
   TF_Buffer* run_opts = nullptr;
   TF_Buffer* meta_graph = TF_NewBuffer();
-  ;
   const char* tags = "serve";
   int ntags = 1;
   sess_ = TF_LoadSessionFromSavedModel(sess_opts, run_opts, model_path.c_str(), &tags, ntags,
@@ -313,6 +314,21 @@ void Tensorflow2Model::GetOutput(int index, void* output) {
   size_t num_bytes = TF_TensorByteSize(tensor);
   const void* out_t_data = TF_TensorData(tensor);
   std::memcpy(output, out_t_data, num_bytes);
+}
+
+int Tensorflow2Model::GetOutputIndex(const char* name) const {
+  for (int i = 0; i < output_names_.size(); i++) {
+    if (output_names_[i].compare(name) == 0) {
+      return i;
+    }
+  }
+  LOG(FATAL) << "Output Tensor not found, name: " << name;
+  return -1;  // unreachable
+}
+
+void Tensorflow2Model::GetOutputByName(const char* name, void* out) {
+  int index = GetOutputIndex(name);
+  GetOutput(index, out);
 }
 
 const void* Tensorflow2Model::GetOutputPtr(int index) const {

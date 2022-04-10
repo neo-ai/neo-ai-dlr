@@ -4,6 +4,7 @@
 #include "dlr.h"
 #include "dlr_common.h"
 #include "tensorflow/c/c_api.h"
+#include "tensorflow/core/protobuf/meta_graph.pb.h"
 
 namespace dlr {
 
@@ -23,6 +24,8 @@ class Tensorflow2Model : public DLRModel {
   std::vector<std::vector<int64_t>> graph_input_shapes_;  // might have -1 dimensions
   std::vector<std::string> output_names_;
   std::vector<std::string> output_types_;
+  std::vector<std::string> input_tensor_names_;
+  std::vector<std::string> output_tensor_names_;
   std::vector<TF_Output> inputs_;
   std::vector<TF_Output> outputs_;
   std::vector<TF_Tensor*> input_tensors_;
@@ -53,6 +56,8 @@ class Tensorflow2Model : public DLRModel {
                         int dim) override;
   virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;
+  virtual int GetOutputIndex(const char* name) const override;
+  virtual void GetOutputByName(const char* name, void* out) override;
   virtual const void* GetOutputPtr(int index) const override;
   virtual const char* GetOutputName(const int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
