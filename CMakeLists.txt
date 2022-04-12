@@ -231,9 +231,22 @@ if(USE_TENSORRT)
     set(USE_TENSORRT OFF)
 endif()
 if(WITH_TENSORFLOW2_LIB)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW2")
     if(NOT TENSORFLOW2_INCLUDE)
         message(FATAL_ERROR "TENSORFLOW2_INCLUDE is required.")
+    endif()
+    message(STATUS "Building WITH_TENSORFLOW2_LIB: ${WITH_TENSORFLOW2_LIB}")
+    message(STATUS "TENSORFLOW2_INCLUDE: ${TENSORFLOW2_INCLUDE}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDLR_TENSORFLOW2")
+    if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
+        # https://discuss.tensorflow.org/t/do-you-have-plan-to-remove-cxxopt-d-glibcxx-use-cxx11-abi-0-in-build/7530
+        execute_process(COMMAND nm -D ${WITH_TENSORFLOW2_LIB}/libtensorflow.so
+                        COMMAND grep protobuf.*fixed_address_empty_string.*cxx11
+                        COMMAND wc -l
+                        OUTPUT_VARIABLE IS_TF_USE_CXX11_ABI)
+        if(${IS_TF_USE_CXX11_ABI} EQUAL "0")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+            message(WARNING "[WITH_TENSORFLOW2_LIB] Using CXX_FLAG -D_GLIBCXX_USE_CXX11_ABI=0")
+        endif()
     endif()
     include_directories("${TENSORFLOW2_INCLUDE}" "${TENSORFLOW2_INCLUDE}/src")
     list(APPEND DLR_SRC "src/dlr_tensorflow2/dlr_tensorflow2.cc")
