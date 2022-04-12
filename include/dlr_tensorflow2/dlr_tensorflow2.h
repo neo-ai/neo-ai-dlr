@@ -4,6 +4,7 @@
 #include "dlr.h"
 #include "dlr_common.h"
 #include "tensorflow/c/c_api.h"
+#include "tensorflow/core/protobuf/meta_graph.pb.h"
 
 namespace dlr {
 
@@ -14,22 +15,23 @@ void PrepareTF2ConfigProto(const DLR_TF2Config& tf2_config, std::vector<std::uin
 /*! \brief class Tensorflow2Model
  */
 class Tensorflow2Model : public DLRModel {
+  typedef google::protobuf::Map<std::string, tensorflow::TensorInfo> InputOutputType;
+
  private:
   TF_Status* status_;
   TF_Graph* graph_;
   TF_Session* sess_;
   std::vector<std::vector<int64_t>> graph_input_shapes_;  // might have -1 dimensions
   std::vector<std::string> output_names_;
-  std::set<std::string> ignored_names_;
   std::vector<std::string> output_types_;
+  std::vector<std::string> input_tensor_names_;
+  std::vector<std::string> output_tensor_names_;
   std::vector<TF_Output> inputs_;
   std::vector<TF_Output> outputs_;
   std::vector<TF_Tensor*> input_tensors_;
   std::vector<TF_Tensor*> output_tensors_;
   TF_Output ParseTensorName(const std::string& t_name);
-  void DetectInputs();
-  void DetectOutputs();
-  void DetectInputShapes();
+  void DetectInputsAndOutputs(const InputOutputType& inputs, const InputOutputType& outputs);
   void PrepInputs();
   void PrepOutputs();
   int GetInputId(const char* name);
@@ -54,6 +56,8 @@ class Tensorflow2Model : public DLRModel {
                         int dim) override;
   virtual void Run() override;
   virtual void GetOutput(int index, void* out) override;
+  virtual int GetOutputIndex(const char* name) const override;
+  virtual void GetOutputByName(const char* name, void* out) override;
   virtual const void* GetOutputPtr(int index) const override;
   virtual const char* GetOutputName(const int index) const override;
   virtual void GetOutputShape(int index, int64_t* shape) const override;
