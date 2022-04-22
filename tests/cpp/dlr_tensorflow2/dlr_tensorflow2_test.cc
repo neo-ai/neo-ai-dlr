@@ -117,7 +117,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int 
     FAIL() << "GetDLRInputType failed";
   }
   LOG(INFO) << "DLRInputType: " << input_type;
-  EXPECT_STREQ("1", input_type);
+  EXPECT_STREQ("DT_FLOAT", input_type);
 
   // GetDLROutputType
   const char* output_type;
@@ -125,7 +125,7 @@ void CheckAllDLRMethods(DLRModelHandle& handle, const int batch_size, const int 
     FAIL() << "GetDLROutputType failed";
   }
   LOG(INFO) << "DLROutputType: " << output_type;
-  EXPECT_STREQ("1", output_type);
+  EXPECT_STREQ("DT_FLOAT", output_type);
 
   CheckInputShape(handle, prev_batch_size);
 

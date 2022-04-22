@@ -128,7 +128,7 @@ void Tensorflow2Model::PrepInputs() {
   for (std::string& t_name : input_tensor_names_) {
     TF_Output oper_out = ParseTensorName(t_name);
     const TF_DataType t_type = TF_OperationOutputType(oper_out);
-    input_types_.push_back(std::to_string((int)t_type));
+    input_types_.push_back(tensorflow::DataType_Name(static_cast<tensorflow::DataType>(t_type)));
     inputs_.push_back(oper_out);
     // fill output_tensors_ vector with nulls
     input_tensors_.push_back(nullptr);
@@ -139,7 +139,7 @@ void Tensorflow2Model::PrepOutputs() {
   for (std::string& t_name : output_tensor_names_) {
     TF_Output oper_out = ParseTensorName(t_name);
     const TF_DataType t_type = TF_OperationOutputType(oper_out);
-    output_types_.push_back(std::to_string((int)t_type));
+    output_types_.push_back(tensorflow::DataType_Name(static_cast<tensorflow::DataType>(t_type)));
     outputs_.push_back(oper_out);
     // fill output_tensors_ vector with nulls
     output_tensors_.push_back(nullptr);
