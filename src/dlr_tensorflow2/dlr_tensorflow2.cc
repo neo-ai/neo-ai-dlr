@@ -71,6 +71,7 @@ void Tensorflow2Model::DetectInputsAndOutputs(const InputOutputType& inputs,
     const tensorflow::TensorInfo& ti = el.second;
     input_names_.push_back(el.first);
     input_tensor_names_.push_back(ti.name());
+    input_types_.push_back(DataType_Name(ti.dtype()));
     const tensorflow::TensorShapeProto& shape = ti.tensor_shape();
     int dim_size = shape.dim_size();
     std::vector<int64_t> dims;
@@ -80,11 +81,20 @@ void Tensorflow2Model::DetectInputsAndOutputs(const InputOutputType& inputs,
       dims.push_back(dim_sz);
     }
     graph_input_shapes_.push_back(dims);
+    TF_Output oper_out = ParseTensorName(ti.name());
+    inputs_.push_back(oper_out);
+    // fill output_tensors_ vector with nulls
+    input_tensors_.push_back(nullptr);
   }
   for (auto& el : outputs) {
     const tensorflow::TensorInfo& ti = el.second;
     output_names_.push_back(el.first);
     output_tensor_names_.push_back(ti.name());
+    output_types_.push_back(DataType_Name(ti.dtype()));
+    TF_Output oper_out = ParseTensorName(ti.name());
+    outputs_.push_back(oper_out);
+    // fill output_tensors_ vector with nulls
+    output_tensors_.push_back(nullptr);
   }
   num_inputs_ = input_names_.size();
   num_outputs_ = output_names_.size();
@@ -122,28 +132,6 @@ TF_Tensor* Tensorflow2Model::AllocateInputTensor(int index, const int64_t* dims,
   TF_Tensor* tensor = TF_AllocateTensor(t_type, dims, n_dim, num_bytes);
   LOG(INFO) << "Input Tensor " << index << " was allocated";
   return tensor;
-}
-
-void Tensorflow2Model::PrepInputs() {
-  for (std::string& t_name : input_tensor_names_) {
-    TF_Output oper_out = ParseTensorName(t_name);
-    const TF_DataType t_type = TF_OperationOutputType(oper_out);
-    input_types_.push_back(std::to_string((int)t_type));
-    inputs_.push_back(oper_out);
-    // fill output_tensors_ vector with nulls
-    input_tensors_.push_back(nullptr);
-  }
-}
-
-void Tensorflow2Model::PrepOutputs() {
-  for (std::string& t_name : output_tensor_names_) {
-    TF_Output oper_out = ParseTensorName(t_name);
-    const TF_DataType t_type = TF_OperationOutputType(oper_out);
-    output_types_.push_back(std::to_string((int)t_type));
-    outputs_.push_back(oper_out);
-    // fill output_tensors_ vector with nulls
-    output_tensors_.push_back(nullptr);
-  }
 }
 
 int Tensorflow2Model::GetInputId(const char* name) {
@@ -192,9 +180,6 @@ Tensorflow2Model::Tensorflow2Model(const std::string& model_path, const DLDevice
       metagraph_def.signature_def().at("serving_default");
 
   DetectInputsAndOutputs(serving_default_def.inputs(), serving_default_def.outputs());
-
-  PrepInputs();
-  PrepOutputs();
 
   TF_DeleteSessionOptions(sess_opts);
   LOG(INFO) << "Tensorflow Session was created";

@@ -32,8 +32,6 @@ class Tensorflow2Model : public DLRModel {
   std::vector<TF_Tensor*> output_tensors_;
   TF_Output ParseTensorName(const std::string& t_name);
   void DetectInputsAndOutputs(const InputOutputType& inputs, const InputOutputType& outputs);
-  void PrepInputs();
-  void PrepOutputs();
   int GetInputId(const char* name);
   TF_Tensor* AllocateInputTensor(int index, const int64_t* dims, const int n_dim);
 
