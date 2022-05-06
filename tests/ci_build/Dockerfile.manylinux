@@ -11,7 +11,7 @@ RUN yum -y update && \
 
 # Python
 RUN yum install -y python3 && \
-    wget https://bootstrap.pypa.io/get-pip.py && \
+    wget https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
     python3 get-pip.py
 
 # CMake

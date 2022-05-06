@@ -5,7 +5,7 @@ RUN apt-get update && \
     libtinfo-dev zlib1g-dev build-essential libedit-dev libxml2-dev \
     antlr4 gnupg git clang-format-10 \
     && rm -rf /var/lib/apt/lists/* \
-    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
+    && curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py \
     && rm -rf /root/.cache/pip
 
 RUN pip3 install -U pip setuptools wheel
