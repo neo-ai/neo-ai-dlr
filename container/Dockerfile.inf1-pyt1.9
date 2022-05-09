@@ -73,7 +73,7 @@ RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.8 \
 #COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
 RUN pip3 install --upgrade --force-reinstall sagemaker-inference
 RUN pip3 install torchvision==0.10.0 --no-deps
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.9.1.2.1.7.0
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.9.1.2.3.3.0
 
 ### Stage 2-2: Runner (APP-specific handler)
 FROM runner_base AS runner
