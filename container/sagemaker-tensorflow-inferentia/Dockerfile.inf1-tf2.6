@@ -7,9 +7,9 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 # Add arguments to achieve the version, python and url
-ARG PYTHON=python3
-ARG PIP=pip3
-ARG TFS_SHORT_VERSION=2.5.2
+ARG PYTHON=python3.7
+ARG PIP=python3.7 -m pip
+ARG TFS_SHORT_VERSION=2.6.3
 ARG TF_S3_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com
 
 # See http://bugs.python.org/issue19846
@@ -41,9 +41,11 @@ RUN apt-get update \
  && apt-get -y install --no-install-recommends \
     nginx \
     nginx-module-njs \
-    python3 \
-    python3-pip \
-    python3-setuptools \
+  && apt-get install software-properties-common -y \
+  && add-apt-repository ppa:deadsnakes/ppa \
+  && apt-get update \
+  && apt-get install python3.7 -y \
+  && apt-get install python3-distutils -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
@@ -56,12 +58,11 @@ RUN echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt
 
 RUN apt list -a tensorflow-model-server-neuron
 
-RUN ${PIP} --no-cache-dir install --upgrade \
-    pip \
-    setuptools
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python3.7 get-pip.py  
 
 # cython, falcon, gunicorn, grpc
-RUN ${PIP} install --no-cache-dir \
+RUN python3.7 -m pip install --no-cache-dir \
     awscli \
     boto3 \
     pyYAML==5.3.1 \
@@ -73,10 +74,10 @@ RUN ${PIP} install --no-cache-dir \
     grpcio==1.24.1 \
     protobuf==3.10.0 \
 # using --no-dependencies to avoid installing tensorflow binary
- && ${PIP} install --no-dependencies --no-cache-dir \
-    tensorflow-serving-api==2.6.3
+ && python3.7 -m pip install --no-dependencies --no-cache-dir \
+    tensorflow-serving-api==2.5.3
 
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron==2.6.3.2.3.0.0"
+RUN python3.7 -m pip install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir "tensorflow-neuron==2.6.3.2.3.0.0"
 
 COPY sagemaker /sagemaker
 
@@ -84,6 +85,7 @@ WORKDIR /
 
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
+ && ln -sf $(which ${PYTHON}) $(which python3) \
  && ln -s /usr/local/bin/pip3 /usr/bin/pip
 
 RUN curl ${TF_S3_URL}/MKL-Libraries/libiomp5.so -o /usr/local/lib/libiomp5.so \
