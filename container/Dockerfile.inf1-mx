@@ -76,6 +76,7 @@ RUN ${PIP} --no-cache-dir install --upgrade \
 WORKDIR /
 
 RUN ${PIP} install --no-cache-dir \
+    boto3 \
     gluonnlp==0.10.0 \
     multi-model-server==$MMS_VERSION \
     keras-mxnet==2.2.4.1 \
