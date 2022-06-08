@@ -163,6 +163,7 @@ void tracking_free(void* ptr) {
   free(ptr);
 }
 
+std::mutex m;
 void* tracking_memalign(size_t alignment, size_t size) {
   void* ptr;
 #if _MSC_VER
@@ -173,7 +174,9 @@ void* tracking_memalign(size_t alignment, size_t size) {
   int ret = posix_memalign(&ptr, alignment, size);
   if (ret != 0) throw std::bad_alloc();
 #endif
+  m.lock();
   CustomAllocatorTrackingTest::memalign_calls_.emplace_back(std::make_tuple(alignment, size, ptr));
+  m.unlock();
   return ptr;
 }
 

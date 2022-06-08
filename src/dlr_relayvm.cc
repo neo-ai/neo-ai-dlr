@@ -88,8 +88,9 @@ void RelayVMModel::SetupVMModule(const std::vector<DLRModelElem>& model_elems) {
   vm_executable_ =
       std::make_shared<tvm::runtime::Module>(tvm::runtime::vm::Executable::Load(code_data, lib));
   auto vm = tvm::runtime::make_object<tvm::runtime::vm::VirtualMachine>();
-  vm->LoadExecutable(static_cast<tvm::runtime::vm::Executable*>(
-      const_cast<tvm::runtime::Object*>(vm_executable_->get())));
+  vm->LoadExecutable(tvm::runtime::GetObjectPtr<tvm::runtime::vm::Executable>(
+      static_cast<tvm::runtime::vm::Executable*>(
+          const_cast<tvm::runtime::Object*>(vm_executable_->get()))));
   vm_module_ = std::make_shared<tvm::runtime::Module>(tvm::runtime::Module(vm));
 
   tvm::runtime::PackedFunc init = vm_module_->GetFunction("init");
