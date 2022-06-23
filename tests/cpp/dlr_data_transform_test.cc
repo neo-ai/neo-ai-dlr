@@ -325,7 +325,7 @@ TEST(DLR, DISABLED_RelayVMDataTransformInput) {
   delete model;
 }
 
-TEST(DLR, RelayVMDataTransformOutput) {
+TEST(DLR, DISABLED_RelayVMDataTransformOutput) {
   DLDevice dev = {kDLCPU, 0};
   std::vector<std::string> paths = {"./inverselabel"};
   std::vector<std::string> files = dlr::FindFiles(paths);
