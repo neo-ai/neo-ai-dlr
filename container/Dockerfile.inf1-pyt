@@ -42,38 +42,57 @@ FROM base AS runner_base
 ENV DEBIAN_FRONTEND noninteractive
 ENV USE_INF 1
 
-# python3-dev and gcc are required by multi-model-server
-# neuron-cc[tensorflow] needs g++ and python3-venv
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    openjdk-8-jdk-headless \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends software-properties-common \
+ && add-apt-repository ppa:openjdk-r/ppa \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
     python3-dev \
     python3-venv \
-    gcc \
-    g++ \
-    pciutils \
-    gnupg \
+    build-essential \
+    apt-transport-https \
+    ca-certificates \
+    cmake \
+    curl \
+    emacs \
+    git \
+    jq \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    openjdk-11-jdk \
+    vim \
+    wget \
+    unzip \
     zlib1g-dev \
+    libcap-dev \
     libjpeg-dev \
     libpng-dev \
-    jq \
-    wget && \
-    echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list && \
-    wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add - && \
-    apt-get update && \
-    apt-get install aws-neuron-tools && \
-    rm -rf /var/lib/apt/lists/*
+    gpg-agent \
+    pciutils \
+    gnupg \
+  && echo "deb https://apt.repos.neuron.amazonaws.com bionic main" | tee /etc/apt/sources.list.d/neuron.list \
+  && wget -qO - https://apt.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-NEURON.PUB | apt-key add -  \
+  && apt-get update \
+  && apt-get install aws-neuron-tools \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /tmp/tmp* \
+  && apt-get clean
 
 COPY --from=builder /workspace/sagemaker-pytorch-inferentia-serving/dist/*.whl /home/model-server/
 
-RUN pip3 install --pre --no-cache-dir multi-model-server==1.1.8 \
-    && pip3 install --no-cache-dir Pillow \
+RUN pip3 install torchserve==0.5.3 \
+    && pip3 install --no-cache-dir "pillow>=8.3" \
+    && pip3 install --no-cache-dir captum \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
+    && pip3 install torchvision==0.11.2 --no-deps \
+    && pip3 install torch-model-archiver==0.5.3 \
     && rm -rf /root/.cache/pip
-#COPY sagemaker_inference-1.5.2.dev0.tar.gz /home/model-server
-RUN pip3 install --upgrade --force-reinstall sagemaker-inference
-RUN pip3 install torchvision==0.8.2 --no-deps
-RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.7.1.2.3.0.0
+
+RUN pip3 install --extra-index-url=https://pip.repos.neuron.amazonaws.com --no-cache-dir torch-neuron==1.7.1.2.3.0.0 \
+    && rm -rf /root/.cache/pip
 
 ### Stage 2-2: Runner (APP-specific handler)
 FROM runner_base AS runner
@@ -103,5 +122,5 @@ WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
 
 ENTRYPOINT ["python3", "/usr/local/bin/dockerd-entrypoint.py"]
-CMD ["mxnet-model-server", "--start", "--mms-config", "/home/model-server/config.properties"]
+CMD ["torchserve", "--start", "--ts-config",  "/home/model-server/config.properties", "--model-store /home/model-server/model"]
 LABEL maintainer="guas@amazon.com"
