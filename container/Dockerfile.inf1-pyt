@@ -87,7 +87,7 @@ RUN pip3 install torchserve==0.5.3 \
     && pip3 install --no-cache-dir "pillow>=8.3" \
     && pip3 install --no-cache-dir captum \
     && pip3 install --no-cache-dir numpy scipy xlrd boto3 six requests \
-    && pip3 install torchvision==0.11.2 --no-deps \
+    && pip3 install torchvision==0.8.2 --no-deps \
     && pip3 install torch-model-archiver==0.5.3 \
     && rm -rf /root/.cache/pip
 
