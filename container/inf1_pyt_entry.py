@@ -18,6 +18,12 @@ import sys
 import os
 
 if sys.argv[1] == 'serve':
+    for key, value in os.environ.items():
+        if key.startswith("MMS_"):
+            new_key = key.replace("MMS_", "TS_", 1)
+            os.environ[new_key] = value
+            del os.environ[key]
+
     user_ncgs = os.environ.get('NEURONCORE_GROUP_SIZES')
     if user_ncgs is None:
         os.environ['NEURONCORE_GROUP_SIZES'] = "1"
