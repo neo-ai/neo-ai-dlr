@@ -139,6 +139,6 @@ EXPOSE 8080 8081
 WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
 
-ENTRYPOINT ["python3", "/usr/local/bin/dockerd-entrypoint.py"]
+ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 CMD ["torchserve", "--start", "--ts-config",  "/home/model-server/config.properties", "--model-store /home/model-server/model"]
 LABEL maintainer="guas@amazon.com"
