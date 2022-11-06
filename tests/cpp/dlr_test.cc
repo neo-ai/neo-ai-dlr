@@ -272,35 +272,35 @@ TEST(DLR, TestCreateFromPaths_RelayVM) {
   }
 
   // set input
-  int64_t input_shape[4] = {1, 512, 512, 3};
+  int64_t input_shape[4] = {1, 640, 640, 3};
   DLTensor input = GetEmptyDLTensor(4, input_shape, kDLUInt, 8);
-  const char* input_name = "image_tensor";
+  const char* input_name = "input_tensor";
   EXPECT_EQ(SetDLRInputTensor(&model, input_name, &input), 0);
 
   // run inference
   EXPECT_EQ(RunDLRModel(&model), 0) << DLRGetLastError();
 
-  // output 3
-  float output3_d[100];
-  EXPECT_EQ(GetDLROutput(&model, 3, output3_d), 0);
-  int64_t output3_size;
-  int output3_dim;
-  EXPECT_EQ(GetDLROutputSizeDim(&model, 3, &output3_size, &output3_dim), 0);
-  std::vector<int64_t> output3_shape(output3_dim);
-  EXPECT_EQ(GetDLROutputShape(&model, 3, output3_shape.data()), 0);
-  DLTensor output3 = GetEmptyDLTensor(output3_dim, output3_shape.data(), kDLFloat, 32);
-  EXPECT_EQ(GetDLROutputTensor(&model, 3, &output3), 0);
-  for (int i = 0; i < output3_size; i++) {
-    EXPECT_EQ(((float*)(output3.data))[i], output3_d[i]);
+  // output 2
+  float output2_d[100];
+  EXPECT_EQ(GetDLROutput(&model, 2, output2_d), 0);
+  int64_t output2_size;
+  int output2_dim;
+  EXPECT_EQ(GetDLROutputSizeDim(&model, 2, &output2_size, &output2_dim), 0);
+  std::vector<int64_t> output2_shape(output2_dim);
+  EXPECT_EQ(GetDLROutputShape(&model, 2, output2_shape.data()), 0);
+  DLTensor output2 = GetEmptyDLTensor(output2_dim, output2_shape.data(), kDLFloat, 32);
+  EXPECT_EQ(GetDLROutputTensor(&model, 2, &output2), 0);
+  for (int i = 0; i < output2_size; i++) {
+    EXPECT_EQ(((float*)(output2.data))[i], output2_d[i]);
   }
-  DLManagedTensor* output3_p;
-  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 3, (const void**)&output3_p), 0);
-  for (int i = 0; i < output3_size; i++) {
-    EXPECT_EQ(((float*)(output3_p->dl_tensor.data))[i], ((float*)(output3.data))[i]);
+  DLManagedTensor* output2_p;
+  EXPECT_EQ(GetDLROutputManagedTensorPtr(&model, 2, (const void**)&output2_p), 0);
+  for (int i = 0; i < output2_size; i++) {
+    EXPECT_EQ(((float*)(output2_p->dl_tensor.data))[i], ((float*)(output2.data))[i]);
   }
 
-  output3_p->deleter(output3_p);
-  DeleteDLTensor(output3);
+  output2_p->deleter(output2_p);
+  DeleteDLTensor(output2);
   DeleteDLTensor(input);
   DeleteDLRModel(&model);
 }

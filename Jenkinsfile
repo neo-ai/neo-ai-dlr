@@ -50,7 +50,7 @@ pipeline {
         unstash name: 'srcs'
         sh """
         tests/ci_build/git-clang-format.sh HEAD~1
-        tests/ci_build/git-clang-format.sh origin/release-1.12.0-rc
+        tests/ci_build/git-clang-format.sh origin/release-1.13.0-rc
         """
       }
     }

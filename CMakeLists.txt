@@ -17,7 +17,7 @@ if(ANDROID_BUILD)
     endif()
 endif(ANDROID_BUILD)
 
-project(dlr VERSION 1.12.0 LANGUAGES C CXX)
+project(dlr VERSION 1.13.0 LANGUAGES C CXX)
 
 message(STATUS "dlr version: ${dlr_VERSION}")
 
@@ -75,7 +75,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(TEST_COVERAGE "C++ test coverage" OFF)
 
 # Compiler flags
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --exclude-libs is not available on Windows and macOS. As such, Windows and
 # Mac do not support the creation of multiple DLRModel instances (in Python) in
@@ -469,15 +469,15 @@ if(DLR_BUILD_TESTS AND NOT(AAR_BUILD))
     file(REMOVE /tmp/xgboost-ml_m5.tar.gz)
   endif()
 
-  set(RELAYVM_MODEL ssd_mobilenet_v1_ppn_shared_box_predictor_300x300_coco14_sync_2018_07_03-LINUX_X86_64.tar.gz)
+  set(RELAYVM_MODEL tf2_ssd_mobilenet_v1.tar.gz)
   set(RELAYVM_MODEL_DIR ${CMAKE_CURRENT_BINARY_DIR}/ssd_mobilenet_v1)
   if(NOT IS_DIRECTORY ${RELAYVM_MODEL_DIR})
     file(MAKE_DIRECTORY ${RELAYVM_MODEL_DIR})
     download_file(
-      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.11.0/${RELAYVM_MODEL}
+      https://neo-ai-dlr-test-artifacts.s3-us-west-2.amazonaws.com/compiled-models/release-1.13.0/${RELAYVM_MODEL}
       /tmp/${RELAYVM_MODEL}
       SHA1
-      9579c77d98de992d5c9e84e1799e2669cbe65c9b
+      e7b951ee10b715218bde4f39d3ee0e0c2588ceae
     )
     # this is OS-agnostic
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf /tmp/${RELAYVM_MODEL}
