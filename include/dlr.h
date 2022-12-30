@@ -1,6 +1,7 @@
 #ifndef DLR_H_
 #define DLR_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
