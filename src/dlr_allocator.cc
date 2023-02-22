@@ -3,10 +3,10 @@
 #include <cstdlib>
 
 namespace dlr {
-
-DLRMallocFunctionPtr DLRAllocatorFunctions::malloc_fn_ = nullptr;
+  
 DLRFreeFunctionPtr DLRAllocatorFunctions::free_fn_ = nullptr;
 DLRMemalignFunctionPtr DLRAllocatorFunctions::memalign_fn_ = nullptr;
+DLRMallocFunctionPtr DLRAllocatorFunctions::malloc_fn_ = nullptr;
 
 void DLRAllocatorFunctions::SetMallocFunction(DLRMallocFunctionPtr malloc_fn) {
   malloc_fn_ = malloc_fn;
