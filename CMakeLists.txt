@@ -273,7 +273,7 @@ if(USE_MLAS)
   endif()
   file(GLOB RUNTIME_MLAS_SRCS ${TVM_SRC}/src/runtime/contrib/mlas/*.cc)
   list(APPEND DLR_SRC ${RUNTIME_MLAS_SRCS})
-  list(APPEND DLR_LINKER_LIBS onnxruntime_mlas_static)
+  list(APPEND DLR_LINKER_LIBS onnxruntime_mlas)
   include_directories(${TVM_SRC}/3rdparty/mlas/inc)
 endif()
 
